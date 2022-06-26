@@ -1,0 +1,35 @@
+/* ----- Qt Style Sheet - Window - Open File ----- */
+
+* {{
+    font: 9pt "{font_family}";
+}}
+
+QFrame#vertical_separator {{
+    border: 1px solid "{on_surface.darker.50}";
+}}
+
+QPushButton#card_background {{
+    background: "{background}";
+    border: "none";
+}}
+QPushButton:hover#card_background {{
+    background: "{primary}";
+}}
+QPushButton:pressed#card_background {{
+    background: "{primary}";
+    border-left: 2px solid "{secondary}";
+}}
+QPushButton:checked#card_background {{
+    background: "{primary}";
+    border-left: 2px solid "{secondary}";
+}}
+
+QStackedWidget#swgt_search_panel {{
+    background: "{primary}";
+    color: "{on_primary}";
+}}
+
+QWidget#wgt_search_results {{
+    background: "{background}";
+    color: "{on_background}";
+}}

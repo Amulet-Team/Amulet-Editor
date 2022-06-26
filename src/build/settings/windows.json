@@ -1,0 +1,4 @@
+{
+    "installer": "${app_name}-${version}-installer.exe",
+    "show_console_window": false
+}

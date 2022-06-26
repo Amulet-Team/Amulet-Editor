@@ -1,0 +1,28 @@
+{
+	"theme_name": "_default",
+	"style": "Fusion",
+	"font": {
+		"family": "Cascadia Mono",
+		"subfamilies": {
+			"extra_light": "ExtraLight",
+			"light": "Light",
+			"semi_bold": "SemiBold",
+			"semi_light": "SemiLight"
+		},
+		"size": 10
+	},
+	"material_colors": {
+		"primary": "#f0f0f0",
+		"primary_variant": "#f0f0f0",
+		"secondary": "#0078d7",
+		"secondary_variant": "#0078d7",
+		"background": "#ffffff",
+		"surface": "#e3e3e3",
+		"error": "#ffffdc",
+		"on_primary": "#000000",
+		"on_secondary": "#FFFFFF",
+		"on_background": "#000000",
+		"on_surface": "#000000",
+		"on_error": "#000000"
+	}
+}

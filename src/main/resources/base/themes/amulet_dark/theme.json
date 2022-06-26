@@ -1,0 +1,28 @@
+{
+	"theme_name": "Amulet Dark",
+	"style": "Fusion",
+	"font": {
+		"family": "Cascadia Mono",
+		"subfamilies": {
+			"extra_light": "ExtraLight",
+			"light": "Light",
+			"semi_bold": "SemiBold",
+			"semi_light": "SemiLight"
+		},
+		"size": 10
+	},
+	"material_colors": {
+		"primary": "#252526",
+		"primary_variant": "#37373d",
+		"secondary": "#1a6a95",
+		"secondary_variant": "#29566c",
+		"background": "#1e1e1e",
+		"surface": "#333333",
+		"error": "",
+		"on_primary": "#d4d4d4",
+		"on_secondary": "#d4d4d4",
+		"on_background": "#d4d4d4",
+		"on_surface": "#828282",
+		"on_error": ""
+	}
+}

@@ -1,0 +1,10 @@
+{
+	"ignore": [
+		".vscode/*.py",
+		"**/site-packages/**/*.py",
+		".venv*/**/*.py",
+		".pytest_cache/**/*.py",
+		"**/version_info.py"
+	],
+	"pythonPlatform": "All"
+}

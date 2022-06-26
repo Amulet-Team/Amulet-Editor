@@ -1,0 +1,28 @@
+{
+    "theme_name": "Jade Slate",
+    "style": "Fusion",
+    "font": {
+        "family": "Cascadia Mono",
+        "subfamilies": {
+            "extra_light": "ExtraLight",
+            "light": "Light",
+            "semi_bold": "SemiBold",
+            "semi_light": "SemiLight"
+        },
+        "size": 10
+    },
+    "material_colors": {
+        "primary": "#242726",
+        "primary_variant": "#242726",
+        "secondary": "#43675b",
+        "secondary_variant": "#43675b",
+        "background": "#191c1b",
+        "surface": "#3f4945",
+        "error": "#ffb4a9",
+        "on_primary": "#dae5df",
+        "on_secondary": "#dae5df",
+        "on_background": "#bec9c3",
+        "on_surface": "#bec9c3",
+        "on_error": "#680003"
+    }
+}
