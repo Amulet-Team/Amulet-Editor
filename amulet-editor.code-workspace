@@ -1,0 +1,70 @@
+{
+    "folders": [
+        {
+            "name": "Amulet Editor",
+            "path": "."
+        }
+    ],
+    "extensions": {
+        "recommendations": [
+            "ms-python.python"
+        ]
+    },
+    "launch": {
+        "version": "0.2.0",
+        "configurations": [
+            {
+                "name": "Amulet Editor",
+                "type": "python",
+                "request": "launch",
+                "program": "${workspaceFolder}/src/main/python/amulet_editor/main.py",
+                "console": "internalConsole",
+                "cwd": "${workspaceFolder}",
+                "env": {
+                    "PYTHONPATH": "${workspaceFolder}/src/main/python"
+                }
+            }
+        ],
+        "compounds": []
+    },
+    "settings": {
+        "[python]": {
+            "editor.codeActionsOnSave": {
+                "source.organizeImports": true
+            }
+        },
+        "editor.formatOnSave": true,
+        "files.exclude": {
+            "**/.git": true,
+            "**/.svn": true,
+            "**/.hg": true,
+            "**/CVS": true,
+            "**/.DS_Store": true,
+            "**/Thumbs.db": true,
+            "**/src/main/python": true
+        },
+        "files.watcherExclude": {
+            "/target/**": true
+        },
+        "python.analysis.autoSearchPaths": false,
+        "python.analysis.extraPaths": [
+            "${workspaceFolder}/src/main/python"
+        ],
+        "python.formatting.provider": "black",
+        "python.linting.enabled": true,
+        "python.sortImports.args": [
+            "--profile",
+            "black"
+        ],
+        "python.testing.cwd": "${workspaceFolder}/src/main/python",
+        "python.testing.unittestArgs": [
+            "-v",
+            "-s",
+            "${workspaceFolder}/src/unittest/python",
+            "-p",
+            "test_*.py"
+        ],
+        "python.testing.pytestEnabled": false,
+        "python.testing.unittestEnabled": true
+    },
+}
