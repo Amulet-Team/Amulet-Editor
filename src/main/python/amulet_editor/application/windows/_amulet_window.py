@@ -69,6 +69,8 @@ class AmuletWindow(QMainWindow):
         self.act_show_secondary_panel.setCheckable(True)
         self.act_show_secondary_panel.setChecked(False)
         self.act_show_secondary_panel.triggered.connect(self.toggle_secondary_panel)
+        self.act_close_project.triggered.connect(self.close_project)
+
         for theme_name in appearance.list_themes():
             action = QAction(self.mn_appearance)
 
@@ -81,6 +83,15 @@ class AmuletWindow(QMainWindow):
 
             self.mn_appearance.addAction(action)
 
+    def close_project(self) -> None:
+        self.unload_tools()
+
+        startup_tool = Startup()
+        self.load_tool(startup_tool)
+        self.show_tool(startup_tool)
+
+        self.act_close_project.setEnabled(False)
+
     def reload_project(self, project_root: str) -> None:
         """
         Unload all tools currently in use and replace them with new instances.
@@ -92,6 +103,8 @@ class AmuletWindow(QMainWindow):
             self.load_tool(tool)
 
         self.show_tool(tools[0])
+
+        self.act_close_project.setEnabled(True)
 
     def update_panel_sizes(self, distance: int, index: int) -> None:
         """
@@ -445,14 +458,16 @@ class AmuletWindow(QMainWindow):
 
         # Configure 'File' menu
         self.act_new_window = QAction(self.mn_file)
-        self.act_open = QAction(self.mn_file)
+        self.act_open_project = QAction(self.mn_file)
         self.act_save = QAction(self.mn_file)
         self.act_save_as = QAction(self.mn_file)
         self.act_save_all = QAction(self.mn_file)
+        self.act_close_project = QAction(self.mn_file)
+        self.act_close_project.setEnabled(False)
 
         self.mn_file.addAction(self.act_new_window)
         self.mn_file.addSeparator()
-        self.mn_file.addAction(self.act_open)
+        self.mn_file.addAction(self.act_open_project)
         self.mn_file.addAction(self.mn_open_recent.menuAction())
         self.mn_file.addSeparator()
         self.mn_file.addAction(self.act_save)
@@ -460,6 +475,8 @@ class AmuletWindow(QMainWindow):
         self.mn_file.addAction(self.act_save_all)
         self.mn_file.addSeparator()
         self.mn_file.addAction(self.mn_preferences.menuAction())
+        self.mn_file.addSeparator()
+        self.mn_file.addAction(self.act_close_project)
 
         # Configure 'Edit' menu
         self.act_undo = QAction(self.mn_edit)
@@ -531,8 +548,8 @@ class AmuletWindow(QMainWindow):
         # Disable formatting to condense tranlate functions
         # fmt: off
         self.setWindowTitle(QCoreApplication.translate("AmuletWindow", "Amulet Editor", None))
-        self.act_open.setText(QCoreApplication.translate("AmuletWindow", "Open Project...", None))
-        self.act_open.setShortcut(QCoreApplication.translate("AmuletWindow", "Ctrl+O", None))
+        self.act_open_project.setText(QCoreApplication.translate("AmuletWindow", "Open Project...", None))
+        self.act_open_project.setShortcut(QCoreApplication.translate("AmuletWindow", "Ctrl+O", None))
         self.act_save.setText(QCoreApplication.translate("AmuletWindow", "Save", None))
         self.act_save.setShortcut(QCoreApplication.translate("AmuletWindow", "Ctrl+S", None))
         self.act_save_as.setText(QCoreApplication.translate("AmuletWindow", "Save As...", None))
@@ -542,6 +559,7 @@ class AmuletWindow(QMainWindow):
         self.act_settings.setShortcut(QCoreApplication.translate("AmuletWindow", "Ctrl+,", None))
         self.act_keyboard_shortcuts.setText(QCoreApplication.translate("AmuletWindow", "Keyboard Shortcuts", None))
         self.act_keyboard_shortcuts.setShortcut(QCoreApplication.translate("AmuletWindow", "Ctrl+K, Ctrl+S", None))
+        self.act_close_project.setText(QCoreApplication.translate("AmuletWindow", "Close Project", None))
         self.act_undo.setText(QCoreApplication.translate("AmuletWindow", "Undo", None))
         self.act_undo.setShortcut(QCoreApplication.translate("AmuletWindow", "Ctrl+Z", None))
         self.act_redo.setText(QCoreApplication.translate("AmuletWindow", "Redo", None))
