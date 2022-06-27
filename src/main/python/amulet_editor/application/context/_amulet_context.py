@@ -2,7 +2,6 @@ from functools import cached_property
 
 from amulet_editor.data import build
 from amulet_editor.data.build import PUBLIC_DATA
-from PySide6.QtCore import Qt
 from PySide6.QtGui import QIcon
 from PySide6.QtWidgets import QApplication
 
