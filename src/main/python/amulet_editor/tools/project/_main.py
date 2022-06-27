@@ -1,67 +1,26 @@
-import os
-from functools import partial
-from typing import Optional
-
-import amulet
-from amulet_editor.data import build, project
-from amulet_editor.application.components import QLinkCard
-from amulet_editor.models.minecraft import LevelData
 from amulet_editor.models.package import AmuletTool, AmuletView
-from amulet_editor.tools.project._ui_panel import Ui_ExplorerPanel
-from PySide6.QtCore import QDir, Qt
-from PySide6.QtWidgets import QFileSystemModel, QWidget
-
-
-class ProjectPage(QWidget):
-    def __init__(self, parent: Optional[QWidget] = None) -> None:
-        super().__init__(parent=parent)
-
-
-class ProjectPanel(QWidget, Ui_ExplorerPanel):
-    def __init__(self, parent: Optional[QWidget] = None) -> None:
-        super().__init__(parent=parent)
-
-        self.setupUi(self)
-
-        self.crd_directory = QLinkCard(
-            "", build.get_resource(f"icons/folder.svg"), self
-        )
-        self.frm_directory.layout().addWidget(self.crd_directory)
-
-        self.model = QFileSystemModel()
-        self.model.setRootPath(QDir.rootPath())
-        self.model.setFilter(
-            QDir.AllDirs | QDir.Files | QDir.NoDotAndDotDot | QDir.Hidden
-        )
-
-        self.trv_directory.setContextMenuPolicy(Qt.CustomContextMenu)
-        self.trv_directory.setModel(self.model)
-        self.trv_directory.hideColumn(1)
-        self.trv_directory.hideColumn(2)
-        self.trv_directory.hideColumn(3)
-
-        project.changed.connect(self.set_folder)
-
-    def set_folder(self, folder: str) -> None:
-        self.level_data = LevelData(amulet.load_format(folder))
-
-        self.trv_directory.setRootIndex(self.model.index(folder))
-        self.crd_directory.lbl_description.setText(
-            self.level_data.name.get_plain_text()
-        )
-
-        try:
-            self.crd_directory.clicked.disconnect()
-        except RuntimeError:
-            pass
-        self.crd_directory.clicked.connect(partial(os.startfile, folder))
+from amulet_editor.tools.project.pages._project import ProjectPage
+from amulet_editor.tools.project.panels._project import ProjectPanel
+from PySide6.QtCore import QObject
+from PySide6.QtWidgets import QWidget
 
 
 class Project(AmuletTool):
     def __init__(self) -> None:
-        self._page = AmuletView(ProjectPage())
-        self._primary_panel = AmuletView(ProjectPanel())
-        self._secondary_panel = AmuletView(None)
+        self._page = AmuletView()
+        self._primary_panel = AmuletView()
+        self._secondary_panel = AmuletView()
+
+        self.view_manager = ProjectManager(self)
+
+    def set_page(self, widget: QWidget):
+        self._page.setWidget(widget)
+
+    def set_primary_panel(self, widget: QWidget):
+        self._primary_panel.setWidget(widget)
+
+    def set_secondary_panel(self, widget: QWidget):
+        self._secondary_panel.setWidget(widget)
 
     @property
     def page(self) -> AmuletView:
@@ -82,3 +41,29 @@ class Project(AmuletTool):
     @property
     def icon_name(self) -> str:
         return "folders.svg"
+
+
+class ProjectManager(QObject):
+    def __init__(self, plugin: Project) -> None:
+        super().__init__()
+
+        self.plugin = plugin
+
+        self.project_page = ProjectPage()
+
+        self.project_panel = ProjectPanel()
+
+        self.set_project_page()
+        self.set_project_panel()
+
+    def set_project_page(self) -> None:
+        page = self.project_page
+
+        self.plugin.set_page(page)
+
+    def set_project_panel(self) -> None:
+        panel = self.project_panel
+
+        panel.file_selected.connect(self.project_page.show_file)
+
+        self.plugin.set_primary_panel(panel)

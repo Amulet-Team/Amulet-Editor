@@ -546,6 +546,14 @@ QStatusBar {{
     background-color: "{secondary}";
 }}
 
+QTextEdit {{
+    background-color: "{background}";
+    color: "{on_background}";
+}}
+QTextEdit[readOnly=true] {{
+    color: "{on_surface}";
+}}
+
 QToolButton {{
     background-color: "{surface}";
     color: "{on_surface}";
