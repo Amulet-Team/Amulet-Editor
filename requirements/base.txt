@@ -1,4 +1,2 @@
 amulet-core==1.6
-black==22.3.0
-pylint==2.12.2
 PySide6==6.2.2
