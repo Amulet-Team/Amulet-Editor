@@ -469,6 +469,14 @@ QMenu::indicator {{
   height: 12px;
 }}
 
+QPlainTextEdit {{
+    background-color: "{background}";
+    color: "{on_background}";
+}}
+QPlainTextEdit[readOnly=true] {{
+    color: "{on_surface}";
+}}
+
 QPushButton {{
     background-color: "{primary.lighter.5}";
     border: 1px solid "{surface}";
