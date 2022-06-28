@@ -205,7 +205,7 @@ class MCFunctionHighlighter(QSyntaxHighlighter):
         function_re = "|".join(function_list)
         function_format = QTextCharFormat()
         function_format.setForeground(QColor("#c586c0"))
-        pattern = r"^(" + function_re + r")|(?<=run )(" + function_re + r")"
+        pattern = r"^(" + function_re + r")\b|(?<=run )\b(" + function_re + r")\b"
         self.add_mapping(pattern, function_format)
 
     def add_mapping(self, pattern, format):
