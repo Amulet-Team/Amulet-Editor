@@ -3,7 +3,7 @@ from distutils.version import StrictVersion
 from functools import partial
 
 import amulet
-from amulet_editor.application.components import QPixCard
+from amulet_editor.models.widgets import QPixCard
 from amulet_editor.data import build, minecraft
 from amulet_editor.models.minecraft import LevelData
 from amulet_editor.tools.startup._components import QIconButton

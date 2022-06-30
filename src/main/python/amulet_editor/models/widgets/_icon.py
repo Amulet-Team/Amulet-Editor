@@ -1,7 +1,7 @@
 from typing import Optional
 
 from amulet_editor.data.build import get_resource
-from amulet_editor.application.components._label import QHoverLabel
+from amulet_editor.models.widgets._label import QHoverLabel
 from PySide6 import QtGui
 from PySide6.QtCore import QEvent, QSize
 from PySide6.QtGui import QColor, QEnterEvent, QIcon, QMouseEvent, QPainter

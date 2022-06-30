@@ -3,7 +3,7 @@ from typing import Optional
 
 from amulet_editor.application import appearance
 from amulet_editor.application.appearance import Theme
-from amulet_editor.application.components import (
+from amulet_editor.models.widgets import (
     QDragContainer,
     QDragIconButton,
     QIconButton,

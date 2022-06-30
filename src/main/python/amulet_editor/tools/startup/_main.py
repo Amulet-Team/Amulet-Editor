@@ -3,6 +3,7 @@ from typing import Callable, Optional
 
 from amulet_editor.data import packages, project
 from amulet_editor.models.package import AmuletTool, AmuletView
+from amulet_editor.tools.programs import Programs
 from amulet_editor.tools.project import Project
 from amulet_editor.tools.startup.pages._import_level import ImportLevelPage
 from amulet_editor.tools.startup.pages._new_project import NewProjectPage
@@ -123,13 +124,24 @@ class StartupManager(QObject):
             elif self.plugin.secondary_panel.widget() is not self.world_selection_panel:
                 self.set_world_selection_panel(page.select_level)
 
-        def next():
+        def open_project() -> None:
             self.project_root = page.level_directory
-            self.set_select_packages_page()
+
+            tools = packages.list_tools()
+            for tool in tools:
+                packages.disable_tool(tool)
+
+            packages.enable_tool(Project())
+            packages.enable_tool(Programs())
+            project.set_root(self.project_root)
+
+        # def next():
+        #     self.project_root = page.level_directory
+        #     self.set_select_packages_page()
 
         # Connect signals
         page.btn_cancel.clicked.connect(partial(self.set_startup_page))
-        page.btn_next.clicked.connect(partial(next))
+        page.btn_next.clicked.connect(partial(open_project))
         page.crd_select_level.clicked.connect(partial(select_level))
 
         # Set plugin view

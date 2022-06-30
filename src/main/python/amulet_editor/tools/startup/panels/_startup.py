@@ -3,7 +3,7 @@ from dataclasses import dataclass
 from functools import partial
 
 from amulet_editor.data import build
-from amulet_editor.application.components import QLinkCard
+from amulet_editor.models.widgets import QLinkCard
 from PySide6.QtCore import QCoreApplication, Qt
 from PySide6.QtWidgets import QLabel, QVBoxLayout, QWidget
 
