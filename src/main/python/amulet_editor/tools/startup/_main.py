@@ -89,8 +89,15 @@ class StartupManager(QObject):
     def set_menu_page(self, menu_class):
         # Create menu
         menu: Menu = menu_class(self.plugin.set_secondary_panel)
+        menu.enable_next.connect(self.menu_page.btn_next.setEnabled)
+
         self.menu_list.append(menu)
         self.set_menu(menu)
+
+        # Connect signals
+        self.menu_page.clicked_cancel.connect(partial(self.set_startup_page))
+        self.menu_page.clicked_back.connect(partial(self.menu_back))
+        self.menu_page.clicked_next.connect(partial(self.menu_next))
 
         # Set plugin view
         self.plugin.set_page(self.menu_page)
@@ -112,13 +119,6 @@ class StartupManager(QObject):
                 QCoreApplication.translate("QMenuWidget", "Next", None)
             )
 
-        # Connect signals
-        if new:
-            menu.enable_next.connect(menu_page.btn_next.setEnabled)
-            menu_page.clicked_cancel.connect(partial(self.set_startup_page))
-            menu_page.clicked_back.connect(partial(self.menu_back, menu))
-            menu_page.clicked_next.connect(partial(self.menu_next, menu))
-
         # Set plugin view
         menu.navigated(Navigate.HERE)
         self.plugin.set_secondary_panel(None)
@@ -130,15 +130,22 @@ class StartupManager(QObject):
 
         self.menu_list = []
 
-    def menu_back(self, current_menu: Menu) -> None:
+    def menu_back(self) -> None:
+        current_menu = self.menu_list[-1]
         current_menu.navigated(Navigate.BACK)
-        self.menu_list.remove(self.menu_list[-1])
-        self.set_menu(self.menu_list[-1])
 
-    def menu_next(self, current_menu: Menu) -> None:
+        self.menu_list.remove(current_menu)
+        self.set_menu(self.menu_list[-1], False)
+
+    def menu_next(self) -> None:
+        current_menu = self.menu_list[-1]
         current_menu.navigated(Navigate.NEXT)
+
         if current_menu.next_menu() is not None:
-            self.menu_list.append(current_menu.next_menu())
+            menu: Menu = current_menu.next_menu()
+            menu.enable_next.connect(self.menu_page.btn_next.setEnabled)
+
+            self.menu_list.append(menu)
             self.set_menu(self.menu_list[-1])
 
     def set_new_project_page(self) -> None:

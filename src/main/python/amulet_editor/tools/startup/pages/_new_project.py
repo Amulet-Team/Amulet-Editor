@@ -45,7 +45,9 @@ class NewProjectMenu(QObject):
         return self._enable_next
 
     def navigated(self, destination) -> None:
-        pass
+        if destination == Navigate.HERE:
+            project_name = self._widget.lne_project_name.text().strip()
+            self._enable_next.emit(len(project_name) > 0)
 
     def widget(self) -> QWidget:
         return self._widget
