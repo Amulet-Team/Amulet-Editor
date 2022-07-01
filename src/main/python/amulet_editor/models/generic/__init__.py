@@ -1,1 +1,1 @@
-from amulet_editor.models.generic._signal import Signal
+from amulet_editor.models.generic._observer import Observer

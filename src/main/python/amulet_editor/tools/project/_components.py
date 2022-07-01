@@ -115,7 +115,7 @@ class QLineNumberArea(QWidget):
 
 class MCFunctionHighlighter(QSyntaxHighlighter):
     def __init__(self, parent=None):
-        QSyntaxHighlighter.__init__(self, parent)
+        super().__init__(parent)
 
         self._mappings = {}
 
@@ -207,6 +207,47 @@ class MCFunctionHighlighter(QSyntaxHighlighter):
         function_format.setForeground(QColor("#c586c0"))
         pattern = r"^(" + function_re + r")\b|(?<=run )\b(" + function_re + r")\b"
         self.add_mapping(pattern, function_format)
+
+    def add_mapping(self, pattern, format):
+        self._mappings[pattern] = format
+
+    def highlightBlock(self, text):
+        for pattern, format in self._mappings.items():
+            for match in re.finditer(pattern, text):
+                start, end = match.span()
+                self.setFormat(start, end - start, format)
+
+
+class JsonHighlighter(QSyntaxHighlighter):
+    def __init__(self, parent=None):
+        super().__init__(parent)
+
+        self._mappings = {}
+
+        bool_format = QTextCharFormat()
+        bool_format.setForeground(QColor("#569cd6"))
+        pattern = r"([tT]rue|[fF]alse)"
+        self.add_mapping(pattern, bool_format)
+
+        string_format = QTextCharFormat()
+        string_format.setForeground(QColor("#f4ab6e"))
+        pattern = r"\"(.*?)(?<!\\)\""
+        self.add_mapping(pattern, string_format)
+
+        key_format = QTextCharFormat()
+        key_format.setForeground(QColor("#9cdcfe"))
+        pattern = r"(\".*\")(?=\s*:)"
+        self.add_mapping(pattern, key_format)
+
+        string_value_format = QTextCharFormat()
+        string_value_format.setForeground(QColor("#f4ab6e"))
+        pattern = r"(?<=:\s)([\"\'].*[\"\'])"
+        self.add_mapping(pattern, string_value_format)
+
+        number_value_format = QTextCharFormat()
+        number_value_format.setForeground(QColor("#a7cea8"))
+        pattern = r"(?<=:\s)(-*((\d+[.]\d+)|(\d+)))"
+        self.add_mapping(pattern, number_value_format)
 
     def add_mapping(self, pattern, format):
         self._mappings[pattern] = format

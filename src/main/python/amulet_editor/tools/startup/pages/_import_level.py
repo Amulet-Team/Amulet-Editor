@@ -1,15 +1,20 @@
 import os
 import pathlib
 from functools import partial
+from typing import Callable, Optional
 
 import amulet
-from amulet_editor.data import build, minecraft
-from amulet_editor.models.widgets import QElidedLabel
+from amulet_editor.data import build, minecraft, paths
+from amulet_editor.models.generic import Observer
 from amulet_editor.models.minecraft import LevelData
-from amulet_editor.tools.startup._components import QIconButton
-from PySide6.QtCore import QCoreApplication, QSize, Qt
+from amulet_editor.models.widgets import QElidedLabel
+from amulet_editor.tools.startup._models import Menu, ProjectData
+from amulet_editor.tools.startup._widgets import QIconButton, QLevelSelectionCard
+from amulet_editor.tools.startup.panels._world_selection import WorldSelectionPanel
+from PySide6.QtCore import QCoreApplication, QObject, QSize
 from PySide6.QtGui import QImage, QPixmap
 from PySide6.QtWidgets import (
+    QApplication,
     QFileDialog,
     QFrame,
     QGridLayout,
@@ -23,118 +28,112 @@ from PySide6.QtWidgets import (
 )
 
 
-class ImportLevelPage(QWidget):
-    def __init__(self) -> None:
+class ImportLevelMenu(QObject):
+    def __init__(self, set_panel: Callable[[Optional[QWidget]], None]) -> None:
         super().__init__()
 
-        self.level_directory = None
+        self.project_directory = paths.project_directory()
 
-        self.setupUi()
+        self.level_directory: Optional[str] = None
+        self.project_data: Optional[ProjectData] = None
+        self.set_panel = set_panel
 
-        self.btn_import_level.clicked.connect(partial(self.select_level))
+        self._enable_next = Observer(bool)
 
-    def select_level(self) -> None:
-        folder = QFileDialog.getExistingDirectory(
+        self._widget = ImportLevelWidget()
+        self._widget.btn_import_level.clicked.connect(partial(self.import_level))
+        self._widget.crd_select_level.clicked.connect(partial(self.select_level))
+
+        self._world_selection_panel = WorldSelectionPanel()
+        self._world_selection_panel.level_data.connect(self.set_level)
+
+        QApplication.instance().focusChanged.connect(self.check_focus)
+
+    @property
+    def title(self) -> str:
+        return "New Project"
+
+    @property
+    def enable_next(self) -> Observer:
+        return self._enable_next
+
+    def navigated(self, destination) -> None:
+        pass
+
+    def widget(self) -> QWidget:
+        return self._widget
+
+    def next_menu(self) -> Optional[Menu]:
+        return None
+
+    def import_level(self) -> None:
+        path = QFileDialog.getExistingDirectory(
             None,
             "Select Minecraft World",
             os.path.realpath(minecraft.save_directories()[0]),
             QFileDialog.ShowDirsOnly,
         )
+        self._widget.btn_import_level.setChecked(False)
 
-        if os.path.exists(os.path.join(folder, "level.dat")):
-            folder = str(os.path.sep).join(folder.split("/"))
-            self.level_directory = folder
-            self.lne_import_level.setText(folder)
+        if os.path.exists(os.path.join(path, "level.dat")):
+            path = str(os.path.sep).join(path.split("/"))
 
-            level_data = LevelData(amulet.load_format(folder))
+            level_data = LevelData(amulet.load_format(path))
+            self.set_level(level_data)
 
-            icon_path = (
-                level_data.icon_path
-                if level_data.icon_path is not None
-                else build.get_resource("images/missing_world_icon.png")
-            )
-            level_icon = QPixmap(QImage(icon_path))
-            level_icon = level_icon.scaledToHeight(80)
+    def select_level(self):
+        if self._widget.crd_select_level.isChecked():
+            self.set_panel(self._world_selection_panel)
+        else:
+            self.set_panel(None)
 
-            level_name = level_data.name.get_html(font_weight=600)
-            file_name = pathlib.PurePath(level_data.path).name
-            version = f"{level_data.edition} - {level_data.version}"
-            last_played = (
-                level_data.last_played.astimezone(tz=None)
-                .strftime("%B %d, %Y %I:%M %p")
-                .replace(" 0", " ")
-            )
+    def set_level(self, level_data: LevelData) -> None:
+        self.project_data.level_directory = level_data.path
 
-            lbl_pixmap = QLabel(self.frm_level_data)
-            lbl_pixmap.setPixmap(level_icon)
-            lbl_pixmap.setSizePolicy(QSizePolicy.Maximum, QSizePolicy.Maximum)
-            lbl_pixmap.setProperty("border", "surface")
-            lbl_pixmap.setProperty("borderRadiusVisible", True)
+        self._widget.lne_import_level.setText(level_data.path)
+        self._widget.crd_select_level.setLevel(level_data)
 
-            lbl_level_name = QElidedLabel(level_name, parent=self.frm_level_data)
-            lbl_level_name.setAttribute(Qt.WA_TransparentForMouseEvents)
+        self.enable_next.emit(True)
 
-            lbl_file_name = QElidedLabel(file_name, parent=self.frm_level_data)
-            lbl_file_name.setAttribute(Qt.WA_TransparentForMouseEvents)
+    def set_project_data(self, project_data: ProjectData):
+        self.project_data = project_data
 
-            lbl_version = QElidedLabel(version, parent=self.frm_level_data)
-            lbl_version.setAttribute(Qt.WA_TransparentForMouseEvents)
+    def check_focus(self, old: Optional[QWidget], new: Optional[QWidget]):
+        alternate_focus = [self._widget.lne_import_level]
 
-            lbl_last_played = QElidedLabel(last_played, parent=self.frm_level_data)
-            lbl_last_played.setAttribute(Qt.WA_TransparentForMouseEvents)
+        if new in alternate_focus:
+            self.uncheck_level_card()
 
-            lyt_frm_level_data: QGridLayout = self.frm_level_data.layout()
-            lyt_frm_level_data.addWidget(lbl_pixmap, 0, 0, 4, 1)
-            lyt_frm_level_data.addWidget(lbl_level_name, 0, 1, 1, 1)
-            lyt_frm_level_data.addWidget(lbl_file_name, 1, 1, 1, 1)
-            lyt_frm_level_data.addWidget(lbl_version, 2, 1, 1, 1)
-            lyt_frm_level_data.addWidget(lbl_last_played, 3, 1, 1, 1)
+    def uncheck_level_card(self) -> None:
+        self._widget.crd_select_level.setChecked(False)
+        self._widget.crd_select_level.clicked.emit()
+
+
+class ImportLevelWidget(QWidget):
+    def __init__(self) -> None:
+        super().__init__()
+
+        self.setupUi()
 
     def setupUi(self):
-        # Create 'Inner Container' frame
-        self.frm_inner_container = QFrame(self)
-        self.frm_inner_container.setFrameShape(QFrame.NoFrame)
-        self.frm_inner_container.setFrameShadow(QFrame.Raised)
-        self.frm_inner_container.setMaximumWidth(750)
-        self.frm_inner_container.setProperty("borderLeft", "surface")
-        self.frm_inner_container.setProperty("borderRight", "surface")
-
-        # Create 'Header' frame
-        self.frm_header = QFrame(self.frm_inner_container)
-
-        self.lbl_header = QLabel(self.frm_header)
-        self.lbl_header.setProperty("heading", "h3")
-        self.lbl_header.setProperty("subfamily", "semi_light")
-
-        lyt_header = QHBoxLayout(self.frm_header)
-        lyt_header.addWidget(self.lbl_header)
-        lyt_header.setAlignment(Qt.AlignLeft)
-        lyt_header.setContentsMargins(0, 0, 0, 10)
-        lyt_header.setSpacing(5)
-
-        self.frm_header.setFrameShape(QFrame.NoFrame)
-        self.frm_header.setFrameShadow(QFrame.Raised)
-        self.frm_header.setLayout(lyt_header)
-        self.frm_header.setProperty("borderBottom", "surface")
-        self.frm_header.setProperty("borderTop", "background")
-
-        # 'Import Level' field
-        self.lbl_select_level = QLabel(self.frm_inner_container)
+        # Create 'Select Level' frame
+        self.lbl_select_level = QLabel(self)
         self.lbl_select_level.setProperty("color", "on_primary")
 
-        lyt_import_level = QHBoxLayout(self.frm_inner_container)
+        lyt_import_level = QHBoxLayout(self)
 
-        self.frm_select_level = QFrame(self.frm_inner_container)
-        self.frm_select_level.setFrameShape(QFrame.NoFrame)
-        self.frm_select_level.setFrameShadow(QFrame.Raised)
-        self.frm_select_level.setLayout(lyt_import_level)
+        self.frm_import_level = QFrame(self)
+        self.frm_import_level.setFrameShape(QFrame.NoFrame)
+        self.frm_import_level.setFrameShadow(QFrame.Raised)
+        self.frm_import_level.setLayout(lyt_import_level)
 
-        self.lne_import_level = QLineEdit(self.frm_select_level)
+        self.lne_import_level = QLineEdit(self.frm_import_level)
         self.lne_import_level.setFixedHeight(25)
         self.lne_import_level.setProperty("color", "on_surface")
         self.lne_import_level.setReadOnly(True)
 
-        self.btn_import_level = QIconButton(self.frm_select_level)
+        self.btn_import_level = QIconButton(self.frm_import_level)
+        self.btn_import_level.setCheckable(True)
         self.btn_import_level.setFixedSize(QSize(27, 27))
         self.btn_import_level.setIcon("folder.svg")
         self.btn_import_level.setIconSize(QSize(15, 15))
@@ -145,75 +144,29 @@ class ImportLevelPage(QWidget):
         lyt_import_level.setContentsMargins(0, 0, 0, 0)
         lyt_import_level.setSpacing(5)
 
-        # Create 'Level Data' frame
-        lyt_level_data = QGridLayout(self.frm_inner_container)
+        self.crd_select_level = QLevelSelectionCard(self)
+        self.crd_select_level.setCheckable(True)
+        self.crd_select_level.setFixedHeight(105)
+        self.crd_select_level.setProperty("backgroundColor", "primary")
+        self.crd_select_level.setProperty("border", "surface")
+        self.crd_select_level.setProperty("borderRadiusVisible", True)
 
-        self.frm_level_data = QFrame(self.frm_inner_container)
-        self.frm_level_data.setFixedHeight(105)
-        self.frm_level_data.setFrameShape(QFrame.NoFrame)
-        self.frm_level_data.setFrameShadow(QFrame.Raised)
-        self.frm_level_data.setLayout(lyt_level_data)
-        self.frm_level_data.setProperty("backgroundColor", "primary")
-        self.frm_level_data.setProperty("border", "surface")
-        self.frm_level_data.setProperty("borderRadiusVisible", True)
-
-        # Create 'Page Options' frame
-        self.frm_page_options = QFrame(self)
-
-        # Configure 'Page Options' widgets
-        self.btn_cancel = QPushButton(self.frm_page_options)
-        self.btn_cancel.setFixedHeight(30)
-
-        self.btn_back = QPushButton(self.frm_page_options)
-        self.btn_back.setFixedHeight(30)
-
-        self.btn_next = QPushButton(self.frm_page_options)
-        self.btn_next.setFixedHeight(30)
-        self.btn_next.setProperty("backgroundColor", "secondary")
-
-        # Create 'Page Options' layout
-        lyt_page_options = QHBoxLayout(self.frm_inner_container)
-        lyt_page_options.addWidget(self.btn_cancel)
-        lyt_page_options.addStretch()
-        lyt_page_options.addWidget(self.btn_back)
-        lyt_page_options.addWidget(self.btn_next)
-        lyt_page_options.setContentsMargins(0, 10, 0, 5)
-        lyt_page_options.setSpacing(5)
-
-        # Configure 'Page Options' frame
-        self.frm_page_options.setFrameShape(QFrame.NoFrame)
-        self.frm_page_options.setFrameShadow(QFrame.Raised)
-        self.frm_page_options.setLayout(lyt_page_options)
-        self.frm_page_options.setProperty("borderTop", "surface")
-
-        # Create 'Inner Frame' layout
-        lyt_inner_frame = QVBoxLayout(self.frm_inner_container)
-        lyt_inner_frame.addWidget(self.frm_header)
-        lyt_inner_frame.addSpacing(10)
-        lyt_inner_frame.addWidget(self.lbl_select_level)
-        lyt_inner_frame.addWidget(self.frm_select_level)
-        lyt_inner_frame.addWidget(self.frm_level_data)
-        lyt_inner_frame.addStretch()
-        lyt_inner_frame.addWidget(self.frm_page_options)
-        lyt_inner_frame.setAlignment(Qt.AlignLeft | Qt.AlignTop)
-        lyt_inner_frame.setSpacing(5)
-
-        # Configure 'Page' layout
+        # Create 'Page Content' layout
         layout = QVBoxLayout(self)
-        layout.addWidget(self.frm_inner_container)
-        layout.setAlignment(Qt.AlignHCenter)
+        layout.addSpacing(10)
+        layout.addWidget(self.lbl_select_level)
+        layout.addWidget(self.frm_import_level)
+        layout.addWidget(self.crd_select_level)
+        layout.addStretch()
+        layout.setSpacing(5)
 
+        self.setProperty("backgroundColor", "background")
         self.setLayout(layout)
 
-        # Translate widget text
         self.retranslateUi()
 
     def retranslateUi(self):
         # Disable formatting to condense tranlate functions
         # fmt: off
-        self.lbl_header.setText(QCoreApplication.translate("NewProjectTypePage", "Import World", None))
         self.lbl_select_level.setText(QCoreApplication.translate("NewProjectTypePage", "Select World", None))
-        self.btn_cancel.setText(QCoreApplication.translate("NewProjectTypePage", "Cancel", None))
-        self.btn_back.setText(QCoreApplication.translate("NewProjectTypePage", "Back", None))
-        self.btn_next.setText(QCoreApplication.translate("NewProjectTypePage", "Next", None))
         # fmt: on

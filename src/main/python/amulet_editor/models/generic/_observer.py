@@ -2,17 +2,17 @@ from inspect import isclass
 from typing import Any, Callable, Optional
 
 
-class Signal:
+class Observer:
     def __init__(self, datatype: Optional[type] = Any) -> None:
-        self._slots: set[Callable[..., None]] = set()
+        self._callbacks: set[Callable[..., None]] = set()
         self._datatype = datatype
 
-    def connect(self, slot: Callable[..., None]) -> None:
-        self._slots.add(slot)
+    def connect(self, callback: Callable[..., None]) -> None:
+        self._callbacks.add(callback)
 
-    def disconnect(self, slot: Callable[..., None]) -> None:
+    def disconnect(self, callback: Callable[..., None]) -> None:
         try:
-            self._slots.remove(slot)
+            self._callbacks.remove(callback)
         except KeyError:
             pass
 
@@ -31,8 +31,8 @@ class Signal:
             )
 
         if self._datatype is None:
-            for slot in self._slots:
-                slot()
+            for callback in self._callbacks:
+                callback()
         else:
-            for slot in self._slots:
-                slot(data)
+            for callback in self._callbacks:
+                callback(data)

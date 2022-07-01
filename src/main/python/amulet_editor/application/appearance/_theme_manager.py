@@ -1,7 +1,7 @@
 import os
 
-from amulet_editor.data import build, project
 from amulet_editor.application.appearance._theme import Theme
+from amulet_editor.data import build, project
 from PySide6.QtCore import QObject, Signal
 
 

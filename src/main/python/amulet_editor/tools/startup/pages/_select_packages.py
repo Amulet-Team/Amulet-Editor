@@ -1,4 +1,4 @@
-from amulet_editor.tools.startup._components import QIconButton
+from amulet_editor.tools.startup._widgets import QIconButton
 from PySide6.QtCore import QCoreApplication, QSize, Qt
 from PySide6.QtWidgets import (
     QFrame,

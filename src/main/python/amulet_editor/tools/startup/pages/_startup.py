@@ -1,6 +1,6 @@
 from amulet_editor.data import build
 from amulet_editor.data.build import PUBLIC_DATA
-from amulet_editor.tools.startup._components import QIconCard
+from amulet_editor.tools.startup._widgets import QIconCard
 from PySide6.QtCore import QCoreApplication, QSize, Qt
 from PySide6.QtGui import QImage, QPixmap
 from PySide6.QtWidgets import QLabel, QVBoxLayout, QWidget
