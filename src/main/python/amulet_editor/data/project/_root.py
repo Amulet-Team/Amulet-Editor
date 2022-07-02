@@ -7,13 +7,13 @@ from typing import Any, Optional
 import amulet
 from amulet_editor.data import paths
 from amulet_editor.data.project import _level
-from amulet_editor.models.generic import Signal
+from amulet_editor.models.generic import Observer
 from amulet_editor.models.minecraft import LevelData
 
 _root: Optional[str] = None
 _projects_json = os.path.join(paths.user_directory(), "projects.json")
 
-changed = Signal(str)
+changed = Observer(str)
 
 
 def remember_project(path: str) -> None:

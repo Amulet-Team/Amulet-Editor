@@ -1,34 +1,34 @@
 import unittest
 
-from amulet_editor.models.generic import Signal
+from amulet_editor.models.generic import Observer
 
 
-class TestSignal(unittest.TestCase):
+class TestObserver(unittest.TestCase):
     def test_connect_none(self):
-        """Connect one slot to signal and ensure it exists"""
+        """Connect one callback to observer and ensure it exists"""
 
-        def test_slot() -> None:
+        def test_callback() -> None:
             pass
 
-        signal = Signal(None)
-        signal.connect(test_slot)
+        observer = Observer(None)
+        observer.connect(test_callback)
 
-        self.assertIn(test_slot, signal._slots)
-        self.assertEqual(len(signal._slots), 1)
+        self.assertIn(test_callback, observer._callbacks)
+        self.assertEqual(len(observer._callbacks), 1)
 
     def test_emit_none(self):
-        """Emit signal twice and ensure both events occur"""
+        """Emit observer twice and ensure both events occur"""
         self.emit_count = 0
 
-        def test_slot() -> None:
+        def test_callback() -> None:
             self.emit_count += 1
 
-        signal = Signal(None)
-        signal.connect(test_slot)
+        observer = Observer(None)
+        observer.connect(test_callback)
 
-        signal.emit()
+        observer.emit()
         self.assertEqual(self.emit_count, 1)
-        signal.emit()
+        observer.emit()
         self.assertEqual(self.emit_count, 2)
 
     def test_emit_raise(self):
@@ -38,12 +38,12 @@ class TestSignal(unittest.TestCase):
             def __init__(self) -> None:
                 pass
 
-        signal = Signal(str)
+        observer = Observer(str)
 
         with self.assertRaises(TypeError):
-            signal.emit(1)
+            observer.emit(1)
         with self.assertRaises(TypeError):
-            signal.emit(TestClass)
+            observer.emit(TestClass)
 
     def test_emit_class(self):
         """Emit class and subclass and ensure both are valid"""
@@ -57,17 +57,17 @@ class TestSignal(unittest.TestCase):
             def __init__(self) -> None:
                 pass
 
-        def test_slot(cls: TestClass) -> None:
+        def test_callback(cls: TestClass) -> None:
             self.assertIsInstance(cls, TestClass)
             self.emit_count += 1
 
-        signal = Signal(TestClass)
+        observer = Observer(TestClass)
 
-        signal.connect(test_slot)
+        observer.connect(test_callback)
 
-        signal.emit(TestClass())
+        observer.emit(TestClass())
         self.assertEqual(self.emit_count, 1)
-        signal.emit(TestSubclass())
+        observer.emit(TestSubclass())
         self.assertEqual(self.emit_count, 2)
 
 

@@ -3,13 +3,9 @@ from typing import Optional
 
 from amulet_editor.application import appearance
 from amulet_editor.application.appearance import Theme
-from amulet_editor.application.components import (
-    QDragContainer,
-    QDragIconButton,
-    QIconButton,
-)
 from amulet_editor.data import packages, project
 from amulet_editor.models.package import AmuletTool
+from amulet_editor.models.widgets import QDragContainer, QDragIconButton, QIconButton
 from amulet_editor.tools.packages import Packages
 from amulet_editor.tools.settings import Settings
 from amulet_editor.tools.startup import Startup
@@ -228,9 +224,8 @@ class AmuletWindow(QMainWindow):
 
     def unload_tools(self) -> None:
         # TODO: This should also clear corresponding panels and pages
-        for index in range(len(self.wgt_dynamic_tools.layout().children()) + 1):
-            item = self.wgt_dynamic_tools.layout().takeAt(index)
-            item.widget().deleteLater()
+        for index in reversed(range(self.wgt_dynamic_tools.layout().count())):
+            self.wgt_dynamic_tools.layout().itemAt(index).widget().deleteLater()
 
     def show_tool(self, tool: AmuletTool) -> None:
         self.active_tool = tool

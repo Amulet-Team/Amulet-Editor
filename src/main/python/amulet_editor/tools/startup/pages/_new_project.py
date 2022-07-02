@@ -1,102 +1,100 @@
 import os
 from functools import partial
+from typing import Callable, Optional
 
-from amulet_editor.data import paths
-from amulet_editor.tools.startup._components import QIconButton
-from PySide6.QtCore import QCoreApplication, QSize, Qt
+from amulet_editor.data import packages, paths, project
+from amulet_editor.models.generic import Observer
+from amulet_editor.tools.programs import Programs
+from amulet_editor.tools.project import Project
+from amulet_editor.tools.startup._models import Menu, Navigate, ProjectData
+from amulet_editor.tools.startup._widgets import QIconButton
+from amulet_editor.tools.startup.pages._import_level import ImportLevelMenu
+from PySide6.QtCore import QCoreApplication, QObject, QSize
 from PySide6.QtWidgets import (
     QFileDialog,
     QFrame,
     QHBoxLayout,
     QLabel,
     QLineEdit,
-    QPushButton,
-    QScrollArea,
     QVBoxLayout,
     QWidget,
 )
 
 
-class NewProjectPage(QWidget):
-    def __init__(self) -> None:
+class NewProjectMenu(QObject):
+    def __init__(self, set_panel: Callable[[Optional[QWidget]], None]) -> None:
         super().__init__()
 
-        self.project_directory = paths.project_directory()
+        self.level_directory: Optional[str] = None
+        self.project_data = ProjectData(name="", directory=paths.project_directory())
+        self.set_panel = set_panel
 
-        self.setupUi()
+        self._enable_next = Observer(bool)
 
-        self.btn_back.setEnabled(False)
-        self.btn_next.setEnabled(False)
-        self.btn_project_directory.clicked.connect(partial(self.select_folder))
+        self._widget = NewProjectWidget()
+        self._widget.btn_project_directory.clicked.connect(partial(self.select_folder))
+        self._widget.lne_project_directory.setText(self.project_data.directory)
+        self._widget.lne_project_name.textChanged.connect(self.check_enable_next)
+
+    @property
+    def title(self) -> str:
+        return "New Project"
+
+    @property
+    def enable_next(self) -> Observer:
+        return self._enable_next
+
+    def navigated(self, destination) -> None:
+        if destination == Navigate.HERE:
+            project_name = self._widget.lne_project_name.text().strip()
+            self._enable_next.emit(len(project_name) > 0)
+
+    def widget(self) -> QWidget:
+        return self._widget
+
+    def next_menu(self) -> Optional[Menu]:
+        menu = ImportLevelMenu(self.set_panel)
+        menu.set_project_data(self.project_data)
+        return menu
 
     def select_folder(self) -> None:
         folder = QFileDialog.getExistingDirectory(
             None,
             "Select Folder",
-            os.path.realpath(self.project_directory),
+            os.path.realpath(self.project_data.directory),
             QFileDialog.ShowDirsOnly,
         )
 
         if os.path.isdir(folder):
             folder = str(os.path.sep).join(folder.split("/"))
-            self.project_directory = folder
-            self.lne_project_directory.setText(folder)
+            self.project_data.directory = folder
+            self._widget.lne_project_directory.setText(folder)
+
+    def check_enable_next(self, project_name: str) -> None:
+        project_name = project_name.strip()
+        self.project_data.name = project_name
+        self._enable_next.emit(len(project_name) > 0)
+
+
+class NewProjectWidget(QWidget):
+    def __init__(self) -> None:
+        super().__init__()
+
+        self.setupUi()
 
     def setupUi(self):
-        # Create 'Inner Container' frame
-        self.frm_inner_container = QFrame(self)
-        self.frm_inner_container.setFrameShape(QFrame.NoFrame)
-        self.frm_inner_container.setFrameShadow(QFrame.Raised)
-        self.frm_inner_container.setMaximumWidth(750)
-        self.frm_inner_container.setProperty("borderLeft", "surface")
-        self.frm_inner_container.setProperty("borderRight", "surface")
-
-        # Create 'Header' frame
-        self.frm_header = QFrame(self.frm_inner_container)
-
-        self.lbl_header = QLabel(self.frm_header)
-        self.lbl_header.setProperty("heading", "h3")
-        self.lbl_header.setProperty("subfamily", "semi_light")
-
-        lyt_header = QHBoxLayout(self.frm_header)
-        lyt_header.addWidget(self.lbl_header)
-        lyt_header.setAlignment(Qt.AlignLeft)
-        lyt_header.setContentsMargins(0, 0, 0, 10)
-        lyt_header.setSpacing(5)
-
-        self.frm_header.setFrameShape(QFrame.NoFrame)
-        self.frm_header.setFrameShadow(QFrame.Raised)
-        self.frm_header.setLayout(lyt_header)
-        self.frm_header.setProperty("borderBottom", "surface")
-        self.frm_header.setProperty("borderTop", "background")
-
-        # 'Scroll Container' widget
-        self.scr_container = QScrollArea()
-        self.wgt_container = QWidget(self.scr_container)
-        self.lyt_container = QVBoxLayout()
-
-        self.lyt_container.setContentsMargins(0, 0, 0, 0)
-        self.wgt_container.setLayout(self.lyt_container)
-        self.wgt_container.setProperty("backgroundColor", "background")
-        self.scr_container.setHorizontalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
-        self.scr_container.setVerticalScrollBarPolicy(Qt.ScrollBarAsNeeded)
-        self.scr_container.setWidgetResizable(True)
-        self.scr_container.setFrameShape(QFrame.NoFrame)
-        self.scr_container.setFrameShadow(QFrame.Raised)
-        self.scr_container.setWidget(self.wgt_container)
-
         # 'Project Name' field
-        self.lbl_project_name = QLabel(self.wgt_container)
+        self.lbl_project_name = QLabel(self)
         self.lbl_project_name.setProperty("color", "on_primary")
 
-        self.lne_project_name = QLineEdit(self.wgt_container)
+        self.lne_project_name = QLineEdit(self)
         self.lne_project_name.setFixedHeight(25)
 
         # 'Project Directory' field
-        self.lbl_project_directory = QLabel(self.wgt_container)
+        self.lbl_project_directory = QLabel(self)
         self.lbl_project_directory.setProperty("color", "on_primary")
 
-        self.frm_project_directory = QFrame(self.wgt_container)
+        self.frm_project_directory = QFrame(self)
 
         lyt_project_directory = QHBoxLayout(self.frm_project_directory)
 
@@ -104,7 +102,6 @@ class NewProjectPage(QWidget):
         self.lne_project_directory.setFixedHeight(25)
         self.lne_project_directory.setProperty("color", "on_surface")
         self.lne_project_directory.setReadOnly(True)
-        self.lne_project_directory.setText(self.project_directory)
 
         self.btn_project_directory = QIconButton(self.frm_project_directory)
         self.btn_project_directory.setFixedSize(QSize(27, 27))
@@ -121,57 +118,18 @@ class NewProjectPage(QWidget):
         self.frm_project_directory.setFrameShadow(QFrame.Raised)
         self.frm_project_directory.setLayout(lyt_project_directory)
 
-        # Add widgets to 'Scroll Container'
-        self.lyt_container.addSpacing(10)
-        self.lyt_container.addWidget(self.lbl_project_name)
-        self.lyt_container.addWidget(self.lne_project_name)
-        self.lyt_container.addSpacing(10)
-        self.lyt_container.addWidget(self.lbl_project_directory)
-        self.lyt_container.addWidget(self.frm_project_directory)
-        self.lyt_container.addStretch()
-
-        # Create 'Page Options' frame
-        self.frm_page_options = QFrame(self)
-
-        # Configure 'Page Options' widgets
-        self.btn_cancel = QPushButton(self.frm_page_options)
-        self.btn_cancel.setFixedHeight(30)
-
-        self.btn_back = QPushButton(self.frm_page_options)
-        self.btn_back.setFixedHeight(30)
-
-        self.btn_next = QPushButton(self.frm_page_options)
-        self.btn_next.setFixedHeight(30)
-        self.btn_next.setProperty("backgroundColor", "secondary")
-
-        # Create 'Page Options' layout
-        lyt_page_options = QHBoxLayout(self.frm_inner_container)
-        lyt_page_options.addWidget(self.btn_cancel)
-        lyt_page_options.addStretch()
-        lyt_page_options.addWidget(self.btn_back)
-        lyt_page_options.addWidget(self.btn_next)
-        lyt_page_options.setContentsMargins(0, 10, 0, 5)
-        lyt_page_options.setSpacing(5)
-
-        # Configure 'Page Options' frame
-        self.frm_page_options.setFrameShape(QFrame.NoFrame)
-        self.frm_page_options.setFrameShadow(QFrame.Raised)
-        self.frm_page_options.setLayout(lyt_page_options)
-        self.frm_page_options.setProperty("borderTop", "surface")
-
-        # Create 'Inner Frame' layout
-        lyt_inner_frame = QVBoxLayout(self.frm_inner_container)
-        lyt_inner_frame.addWidget(self.frm_header)
-        lyt_inner_frame.addWidget(self.scr_container)
-        lyt_inner_frame.addWidget(self.frm_page_options)
-        lyt_inner_frame.setAlignment(Qt.AlignLeft | Qt.AlignTop)
-        lyt_inner_frame.setSpacing(5)
-
-        # Configure 'Page' layout
+        # Create 'Page Content' layout
         layout = QVBoxLayout(self)
-        layout.addWidget(self.frm_inner_container)
-        layout.setAlignment(Qt.AlignHCenter)
+        layout.addSpacing(10)
+        layout.addWidget(self.lbl_project_name)
+        layout.addWidget(self.lne_project_name)
+        layout.addSpacing(10)
+        layout.addWidget(self.lbl_project_directory)
+        layout.addWidget(self.frm_project_directory)
+        layout.addStretch()
+        layout.setSpacing(5)
 
+        self.setProperty("backgroundColor", "background")
         self.setLayout(layout)
 
         # Translate widget text
@@ -180,10 +138,6 @@ class NewProjectPage(QWidget):
     def retranslateUi(self):
         # Disable formatting to condense tranlate functions
         # fmt: off
-        self.lbl_header.setText(QCoreApplication.translate("NewProjectTypePage", "New Project", None))
         self.lbl_project_name.setText(QCoreApplication.translate("NewProjectTypePage", "Project Name", None))
         self.lbl_project_directory.setText(QCoreApplication.translate("NewProjectTypePage", "Project Directory", None))
-        self.btn_cancel.setText(QCoreApplication.translate("NewProjectTypePage", "Cancel", None))
-        self.btn_back.setText(QCoreApplication.translate("NewProjectTypePage", "Back", None))
-        self.btn_next.setText(QCoreApplication.translate("NewProjectTypePage", "Next", None))
         # fmt: on

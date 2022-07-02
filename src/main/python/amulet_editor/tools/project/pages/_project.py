@@ -1,15 +1,24 @@
+import json
 import os
 from os import R_OK
 from pathlib import Path
 from typing import Optional
 
-from amulet_editor.tools.project._components import MCFunctionHighlighter, QCodeEditor
+from amulet_editor.tools.project._components import (
+    JsonHighlighter,
+    MCFunctionHighlighter,
+    QCodeEditor,
+)
 from PySide6.QtGui import QFontDatabase, QSyntaxHighlighter
 from PySide6.QtWidgets import QVBoxLayout, QWidget
 
 syntax_highlighters = {
     ".mcfunction": MCFunctionHighlighter,
+    ".json": JsonHighlighter,
+    ".mcmeta": JsonHighlighter,
 }
+
+json_like = (".json", ".mcmeta")
 
 
 class ProjectPage(QWidget):
@@ -26,8 +35,14 @@ class ProjectPage(QWidget):
     def show_file(self, file_path: str) -> None:
         if os.path.isfile(file_path) and os.access(file_path, R_OK):
             try:
-                with open(file_path, "r") as text:
-                    self.txe_file.setPlainText(text.read())
+                with open(file_path, "r") as textio:
+                    if Path(file_path).suffix in json_like:
+                        parsed = json.load(textio)
+                        text = json.dumps(parsed, indent=2)
+                    else:
+                        text = textio.read()
+
+                self.txe_file.setPlainText(text)
 
                 # Remove current syntax highlighter
                 if self.highlighter is not None:
@@ -49,9 +64,9 @@ class ProjectPage(QWidget):
         self.txe_file = QCodeEditor()
         self.txe_file.setFont(font)
 
-        self.hlt_mcfunction = MCFunctionHighlighter()
-        self.hlt_mcfunction.setDocument(self.txe_file.document())
-        self.hlt_mcfunction.setDocument(None)
+        # self.hlt_mcfunction = MCFunctionHighlighter()
+        # self.hlt_mcfunction.setDocument(self.txe_file.document())
+        # self.hlt_mcfunction.setDocument(None)
 
         layout = QVBoxLayout(self)
         layout.setContentsMargins(0, 0, 0, 0)

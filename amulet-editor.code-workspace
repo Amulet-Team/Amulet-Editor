@@ -17,7 +17,7 @@
                 "name": "Amulet Editor",
                 "type": "python",
                 "request": "launch",
-                "program": "${workspaceFolder}/src/main/python/amulet_editor/main.py",
+                "program": "${workspaceFolder}/src/main/python/amulet_editor/__main__.py",
                 "console": "internalConsole",
                 "cwd": "${workspaceFolder}",
                 "env": {

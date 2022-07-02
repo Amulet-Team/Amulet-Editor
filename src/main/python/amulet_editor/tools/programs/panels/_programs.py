@@ -17,7 +17,7 @@ from PySide6.QtWidgets import (
 )
 
 
-class ProjectPanel(QWidget):
+class ProgramsPanel(QWidget):
     file_selected = Signal(str)
 
     def __init__(self, parent: Optional[QWidget] = None) -> None:
@@ -27,27 +27,6 @@ class ProjectPanel(QWidget):
             super().__init__(parent=parent)
 
         self.setupUi()
-
-        self.crd_directory = QLinkCard(
-            "", build.get_resource(f"icons/folder.svg"), self
-        )
-        self.frm_directory.layout().addWidget(self.crd_directory)
-
-        self.model = QFileSystemModel()
-        self.model.setRootPath(QDir.rootPath())
-        self.model.setFilter(
-            QDir.AllDirs | QDir.Files | QDir.NoDotAndDotDot | QDir.Hidden
-        )
-
-        self.trv_directory.setContextMenuPolicy(Qt.CustomContextMenu)
-        self.trv_directory.setModel(self.model)
-        self.trv_directory.hideColumn(1)
-        self.trv_directory.hideColumn(2)
-        self.trv_directory.hideColumn(3)
-
-        self.trv_directory.clicked.connect(self.print_directory)
-
-        project.changed.connect(self.set_folder)
 
     def print_directory(self) -> None:
         file = self.model.filePath(self.trv_directory.selectedIndexes()[0])

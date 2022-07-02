@@ -3,10 +3,10 @@ from distutils.version import StrictVersion
 from functools import partial
 
 import amulet
-from amulet_editor.application.components import QPixCard
 from amulet_editor.data import build, minecraft
 from amulet_editor.models.minecraft import LevelData
-from amulet_editor.tools.startup._components import QIconButton
+from amulet_editor.models.widgets import QPixCard
+from amulet_editor.tools.startup._widgets import QIconButton
 from PySide6.QtCore import QCoreApplication, QSize, Qt, Signal
 from PySide6.QtGui import QImage, QPixmap
 from PySide6.QtWidgets import (

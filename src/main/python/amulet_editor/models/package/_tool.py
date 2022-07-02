@@ -22,12 +22,14 @@ class AmuletTool(ABC):
         """Returns a view object containing a widget which should be rendered as a panel."""
         ...
 
-    @abstractproperty
+    @property
+    @abstractmethod
     def name(self) -> str:
         """Name of this package."""
         ...
 
-    @abstractproperty
+    @property
+    @abstractmethod
     def icon_name(self) -> str:
         """Name of the svg icon used to represent this package."""
         ...

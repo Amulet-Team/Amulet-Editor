@@ -1,6 +1,6 @@
 from typing import Any
 
-from amulet_editor.application.components._icon import QIconButton
+from amulet_editor.models.widgets._icon import QIconButton
 from PySide6.QtCore import QCoreApplication, QEvent, QMimeData, Qt, Signal
 from PySide6.QtGui import QDrag, QDragEnterEvent, QDropEvent, QMouseEvent, QPixmap
 from PySide6.QtWidgets import QHBoxLayout, QLayout, QVBoxLayout, QWidget
