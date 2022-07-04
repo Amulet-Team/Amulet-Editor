@@ -17,7 +17,7 @@ def locate_file(file: str, directory: str, recursive=False) -> list[str]:
     return paths
 
 
-def locate_worlds(directories: list[str]) -> list[str]:
+def locate_levels(directories: list[str]) -> list[str]:
     """
     Returns a list of paths to all identified minecraft level.dat
     files in the list of provided directories.

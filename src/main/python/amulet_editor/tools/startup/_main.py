@@ -1,19 +1,14 @@
 from functools import partial
-from typing import Callable, Optional
 
 from amulet_editor.data import packages, project
 from amulet_editor.models.package import AmuletTool, AmuletView
 from amulet_editor.models.widgets import QMenuWidget
-from amulet_editor.tools.programs import Programs
 from amulet_editor.tools.project import Project
 from amulet_editor.tools.startup._models import Menu, Navigate
-from amulet_editor.tools.startup.pages._import_level import ImportLevelMenu
 from amulet_editor.tools.startup.pages._new_project import NewProjectMenu
 from amulet_editor.tools.startup.pages._open_world import OpenWorldMenu
-from amulet_editor.tools.startup.pages._select_packages import SelectPackagesPage
 from amulet_editor.tools.startup.pages._startup import StartupPage
 from amulet_editor.tools.startup.panels._startup import StartupPanel
-from amulet_editor.tools.startup.panels._world_selection import WorldSelectionPanel
 from PySide6.QtCore import QCoreApplication, QObject
 from PySide6.QtWidgets import QWidget
 
@@ -76,6 +71,10 @@ class StartupManager(QObject):
             partial(self.set_menu_page, NewProjectMenu)
         )
 
+        self.menu_page.clicked_cancel.connect(partial(self.set_startup_page))
+        self.menu_page.clicked_back.connect(partial(self.menu_back))
+        self.menu_page.clicked_next.connect(partial(self.menu_next))
+
         self.set_startup_page()
 
     def set_startup_page(self) -> None:
@@ -93,11 +92,6 @@ class StartupManager(QObject):
 
         self.menu_list.append(menu)
         self.set_menu(menu)
-
-        # Connect signals
-        self.menu_page.clicked_cancel.connect(partial(self.set_startup_page))
-        self.menu_page.clicked_back.connect(partial(self.menu_back))
-        self.menu_page.clicked_next.connect(partial(self.menu_next))
 
         # Set plugin view
         self.plugin.set_page(self.menu_page)
