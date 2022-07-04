@@ -1,9 +1,9 @@
 import os
 from functools import partial
-from typing import Callable, Optional
+from typing import Callable, Optional, Union
 
 import amulet
-from amulet_editor.data import minecraft, packages, project
+from amulet_editor.data import packages, project
 from amulet_editor.models.generic import Observer
 from amulet_editor.models.minecraft import LevelData
 from amulet_editor.tools.programs import Programs
@@ -11,7 +11,7 @@ from amulet_editor.tools.project import Project
 from amulet_editor.tools.startup._models import Menu, Navigate
 from amulet_editor.tools.startup._widgets import QIconButton, QLevelSelectionCard
 from amulet_editor.tools.startup.panels._world_selection import WorldSelectionPanel
-from PySide6.QtCore import QCoreApplication, QObject, QSize, Qt
+from PySide6.QtCore import QCoreApplication, QObject, QSize
 from PySide6.QtWidgets import (
     QApplication,
     QFileDialog,
@@ -34,7 +34,7 @@ class OpenWorldMenu(QObject):
         self._enable_next = Observer(bool)
 
         self._widget = OpenWorldWidget()
-        self._widget.btn_import_level.clicked.connect(partial(self.import_level))
+        self._widget.btn_level_directory.clicked.connect(partial(self.import_level))
         self._widget.crd_select_level.clicked.connect(partial(self.select_level))
 
         self._world_selection_panel = WorldSelectionPanel()
@@ -69,19 +69,16 @@ class OpenWorldMenu(QObject):
     def import_level(self) -> None:
         self.uncheck_level_card()
 
+        path = self._widget.lne_level_directory.text()
+        path = os.path.expanduser("~") if path == "" else path
         path = QFileDialog.getExistingDirectory(
             None,
             "Select Minecraft World",
-            os.path.realpath(minecraft.save_directories()[0]),
+            os.path.realpath(path),
             QFileDialog.ShowDirsOnly,
         )
-        self._widget.btn_import_level.setChecked(False)
-
-        if os.path.exists(os.path.join(path, "level.dat")):
-            path = str(os.path.sep).join(path.split("/"))
-
-            level_data = LevelData(amulet.load_format(path))
-            self.set_level(level_data)
+        self._widget.btn_level_directory.setChecked(False)
+        self.set_level(path)
 
     def select_level(self):
         if self._widget.crd_select_level.isChecked():
@@ -89,16 +86,34 @@ class OpenWorldMenu(QObject):
         else:
             self.set_panel(None)
 
-    def set_level(self, level_data: LevelData) -> None:
-        self.level_directory = level_data.path
+    def set_level(self, level: Union[str, LevelData]) -> None:
+        if isinstance(level, str):
+            path = str(os.path.sep).join(level.split("/"))
 
-        self._widget.lne_import_level.setText(level_data.path)
-        self._widget.crd_select_level.setLevel(level_data)
+        if isinstance(level, LevelData):
+            self.level_directory = level.path
 
-        self.enable_next.emit(True)
+            self._widget.lne_level_directory.setText(level.path)
+            self._widget.crd_select_level.setLevel(level)
+
+            self.enable_next.emit(True)
+        elif os.path.isfile(os.path.join(path, "level.dat")):
+            level_data = LevelData(amulet.load_format(path))
+
+            self.level_directory = level_data.path
+
+            self._widget.lne_level_directory.setText(level_data.path)
+            self._widget.crd_select_level.setLevel(level_data)
+
+            self.enable_next.emit(True)
+        else:
+            self._widget.lne_level_directory.setText(path)
+            self._widget.crd_select_level.setLevel(None)
+
+            self.enable_next.emit(False)
 
     def check_focus(self, old: Optional[QWidget], new: Optional[QWidget]):
-        alternate_focus = [self._widget.lne_import_level]
+        alternate_focus = [self._widget.lne_level_directory]
 
         if new in alternate_focus:
             self.uncheck_level_card()
@@ -115,33 +130,9 @@ class OpenWorldWidget(QWidget):
         self.setupUi()
 
     def setupUi(self):
-        # Create 'Select Level' frame
+        # Configure 'Select Level'
         self.lbl_select_level = QLabel(self)
         self.lbl_select_level.setProperty("color", "on_primary")
-
-        lyt_import_level = QHBoxLayout(self)
-
-        self.frm_import_level = QFrame(self)
-        self.frm_import_level.setFrameShape(QFrame.NoFrame)
-        self.frm_import_level.setFrameShadow(QFrame.Raised)
-        self.frm_import_level.setLayout(lyt_import_level)
-
-        self.lne_import_level = QLineEdit(self.frm_import_level)
-        self.lne_import_level.setFixedHeight(25)
-        self.lne_import_level.setProperty("color", "on_surface")
-        self.lne_import_level.setReadOnly(True)
-
-        self.btn_import_level = QIconButton(self.frm_import_level)
-        self.btn_import_level.setCheckable(True)
-        self.btn_import_level.setFixedSize(QSize(27, 27))
-        self.btn_import_level.setIcon("folder.svg")
-        self.btn_import_level.setIconSize(QSize(15, 15))
-        self.btn_import_level.setProperty("backgroundColor", "primary")
-
-        lyt_import_level.addWidget(self.lne_import_level)
-        lyt_import_level.addWidget(self.btn_import_level)
-        lyt_import_level.setContentsMargins(0, 0, 0, 0)
-        lyt_import_level.setSpacing(5)
 
         self.crd_select_level = QLevelSelectionCard(self)
         self.crd_select_level.setCheckable(True)
@@ -150,12 +141,42 @@ class OpenWorldWidget(QWidget):
         self.crd_select_level.setProperty("border", "surface")
         self.crd_select_level.setProperty("borderRadiusVisible", True)
 
+        # Configure 'Level Directory'
+        self.lbl_level_directory = QLabel(self)
+        self.lbl_level_directory.setProperty("color", "on_primary")
+
+        lyt_level_directory = QHBoxLayout(self)
+
+        self.frm_level_directory = QFrame(self)
+        self.frm_level_directory.setFrameShape(QFrame.NoFrame)
+        self.frm_level_directory.setFrameShadow(QFrame.Raised)
+        self.frm_level_directory.setLayout(lyt_level_directory)
+
+        self.lne_level_directory = QLineEdit(self.frm_level_directory)
+        self.lne_level_directory.setFixedHeight(25)
+        self.lne_level_directory.setProperty("color", "on_surface")
+        self.lne_level_directory.setReadOnly(True)
+
+        self.btn_level_directory = QIconButton(self.frm_level_directory)
+        self.btn_level_directory.setCheckable(True)
+        self.btn_level_directory.setFixedSize(QSize(27, 27))
+        self.btn_level_directory.setIcon("folder.svg")
+        self.btn_level_directory.setIconSize(QSize(15, 15))
+        self.btn_level_directory.setProperty("backgroundColor", "primary")
+
+        lyt_level_directory.addWidget(self.lne_level_directory)
+        lyt_level_directory.addWidget(self.btn_level_directory)
+        lyt_level_directory.setContentsMargins(0, 0, 0, 0)
+        lyt_level_directory.setSpacing(5)
+
         # Create 'Page Content' layout
         layout = QVBoxLayout(self)
         layout.addSpacing(10)
         layout.addWidget(self.lbl_select_level)
-        layout.addWidget(self.frm_import_level)
         layout.addWidget(self.crd_select_level)
+        layout.addSpacing(10)
+        layout.addWidget(self.lbl_level_directory)
+        layout.addWidget(self.frm_level_directory)
         layout.addStretch()
         layout.setSpacing(5)
 
@@ -168,4 +189,5 @@ class OpenWorldWidget(QWidget):
         # Disable formatting to condense tranlate functions
         # fmt: off
         self.lbl_select_level.setText(QCoreApplication.translate("NewProjectTypePage", "Select World", None))
+        self.lbl_level_directory.setText(QCoreApplication.translate("NewProjectTypePage", "World Directory", None))
         # fmt: on

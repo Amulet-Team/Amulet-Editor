@@ -1,13 +1,15 @@
 import pathlib
+from dataclasses import dataclass
 from distutils.version import StrictVersion
 from functools import partial
+from typing import Optional
 
 import amulet
 from amulet_editor.data import build, minecraft
 from amulet_editor.models.minecraft import LevelData
 from amulet_editor.models.widgets import QPixCard
 from amulet_editor.tools.startup._widgets import QIconButton
-from PySide6.QtCore import QCoreApplication, QSize, Qt, Signal
+from PySide6.QtCore import QCoreApplication, QObject, QSize, Qt, QThread, Signal, Slot
 from PySide6.QtGui import QImage, QPixmap
 from PySide6.QtWidgets import (
     QComboBox,
@@ -21,20 +23,74 @@ from PySide6.QtWidgets import (
 )
 
 
+@dataclass
+class ParsedLevel:
+    level_data: LevelData
+    icon_path: str = ""
+    level_name: str = ""
+    file_name: str = ""
+    version: str = ""
+    last_played: str = ""
+
+
+class LevelParser(QObject):
+
+    parsed_level = Signal(ParsedLevel)
+
+    @Slot(str)
+    def parse_level(self, level_path: str):
+        level_data = LevelData(amulet.load_format(level_path))
+        parsed_level = ParsedLevel(level_data)
+
+        parsed_level.icon_path = (
+            level_data.icon_path
+            if level_data.icon_path is not None
+            else build.get_resource("images/missing_world_icon.png")
+        )
+        parsed_level.level_name = level_data.name.get_html(font_weight=600)
+        parsed_level.file_name = pathlib.PurePath(level_data.path).name
+        parsed_level.version = f"{level_data.edition} - {level_data.version}"
+        parsed_level.last_played = (
+            level_data.last_played.astimezone(tz=None)
+            .strftime("%B %d, %Y %I:%M %p")
+            .replace(" 0", " ")
+        )
+
+        self.parsed_level.emit(parsed_level)
+
+
 class WorldSelectionPanel(QWidget):
 
     level_data = Signal(LevelData)
+    parse = Signal(str)
 
     def __init__(self) -> None:
         super().__init__()
 
         self.setupUi()
 
+        self.cbx_version.addItem("Any")
+
+        self.cbx_edition.addItem("Any")
+
         self.cbx_sort.addItem("Last Played")
         self.cbx_sort.addItem("Name")
 
+        self._sort_descending = True
+
+        self._parsing_thread = QThread()
+        self._parsing_thread.start()
+
+        self.parser = LevelParser()
+        self.parse.connect(self.parser.parse_level)
+        self.parser.parsed_level.connect(self.new_world_card)
+        self.parser.moveToThread(self._parsing_thread)
+
         self._world_cards: list[QPixCard] = []
         self._world_cards_filtered: list[QPixCard] = []
+
+        self._minecraft_editions: list[str] = []
+        self._minecraft_versions: list[str] = []
 
         self.load_world_cards()
 
@@ -53,68 +109,42 @@ class WorldSelectionPanel(QWidget):
         self.level_data.emit(clicked_card.level_data)
 
     def load_world_cards(self) -> None:
-        self._sort_descending = True
-        level_paths = minecraft.locate_worlds(minecraft.save_directories())
-
-        world_versions = []
-        unknown_version_present = False
+        level_paths = minecraft.locate_levels(minecraft.save_directories())
 
         for path in level_paths:
-            level_data = LevelData(amulet.load_format(path))
+            self.parse.emit(path)
 
-            icon_path = (
-                level_data.icon_path
-                if level_data.icon_path is not None
-                else build.get_resource("images/missing_world_icon.png")
-            )
-            level_icon = QPixmap(QImage(icon_path))
-            level_icon = level_icon.scaledToHeight(80)
+    def new_world_card(self, parsed_level: ParsedLevel):
+        level_data = parsed_level.level_data
 
-            level_name = level_data.name.get_html(font_weight=600)
-            file_name = pathlib.PurePath(level_data.path).name
-            version = f"{level_data.edition} - {level_data.version}"
-            last_played = (
-                level_data.last_played.astimezone(tz=None)
-                .strftime("%B %d, %Y %I:%M %p")
-                .replace(" 0", " ")
-            )
+        level_icon = QPixmap(QImage(parsed_level.icon_path))
+        level_icon = level_icon.scaledToHeight(80)
 
-            world_card = QPixCard(level_icon, self.wgt_search_results)
-            world_card.addLabel(level_name)
-            world_card.addLabel(file_name)
-            world_card.addLabel(version)
-            world_card.addLabel(last_played)
-            world_card.setCheckable(True)
-            world_card.setFocusPolicy(Qt.NoFocus)
-            world_card.clicked.connect(partial(self.card_clicked, world_card))
-            world_card.level_data = level_data
+        world_card = QPixCard(level_icon, self.wgt_search_results)
+        world_card.addLabel(parsed_level.level_name)
+        world_card.addLabel(parsed_level.file_name)
+        world_card.addLabel(parsed_level.version)
+        world_card.addLabel(parsed_level.last_played)
+        world_card.setCheckable(True)
+        world_card.setFocusPolicy(Qt.NoFocus)
+        world_card.clicked.connect(partial(self.card_clicked, world_card))
+        world_card.level_data = level_data
 
-            self.lyt_search_results.insertWidget(
-                self.lyt_search_results.count() - 1, world_card
-            )
-            world_card.show()
+        self.lyt_search_results.addWidget(world_card)
+        world_card.show()
 
-            self._world_cards.append(world_card)
+        self._world_cards.append(world_card)
 
-            if not any(c.isalpha() for c in level_data.version):
-                world_versions.append("{}.{}".format(*level_data.version.split(".")))
-            elif level_data.version == "Unknown":
-                unknown_version_present = True
+        if not any(c.isalpha() for c in level_data.version):
+            version = "{}.{}".format(*level_data.version.split("."))
+            self.update_filters(version, level_data.edition)
+        elif level_data.version == "Unknown":
+            version = "Unknown"
+            self.update_filters(version, level_data.edition)
+        else:
+            self.update_filters(edition=level_data.edition)
 
-        world_versions = list(set(world_versions))
-        world_versions.sort(key=StrictVersion, reverse=True)
-        self.cbx_version.addItem("Any")
-        for version in world_versions:
-            self.cbx_version.addItem(version)
-        if unknown_version_present:
-            self.cbx_version.addItem("Unknown")
-
-        self.cbx_edition.addItem("Any")
-        self.cbx_edition.addItem("Bedrock")
-        self.cbx_edition.addItem("Java")
-
-        self._world_cards_filtered = self._world_cards
-        self.sort_cards()
+        self.filter_cards()
 
     def show_search_options(self) -> None:
         if self.btn_search_level.isChecked():
@@ -130,6 +160,30 @@ class WorldSelectionPanel(QWidget):
             self.btn_sort.setIcon("sort-ascending.svg")
 
         self.sort_cards()
+
+    def update_filters(
+        self, version: Optional[str] = None, edition: Optional[str] = None
+    ) -> None:
+        if version is not None and version not in self._minecraft_versions:
+            self._minecraft_versions.append(version)
+            if "Unknown" not in self._minecraft_versions:
+                self._minecraft_versions.sort(key=StrictVersion, reverse=True)
+            else:
+                self._minecraft_versions.remove("Unknown")
+                self._minecraft_versions.sort(key=StrictVersion, reverse=True)
+                self._minecraft_versions.append("Unknown")
+
+            index = self._minecraft_versions.index(version) + 1
+
+            self.cbx_version.insertItem(index, version)
+
+        if edition is not None and edition not in self._minecraft_editions:
+            self._minecraft_editions.append(edition)
+            self._minecraft_editions.sort(reverse=True)
+
+            index = self._minecraft_editions.index(edition) + 1
+
+            self.cbx_edition.insertItem(index, edition)
 
     def filter_cards(self) -> None:
         search_text = self.lne_search_level.text()
@@ -172,9 +226,7 @@ class WorldSelectionPanel(QWidget):
                 self.wgt_search_results.layout().removeWidget(world_card)
 
         for world_card in self._world_cards_filtered:
-            self.wgt_search_results.layout().insertWidget(
-                self.wgt_search_results.layout().count() - 1, world_card
-            )
+            self.wgt_search_results.layout().addWidget(world_card)
             world_card.show()
 
     def setupUi(self):
@@ -294,7 +346,7 @@ class WorldSelectionPanel(QWidget):
         self.scr_search_results.setWidget(self.wgt_search_results)
 
         self.lyt_search_results = QVBoxLayout(self.scr_search_results)
-        self.lyt_search_results.addStretch()
+        self.lyt_search_results.setAlignment(Qt.AlignTop)
         self.lyt_search_results.setContentsMargins(5, 5, 5, 5)
 
         self.wgt_search_results.setLayout(self.lyt_search_results)

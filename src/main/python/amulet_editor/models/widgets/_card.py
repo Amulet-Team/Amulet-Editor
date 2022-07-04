@@ -1,8 +1,8 @@
 from typing import Optional
 
-from amulet_editor.data import build
 from amulet_editor.application import appearance
 from amulet_editor.application.appearance import Color, Theme
+from amulet_editor.data import build
 from amulet_editor.models.widgets._icon import QSvgIcon
 from amulet_editor.models.widgets._label import QElidedLabel
 from PySide6.QtCore import QEvent, QSize, Qt
@@ -44,7 +44,6 @@ class QPixCard(QPushButton):
 
     def addLabel(self, text: str):
         label = QElidedLabel(text, self)
-        label.setAttribute(Qt.WA_TransparentForMouseEvents)
         self.layout().itemAt(1).widget().layout().addWidget(label)
 
     def layout(self) -> QHBoxLayout:

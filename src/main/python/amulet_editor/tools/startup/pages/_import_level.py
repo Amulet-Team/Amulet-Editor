@@ -1,28 +1,22 @@
 import os
-import pathlib
 from functools import partial
 from typing import Callable, Optional
 
 import amulet
-from amulet_editor.data import build, minecraft, paths
+from amulet_editor.data import minecraft, paths
 from amulet_editor.models.generic import Observer
 from amulet_editor.models.minecraft import LevelData
-from amulet_editor.models.widgets import QElidedLabel
 from amulet_editor.tools.startup._models import Menu, ProjectData
 from amulet_editor.tools.startup._widgets import QIconButton, QLevelSelectionCard
 from amulet_editor.tools.startup.panels._world_selection import WorldSelectionPanel
 from PySide6.QtCore import QCoreApplication, QObject, QSize
-from PySide6.QtGui import QImage, QPixmap
 from PySide6.QtWidgets import (
     QApplication,
     QFileDialog,
     QFrame,
-    QGridLayout,
     QHBoxLayout,
     QLabel,
     QLineEdit,
-    QPushButton,
-    QSizePolicy,
     QVBoxLayout,
     QWidget,
 )
