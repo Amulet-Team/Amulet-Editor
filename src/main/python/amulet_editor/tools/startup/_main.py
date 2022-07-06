@@ -86,6 +86,7 @@ class StartupManager(QObject):
     def set_menu_page(self, menu_class):
         # Create menu
         menu: Menu = menu_class(self.plugin.set_secondary_panel)
+        menu.enable_back.connect(self.menu_page.btn_back.setEnabled)
         menu.enable_next.connect(self.menu_page.btn_next.setEnabled)
 
         self.menu_list.append(menu)

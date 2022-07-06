@@ -32,6 +32,7 @@ class OpenWorldMenu(QObject):
         self.level_directory: Optional[str] = None
         self.set_panel = set_panel
 
+        self._enable_back = Observer(bool)
         self._enable_next = Observer(bool)
 
         self._widget = OpenWorldWidget()
@@ -46,6 +47,10 @@ class OpenWorldMenu(QObject):
     @property
     def title(self) -> str:
         return "Open World"
+
+    @property
+    def enable_back(self) -> Observer:
+        return self._enable_back
 
     @property
     def enable_next(self) -> Observer:
@@ -189,6 +194,6 @@ class OpenWorldWidget(QWidget):
     def retranslateUi(self):
         # Disable formatting to condense tranlate functions
         # fmt: off
-        self.lbl_select_level.setText(QCoreApplication.translate("NewProjectTypePage", "Select World", None))
-        self.lbl_level_directory.setText(QCoreApplication.translate("NewProjectTypePage", "World Directory", None))
+        self.lbl_select_level.setText(QCoreApplication.translate("OpenWorldWidget", "Select World", None))
+        self.lbl_level_directory.setText(QCoreApplication.translate("OpenWorldWidget", "World Directory", None))
         # fmt: on

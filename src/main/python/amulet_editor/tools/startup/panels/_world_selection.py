@@ -79,7 +79,7 @@ class WorldSelectionPanel(QWidget):
         self._sort_descending = True
 
         self._parsing_thread = QThread()
-        self._parsing_thread.start()
+        self._parsing_levels = 0
 
         self.parser = LevelParser()
         self.parse.connect(self.parser.parse_level)
@@ -111,10 +111,16 @@ class WorldSelectionPanel(QWidget):
     def load_world_cards(self) -> None:
         level_paths = minecraft.locate_levels(minecraft.save_directories())
 
+        self._parsing_thread.start()
         for path in level_paths:
+            self._parsing_levels += 1
             self.parse.emit(path)
 
     def new_world_card(self, parsed_level: ParsedLevel):
+        self._parsing_levels -= 1
+        if self._parsing_levels == 0 and self._parsing_thread.isRunning():
+            self._parsing_thread.exit()
+
         level_data = parsed_level.level_data
 
         level_icon = QPixmap(QImage(parsed_level.icon_path))

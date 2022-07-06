@@ -8,7 +8,7 @@ from amulet_editor.models.generic import Observer
 from amulet_editor.models.minecraft import LevelData
 from amulet_editor.tools.startup._models import Menu, Navigate, ProjectData
 from amulet_editor.tools.startup._widgets import QIconButton, QLevelSelectionCard
-from amulet_editor.tools.startup.pages._import_level import ImportLevelMenu
+from amulet_editor.tools.startup.pages._create_project import CreateProjectMenu
 from amulet_editor.tools.startup.panels._world_selection import WorldSelectionPanel
 from PySide6.QtCore import QCoreApplication, QObject, QSize
 from PySide6.QtWidgets import (
@@ -30,6 +30,7 @@ class NewProjectMenu(QObject):
         self.project_data = ProjectData(name="", directory=paths.project_directory())
         self.set_panel = set_panel
 
+        self._enable_back = Observer(bool)
         self._enable_next = Observer(bool)
 
         self._widget = NewProjectWidget()
@@ -49,6 +50,10 @@ class NewProjectMenu(QObject):
         return "New Project"
 
     @property
+    def enable_back(self) -> Observer:
+        return self._enable_back
+
+    @property
     def enable_next(self) -> Observer:
         return self._enable_next
 
@@ -60,8 +65,8 @@ class NewProjectMenu(QObject):
         return self._widget
 
     def next_menu(self) -> Optional[Menu]:
-        menu = ImportLevelMenu(self.set_panel)
-        menu.set_project_data(self.project_data)
+        menu = CreateProjectMenu(self.set_panel)
+        menu.project_data = self.project_data
         return menu
 
     def set_project_name(self, project_name: str) -> None:
@@ -283,9 +288,9 @@ class NewProjectWidget(QWidget):
     def retranslateUi(self):
         # Disable formatting to condense tranlate functions
         # fmt: off
-        self.lbl_project_name.setText(QCoreApplication.translate("NewProjectTypePage", "Project Name", None))
-        self.lbl_project_directory.setText(QCoreApplication.translate("NewProjectTypePage", "Project Directory", None))
-        self.lbl_import_level.setText(QCoreApplication.translate("NewProjectTypePage", "Import World", None))
-        self.lbl_select_level.setText(QCoreApplication.translate("NewProjectTypePage", "Select World", None))
-        self.lbl_level_directory.setText(QCoreApplication.translate("NewProjectTypePage", "World Directory", None))
+        self.lbl_project_name.setText(QCoreApplication.translate("NewProjectWidget", "Project Name", None))
+        self.lbl_project_directory.setText(QCoreApplication.translate("NewProjectWidget", "Project Directory", None))
+        self.lbl_import_level.setText(QCoreApplication.translate("NewProjectWidget", "Import World", None))
+        self.lbl_select_level.setText(QCoreApplication.translate("NewProjectWidget", "Select World", None))
+        self.lbl_level_directory.setText(QCoreApplication.translate("NewProjectWidget", "World Directory", None))
         # fmt: on

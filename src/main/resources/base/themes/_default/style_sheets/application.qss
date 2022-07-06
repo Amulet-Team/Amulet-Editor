@@ -477,6 +477,19 @@ QPlainTextEdit[readOnly=true] {{
     color: "{on_surface}";
 }}
 
+QProgressBar {{
+    background-color: "{background}";
+    border: 1px solid "{surface}";
+    border-radius: 4px;
+    color: "{on_background}";
+    text-align: center;
+}}
+QProgressBar::chunk {{
+    background-color: "{secondary_variant.darker.25}";
+    border-radius: 3px;
+    margin: 2px;
+}}
+
 QPushButton {{
     background-color: "{primary.lighter.5}";
     border: 1px solid "{surface}";
@@ -489,7 +502,7 @@ QPushButton {{
 }}
 QPushButton:checked {{
     background: QLinearGradient(x1: 0, y1: 0, x2: 0, y2: 1, stop: 0 "{primary.darker.10}", stop: 1 "{primary.lighter.25}");
-    border-bottom: 2px solid "{secondary}";
+    border-bottom: 2px solid "{secondary_variant}";
 }}
 QPushButton:hover {{
     background: QLinearGradient(x1: 0, y1: 0, x2: 0, y2: 1, stop: 0 "{primary.lighter.10}", stop: 1 "{primary.lighter.25}");
@@ -497,24 +510,24 @@ QPushButton:hover {{
 QPushButton:pressed {{
     background: QLinearGradient(x1: 0, y1: 0, x2: 0, y2: 1, stop: 0 "{primary.darker.10}", stop: 1 "{primary.lighter.25}");
     border: 1px solid "{surface.darker.10}";
-    border-bottom: 2px solid "{secondary}";
+    border-bottom: 2px solid "{secondary_variant}";
 }}
 QPushButton[backgroundColor="secondary"] {{
-    background: "{secondary_variant.darker.25}";
-    border: 1px solid "{secondary.darker.50}";
+    background: QLinearGradient(x1: 0, y1: 0, x2: 0, y2: 1, stop: 0 "{secondary_variant.darker.50}", stop: 1 "{secondary_variant.darker.25}");
+    border: 1px solid "{secondary_variant}";
     color: "{on_secondary}";
 }}
 QPushButton[backgroundColor="secondary"]:checked {{
-    background: QLinearGradient(x1: 0, y1: 0, x2: 0, y2: 1, stop: 0 "{secondary_variant.darker.10}", stop: 1 "{secondary_variant}");
-    border-bottom: 2px solid "{secondary}";
+    background: QLinearGradient(x1: 0, y1: 0, x2: 0, y2: 1, stop: 0 "{secondary_variant.darker.60}", stop: 1 "{secondary_variant.darker.10}");
+    border-bottom: 2px solid "{secondary_variant}";
 }}
 QPushButton[backgroundColor="secondary"]:hover {{
-    background: QLinearGradient(x1: 0, y1: 0, x2: 0, y2: 1, stop: 0 "{secondary_variant.darker.10}", stop: 1 "{secondary_variant}");
+    background: QLinearGradient(x1: 0, y1: 0, x2: 0, y2: 1, stop: 0 "{secondary_variant.darker.40}", stop: 1 "{secondary_variant.darker.10}");
 }}
 QPushButton[backgroundColor="secondary"]:pressed {{
-    background: QLinearGradient(x1: 0, y1: 0, x2: 0, y2: 1, stop: 0 "{secondary_variant.darker.25}", stop: 1 "{secondary_variant}");
-    border: 1px solid "{secondary.darker.100}";
-    border-bottom: 2px solid "{secondary}";
+    background: QLinearGradient(x1: 0, y1: 0, x2: 0, y2: 1, stop: 0 "{secondary_variant.darker.60}", stop: 1 "{secondary_variant.darker.10}");
+    border: 1px solid "{secondary_variant.darker.10}";
+    border-bottom: 2px solid "{secondary_variant}";
 }}
 QPushButton:!enabled {{
     background: QLinearGradient(x1: 0, y1: 0, x2: 0, y2: 1, stop: 0 "{background}", stop: 1 "{background.lighter.15}");
