@@ -1,3 +1,4 @@
+import errno
 import json
 import os
 from datetime import datetime, timezone
@@ -51,14 +52,37 @@ def root() -> str:
     return _root
 
 
-def set_root(path: str) -> None:
-    """Changes the root directory of the current project."""
+def set_root(root: str) -> None:
+    """Change project rood directory."""
     global _root
 
-    if os.path.exists(os.path.join(path, "level.dat")):
-        _level.level_data = LevelData(amulet.load_format(path))
+    remember_project(root)
 
-    remember_project(path)
+    _root = root
+    changed.emit(root)
 
-    _root = path
-    changed.emit(path)
+
+def open_world(root: str) -> None:
+    """Open a minecraft world folder as a project."""
+
+    dat_file = os.path.join(root, "level.dat")
+    if not os.path.isfile(dat_file):
+        raise FileNotFoundError(errno.ENOENT, os.strerror(errno.ENOENT), dat_file)
+    else:
+        _level.level_data = LevelData(amulet.load_format(root))
+
+    amulet_dir = os.path.join(root, ".amulet")
+    if not os.path.isdir(amulet_dir):
+        os.makedirs(amulet_dir, exist_ok=True)
+
+    set_root(root)
+
+
+def open_project(root: str) -> None:
+    """Open existing project at root folder."""
+
+    amulet_dir = os.path.join(root, ".amulet")
+    if not os.path.isdir(amulet_dir):
+        os.makedirs(amulet_dir, exist_ok=True)
+
+    set_root(root)

@@ -1,32 +1,32 @@
 import json
 import os
+from json import JSONDecodeError
 
 from amulet_editor.data import project
 
 
-def default_settings() -> dict:
-    return {
-        "theme": "Amulet Dark",
-        "startup_size": [1400, 720],
-    }
-
-
 def user_settings() -> dict:
-    return default_settings()
+    return {}
 
 
 def project_settings() -> dict:
     if project.root() is None:
         return {}
 
-    _settings_file = os.path.join(project.root(), ".amulet", "settings.json")
-    if not os.path.exists(_settings_file):
-        return {}
+    settings_file = os.path.join(project.root(), ".amulet", "settings.json")
+    if not os.path.isfile(settings_file):
+        settings = {}
+    else:
+        try:
+            with open(settings_file, "r") as file:
+                settings: dict = json.load(file)
+        except JSONDecodeError:
+            settings = {}
 
-    return json.load(_settings_file)
+    return settings
 
 
 def settings() -> dict:
-    _settings = default_settings()
+    _settings = {}
     _settings.update(project_settings())
     return _settings

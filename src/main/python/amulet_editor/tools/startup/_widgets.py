@@ -55,8 +55,12 @@ class QIconButton(QToolButton):
     def leaveEvent(self, event: QEvent) -> None:
         if self.isCheckable() and not self.isChecked():
             self.repaint(appearance.theme().on_surface)
-
         return super().leaveEvent(event)
+
+    def setChecked(self, arg__1: bool) -> None:
+        if not arg__1:
+            self.repaint(appearance.theme().on_surface)
+        return super().setChecked(arg__1)
 
 
 class QIconCard(QPushButton):

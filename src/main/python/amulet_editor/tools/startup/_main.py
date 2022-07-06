@@ -1,9 +1,7 @@
 from functools import partial
 
-from amulet_editor.data import packages, project
 from amulet_editor.models.package import AmuletTool, AmuletView
 from amulet_editor.models.widgets import QMenuWidget
-from amulet_editor.tools.project import Project
 from amulet_editor.tools.startup._models import Menu, Navigate
 from amulet_editor.tools.startup.pages._new_project import NewProjectMenu
 from amulet_editor.tools.startup.pages._open_world import OpenWorldMenu
@@ -141,47 +139,3 @@ class StartupManager(QObject):
 
             self.menu_list.append(menu)
             self.set_menu(self.menu_list[-1])
-
-    def set_new_project_page(self) -> None:
-        page = self.new_project_page
-
-        def enable_next(project_name: str) -> None:
-            project_name = project_name.strip()
-            page.btn_next.setEnabled(len(project_name) > 0)
-
-        # Connect signals
-        page.lne_project_name.textChanged.connect(enable_next)
-        page.btn_cancel.clicked.connect(partial(self.set_startup_page))
-        page.btn_next.clicked.connect(partial(self.set_import_level_page))
-
-        # Set plugin view
-        self.plugin.set_secondary_panel(None)
-
-    def set_import_level_page(self) -> None:
-        page = self.import_level_page
-
-        # Connect signals
-        page.btn_cancel.clicked.connect(partial(self.set_startup_page))
-        page.btn_back.clicked.connect(partial(self.set_new_project_page))
-
-        # Set plugin view
-        self.plugin.set_secondary_panel(None)
-
-    def set_select_packages_page(self) -> None:
-        page = self.select_packages_page
-
-        def open_project() -> None:
-            tools = packages.list_tools()
-            for tool in tools:
-                packages.disable_tool(tool)
-
-            packages.enable_tool(Project())
-            project.set_root(self.project_root)
-
-        # Connect signals
-        page.btn_cancel.clicked.connect(partial(self.set_startup_page))
-        page.btn_back.clicked.connect(partial(self.set_open_world_page))
-        page.btn_next.clicked.connect(partial(open_project))
-
-        # Set plugin view
-        self.plugin.set_secondary_panel(None)

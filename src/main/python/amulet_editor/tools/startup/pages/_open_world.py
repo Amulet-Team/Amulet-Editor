@@ -3,7 +3,8 @@ from functools import partial
 from typing import Callable, Optional, Union
 
 import amulet
-from amulet_editor.data import packages, project
+from amulet_editor.data import packages
+from amulet_editor.data.project import _files
 from amulet_editor.models.generic import Observer
 from amulet_editor.models.minecraft import LevelData
 from amulet_editor.tools.programs import Programs
@@ -58,7 +59,7 @@ class OpenWorldMenu(QObject):
 
             packages.enable_tool(Project())
             packages.enable_tool(Programs())
-            project.set_root(self.level_directory)
+            _files.open_world(self.level_directory)
 
     def widget(self) -> QWidget:
         return self._widget
