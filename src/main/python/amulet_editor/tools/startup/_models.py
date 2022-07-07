@@ -41,6 +41,12 @@ class Menu(Protocol):
 
     @property
     @abstractmethod
+    def enable_cancel(self) -> Observer:
+        """Observer used by the menu handler to enable the cancel button."""
+        raise NotImplementedError
+
+    @property
+    @abstractmethod
     def enable_back(self) -> Observer:
         """Observer used by the menu handler to enable the back button."""
         raise NotImplementedError

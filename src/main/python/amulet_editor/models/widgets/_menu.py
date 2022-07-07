@@ -94,12 +94,15 @@ class QMenuWidget(QWidget):
         # Configure 'Menu Options' widgets
         btn_cancel = QPushButton(frm_menu_options)
         btn_cancel.setFixedHeight(30)
+        btn_cancel.setFixedWidth(75)
 
         btn_back = QPushButton(frm_menu_options)
         btn_back.setFixedHeight(30)
+        btn_back.setFixedWidth(75)
 
         btn_next = QPushButton(frm_menu_options)
         btn_next.setFixedHeight(30)
+        btn_next.setFixedWidth(75)
         btn_next.setProperty("backgroundColor", "secondary")
 
         # Create 'Menu Options' layout

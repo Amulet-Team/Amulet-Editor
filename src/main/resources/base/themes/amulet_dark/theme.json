@@ -18,11 +18,11 @@
 		"secondary_variant": "#29566c",
 		"background": "#1e1e1e",
 		"surface": "#333333",
-		"error": "",
+		"error": "#ee5144",
 		"on_primary": "#d4d4d4",
 		"on_secondary": "#d4d4d4",
 		"on_background": "#d4d4d4",
 		"on_surface": "#828282",
-		"on_error": ""
+		"on_error": "#d4d4d4"
 	}
 }

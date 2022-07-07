@@ -86,6 +86,7 @@ class StartupManager(QObject):
     def set_menu_page(self, menu_class):
         # Create menu
         menu: Menu = menu_class(self.plugin.set_secondary_panel)
+        menu.enable_cancel.connect(self.menu_page.btn_cancel.setEnabled)
         menu.enable_back.connect(self.menu_page.btn_back.setEnabled)
         menu.enable_next.connect(self.menu_page.btn_next.setEnabled)
 
@@ -98,6 +99,8 @@ class StartupManager(QObject):
     def set_menu(self, menu: Menu, new: bool = True) -> None:
         # Update menu page
         menu_page = self.menu_page
+        menu_page.btn_cancel.setEnabled(True)
+        menu_page.btn_back.setEnabled(True)
         menu_page.btn_back.setVisible(menu is not self.menu_list[0])
         menu_page.btn_next.setEnabled(False)
         menu_page.setMenuTitle(menu.title)
@@ -136,6 +139,8 @@ class StartupManager(QObject):
 
         if current_menu.next_menu() is not None:
             menu: Menu = current_menu.next_menu()
+            menu.enable_cancel.connect(self.menu_page.btn_cancel.setEnabled)
+            menu.enable_back.connect(self.menu_page.btn_back.setEnabled)
             menu.enable_next.connect(self.menu_page.btn_next.setEnabled)
 
             self.menu_list.append(menu)

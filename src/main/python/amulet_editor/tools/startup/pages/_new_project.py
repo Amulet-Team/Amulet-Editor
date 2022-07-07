@@ -30,6 +30,7 @@ class NewProjectMenu(QObject):
         self.project_data = ProjectData(name="", directory=paths.project_directory())
         self.set_panel = set_panel
 
+        self._enable_cancel = Observer(bool)
         self._enable_back = Observer(bool)
         self._enable_next = Observer(bool)
 
@@ -48,6 +49,10 @@ class NewProjectMenu(QObject):
     @property
     def title(self) -> str:
         return "New Project"
+
+    @property
+    def enable_cancel(self) -> Observer:
+        return self._enable_cancel
 
     @property
     def enable_back(self) -> Observer:

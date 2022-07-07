@@ -32,6 +32,7 @@ class OpenWorldMenu(QObject):
         self.level_directory: Optional[str] = None
         self.set_panel = set_panel
 
+        self._enable_cancel = Observer(bool)
         self._enable_back = Observer(bool)
         self._enable_next = Observer(bool)
 
@@ -47,6 +48,10 @@ class OpenWorldMenu(QObject):
     @property
     def title(self) -> str:
         return "Open World"
+
+    @property
+    def enable_cancel(self) -> Observer:
+        return self._enable_cancel
 
     @property
     def enable_back(self) -> Observer:

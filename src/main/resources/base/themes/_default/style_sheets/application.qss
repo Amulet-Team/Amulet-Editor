@@ -30,9 +30,17 @@ QWidget[backgroundColor="primary"] {{
     background-color: "{primary}";
     color: "{on_primary}";
 }}
+QWidget[backgroundColor="secondary"] {{
+    background-color: "{secondary}";
+    color: "{on_secondary}";
+}}
 QWidget[backgroundColor="surface"] {{
     background-color: "{surface}";
     color: "{on_surface}";
+}}
+QWidget[backgroundColor="error"] {{
+    background-color: "{error}";
+    color: "{on_error}";
 }}
 
 QWidget[border="none"] {{
@@ -68,6 +76,14 @@ QWidget[border="background"] {{
 }}
 QWidget[border="on_background"] {{
     border: 1px solid "{on_background}";
+    padding: 1px;
+}}
+QWidget[border="error"] {{
+    border: 1px solid "{error}";
+    padding: 1px;
+}}
+QWidget[border="on_error"] {{
+    border: 1px solid "{on_error}";
     padding: 1px;
 }}
 
@@ -106,6 +122,14 @@ QWidget[borderBottom="on_background"] {{
     border-bottom: 1px solid "{on_background}";
     padding-bottom: 1px;
 }}
+QWidget[borderBottom="error"] {{
+    border-bottom: 1px solid "{error}";
+    padding-bottom: 1px;
+}}
+QWidget[borderBottom="on_error"] {{
+    border-bottom: 1px solid "{on_error}";
+    padding-bottom: 1px;
+}}
 
 QWidget[borderLeft="none"] {{
     border-left: none;
@@ -140,6 +164,14 @@ QWidget[borderLeft="background"] {{
 }}
 QWidget[borderLeft="on_background"] {{
     border-left: 1px solid "{on_background}";
+    padding-left: 1px;
+}}
+QWidget[borderLeft="error"] {{
+    border-left: 1px solid "{error}";
+    padding-left: 1px;
+}}
+QWidget[borderLeft="on_error"] {{
+    border-left: 1px solid "{on_error}";
     padding-left: 1px;
 }}
 
@@ -178,6 +210,14 @@ QWidget[borderRight="on_background"] {{
     border-right: 1px solid "{on_background}";
     padding-right: 1px;
 }}
+QWidget[borderRight="error"] {{
+    border-right: 1px solid "{error}";
+    padding-right: 1px;
+}}
+QWidget[borderRight="on_error"] {{
+    border-right: 1px solid "{on_error}";
+    padding-right: 1px;
+}}
 
 QWidget[borderTop="none"] {{
     border-top: none;
@@ -214,6 +254,14 @@ QWidget[borderTop="on_background"] {{
     border-top: 1px solid "{on_background}";
     padding-top: 1px;
 }}
+QWidget[borderTop="error"] {{
+    border-top: 1px solid "{error}";
+    padding-top: 1px;
+}}
+QWidget[borderTop="on_error"] {{
+    border-top: 1px solid "{on_error}";
+    padding-top: 1px;
+}}
 
 QWidget[borderRadiusVisible=true] {{
     border-radius: 3px;
@@ -245,6 +293,12 @@ QWidget[color="background"] {{
 }}
 QWidget[color="on_background"] {{
     color: "{on_background}";
+}}
+QWidget[color="error"] {{
+    color: "{error}";
+}}
+QWidget[color="on_error"] {{
+    color: "{on_error}";
 }}
 
 /* ------------------------------------------------------- */
@@ -495,6 +549,7 @@ QPushButton {{
     border: 1px solid "{surface}";
     border-radius: 3px;
     color: "{on_primary}";
+    outline: 0px;
     padding-bottom: 5px;
     padding-left: 10px;
     padding-top: 5px;
@@ -528,6 +583,23 @@ QPushButton[backgroundColor="secondary"]:pressed {{
     background: QLinearGradient(x1: 0, y1: 0, x2: 0, y2: 1, stop: 0 "{secondary_variant.darker.60}", stop: 1 "{secondary_variant.darker.10}");
     border: 1px solid "{secondary_variant.darker.10}";
     border-bottom: 2px solid "{secondary_variant}";
+}}
+QPushButton[error=true] {{
+    background: QLinearGradient(x1: 0, y1: 0, x2: 0, y2: 1, stop: 0 "{error.darker.50}", stop: 1 "{error.darker.25}");
+    border: 1px solid "{error}";
+    color: "{on_error}";
+}}
+QPushButton[error=true]:checked {{
+    background: QLinearGradient(x1: 0, y1: 0, x2: 0, y2: 1, stop: 0 "{error.darker.60}", stop: 1 "{error.darker.10}");
+    border-bottom: 2px solid "{error}";
+}}
+QPushButton[error=true]:hover {{
+    background: QLinearGradient(x1: 0, y1: 0, x2: 0, y2: 1, stop: 0 "{error.darker.40}", stop: 1 "{error.darker.10}");
+}}
+QPushButton[error=true]:pressed {{
+    background: QLinearGradient(x1: 0, y1: 0, x2: 0, y2: 1, stop: 0 "{error.darker.60}", stop: 1 "{error.darker.10}");
+    border: 1px solid "{error.darker.10}";
+    border-bottom: 2px solid "{error}";
 }}
 QPushButton:!enabled {{
     background: QLinearGradient(x1: 0, y1: 0, x2: 0, y2: 1, stop: 0 "{background}", stop: 1 "{background.lighter.15}");

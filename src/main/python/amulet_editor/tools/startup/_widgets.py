@@ -8,7 +8,7 @@ from amulet_editor.models.minecraft import LevelData
 from amulet_editor.models.widgets._icon import QSvgIcon
 from amulet_editor.models.widgets._label import QElidedLabel
 from PySide6.QtCore import QCoreApplication, QEvent, QSize, Qt
-from PySide6.QtGui import QEnterEvent, QImage, QPixmap
+from PySide6.QtGui import QEnterEvent, QFocusEvent, QImage, QPixmap
 from PySide6.QtWidgets import (
     QGridLayout,
     QHBoxLayout,
