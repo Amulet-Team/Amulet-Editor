@@ -228,7 +228,7 @@ class CreateProjectWidget(QWidget):
         self.txe_project_output.setHorizontalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
         self.txe_project_output.setProperty("border", "surface")
         self.txe_project_output.setProperty("borderRadiusVisible", True)
-        self.txe_project_output.setProperty("color", "on_surface")
+        self.txe_project_output.setReadOnly(True)
         self.txe_project_output.setWordWrapMode(QTextOption.WordWrap)
 
         # Create 'Page Content' layout
