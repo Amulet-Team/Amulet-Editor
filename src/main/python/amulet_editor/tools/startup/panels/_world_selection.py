@@ -2,7 +2,7 @@ import pathlib
 from dataclasses import dataclass
 from distutils.version import StrictVersion
 from functools import partial
-from typing import Optional
+from typing import Any, Callable, Iterable, Optional
 
 import amulet
 from amulet_editor.data import build, minecraft
@@ -12,6 +12,7 @@ from amulet_editor.tools.startup._widgets import QIconButton
 from PySide6.QtCore import QCoreApplication, QObject, QSize, Qt, QThread, Signal, Slot
 from PySide6.QtGui import QImage, QPixmap
 from PySide6.QtWidgets import (
+    QButtonGroup,
     QComboBox,
     QFrame,
     QHBoxLayout,
@@ -86,6 +87,9 @@ class WorldSelectionPanel(QWidget):
         self.parser.parsed_level.connect(self.new_world_card)
         self.parser.moveToThread(self._parsing_thread)
 
+        self.btng_world_cards = QButtonGroup(self)
+        self.btng_world_cards.setExclusive(True)
+
         self._world_cards: list[QPixCard] = []
         self._world_cards_filtered: list[QPixCard] = []
 
@@ -102,10 +106,6 @@ class WorldSelectionPanel(QWidget):
         self.btn_sort.clicked.connect(self.toggle_sort)
 
     def card_clicked(self, clicked_card: QPixCard):
-        for card in self._world_cards:
-            card.setChecked(False)
-
-        clicked_card.setChecked(True)
         self.level_data.emit(clicked_card.level_data)
 
     def load_world_cards(self) -> None:
@@ -137,6 +137,7 @@ class WorldSelectionPanel(QWidget):
         world_card.level_data = level_data
 
         self.lyt_search_results.addWidget(world_card)
+        self.btng_world_cards.addButton(world_card)
         world_card.show()
 
         self._world_cards.append(world_card)
@@ -192,20 +193,39 @@ class WorldSelectionPanel(QWidget):
             self.cbx_edition.insertItem(index, edition)
 
     def filter_cards(self) -> None:
-        search_text = self.lne_search_level.text()
+        def search_filter(search: str, card: QPixCard):
+            level_data: LevelData = card.level_data
+            return search.lower() in level_data.name.get_plain_text().lower()
+
+        def edition_filter(edition: str, card: QPixCard):
+            level_data: LevelData = card.level_data
+            return edition == "Any" or edition == level_data.edition
+
+        def version_filter(version: str, card: QPixCard) -> bool:
+            level_data: LevelData = card.level_data
+            return version == "Any" or version in level_data.version
+
+        def multi_filter(
+            filters: list[Callable[[Any], bool]], iterable: Iterable
+        ) -> Iterable:
+            if not filters:
+                return iterable
+            return multi_filter(filters[1:], filter(filters[0], iterable))
+
+        text = self.lne_search_level.text()
         edition = self.cbx_edition.currentText()
         version = self.cbx_version.currentText()
 
-        self._world_cards_filtered = []
-        for world_card in self._world_cards:
-            if (
-                search_text.lower()
-                in world_card.level_data.name.get_plain_text().lower()
-                and (edition == "Any" or edition == world_card.level_data.edition)
-                and (version == "Any" or version in world_card.level_data.version)
-            ):
-                self._world_cards_filtered.append(world_card)
-
+        self._world_cards_filtered = list(
+            multi_filter(
+                [
+                    partial(search_filter, text),
+                    partial(edition_filter, edition),
+                    partial(version_filter, version),
+                ],
+                self._world_cards,
+            )
+        )
         self.sort_cards()
 
     def sort_cards(self):
@@ -303,6 +323,10 @@ class WorldSelectionPanel(QWidget):
         self.frm_sort.setFrameShape(QFrame.NoFrame)
         self.frm_sort.setFrameShadow(QFrame.Raised)
         self.frm_sort.setLayout(self.lyt_sort)
+        self.frm_sort.setProperty("border", "surface")
+        self.frm_sort.setProperty("borderLeft", "none")
+        self.frm_sort.setProperty("borderRight", "none")
+        self.frm_sort.setProperty("borderTop", "none")
 
         self.cbx_sort = QComboBox(self.wgt_search_options)
         self.cbx_sort.setFixedHeight(25)
@@ -315,26 +339,26 @@ class WorldSelectionPanel(QWidget):
 
         self.lyt_sort.addWidget(self.cbx_sort)
         self.lyt_sort.addWidget(self.btn_sort)
-        self.lyt_sort.setContentsMargins(0, 0, 0, 0)
+        self.lyt_sort.setContentsMargins(0, 0, 0, 10)
         self.lyt_sort.setSpacing(5)
 
         self.lyt_search_options = QVBoxLayout(self.scr_search_options)
+        self.lyt_search_options.addWidget(self.lbl_sort)
+        self.lyt_search_options.addWidget(self.frm_sort)
+        self.lyt_search_options.addSpacing(5)
         self.lyt_search_options.addWidget(self.lbl_edition)
         self.lyt_search_options.addWidget(self.cbx_edition)
         self.lyt_search_options.addSpacing(5)
         self.lyt_search_options.addWidget(self.lbl_version)
         self.lyt_search_options.addWidget(self.cbx_version)
-        self.lyt_search_options.addSpacing(5)
-        self.lyt_search_options.addWidget(self.lbl_sort)
-        self.lyt_search_options.addWidget(self.frm_sort)
         self.lyt_search_options.setAlignment(Qt.AlignTop)
-        self.lyt_search_options.setContentsMargins(7, 7, 7, 7)
 
         self.wgt_search_options.setLayout(self.lyt_search_options)
         self.wgt_search_options.setProperty("backgroundColor", "background")
 
+        # Add four to ensure max height is large enough to not need scrollbar
         self.scr_search_options.setMaximumHeight(
-            self.wgt_search_options.sizeHint().height()
+            self.wgt_search_options.sizeHint().height() + 4
         )
 
         # Configure 'Search Results'
@@ -353,7 +377,6 @@ class WorldSelectionPanel(QWidget):
 
         self.lyt_search_results = QVBoxLayout(self.scr_search_results)
         self.lyt_search_results.setAlignment(Qt.AlignTop)
-        self.lyt_search_results.setContentsMargins(5, 5, 5, 5)
 
         self.wgt_search_results.setLayout(self.lyt_search_results)
         self.wgt_search_results.setProperty("backgroundColor", "background")

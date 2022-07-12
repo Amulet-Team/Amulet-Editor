@@ -10,11 +10,31 @@ from amulet_editor.data import paths
 from amulet_editor.data.project import _level
 from amulet_editor.models.generic import Observer
 from amulet_editor.models.minecraft import LevelData
+from amulet_editor.models.project import MCProjectMeta
 
 _root: Optional[str] = None
 _projects_json = os.path.join(paths.user_directory(), "projects.json")
 
 changed = Observer(str)
+
+
+def list_projects() -> list[MCProjectMeta]:
+    """List of metadata for all recent projects."""
+
+    if os.path.exists(_projects_json):
+        try:
+            with open(_projects_json) as _file:
+                projects: list[dict[str, Any]] = json.load(_file)
+        except JSONDecodeError:
+            projects = []
+    else:
+        projects = []
+
+    metaprojects = []
+    for project in projects:
+        metaprojects.append(MCProjectMeta(**project))
+
+    return metaprojects
 
 
 def remember_project(path: str) -> None:
@@ -23,20 +43,20 @@ def remember_project(path: str) -> None:
     if os.path.exists(_projects_json):
         try:
             with open(_projects_json) as _file:
-                _projects: list[dict[str, Any]] = json.load(_file)
+                projects: list[dict[str, Any]] = json.load(_file)
         except JSONDecodeError:
-            _projects = []
+            projects = []
     else:
-        _projects = []
+        projects = []
 
-    for _project in _projects:
-        if _project["path"] == path:
-            _project.update(
+    for project in projects:
+        if project["path"] == path:
+            project.update(
                 {"last_opened": datetime.now().replace(tzinfo=timezone.utc).timestamp()}
             )
             break
     else:
-        _projects.append(
+        projects.append(
             {
                 "path": f"{path}",
                 "last_opened": datetime.now().replace(tzinfo=timezone.utc).timestamp(),
@@ -44,7 +64,7 @@ def remember_project(path: str) -> None:
         )
 
     with open(_projects_json, "w") as _file:
-        json.dump(_projects, _file, indent=2)
+        json.dump(projects, _file, indent=2)
 
 
 def root() -> str:

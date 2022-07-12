@@ -4,7 +4,7 @@ from shutil import copy, copytree
 from typing import Callable, Optional
 
 from amulet_editor.application import appearance
-from amulet_editor.data import packages
+from amulet_editor.data import packages, project
 from amulet_editor.data.project import _files
 from amulet_editor.models.generic import Observer
 from amulet_editor.tools.programs import Programs
@@ -24,51 +24,7 @@ from PySide6.QtWidgets import (
 )
 
 
-class ProjectGenerator(QObject):
-
-    progress_value = Signal(int)
-    progress_max = Signal(int)
-    status = Signal(str)
-
-    @Slot(str)
-    def generate_project(self, project_data: ProjectData) -> None:
-        self.copied_files = 0
-
-        def copy_verbose(source: str, destination: str):
-            self.status.emit(
-                '<span style="color: {};">Copying</span> {}'.format(
-                    appearance.theme().secondary_variant.get_hex(), source
-                )
-            )
-
-            copy(source, destination)
-            self.copied_files += 1
-            self.progress_value.emit(self.copied_files)
-
-        self.progress_max.emit(self.get_file_count(project_data.level_directory))
-
-        source = project_data.level_directory
-        destination = os.path.join(project_data.directory, project_data.name, "world")
-        copytree(source, destination, copy_function=copy_verbose)
-
-        self.status.emit(
-            '<span style="color: {};">Project</span> {}'.format(
-                appearance.theme().secondary_variant.get_hex(), project_data.directory
-            )
-        )
-
-    def get_file_count(self, root: str) -> int:
-        count = 0
-        for path in os.scandir(root):
-            if path.is_file():
-                count += 1
-            else:
-                count += self.get_file_count(path)
-
-        return count
-
-
-class CreateProjectMenu(QObject):
+class OpenProjectMenu(QObject):
 
     generate_project = Signal(ProjectData)
 
@@ -82,22 +38,13 @@ class CreateProjectMenu(QObject):
         self._enable_back = Observer(bool)
         self._enable_next = Observer(bool)
 
-        self._widget = CreateProjectWidget()
-        self._widget.btn_create_project.clicked.connect(partial(self.create_project))
+        self._widget = OpenProjectWidget()
 
-        self._generator_thread = QThread()
-        self._progress_max = 0
-
-        self.generator = ProjectGenerator()
-        self.generate_project.connect(self.generator.generate_project)
-        self.generator.progress_value.connect(self.set_progress)
-        self.generator.progress_max.connect(self.set_progress_max)
-        self.generator.status.connect(self.display_status)
-        self.generator.moveToThread(self._generator_thread)
+        print(project.list_projects())
 
     @property
     def title(self) -> str:
-        return "Create Project"
+        return "Open Project"
 
     @property
     def enable_cancel(self) -> Observer:
@@ -112,10 +59,7 @@ class CreateProjectMenu(QObject):
         return self._enable_next
 
     def navigated(self, destination) -> None:
-        if destination == Navigate.HERE:
-            self._widget.lbl_project_name.setText(self.project_data.name)
-            self._widget.lbl_project_directory.setText(self.project_data.directory)
-        elif destination == Navigate.NEXT:
+        if destination == Navigate.NEXT:
             tools = packages.list_tools()
             for tool in reversed(tools):
                 packages.disable_tool(tool)
@@ -132,58 +76,15 @@ class CreateProjectMenu(QObject):
     def next_menu(self) -> Optional[Menu]:
         return None
 
-    def create_project(self) -> None:
-        self._widget.btn_create_project.setEnabled(False)
-        self._enable_cancel.emit(False)
-        self._enable_back.emit(False)
 
-        project_folder = os.path.join(
-            self.project_data.directory, self.project_data.name
-        )
-        try:
-            os.makedirs(project_folder)
-        except OSError:
-            self.project_error("Error: Project already exists")
-        else:
-            self._generator_thread.start()
-            self.generate_project.emit(self.project_data)
-
-    def project_error(self, message: str) -> None:
-        txe_project_output = self._widget.txe_project_output
-        txe_project_output.appendHtml(
-            '<span style="color: {};">{}</span>'.format(
-                appearance.theme().error.get_hex(), message
-            )
-        )
-
-        self._enable_cancel.emit(True)
-        self._enable_back.emit(True)
-
-    def set_progress(self, progress: int) -> None:
-        self._widget.pbr_project_progress.setValue(progress)
-        if progress == self._progress_max and self._generator_thread.isRunning():
-            self._generator_thread.exit()
-            self._enable_next.emit(True)
-
-    def set_progress_max(self, progress_max: int) -> None:
-        self._widget.pbr_project_progress.setRange(0, progress_max)
-        self._progress_max = progress_max
-
-    def display_status(self, status: str) -> None:
-        self._widget.txe_project_output.appendHtml(status)
-        self._widget.txe_project_output.verticalScrollBar().setValue(
-            self._widget.txe_project_output.verticalScrollBar().maximum()
-        )
-
-
-class CreateProjectWidget(QWidget):
+class OpenProjectWidget(QWidget):
     def __init__(self) -> None:
         super().__init__()
 
         self.setupUi()
 
     def setupUi(self):
-        # Create 'Project Overview' frame
+        # Open 'Project Overview' frame
         self.lbl_project_overview = QLabel(self)
         self.lbl_project_overview.setProperty("color", "on_primary")
 
@@ -208,7 +109,7 @@ class CreateProjectWidget(QWidget):
         lyt_project_overview.addWidget(self.lbl_project_directory)
         lyt_project_overview.setSpacing(5)
 
-        # 'Create Project' frame
+        # 'Open Project' frame
         lyt_create_project = QHBoxLayout(self)
 
         self.frm_create_project = QFrame(self)
@@ -236,7 +137,7 @@ class CreateProjectWidget(QWidget):
         self.txe_project_output.setReadOnly(True)
         self.txe_project_output.setWordWrapMode(QTextOption.WordWrap)
 
-        # Create 'Page Content' layout
+        # Open 'Page Content' layout
         layout = QVBoxLayout(self)
         layout.addSpacing(10)
         layout.addWidget(self.lbl_project_overview)
@@ -253,6 +154,6 @@ class CreateProjectWidget(QWidget):
     def retranslateUi(self):
         # Disable formatting to condense tranlate functions
         # fmt: off
-        self.lbl_project_overview.setText(QCoreApplication.translate("CreateProjectWidget", "Project Overview", None))
-        self.btn_create_project.setText(QCoreApplication.translate("CreateProjectWidget", "Create Project", None))
+        self.lbl_project_overview.setText(QCoreApplication.translate("OpenProjectWidget", "Project Overview", None))
+        self.btn_create_project.setText(QCoreApplication.translate("OpenProjectWidget", "Open Project", None))
         # fmt: on

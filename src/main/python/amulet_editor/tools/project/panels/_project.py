@@ -64,9 +64,7 @@ class ProjectPanel(QWidget):
             )
 
         self.trv_directory.setRootIndex(self.model.index(folder))
-        self.crd_directory.lbl_description.setText(
-            self.level_data.name.get_plain_text()
-        )
+        self.crd_directory.lbl_description.setText(os.path.basename(folder))
 
         try:
             self.crd_directory.clicked.disconnect()

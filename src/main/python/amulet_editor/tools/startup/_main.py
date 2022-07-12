@@ -4,6 +4,7 @@ from amulet_editor.models.package import AmuletTool, AmuletView
 from amulet_editor.models.widgets import QMenuWidget
 from amulet_editor.tools.startup._models import Menu, Navigate
 from amulet_editor.tools.startup.pages._new_project import NewProjectMenu
+from amulet_editor.tools.startup.pages._open_project import OpenProjectMenu
 from amulet_editor.tools.startup.pages._open_world import OpenWorldMenu
 from amulet_editor.tools.startup.pages._startup import StartupPage
 from amulet_editor.tools.startup.panels._startup import StartupPanel
@@ -64,6 +65,9 @@ class StartupManager(QObject):
         # Connect signals
         self.startup_page.crd_open_level.clicked.connect(
             partial(self.set_menu_page, OpenWorldMenu)
+        )
+        self.startup_page.crd_open_project.clicked.connect(
+            partial(self.set_menu_page, OpenProjectMenu)
         )
         self.startup_page.crd_new_project.clicked.connect(
             partial(self.set_menu_page, NewProjectMenu)
