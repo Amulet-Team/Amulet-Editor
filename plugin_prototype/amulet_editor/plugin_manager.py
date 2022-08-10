@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import json
 import logging
 import os.path
@@ -6,6 +8,8 @@ import weakref
 from enum import Enum
 from dataclasses import dataclass
 import glob
+import importlib.util
+import sys
 
 if TYPE_CHECKING:
     from .plugin import Plugin
@@ -43,6 +47,8 @@ class PluginManager:
     def __init__(self, api: AppPrivateAPI):
         self.__api = weakref.ref(api)
         self.__plugins = {}
+
+    def init(self):
         self.__find_plugins()
         self.__enable_plugins()
 
@@ -95,16 +101,36 @@ class PluginManager:
         # load from a config file which plugins were enabled last session and enable them.
         # for simplicity, we are just going to enable all plugins
         for plugin_identifier in list(self.__plugins):
-            self.enable_plugin(plugin_identifier)
+            try:
+                self.enable_plugin(plugin_identifier)
+            except Exception as e:
+                log.exception(e)
 
     def __load_plugin(self, plugin_container: PluginContainer):
         """Import and load a plugin."""
         plugin_container.plugin_state = PluginState.Enabled
-        raise NotImplementedError  # TODO: load the plugin class
+        path = plugin_container.plugin_path
+        if os.path.isdir(path):
+            path = os.path.join(path, "__init__.py")
+        spec = importlib.util.spec_from_file_location(
+            plugin_container.plugin_identifier, path
+        )
+        if spec is None:
+            raise Exception
+        mod = importlib.util.module_from_spec(spec)
+        if mod is None:
+            raise Exception
+        sys.modules[plugin_container.plugin_identifier] = mod
+        spec.loader.exec_module(mod)
+        plugin_container.plugin_instance = mod.plugin(self.api)
         plugin_container.plugin_instance.on_load()
 
     def enable_plugin(self, plugin_identifier: str):
-        """Enable a plugin"""
+        """Enable a plugin
+
+        :param plugin_identifier: The identifier of the plugin to enable
+        :raises: Exception if an error happened when loading the plugin.
+        """
         plugin_container = self.__plugins[plugin_identifier]
         if plugin_container.plugin_state is not PluginState.Disabled:
             return
@@ -133,8 +159,12 @@ class PluginManager:
                     for dep in plugin_container.depends
                 ):
                     # all dependencies are satisfied so the plugin can be enabled.
-                    self.__load_plugin(plugin_container)
-                    enabled_count += 1
+                    try:
+                        self.__load_plugin(plugin_container)
+                    except Exception as e:
+                        log.exception(e)
+                    else:
+                        enabled_count += 1
 
     def __unload_plugin(self, plugin_container: PluginContainer):
         """Unload and destroy a plugin."""
@@ -144,6 +174,7 @@ class PluginManager:
         except Exception as e:
             log.exception(e, exc_info=e)
         plugin_container.plugin_instance = None
+        sys.modules.pop(plugin_container.plugin_identifier, None)
 
     def disable_plugin(self, plugin_identifier: str):
         """Disable a plugin and inactive all dependents."""

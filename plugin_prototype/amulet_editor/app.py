@@ -20,6 +20,7 @@ class AppPrivateAPI:
     def __init__(self, app: App):
         self.__app = weakref.ref(app)
         self.plugin_manager = PluginManager(self)
+        self.plugin_manager.init()
 
     @property
     def app(self) -> App:

@@ -15,8 +15,8 @@ class Plugin:
     PluginDepends: list[str] = []
 
     @final
-    def __init__(self, app: AppPrivateAPI):
-        self.__api = weakref.ref(app)
+    def __init__(self, api: AppPrivateAPI):
+        self.__api = weakref.ref(api)
 
     def on_load(self):
         """
@@ -41,7 +41,7 @@ class Plugin:
         return self.__api().get_plugin(plugin_identifier)
 
     @final
-    def register_view(self, view_name: str, view: Type[View]):
+    def register_view(self, plugin: Plugin, view_name: str, view: Type[View]):
         """Register a new view"""
         # this would be better split into a couple of functions
         self.__api().register_view(self, view_name, view)
