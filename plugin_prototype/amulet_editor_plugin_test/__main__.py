@@ -1,4 +1,4 @@
-from amulet_editor.app import App
+from amulet_editor_plugin_test.app import App
 
 
 def main():
