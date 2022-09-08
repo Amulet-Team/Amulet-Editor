@@ -1,18 +1,23 @@
 import os
+import pathlib
 from functools import partial
 from typing import Callable, Optional, Union
 
 import amulet
-from amulet_editor.data import packages
+from amulet_editor.data import build, packages
 from amulet_editor.data.project import _files
 from amulet_editor.models.generic import Observer
 from amulet_editor.models.minecraft import LevelData
+from amulet_editor.models.widgets import SearchPanel
 from amulet_editor.tools.programs import Programs
 from amulet_editor.tools.project import Project
-from amulet_editor.tools.startup._models import Menu, Navigate
-from amulet_editor.tools.startup._widgets import QIconButton, QLevelSelectionCard
-from amulet_editor.tools.startup.panels._world_selection import WorldSelectionPanel
-from PySide6.QtCore import QCoreApplication, QObject, QSize
+from amulet_editor.tools.startup._models import Menu, Navigate, ParsedLevel
+from amulet_editor.tools.startup._widgets import (
+    QIconButton,
+    QLevelCard,
+    QLevelSelectionCard,
+)
+from PySide6.QtCore import QCoreApplication, QObject, QSize, Signal
 from PySide6.QtWidgets import (
     QApplication,
     QFileDialog,
@@ -23,6 +28,34 @@ from PySide6.QtWidgets import (
     QVBoxLayout,
     QWidget,
 )
+
+
+def sort_name():
+    return True
+
+class LevelParser(QObject):
+
+    result = Signal(ParsedLevel)
+
+    def parse(self, level_path: str):
+        level_data = LevelData(amulet.load_format(level_path))
+        parsed_level = ParsedLevel(level_data)
+
+        parsed_level.icon_path = (
+            level_data.icon_path
+            if level_data.icon_path is not None
+            else build.get_resource("images/missing_world_icon.png")
+        )
+        parsed_level.level_name = level_data.name.get_html(font_weight=600)
+        parsed_level.file_name = pathlib.PurePath(level_data.path).name
+        parsed_level.version = f"{level_data.edition} - {level_data.version}"
+        parsed_level.last_played = (
+            level_data.last_played.astimezone(tz=None)
+            .strftime("%B %d, %Y %I:%M %p")
+            .replace(" 0", " ")
+        )
+
+        self.result.emit(parsed_level)
 
 
 class OpenWorldMenu(QObject):
@@ -40,8 +73,11 @@ class OpenWorldMenu(QObject):
         self._widget.btn_level_directory.clicked.connect(partial(self.import_level))
         self._widget.crd_select_level.clicked.connect(partial(self.select_level))
 
-        self._world_selection_panel = WorldSelectionPanel()
-        self._world_selection_panel.level_data.connect(self.set_level)
+        self._search_panel = SearchPanel()
+        self._search_panel.setSearchItem(QLevelCard)
+        self._search_panel.setParser(LevelParser())
+        self._search_panel.addSorter()
+        self._search_panel.data.connect(self.set_level)
 
         QApplication.instance().focusChanged.connect(self.check_focus)
 
@@ -93,7 +129,7 @@ class OpenWorldMenu(QObject):
 
     def select_level(self):
         if self._widget.crd_select_level.isChecked():
-            self.set_panel(self._world_selection_panel)
+            self.set_panel(self._search_panel)
         else:
             self.set_panel(None)
 

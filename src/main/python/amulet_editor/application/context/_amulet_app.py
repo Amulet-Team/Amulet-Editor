@@ -2,11 +2,11 @@ import os
 import subprocess
 import sys
 
-from amulet_editor.data import packages
-from amulet_editor.data.build import PUBLIC_DATA
 from amulet_editor.application import appearance
 from amulet_editor.application.appearance import Theme
 from amulet_editor.application.windows._amulet_window import AmuletWindow
+from amulet_editor.data import packages
+from amulet_editor.data.build import PUBLIC_DATA
 from PySide6.QtCore import Qt
 from PySide6.QtWidgets import QApplication
 
@@ -15,7 +15,6 @@ class AmuletEditor:
     def __init__(self, app: QApplication) -> None:
         self._app = app
         self._app.setApplicationName(PUBLIC_DATA["app_name"])
-        self._app.setAttribute(Qt.AA_UseHighDpiPixmaps)
 
         # Load builtin packages
         packages.install_builtins()

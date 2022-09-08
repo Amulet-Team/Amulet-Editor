@@ -1,36 +1,29 @@
-import pathlib
-from dataclasses import dataclass
-from distutils.version import StrictVersion
 from functools import partial
-from typing import Optional, Protocol
+from typing import Any, Callable, Optional, Protocol
 
-import amulet
-from amulet_editor.data import build, minecraft
-from amulet_editor.models.minecraft import LevelData
-from amulet_editor.models.widgets import QPixCard
-from amulet_editor.tools.startup._widgets import QIconButton
-from PySide6.QtCore import QCoreApplication, QObject, QSize, Qt, QThread, Signal, Slot
-from PySide6.QtGui import QImage, QPixmap
+from amulet_editor.models.widgets import QIconButton
+from PySide6.QtCore import QCoreApplication, QSize, Qt, QThread, Signal
 from PySide6.QtWidgets import (
+    QButtonGroup,
     QComboBox,
     QFrame,
     QHBoxLayout,
     QLabel,
     QLineEdit,
+    QPushButton,
     QScrollArea,
     QVBoxLayout,
     QWidget,
 )
 
 
-@dataclass
-class ParsedLevel:
-    level_data: LevelData
-    icon_path: str = ""
-    level_name: str = ""
-    file_name: str = ""
-    version: str = ""
-    last_played: str = ""
+class SearchItem(Protocol):
+    """Item should be a `QPushButton` that can be constructed using only the
+    `result` emitted from a paired `DataParser`"""
+
+    @property
+    def data(self) -> Any:
+        ...
 
 
 class DataParser(Protocol):
@@ -38,7 +31,7 @@ class DataParser(Protocol):
 
     result: Signal
 
-    def parse(self, data: object) -> None:
+    def parse(self, raw_data: Any) -> None:
         """This method will emit the parsed data from the `result` Signal."""
         ...
 
@@ -50,12 +43,15 @@ class DataParser(Protocol):
 class SearchPanel(QWidget):
 
     data = Signal(object)
-    parse = Signal(object)
+    raw_data = Signal(object)
 
     def __init__(self) -> None:
         super().__init__()
 
         self.setupUi()
+
+        self.btng_items = QButtonGroup()
+        self.btng_items.setExclusive(True)
 
         self.cbx_sort: Optional[QComboBox] = None
         self.btn_sort: Optional[QIconButton] = None
@@ -65,77 +61,38 @@ class SearchPanel(QWidget):
         self.parsing_thread = QThread()
         self.parsing_await = 0
 
-        self.world_cards: list[QPixCard] = []
-        self.world_cards_filtered: list[QPixCard] = []
+        self.search_item: Optional[Callable[[Any], SearchItem]] = None
 
-        self.minecraft_editions: list[str] = []
-        self.minecraft_versions: list[str] = []
+        self.filters: list[Callable] = []
+        self.sorters: dict[str, Callable] = {"Search": None}
 
-        self.load_world_cards()
+        self.items: list[QPushButton] = []
+        self.filtered_items: list[QPushButton] = []
 
-        self.lne_search_bar.textChanged.connect(self.filter_cards)
+        self.lne_search_bar.textChanged.connect(self.filter_items)
         self.btn_search_options.clicked.connect(self.show_search_options)
-        self.cbx_edition.currentIndexChanged.connect(self.filter_cards)
-        self.cbx_version.currentIndexChanged.connect(self.filter_cards)
-        self.cbx_sort.currentIndexChanged.connect(self.sort_cards)
+        self.cbx_sort.currentIndexChanged.connect(self.sort_items)
         self.btn_sort.clicked.connect(self.toggle_sort)
 
-    def card_clicked(self, clicked_card: QPixCard):
-        for card in self.world_cards:
-            card.setChecked(False)
+    def item_clicked(self, item: SearchItem):
+        self.data.emit(item.data)
 
-        clicked_card.setChecked(True)
-        self.level_data.emit(clicked_card.level_data)
+    # def load_world_cards(self) -> None:
+    #     level_paths = minecraft.locate_levels(minecraft.save_directories())
 
-    def load_world_cards(self) -> None:
-        level_paths = minecraft.locate_levels(minecraft.save_directories())
+    #     if not any(c.isalpha() for c in level_data.version):
+    #         version = "{}.{}".format(*level_data.version.split("."))
+    #         self.update_filters(version, level_data.edition)
+    #     elif level_data.version == "Unknown":
+    #         version = "Unknown"
+    #         self.update_filters(version, level_data.edition)
+    #     else:
+    #         self.update_filters(edition=level_data.edition)
 
-        self.parsing_thread.start()
-        for path in level_paths:
-            self.parsing_levels += 1
-            self.parse.emit(path)
-
-    def new_world_card(self, parsed_level: ParsedLevel):
-        self.parsing_levels -= 1
-        if self.parsing_levels == 0 and self.parsing_thread.isRunning():
-            self.parsing_thread.exit()
-
-        level_data = parsed_level.level_data
-
-        level_icon = QPixmap(QImage(parsed_level.icon_path))
-        level_icon = level_icon.scaledToHeight(80)
-
-        world_card = QPixCard(level_icon, self.wgt_search_results)
-        world_card.addLabel(parsed_level.level_name)
-        world_card.addLabel(parsed_level.file_name)
-        world_card.addLabel(parsed_level.version)
-        world_card.addLabel(parsed_level.last_played)
-        world_card.setCheckable(True)
-        world_card.setFocusPolicy(Qt.NoFocus)
-        world_card.clicked.connect(partial(self.card_clicked, world_card))
-        world_card.level_data = level_data
-
-        self.lyt_search_results.addWidget(world_card)
-        world_card.show()
-
-        self.world_cards.append(world_card)
-
-        if not any(c.isalpha() for c in level_data.version):
-            version = "{}.{}".format(*level_data.version.split("."))
-            self.update_filters(version, level_data.edition)
-        elif level_data.version == "Unknown":
-            version = "Unknown"
-            self.update_filters(version, level_data.edition)
-        else:
-            self.update_filters(edition=level_data.edition)
-
-        self.filter_cards()
+    #     self.filter_items()
 
     def show_search_options(self) -> None:
-        if self.btn_search_options.isChecked():
-            self.scr_search_options.setVisible(True)
-        else:
-            self.scr_search_options.setVisible(False)
+        self.scr_search_options.setVisible(self.btn_search_options.isChecked())
 
     def toggle_sort(self) -> None:
         self.sort_descending = not self.sort_descending
@@ -144,85 +101,119 @@ class SearchPanel(QWidget):
         else:
             self.btn_sort.setIcon("sort-ascending.svg")
 
-        self.sort_cards()
+        self.sort_items()
 
-    def update_filters(
-        self, version: Optional[str] = None, edition: Optional[str] = None
-    ) -> None:
-        if version is not None and version not in self.minecraft_versions:
-            self.minecraft_versions.append(version)
-            if "Unknown" not in self.minecraft_versions:
-                self.minecraft_versions.sort(key=StrictVersion, reverse=True)
-            else:
-                self.minecraft_versions.remove("Unknown")
-                self.minecraft_versions.sort(key=StrictVersion, reverse=True)
-                self.minecraft_versions.append("Unknown")
+    def create_item(self, __raw_data: Any, /) -> None:
+        self.raw_data.emit(__raw_data)
 
-            index = self.minecraft_versions.index(version) + 1
+    def _create_item(self, data: Any) -> None:
+        # if version is not None and version not in self.minecraft_versions:
+        #     self.minecraft_versions.append(version)
+        #     if "Unknown" not in self.minecraft_versions:
+        #         self.minecraft_versions.sort(key=StrictVersion, reverse=True)
+        #     else:
+        #         self.minecraft_versions.remove("Unknown")
+        #         self.minecraft_versions.sort(key=StrictVersion, reverse=True)
+        #         self.minecraft_versions.append("Unknown")
 
-            self.cbx_version.insertItem(index, version)
+        #     index = self.minecraft_versions.index(version) + 1
 
-        if edition is not None and edition not in self.minecraft_editions:
-            self.minecraft_editions.append(edition)
-            self.minecraft_editions.sort(reverse=True)
+        #     self.cbx_version.insertItem(index, version)
 
-            index = self.minecraft_editions.index(edition) + 1
+        # if edition is not None and edition not in self.minecraft_editions:
+        #     self.minecraft_editions.append(edition)
+        #     self.minecraft_editions.sort(reverse=True)
 
-            self.cbx_edition.insertItem(index, edition)
+        #     index = self.minecraft_editions.index(edition) + 1
 
-    def filter_cards(self) -> None:
-        search_text = self.lne_search_bar.text()
-        edition = self.cbx_edition.currentText()
-        version = self.cbx_version.currentText()
+        #     self.cbx_edition.insertItem(index, edition)
+        item = self.search_item(data)
+        self.btng_items.addButton(item)
 
-        self.world_cards_filtered = []
-        for world_card in self.world_cards:
-            if (
-                search_text.lower()
-                in world_card.level_data.name.get_plain_text().lower()
-                and (edition == "Any" or edition == world_card.level_data.edition)
-                and (version == "Any" or version in world_card.level_data.version)
-            ):
-                self.world_cards_filtered.append(world_card)
+        self.items.append(item)
+        self.filter_items()
 
-        self.sort_cards()
+    def filter_items(self) -> None:
+        # search_text = self.lne_search_bar.text()
+        # edition = self.cbx_edition.currentText()
+        # version = self.cbx_version.currentText()
 
-    def sort_cards(self):
+        # self.world_items_filtered = []
+        # for world_card in self.world_items:
+        #     if (
+        #         search_text.lower()
+        #         in world_card.level_data.name.get_plain_text().lower()
+        #         and (edition == "Any" or edition == world_card.level_data.edition)
+        #         and (version == "Any" or version in world_card.level_data.version)
+        #     ):
+        #         self.world_items_filtered.append(world_card)
+
+        def multi_filter(filters, iterable):
+            if not filters:
+                return iterable
+            return multi_filter(filters[1:], filter(filters[0], iterable))
+
+        self.filtered_items = multi_filter(self.filters, self.items)
+
+        self.sort_items()
+
+    def sort_items(self):
         sort_by = self.cbx_sort.currentText()
 
-        if sort_by == "Name":
-            self.world_cards_filtered.sort(
-                key=lambda card: "".join(
-                    char
-                    for char in card.level_data.name.get_plain_text()
-                    if char.isalnum()
-                ),
-                reverse=self.sort_descending,
-            )
-        elif sort_by == "Last Played":
-            self.world_cards_filtered.sort(
-                key=lambda card: card.level_data.last_played,
-                reverse=self.sort_descending,
-            )
+        self.filtered_items = sorted(
+            self.filtered_items,
+            key=self.sorters.get(sort_by, None),
+            reverse=self.sort_descending,
+        )
 
-        for world_card in self.wgt_search_results.children():
-            if isinstance(world_card, QPixCard):
-                world_card.hide()
-                self.wgt_search_results.layout().removeWidget(world_card)
+        # if sort_by == "Name":
+        #     self.world_items_filtered.sort(
+        #         key=lambda card: "".join(
+        #             char
+        #             for char in card.level_data.name.get_plain_text()
+        #             if char.isalnum()
+        #         ),
+        #         reverse=self.sort_descending,
+        #     )
+        # elif sort_by == "Last Played":
+        #     self.world_items_filtered.sort(
+        #         key=lambda card: card.level_data.last_played,
+        #         reverse=self.sort_descending,
+        #     )
 
-        for world_card in self.world_cards_filtered:
-            self.wgt_search_results.layout().addWidget(world_card)
-            world_card.show()
+        for item in self.wgt_search_results.children():
+            if isinstance(item, QPushButton):
+                item.hide()
+                self.wgt_search_results.layout().removeWidget(item)
 
-    def addFilter(self, label: str, filters: list[str]) -> QComboBox:
+        for item in self.filtered_items:
+            self.wgt_search_results.layout().addWidget(item)
+            item.show()
+
+    def setParser(self, parser: DataParser) -> None:
+        self.parser = parser
+        self.raw_data.connect(self.parser.parse)
+        self.parser.result.connect(self._create_item)
+        self.parser.moveToThread(self.parsing_thread)
+
+    def setSearchItem(self, search_item: Callable[[Any], SearchItem]) -> None:
+        self.search_item = search_item
+
+    def addFilter(
+        self,
+        label: str,
+        options: list[str],
+        __filter: Callable[[Callable[[], str], Any], bool],
+    ) -> None:
         lbl_filter = QLabel(label, self.wgt_search_options)
         lbl_filter.setProperty("color", "on_primary")
 
         cbx_filter = QComboBox(self.wgt_search_options)
         cbx_filter.setFixedHeight(25)
+        cbx_filter.currentIndexChanged.connect(self.filter_items)
 
-        for filter in filters:
-            cbx_filter.addItem(filter)
+        for option in options:
+            cbx_filter.addItem(option)
 
         self.lyt_search_options.addSpacing(5)
         self.lyt_search_options.addWidget(lbl_filter)
@@ -233,58 +224,60 @@ class SearchPanel(QWidget):
             self.wgt_search_options.sizeHint().height() + 4
         )
 
-        return cbx_filter
+        self.filters.append(partial(__filter, cbx_filter.currentText))
 
-    def addSorter(self, sort_options: list[str]) -> None:
-        lbl_sort = QLabel(self.wgt_search_options)
-        lbl_sort.setProperty("color", "on_primary")
-        lbl_sort.setText(
-            QCoreApplication.translate("NewProjectTypePage", "Sort Order", None)
-        )
+    def addSorter(self, option: str, __sorter: Callable[[list[Any]], int]) -> None:
+        if self.cbx_sort is None:
+            lbl_sort = QLabel(self.wgt_search_options)
+            lbl_sort.setProperty("color", "on_primary")
+            lbl_sort.setText(
+                QCoreApplication.translate("NewProjectTypePage", "Sort Order", None)
+            )
 
-        lyt_sort = QHBoxLayout(self)
+            lyt_sort = QHBoxLayout(self)
 
-        frm_sort = QFrame(self)
-        frm_sort.setFrameShape(QFrame.NoFrame)
-        frm_sort.setFrameShadow(QFrame.Raised)
-        frm_sort.setLayout(lyt_sort)
-        frm_sort.setProperty("border", "surface")
-        frm_sort.setProperty("borderLeft", "none")
-        frm_sort.setProperty("borderRight", "none")
-        frm_sort.setProperty("borderTop", "none")
+            frm_sort = QFrame(self)
+            frm_sort.setFrameShape(QFrame.NoFrame)
+            frm_sort.setFrameShadow(QFrame.Raised)
+            frm_sort.setLayout(lyt_sort)
+            frm_sort.setProperty("border", "surface")
+            frm_sort.setProperty("borderLeft", "none")
+            frm_sort.setProperty("borderRight", "none")
+            frm_sort.setProperty("borderTop", "none")
 
-        self.cbx_sort = QComboBox(self.wgt_search_options)
-        self.cbx_sort.setFixedHeight(25)
+            self.cbx_sort = QComboBox(self.wgt_search_options)
+            self.cbx_sort.setFixedHeight(25)
+            self.cbx_sort.currentIndexChanged.connect(self.sort_items)
 
-        for option in sort_options:
-            self.cbx_sort.addItem(option)
+            self.btn_sort = QIconButton(frm_sort)
+            self.btn_sort.setFixedSize(QSize(27, 27))
+            self.btn_sort.setIcon("sort-descending.svg")
+            self.btn_sort.setIconSize(QSize(15, 15))
+            self.btn_sort.setProperty("backgroundColor", "primary")
 
-        self.btn_sort = QIconButton(frm_sort)
-        self.btn_sort.setFixedSize(QSize(27, 27))
-        self.btn_sort.setIcon("sort-descending.svg")
-        self.btn_sort.setIconSize(QSize(15, 15))
-        self.btn_sort.setProperty("backgroundColor", "primary")
+            lyt_sort.addWidget(self.cbx_sort)
+            lyt_sort.addWidget(self.btn_sort)
+            lyt_sort.setContentsMargins(0, 0, 0, 10)
+            lyt_sort.setSpacing(5)
 
-        lyt_sort.addWidget(self.cbx_sort)
-        lyt_sort.addWidget(self.btn_sort)
-        lyt_sort.setContentsMargins(0, 0, 0, 10)
-        lyt_sort.setSpacing(5)
+            self.lyt_search_options.insertWidget(0, lbl_sort)
+            self.lyt_search_options.insertWidget(1, frm_sort)
+            self.lyt_search_options.addSpacing(5)
 
-        self.lyt_search_options.insertWidget(0, lbl_sort)
-        self.lyt_search_options.insertWidget(1, frm_sort)
-        self.lyt_search_options.addSpacing(5)
+            # Add four to ensure max height is large enough to not need scrollbar
+            self.scr_search_options.setMaximumHeight(
+                self.wgt_search_options.sizeHint().height() + 4
+            )
 
-        # Add four to ensure max height is large enough to not need scrollbar
-        self.scr_search_options.setMaximumHeight(
-            self.wgt_search_options.sizeHint().height() + 4
-        )
+        self.cbx_sort.addItem(option)
+        self.sorters.update({option: __sorter})
 
     def addParser(self, parser: DataParser) -> None:
         if self.parser is not None:
             raise
 
         self.parser = parser
-        self.parse.connect(self.parser.parse)
+        self.raw_data.connect(self.parser.parse)
         self.parser.result.connect(self.new_world_card)
         self.parser.moveToThread(self.parsing_thread)
 

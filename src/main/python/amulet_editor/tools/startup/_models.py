@@ -5,6 +5,7 @@ from enum import Enum
 from typing import Callable, Optional, Protocol, TypeVar
 
 from amulet_editor.models.generic import Observer
+from amulet_editor.models.minecraft import LevelData
 from PySide6.QtWidgets import QWidget
 
 SelfMenu = TypeVar("SelfMenu", bound="Menu")
@@ -19,6 +20,16 @@ class Navigate(AutoName):
     BACK = enum.auto()
     HERE = enum.auto()
     NEXT = enum.auto()
+
+
+@dataclass
+class ParsedLevel:
+    level_data: LevelData
+    icon_path: str = ""
+    level_name: str = ""
+    file_name: str = ""
+    version: str = ""
+    last_played: str = ""
 
 
 @dataclass

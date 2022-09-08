@@ -7,9 +7,11 @@ from amulet_editor.data import build
 from amulet_editor.models.minecraft import LevelData
 from amulet_editor.models.widgets._icon import QSvgIcon
 from amulet_editor.models.widgets._label import QElidedLabel
+from amulet_editor.tools.startup._models import ParsedLevel
 from PySide6.QtCore import QCoreApplication, QEvent, QSize, Qt
-from PySide6.QtGui import QEnterEvent, QFocusEvent, QImage, QPixmap
+from PySide6.QtGui import QEnterEvent, QImage, QPixmap
 from PySide6.QtWidgets import (
+    QFrame,
     QGridLayout,
     QHBoxLayout,
     QLabel,
@@ -18,6 +20,7 @@ from PySide6.QtWidgets import (
     QSizePolicy,
     QStackedWidget,
     QToolButton,
+    QVBoxLayout,
     QWidget,
 )
 
@@ -133,12 +136,47 @@ class QIconCard(QPushButton):
         return super().leaveEvent(event)
 
 
+class QLevelCard(QPushButton):
+    def __init__(self, parsed_level: ParsedLevel, parent: Optional[QWidget] = None):
+        super().__init__(parent=parent)
+
+        self.level_data = parsed_level.level_data
+
+        level_icon = QPixmap(QImage(parsed_level.icon_path))
+        level_icon = level_icon.scaledToHeight(80)
+
+        lbl_pixmap = QLabel(self)
+        lbl_pixmap.setPixmap(level_icon)
+        lbl_pixmap.setProperty("backgroundColor", "background")
+        lbl_pixmap.setProperty("border", "surface")
+        lbl_pixmap.setProperty("borderRadiusVisible", True)
+        lbl_pixmap.setSizePolicy(QSizePolicy.Maximum, QSizePolicy.Maximum)
+
+        lbl_level_name = QElidedLabel(parsed_level.level_name)
+        lbl_level_name.setAttribute(Qt.WA_TransparentForMouseEvents)
+        lbl_file_name = QElidedLabel(parsed_level.file_name)
+        lbl_version = QElidedLabel(parsed_level.version)
+        lbl_last_played = QElidedLabel(parsed_level.last_played)
+
+        layout = QGridLayout(self)
+        layout.addWidget(lbl_pixmap, 0, 0, 4, 1)
+        layout.addWidget(lbl_level_name, 0, 1, 1, 1)
+        layout.addWidget(lbl_file_name, 1, 1, 1, 1)
+        layout.addWidget(lbl_version, 2, 1, 1, 1)
+        layout.addWidget(lbl_last_played, 3, 1, 1, 1)
+
+        self.setLayout(layout)
+
+    def data(self) -> LevelData:
+        return self.level_data
+
+    def layout(self) -> QGridLayout:
+        return super().layout()
+
+
 class QLevelSelectionCard(QPushButton):
     def __init__(self, parent: Optional[QWidget] = None):
-        if parent is None:
-            super().__init__()
-        else:
-            super().__init__(parent=parent)
+        super().__init__(parent=parent)
 
         self.setupUi()
 

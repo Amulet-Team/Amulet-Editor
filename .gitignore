@@ -120,4 +120,5 @@ venv.bak/
 /logs
 
 # Visual Studio Code extensions
+*.ipynb
 .qt_for_python

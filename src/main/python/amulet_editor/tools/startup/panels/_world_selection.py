@@ -36,10 +36,10 @@ class ParsedLevel:
 
 class LevelParser(QObject):
 
-    parsed_level = Signal(ParsedLevel)
+    result = Signal(ParsedLevel)
 
     @Slot(str)
-    def parse_level(self, level_path: str):
+    def parse(self, level_path: str):
         level_data = LevelData(amulet.load_format(level_path))
         parsed_level = ParsedLevel(level_data)
 
@@ -57,7 +57,7 @@ class LevelParser(QObject):
             .replace(" 0", " ")
         )
 
-        self.parsed_level.emit(parsed_level)
+        self.result.emit(parsed_level)
 
 
 class WorldSelectionPanel(QWidget):
