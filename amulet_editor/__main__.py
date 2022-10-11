@@ -1,29 +1,52 @@
-import sys
+#!/usr/bin/env python3
 
+def _on_error(e):
+    """Code to handle errors"""
+    err_list = []
+    try:
+        import traceback
 
-class PythonVersionError(Exception):
-    def __init__(self, required_version: tuple) -> None:
-        super().__init__(
-            "Python {} required, found Python {}".format(
-                ".".join([str(required_version[0]), str(required_version[1])]),
-                ".".join([str(sys.version_info[0]), str(sys.version_info[1])]),
-            )
+        err_list.append(traceback.format_exc())
+    except:
+        pass
+    if isinstance(e, ImportError):
+        err_list.append(
+            f"Failed to import requirements. Check that you extracted correctly."
         )
+    err_list.append(str(e))
+    err = "\n".join(err_list)
+    print(err)
+    # TODO: fix this path to a writable location
+    with open("./logs/crash.log", "w") as f:
+        f.write(err)
+    input("Press ENTER to continue.")
+    sys.exit(1)
+
+
+try:
+    import sys
+
+    if sys.version_info[:2] < (3, 9):
+        raise Exception("Must be using Python 3.9+")
+    import traceback
+except Exception as e:
+    _on_error(e)
 
 
 def main() -> None:
     try:
-        if sys.version_info[:2] != (3, 9):
-            raise PythonVersionError((3, 9))
+        from amulet_editor.application.context._amulet_app import AmuletEditor
+    except Exception as e:
+        _on_error(e)
+        raise
 
-        from amulet_editor.application.context._amulet_context import AMULET_CONTEXT
-
-        AMULET_CONTEXT.run()
-    finally:
-        try:
-            input("Press ENTER to continue...")
-        except Exception:
-            pass
+    try:
+        sys.exit(AmuletEditor().exec())
+    except Exception as e:
+        # TODO: Convert this to use logging
+        print(f"Amulet Crashed. Sorry about that. Please report it to a developer if you think this is an issue. \n{traceback.format_exc()}")
+        input("Press ENTER to continue...")
+        raise e
 
 
 if __name__ == "__main__":
