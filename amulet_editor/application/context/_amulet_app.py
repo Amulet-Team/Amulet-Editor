@@ -2,9 +2,9 @@ import os
 import subprocess
 import sys
 
+import amulet_editor
 from amulet_editor import __version__
 from amulet_editor.data import packages, build
-from amulet_editor.data.build import PUBLIC_DATA
 from amulet_editor.application import appearance
 from amulet_editor.application.appearance import Theme
 from amulet_editor.application.windows._amulet_window import AmuletWindow
@@ -16,7 +16,7 @@ from PySide6.QtGui import QIcon
 class AmuletEditor(QApplication):
     def __init__(self) -> None:
         super().__init__()
-        self.setApplicationName(PUBLIC_DATA["app_name"])
+        self.setApplicationName("Amulet Editor")
         self.setApplicationVersion(__version__)
         self.setWindowIcon(QIcon(build.get_resource("icons/amulet/Icon.ico")))
         self.setAttribute(Qt.AA_UseHighDpiPixmaps)
@@ -39,14 +39,12 @@ class AmuletEditor(QApplication):
         theme.apply(self)
 
     def new_instance(self):
-        import amulet_editor
-
         subprocess.Popen(
             [
                 sys.executable,
                 os.path.join(
                     os.path.dirname(amulet_editor.__file__),
-                    os.path.basename(PUBLIC_DATA["main_module"]),
+                    "__main__.py",
                 ),
             ]
         )
