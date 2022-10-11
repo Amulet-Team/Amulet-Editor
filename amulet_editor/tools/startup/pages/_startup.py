@@ -1,5 +1,5 @@
+from amulet_editor import __version__
 from amulet_editor.data import build
-from amulet_editor.data.build import PUBLIC_DATA
 from amulet_editor.tools.startup._widgets import QIconCard
 from PySide6.QtCore import QCoreApplication, QSize, Qt
 from PySide6.QtGui import QImage, QPixmap
@@ -34,7 +34,7 @@ class StartupPage(QWidget):
         self.lbl_app_name.setProperty("heading", "h1")
         self.lbl_app_name.setProperty("subfamily", "semi_light")
 
-        self.lbl_app_version = QLabel(f"Version {PUBLIC_DATA['version']}")
+        self.lbl_app_version = QLabel(f"Version {__version__}")
         self.lbl_app_version.setAlignment(Qt.AlignCenter)
         self.lbl_app_version.setProperty("color", "secondary")
         self.lbl_app_version.setProperty("heading", "h5")

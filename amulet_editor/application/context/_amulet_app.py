@@ -2,6 +2,7 @@ import os
 import subprocess
 import sys
 
+from amulet_editor import __version__
 from amulet_editor.data import packages, build
 from amulet_editor.data.build import PUBLIC_DATA
 from amulet_editor.application import appearance
@@ -16,7 +17,7 @@ class AmuletEditor(QApplication):
     def __init__(self) -> None:
         super().__init__()
         self.setApplicationName(PUBLIC_DATA["app_name"])
-        self.setApplicationVersion(PUBLIC_DATA["version"])
+        self.setApplicationVersion(__version__)
         self.setWindowIcon(QIcon(build.get_resource("icons/amulet/Icon.ico")))
         self.setAttribute(Qt.AA_UseHighDpiPixmaps)
 
