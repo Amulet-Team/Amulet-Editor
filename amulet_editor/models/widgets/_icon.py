@@ -46,7 +46,7 @@ class QIconButton(QToolButton):
         if icon_color != self._icon_color:
             super().setIcon(
                 QSvgIcon(
-                    get_resource(f"icons/{self._icon_name}"),
+                    get_resource(f"icons/tabler/{self._icon_name}"),
                     self.iconSize(),
                     self._icon_color,
                 )

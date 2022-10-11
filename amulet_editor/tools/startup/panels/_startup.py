@@ -62,7 +62,7 @@ class StartupPanel(QWidget):
         self.wgt_links.layout().addWidget(self.lbl_links)
         for link in links:
             link_card = QLinkCard(
-                link.name, build.get_resource(f"icons/{link.icon}"), self.wgt_links
+                link.name, build.get_resource(f"icons/tabler/{link.icon}"), self.wgt_links
             )
             link_card.clicked.connect(partial(webbrowser.open, link.url))
             self.wgt_links.layout().addWidget(link_card)

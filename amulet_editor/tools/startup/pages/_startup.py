@@ -41,21 +41,21 @@ class StartupPage(QWidget):
         self.lbl_app_version.setProperty("subfamily", "semi_light")
 
         self.crd_open_level = QIconCard(
-            build.get_resource(f"icons/file-symlink.svg"),
+            build.get_resource(f"icons/tabler/file-symlink.svg"),
             QSize(25, 25),
             self,
         )
         self.crd_open_level.setMinimumWidth(200)
 
         self.crd_open_project = QIconCard(
-            build.get_resource(f"icons/file-symlink.svg"),
+            build.get_resource(f"icons/tabler/file-symlink.svg"),
             QSize(25, 25),
             self,
         )
         self.crd_open_project.setMinimumWidth(200)
 
         self.crd_new_project = QIconCard(
-            build.get_resource(f"icons/file-plus.svg"),
+            build.get_resource(f"icons/tabler/file-plus.svg"),
             QSize(25, 25),
             self,
         )

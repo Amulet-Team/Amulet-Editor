@@ -29,7 +29,7 @@ class ProjectPanel(QWidget):
         self.setupUi()
 
         self.crd_directory = QLinkCard(
-            "", build.get_resource(f"icons/folder.svg"), self
+            "", build.get_resource(f"icons/tabler/folder.svg"), self
         )
         self.frm_directory.layout().addWidget(self.crd_directory)
 

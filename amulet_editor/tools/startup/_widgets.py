@@ -38,7 +38,7 @@ class QIconButton(QToolButton):
     def repaint(self, color: Color) -> None:
         super().setIcon(
             QSvgIcon(
-                build.get_resource(f"icons/{self._icon_name}"),
+                build.get_resource(f"icons/tabler/{self._icon_name}"),
                 self.iconSize(),
                 color.get_qcolor(),
             )

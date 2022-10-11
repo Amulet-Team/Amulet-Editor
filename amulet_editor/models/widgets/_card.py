@@ -61,7 +61,7 @@ class QLinkCard(QPushButton):
 
         self.icon_size = QSize(15, 15)
         self.icon_path = icon
-        self.icon_link = build.get_resource(f"icons/external-link.svg")
+        self.icon_link = build.get_resource(f"icons/tabler/external-link.svg")
 
         self.lbl_link_icon = QLabel()
         self.lbl_description = QElidedLabel()
