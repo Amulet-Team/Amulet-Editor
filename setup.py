@@ -159,6 +159,5 @@ setup(
     version=versioneer.get_version(),
     cmdclass=cmdclass,
     include_dirs=[numpy.get_include()],
-    packages=find_packages(),
     ext_modules=ext,
 )
