@@ -1,15 +1,21 @@
 {
-    "app_name": "amulet-editor",
-    "display_name": "Amulet Editor",
+    "app_name": "AmuletEditor",
+    "description": "A Minecraft world editor and converter that supports all versions since Java 1.12 and Bedrock 1.7.",
     "author": "James Clare, Ben Gothard et al.",
-    "version": "1.0.0",
-    "main_module": "amulet_editor/__main__.py",
-    "public_settings": [
-        "app_name",
-        "display_name",
-        "author",
-        "main_module",
-        "version"
+    "version": "attr: amulet_editor.__version__",
+    "python_path": "src",
+    "main_module": "amulet_editor",
+    "hidden_imports": [
+        "amulet",
+        "amulet_nbt",
+        "PyMCTranslate",
+        "minecraft_model_reader",
+        "PySide6",
+        "pkg_resources",
+        "OpenGL",
+        "OpenGL.GL",
+        "OpenGL.GL.shaders"
     ],
-    "hidden_imports": []
+    "author_email": "amuleteditor@gmail.com",
+    "url": "https://www.amuletmc.com/"
 }

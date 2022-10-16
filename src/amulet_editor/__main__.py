@@ -17,7 +17,7 @@ def _on_error(e):
     err = "\n".join(err_list)
     print(err)
     # TODO: fix this path to a writable location
-    with open("./logs/crash.log", "w") as f:
+    with open("crash.log", "w") as f:
         f.write(err)
     input("Press ENTER to continue.")
     sys.exit(1)
