@@ -1,7 +1,10 @@
 {
     "app_name": "AmuletEditor",
+    "display_name": "Amulet Editor",
     "description": "A Minecraft world editor and converter that supports all versions since Java 1.12 and Bedrock 1.7.",
     "author": "James Clare, Ben Gothard et al.",
+    "author_email": "amuleteditor@gmail.com",
+    "url": "https://www.amuletmc.com/",
     "version": "attr: amulet_editor.__version__",
     "python_path": "src",
     "main_module": "amulet_editor",
@@ -15,7 +18,5 @@
         "OpenGL",
         "OpenGL.GL",
         "OpenGL.GL.shaders"
-    ],
-    "author_email": "amuleteditor@gmail.com",
-    "url": "https://www.amuletmc.com/"
+    ]
 }
