@@ -17,11 +17,11 @@
                 "name": "Amulet Editor",
                 "type": "python",
                 "request": "launch",
-                "program": "${workspaceFolder}/src/main/python/amulet_editor/__main__.py",
+                "program": "${workspaceFolder}/amulet_editor/__main__.py",
                 "console": "internalConsole",
                 "cwd": "${workspaceFolder}",
                 "env": {
-                    "PYTHONPATH": "${workspaceFolder}/src/main/python"
+                    "PYTHONPATH": "${workspaceFolder}"
                 }
             }
         ],

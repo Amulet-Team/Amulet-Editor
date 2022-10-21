@@ -1,12 +1,19 @@
 # Amulet-Editor
 
+A Minecraft world editor and converter that supports all versions since Java 1.12 and Bedrock 1.7.
+
+## Running compiled builds
+
+Download the installer for your operating system from the list of [compiled builds](https://github.com/Amulet-Team/Amulet-Editor/releases).
+
+Double click on the installer when downloaded and follow the installation steps. It can then be run and uninstalled like a normal program.
+
 ## Running from Source
-To run Amulet Editor from source, it is recommended to install Visual Studio Code though not required.
 
-First, install the base requirements for Amulet Editor. Requirements are separated out by platform: Windows, Mac, and Linux and can be installed via the command: `pip install -r .\requirements\windows.txt` replacing `windows` with `mac` or `linux` depending on which of the platforms you are using.
+**If you are running a compiled build you do NOT need to do this.**
 
-If using fbs, you should additionally install fbs-pro version 1.1.0 or an equivalent, but note that fbs-pro is a paid software available here: (https://build-system.fman.io/pro).
-
-Once all requirements are installed, you should be able to select the new environment as your default environment in Visual Studio Code and run the project using the `Run Without Debugging` command from the `Run` tab in the menu bar. Alternatively, you can use the shortcut `F5` (default, may vary on your system) to launch the application.
-
-If not using Visual Studio Code, you should be able to run Amulet Editor in the terminal by activating the virtual environment you created and running the command `py -m amulet_editor` or `fbs run` if you have fbs installed as well.
+1) Install [Python 3.9+](https://www.python.org/)
+2) We recommend setting up a [python virtual environment](https://docs.python.org/3/tutorial/venv.html) so you don't run into issues with dependency conflicts.
+3) Clone or download the repository source code.
+4) In the source code directory run `python -m pip install .` to install the library and all its dependencies. Linux and MacOS users will need to use `python3`
+5) run `amulet_editor` to run the program

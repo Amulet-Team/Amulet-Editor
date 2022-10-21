@@ -1,2 +1,0 @@
-amulet-core==1.6
-PySide6==6.2.2
