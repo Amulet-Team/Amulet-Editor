@@ -3,13 +3,16 @@ from __future__ import annotations
 import json
 import logging
 import os.path
-from typing import TYPE_CHECKING, Optional, Any
+from os.path import relpath, normpath
+from typing import TYPE_CHECKING, Optional, Any, List
 import weakref
 from enum import Enum
 from dataclasses import dataclass
 import glob
 import importlib.util
 import sys
+import traceback
+import re
 
 if TYPE_CHECKING:
     from .plugin import Plugin
@@ -24,6 +27,50 @@ PluginDirs = [
         os.path.join(__file__, "..", "..", "plugins")
     )  # TODO: set up a better plugin path
 ]
+
+TracePattern = re.compile(r"\s*File\s*\"(?P<path>.*?)\"")
+
+
+def get_trace_paths() -> List[str]:
+    return list(reversed([normpath(TracePattern.match(line).group("path")) for line in traceback.format_stack()]))[1:]
+
+
+class CustomDict(dict):
+    def __getitem__(self, key):
+        return self.__get(key)
+
+    def get(self, key, default=None):
+        if key in self:
+            return self.__get(key)
+        else:
+            return default
+
+    def __get(self, key):
+        mod = super().__getitem__(key)
+        try:
+            module_path = normpath(mod.__file__)
+            plugin_dir = next((path for path in PluginDirs if module_path.startswith(path)), None)
+        except AttributeError:
+            pass
+        else:
+            if plugin_dir is not None:
+                plugin_dir = normpath(plugin_dir)
+                plugin_path = os.path.join(plugin_dir, relpath(module_path, plugin_dir).split(os.sep)[0])
+                for frame in get_trace_paths()[2:]:
+                    if frame.startswith("<"):
+                        # skip over built in frames
+                        continue
+                    elif frame.startswith(plugin_path):
+                        break
+                    else:
+                        raise ImportError(
+                            "Plugins cannot directly import other plugins. You must use the plugin API to iteract with other plugins.\n"
+                            f"Plugin {frame} tried to import {key}"
+                        )
+        return mod
+
+
+sys.modules = CustomDict(sys.modules)
 
 
 class PluginState(Enum):
