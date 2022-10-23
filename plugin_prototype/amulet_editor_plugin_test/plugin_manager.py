@@ -18,6 +18,9 @@ if TYPE_CHECKING:
 log = logging.getLogger(__name__)
 PluginDirs = [
     os.path.abspath(
+        os.path.join(os.path.dirname(__file__), "first_party_plugins")
+    ),
+    os.path.abspath(
         os.path.join(__file__, "..", "..", "plugins")
     )  # TODO: set up a better plugin path
 ]
