@@ -1,4 +1,6 @@
+from typing import TYPE_CHECKING
 from amulet_editor_plugin_test.plugin import Plugin
+
 
 
 class MyPlugin(Plugin):

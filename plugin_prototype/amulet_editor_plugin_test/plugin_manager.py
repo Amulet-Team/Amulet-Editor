@@ -125,7 +125,7 @@ class PluginManager:
             raise Exception
         sys.modules[plugin_container.plugin_identifier] = mod
         spec.loader.exec_module(mod)
-        plugin_container.plugin_instance = mod.plugin(self.api)
+        plugin_container.plugin_instance = mod.Plugin(self.api)
         plugin_container.plugin_instance.on_load()
 
     def enable_plugin(self, plugin_identifier: str):

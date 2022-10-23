@@ -9,9 +9,9 @@ print("a2", relative_package_noop())
 print("a3", relative_package_submodule_noop())
 print("a4", relative_submodule_noop())
 
-from amulet_team.editor.module_test import module_noop as absolute_module_noop
-from amulet_team.editor.package_test import package_noop as absolute_package_noop, submodule_noop as absolute_package_submodule_noop
-from amulet_team.editor.package_test.submodule_test import submodule_noop as absolute_submodule_noop
+from amulet_team_editor.module_test import module_noop as absolute_module_noop
+from amulet_team_editor.package_test import package_noop as absolute_package_noop, submodule_noop as absolute_package_submodule_noop
+from amulet_team_editor.package_test.submodule_test import submodule_noop as absolute_submodule_noop
 
 print("a5", absolute_module_noop())
 print("a6", absolute_package_noop())
