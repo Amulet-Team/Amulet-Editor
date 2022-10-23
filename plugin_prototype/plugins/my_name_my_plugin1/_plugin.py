@@ -1,6 +1,10 @@
 from __future__ import annotations
 from typing import TYPE_CHECKING
+import logging
+
 from amulet_editor_plugin_test.plugin import Plugin
+
+log = logging.getLogger(__name__)
 
 
 if TYPE_CHECKING:
@@ -12,9 +16,9 @@ if TYPE_CHECKING:
 
 class MyPlugin(Plugin):
     def on_load(self):
-        print("My Plugin1 Loaded")
+        log.info("My Plugin1 Loaded")
         editor: EditorPlugin = self.get_plugin("amulet_team_editor")
         editor.custom_method("test")
 
     def on_unload(self):
-        print("My Plugin1 Unloaded")
+        log.info("My Plugin1 Unloaded")

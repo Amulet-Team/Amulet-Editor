@@ -1,7 +1,10 @@
 from __future__ import annotations
 from contextlib import contextmanager
+import logging
 
 from amulet_editor_plugin_test.plugin import Plugin
+
+log = logging.getLogger(__name__)
 
 
 @contextmanager
@@ -26,7 +29,7 @@ with import_test():
 
 class TestPlugin(Plugin):
     def on_load(self):
-        print("Test Import Plugin Loaded")
+        log.info("Test Import Plugin Loaded")
 
     def on_unload(self):
-        print("Test Import Plugin Unloaded")
+        log.info("Test Import Plugin Unloaded")
