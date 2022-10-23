@@ -1,4 +1,4 @@
 {
 	"identifier": "my_name_my_plugin1",
-	"depends": ["amulet_team.editor"]
+	"depends": ["amulet_team_editor"]
 }
