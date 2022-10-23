@@ -4,7 +4,7 @@ import json
 import logging
 import os.path
 from os.path import relpath, normpath
-from typing import TYPE_CHECKING, Optional, Any, List
+from typing import TYPE_CHECKING, Optional, List
 import weakref
 from enum import Enum
 from dataclasses import dataclass
@@ -13,6 +13,8 @@ import importlib.util
 import sys
 import traceback
 import re
+from packaging.version import Version
+from packaging.specifiers import SpecifierSet
 
 if TYPE_CHECKING:
     from .plugin import Plugin
@@ -73,6 +75,37 @@ class CustomDict(dict):
 sys.modules = CustomDict(sys.modules)
 
 
+@dataclass
+class PluginUID:
+    plugin_identifier: str  # The package name. This is the name used when importing the package. Eg "my_name_my_plugin". This must be a valid python identifier.
+    version: Version  # The version number of the plugin.
+
+    def __hash__(self):
+        return hash((self.plugin_identifier, self.version))
+
+
+RequirementPattern = re.compile(r"(?P<identifier>[a-zA-Z_]+[a-zA-Z_0-9]*)(?P<requirement>.*)")
+
+
+@dataclass
+class PluginRequirement:
+    plugin_identifier: str  # The package name
+    specifier: SpecifierSet  # The version specifier. It is recommended to use the compatible format. Eg. "~=1.0"
+
+    @classmethod
+    def from_string(cls, requirement: str):
+        match = RequirementPattern.fullmatch(requirement)
+        if match is None:
+            raise ValueError(f"\"{requirement}\" is not a valid requirement.\n It must be a python identifier followed by an optional PEP 440 compatible version specifier")
+        specifier = SpecifierSet(match.group("requirement"))
+        return cls(match.group("identifier"), specifier)
+
+    def __contains__(self, item: PluginUID):
+        if not isinstance(item, PluginUID):
+            raise TypeError
+        return item.plugin_identifier == self.plugin_identifier and item.version in self.specifier
+
+
 class PluginState(Enum):
     Disabled = 0  # Plugin is not enabled by the user
     Inactive = (
@@ -83,16 +116,57 @@ class PluginState(Enum):
 
 @dataclass
 class PluginContainer:
-    plugin_path: str
-    plugin_identifier: str
-    metadata: dict[str, Any]
-    depends: list[str]
-    plugin_instance: Optional[Plugin] = None
+    plugin_path: str  # The root path of the plugin.
+    plugin_uid: PluginUID  # The unique identifier for the plugin. Made up of the plugin id and the version number. No two plugins may have the same UID.
+    depends: list[PluginRequirement]  # The plugins that this plugin depends on. This plugin will only be loaded once these plugins have been loaded.
+    plugin_instance: Optional[Plugin] = None  # The instance of the plugin.
     plugin_state: PluginState = PluginState.Disabled
+
+    @classmethod
+    def from_path(cls, plugin_path: str) -> PluginContainer:
+        """
+        Populate a PluginContainer instance from the data in a directory.
+        plugin_path is the system path to a directory containing a plugin.json file.
+        """
+        # Get and validate the plugin data
+        with open(os.path.join(plugin_path, "plugin.json")) as f:
+            metadata = json.load(f)
+        if not isinstance(metadata, dict):
+            raise TypeError("plugin.json must be a dictionary.")
+
+        # Get the plugin identifier
+        plugin_identifier = metadata.get("identifier")
+        if not isinstance(plugin_identifier, str):
+            raise TypeError("plugin.json[identifier] must be a string")
+        if not plugin_identifier.isidentifier():
+            raise ValueError("plugin.json[identifier] must be a valid python identifier")
+
+        # Get the plugin version
+        plugin_version_string = metadata.get("version")
+        if not isinstance(plugin_version_string, str):
+            raise TypeError("plugin.json[version] must be a PEP 440 version string")
+        plugin_version = Version(plugin_version_string)
+
+        # Get the plugin dependencies
+        depends: list[str] = metadata.get("depends", [])
+        if not isinstance(depends, list) and all(
+            isinstance(d, str) for d in depends
+        ):
+            raise TypeError(
+                "plugin.json[depends] must be a list of string identifiers and version specifiers if defined.\nEg. [\"plugin_1 ~=1.0\", \"plugin_2 ~=1.3\"]"
+            )
+
+        parsed_depends = list(map(PluginRequirement.from_string, depends))
+
+        return PluginContainer(
+            plugin_path,
+            PluginUID(plugin_identifier, plugin_version),
+            parsed_depends,
+        )
 
 
 class PluginManager:
-    __plugins: dict[str, PluginContainer]
+    __plugins: dict[PluginUID, PluginContainer]
 
     def __init__(self, api: AppPrivateAPI):
         self.__api = weakref.ref(api)
@@ -114,35 +188,17 @@ class PluginManager:
             ):
                 try:
                     plugin_path = os.path.dirname(manifest_path)
-                    with open(manifest_path) as f:
-                        metadata = json.load(f)
-                    if not isinstance(metadata, dict):
-                        raise TypeError("plugin.json must be a dictionary.")
-                    plugin_identifier = metadata["identifier"]
-                    if not isinstance(plugin_identifier, str):
-                        raise TypeError("plugin.json[identifier] must be a string")
-                    if plugin_identifier in self.__plugins:
-                        if self.__plugins[plugin_identifier].plugin_path == plugin_path:
-                            continue
-                        else:
-                            raise ValueError(
-                                f"Two plugins cannot have the same identifier. {self.__plugins[plugin_identifier].plugin_path} and {plugin_path} have the same identifier."
-                            )
+                    plugin_container = PluginContainer.from_path(plugin_path)
+                    plugin_uid = plugin_container.plugin_uid
 
-                    depends = metadata.get("depends", [])
-                    if not isinstance(depends, list) and all(
-                        isinstance(d, str) for d in depends
-                    ):
-                        raise TypeError(
-                            "plugin.json[depends] must be a list of string identifiers if defined"
+                    if plugin_uid not in self.__plugins:
+                        self.__plugins[plugin_uid] = plugin_container
+                    elif self.__plugins[plugin_uid].plugin_path == plugin_path:
+                        continue
+                    else:
+                        raise ValueError(
+                            f"Two plugins cannot have the same identifier and version.\n{self.__plugins[plugin_uid].plugin_path} and {plugin_path} have the same identifier and version."
                         )
-                    plugin_container = PluginContainer(
-                        plugin_path,
-                        plugin_identifier,
-                        metadata,
-                        depends,
-                    )
-                    self.__plugins[plugin_identifier] = plugin_container
 
                 except Exception as e:
                     log.exception(str(e))
@@ -163,31 +219,32 @@ class PluginManager:
         if os.path.isdir(path):
             path = os.path.join(path, "__init__.py")
         spec = importlib.util.spec_from_file_location(
-            plugin_container.plugin_identifier, path
+            plugin_container.plugin_uid.plugin_identifier, path
         )
         if spec is None:
             raise Exception
         mod = importlib.util.module_from_spec(spec)
         if mod is None:
             raise Exception
-        sys.modules[plugin_container.plugin_identifier] = mod
+        sys.modules[plugin_container.plugin_uid.plugin_identifier] = mod
         spec.loader.exec_module(mod)
         plugin_container.plugin_instance = mod.Plugin(self.api)
         plugin_container.plugin_instance.on_load()
 
-    def enable_plugin(self, plugin_identifier: str):
+    def enable_plugin(self, plugin_uid: PluginUID):
         """Enable a plugin
 
-        :param plugin_identifier: The identifier of the plugin to enable
+        :param plugin_uid: The unique identifier of the plugin to enable
         :raises: Exception if an error happened when loading the plugin.
         """
-        plugin_container = self.__plugins[plugin_identifier]
+        if not isinstance(plugin_uid, PluginUID):
+            raise TypeError
+        plugin_container = self.__plugins[plugin_uid]
         if plugin_container.plugin_state is not PluginState.Disabled:
             return
         if all(
-            dep in self.__plugins
-            and self.__plugins[dep].plugin_state is PluginState.Enabled
-            for dep in plugin_container.depends
+            any(uid in requirement and plugin.plugin_state is PluginState.Enabled for uid, plugin in self.__plugins.items())
+            for requirement in plugin_container.depends
         ):
             # all dependencies are already satisfied so the plugin can be enabled.
             self.__load_plugin(plugin_container)
@@ -204,9 +261,8 @@ class PluginManager:
             enabled_count = 0
             for plugin_container in list(self.__plugins.values()):
                 if plugin_container.plugin_state is PluginState.Inactive and all(
-                    dep in self.__plugins
-                    and self.__plugins[dep].plugin_state is PluginState.Enabled
-                    for dep in plugin_container.depends
+                    any(uid in requirement and plugin.plugin_state is PluginState.Enabled for uid, plugin in self.__plugins.items())
+                    for requirement in plugin_container.depends
                 ):
                     # all dependencies are satisfied so the plugin can be enabled.
                     try:
@@ -218,32 +274,32 @@ class PluginManager:
 
     def __unload_plugin(self, plugin_container: PluginContainer):
         """Unload and destroy a plugin."""
-        self._recursive_inactive_plugins(plugin_container.plugin_identifier)
+        self._recursive_inactive_plugins(plugin_container.plugin_uid)
         try:
             plugin_container.plugin_instance.on_unload()
         except Exception as e:
             log.exception(e, exc_info=e)
         plugin_container.plugin_instance = None
-        sys.modules.pop(plugin_container.plugin_identifier, None)
+        sys.modules.pop(plugin_container.plugin_uid.plugin_identifier, None)
 
-    def disable_plugin(self, plugin_identifier: str):
+    def disable_plugin(self, plugin_uid: PluginUID):
         """Disable a plugin and inactive all dependents."""
-        plugin_container = self.__plugins[plugin_identifier]
+        plugin_container = self.__plugins[plugin_uid]
         if plugin_container.plugin_state is PluginState.Enabled:
             self.__unload_plugin(plugin_container)
         plugin_container.plugin_state = PluginState.Disabled
 
-    def _recursive_inactive_plugins(self, plugin_identifier: str):
+    def _recursive_inactive_plugins(self, plugin_uid: PluginUID):
         """
         Recursively inactive all dependents of a plugin.
         When a plugin is disabled none of its dependents are valid any more so they must be inactivated.
 
-        :param plugin_identifier: The plugin identifier to find dependents of.
+        :param plugin_uid: The plugin unique identifier to find dependents of.
         """
         for plugin_container in self.__plugins.values():
             if (
                 plugin_container.plugin_state is PluginState.Enabled
-                and plugin_identifier in plugin_container.depends
+                and any(plugin_uid in requirement for requirement in plugin_container.depends)
             ):
                 self.__unload_plugin(plugin_container)
                 plugin_container.plugin_state = PluginState.Inactive
@@ -254,10 +310,7 @@ class PluginManager:
         Do not store other plugin instances.
         Useful to use the API of another plugin.
         """
-        if (
-            plugin_identifier in self.__plugins
-            and self.__plugins[plugin_identifier].plugin_state is PluginState.Enabled
-        ):
-            return self.__plugins[plugin_identifier].plugin_instance
-        else:
-            raise KeyError("The requested plugin has not been enabled.")
+        plugin = next((p for p in self.__plugins.values() if p.plugin_uid.plugin_identifier == plugin_identifier and p.plugin_state is PluginState.Enabled), None)
+        if plugin is None:
+            raise KeyError(f"Plugin {plugin_identifier} has not been enabled.")
+        return plugin.plugin_instance

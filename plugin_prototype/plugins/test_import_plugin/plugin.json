@@ -1,4 +1,5 @@
 {
 	"identifier": "test_import_plugin",
+	"version": "1.0.0",
 	"depends": []
 }

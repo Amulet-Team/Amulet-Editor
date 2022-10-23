@@ -1,4 +1,5 @@
 {
 	"identifier": "my_name_my_plugin1",
+	"version": "1.0.0",
 	"depends": ["amulet_team_editor"]
 }
