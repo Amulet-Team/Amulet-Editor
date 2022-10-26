@@ -13,6 +13,8 @@ import importlib.util
 import sys
 import traceback
 import re
+from collections import UserDict
+from copy import copy
 from packaging.version import Version
 from packaging.specifiers import SpecifierSet
 
@@ -37,17 +39,14 @@ def get_trace_paths() -> List[str]:
     return list(reversed([normpath(TracePattern.match(line).group("path")) for line in traceback.format_stack()]))[1:]
 
 
-class CustomDict(dict):
+class CustomDict(UserDict):
+    def __init__(self, original: dict):
+        super().__init__()
+        # self.data = original  # I would prefer to do this but getitem does not get called if this line is used instead.
+        self.data = copy(original)
+
     def __getitem__(self, key):
-        return self.__get(key)
-
-    def get(self, key, default=None):
-        if key in self:
-            return self.__get(key)
-        else:
-            return default
-
-    def __get(self, key):
+        print(key)
         mod = super().__getitem__(key)
         try:
             module_path = normpath(mod.__file__)
@@ -59,12 +58,9 @@ class CustomDict(dict):
                 plugin_dir = normpath(plugin_dir)
                 plugin_path = os.path.join(plugin_dir, relpath(module_path, plugin_dir).split(os.sep)[0])
                 for frame in get_trace_paths()[2:]:
-                    if frame.startswith("<"):
-                        # skip over built in frames
-                        continue
-                    elif frame.startswith(plugin_path):
+                    if frame.startswith(plugin_path):
                         break
-                    else:
+                    elif any(frame.startswith(path) for path in PluginDirs):
                         raise ImportError(
                             "Plugins cannot directly import other plugins. You must use the plugin API to iteract with other plugins.\n"
                             f"Plugin {frame} tried to import {key}"
