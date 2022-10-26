@@ -19,10 +19,10 @@ class AppPrivateAPI:
 
     def __init__(self, app: App):
         self.__app = weakref.ref(app)
-        self.plugin_manager = PluginManager(self)
+        self.__plugin_manager = PluginManager(self)
 
     def init(self):
-        self.plugin_manager.init()
+        self.__plugin_manager.init()
 
     @property
     def app(self) -> App:
@@ -34,7 +34,7 @@ class AppPrivateAPI:
         Do not store other plugin instances.
         Useful to use the API of another plugin.
         """
-        return self.plugin_manager.get_plugin(plugin_identifier)
+        return self.__plugin_manager.get_plugin(plugin_identifier)
 
     def register_view(self, plugin: Plugin, view_name: str, view: Type[View]):
         """Register a new view"""
