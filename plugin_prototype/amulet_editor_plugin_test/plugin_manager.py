@@ -4,7 +4,7 @@ import json
 import logging
 import os.path
 from os.path import relpath, normpath
-from typing import TYPE_CHECKING, Optional, List
+from typing import TYPE_CHECKING, Optional, List, Callable, NamedTuple, Generator
 import weakref
 from enum import Enum
 from dataclasses import dataclass
@@ -71,20 +71,15 @@ class CustomDict(UserDict):
 sys.modules = CustomDict(sys.modules)
 
 
-@dataclass
-class PluginUID:
     plugin_identifier: str  # The package name. This is the name used when importing the package. Eg "my_name_my_plugin". This must be a valid python identifier.
+class PluginUID(NamedTuple):
     version: Version  # The version number of the plugin.
-
-    def __hash__(self):
-        return hash((self.plugin_identifier, self.version))
 
 
 RequirementPattern = re.compile(r"(?P<identifier>[a-zA-Z_]+[a-zA-Z_0-9]*)(?P<requirement>.*)")
 
 
-@dataclass
-class PluginRequirement:
+class PluginRequirement(NamedTuple):
     plugin_identifier: str  # The package name
     specifier: SpecifierSet  # The version specifier. It is recommended to use the compatible format. Eg. "~=1.0"
 
