@@ -6,7 +6,7 @@ import os.path
 from os.path import relpath, normpath
 from typing import TYPE_CHECKING, Optional, List, Callable, NamedTuple, Generator
 import weakref
-from enum import Enum
+from enum import IntEnum
 from dataclasses import dataclass
 import glob
 import importlib.util
@@ -48,7 +48,6 @@ class CustomDict(UserDict):
         self.data = copy(original)
 
     def __getitem__(self, key):
-        print(key)
         mod = super().__getitem__(key)
         try:
             module_path = normpath(mod.__file__)
@@ -77,6 +76,17 @@ class PluginUID(NamedTuple):
     identifier: str  # The package name. This is the name used when importing the package. Eg "my_name_my_plugin". This must be a valid python identifier.
     version: Version  # The version number of the plugin.
 
+    def to_string(self):
+        return f"{self.identifier}@{self.version}"
+
+    @classmethod
+    def from_string(cls, s: str):
+        match = re.fullmatch(r"(?P<identifier>[a-zA-Z_]+[a-zA-Z_0-9]*)@(?P<version>.*)", s)
+        if match is None:
+            raise ValueError(f"Invalid PluginUID string: {s}")
+        version = Version(match.group("version"))
+        return cls(match.group("identifier"), version)
+
 
 RequirementPattern = re.compile(r"(?P<identifier>[a-zA-Z_]+[a-zA-Z_0-9]*)(?P<requirement>.*)")
 
@@ -99,7 +109,7 @@ class PluginRequirement(NamedTuple):
         return item.identifier == self.plugin_identifier and item.version in self.specifier
 
 
-class PluginState(Enum):
+class PluginState(IntEnum):
     Disabled = 0  # Plugin is not enabled by the user
     Inactive = (
         1  # Plugin is enabled by the user but had dependencies that are not enabled
@@ -175,21 +185,42 @@ class PluginContainer:
         )
 
 
+PluginConfig = dict[str, bool]
+PluginConfigPath = "plugins.json"
+
+
 class PluginManager(QObject):
     __plugins: dict[PluginUID, PluginContainer]
+    __plugins_config: PluginConfig
 
     def __init__(self, api: AppPrivateAPI):
         super().__init__()
         self.__api = weakref.ref(api)
         self.__plugins = {}
+        self.__plugins_config = {}
 
     def init(self):
+        self.__load_plugin_config()
         self.__find_plugins()
-        self.__enable_plugins()
 
     @property
     def api(self) -> AppPrivateAPI:
         return self.__api()
+
+    def __load_plugin_config(self):
+        try:
+            plugin_config: PluginConfig
+            with open(PluginConfigPath) as f:
+                plugin_config = json.load(f)
+            if not isinstance(plugin_config, dict) and all(isinstance(v, bool) for v in plugin_config.values()):
+                raise TypeError
+        except (FileNotFoundError, json.JSONDecodeError, TypeError):
+            plugin_config = {}
+        self.__plugins_config = plugin_config
+
+    def __save_plugin_config(self):
+        with open(PluginConfigPath, "w") as f:
+            json.dump(self.__plugins_config, f)
 
     def __find_plugins(self):
         """find and populate plugins"""
@@ -204,24 +235,20 @@ class PluginManager(QObject):
 
                     if plugin_uid not in self.__plugins:
                         self.__plugins[plugin_uid] = plugin_container
-                    elif self.__plugins[plugin_uid].data.path == plugin_path:
-                        continue
-                    else:
+                    elif self.__plugins[plugin_uid].data.path != plugin_path:
                         raise ValueError(
                             f"Two plugins cannot have the same identifier and version.\n{self.__plugins[plugin_uid].data.path} and {plugin_path} have the same identifier and version."
                         )
-
                 except Exception as e:
                     log.exception(str(e))
 
-    def __enable_plugins(self):
-        # load from a config file which plugins were enabled last session and enable them.
-        # for simplicity, we are just going to enable all plugins
-        for plugin_identifier in list(self.__plugins):
-            try:
-                self.enable_plugin(plugin_identifier)
-            except Exception as e:
-                log.exception(e)
+        for plugin_str, enabled in self.__plugins_config.items():
+            plugin_uid = PluginUID.from_string(plugin_str)
+            if enabled and plugin_uid in self.__plugins:
+                try:
+                    self.enable_plugin(plugin_uid)
+                except Exception as e:
+                    log.exception(e)
 
     def __load_plugin(self, plugin_container: PluginContainer):
         """Import and load a plugin."""
@@ -328,6 +355,8 @@ class PluginManager(QObject):
 
     def __set_plugin_state(self, plugin_container: PluginContainer, plugin_state: PluginState):
         plugin_container.state = plugin_state
+        self.__plugins_config[plugin_container.data.uid.to_string()] = bool(plugin_state)
+        self.__save_plugin_config()
         self.plugin_state_change.emit(plugin_container.data.uid, plugin_container.state)
 
     plugin_state_change = Signal(PluginUID, PluginState)
