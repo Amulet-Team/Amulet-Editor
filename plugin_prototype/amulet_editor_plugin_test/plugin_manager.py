@@ -71,8 +71,8 @@ class CustomDict(UserDict):
 sys.modules = CustomDict(sys.modules)
 
 
-    plugin_identifier: str  # The package name. This is the name used when importing the package. Eg "my_name_my_plugin". This must be a valid python identifier.
 class PluginUID(NamedTuple):
+    identifier: str  # The package name. This is the name used when importing the package. Eg "my_name_my_plugin". This must be a valid python identifier.
     version: Version  # The version number of the plugin.
 
 
@@ -94,7 +94,7 @@ class PluginRequirement(NamedTuple):
     def __contains__(self, item: PluginUID):
         if not isinstance(item, PluginUID):
             raise TypeError
-        return item.plugin_identifier == self.plugin_identifier and item.version in self.specifier
+        return item.identifier == self.plugin_identifier and item.version in self.specifier
 
 
 class PluginState(Enum):
@@ -105,13 +105,22 @@ class PluginState(Enum):
     Enabled = 2  # Plugin is fully enabled
 
 
+class PluginData(NamedTuple):
+    """Static, publicly accessible data about a plugin"""
+    uid: PluginUID  # The unique identifier for the plugin. Made up of the plugin id and the version number. No two plugins may have the same UID.
+    path: str  # The root path of the plugin.
+    name: str  # The public name of the plugin.
+    depends: tuple[PluginRequirement, ...]  # The plugins that this plugin depends on. This plugin will only be loaded once these plugins have been loaded.
+
+
+PluginChangeCallback = Callable[[PluginUID, PluginState], None]
+
+
 @dataclass
 class PluginContainer:
-    plugin_path: str  # The root path of the plugin.
-    plugin_uid: PluginUID  # The unique identifier for the plugin. Made up of the plugin id and the version number. No two plugins may have the same UID.
-    depends: list[PluginRequirement]  # The plugins that this plugin depends on. This plugin will only be loaded once these plugins have been loaded.
-    plugin_instance: Optional[Plugin] = None  # The instance of the plugin.
-    plugin_state: PluginState = PluginState.Disabled
+    data: PluginData
+    instance: Optional[Plugin] = None  # The instance of the plugin.
+    state: PluginState = PluginState.Disabled
 
     @classmethod
     def from_path(cls, plugin_path: str) -> PluginContainer:
@@ -138,6 +147,11 @@ class PluginContainer:
             raise TypeError("plugin.json[version] must be a PEP 440 version string")
         plugin_version = Version(plugin_version_string)
 
+        # Get the plugin name
+        plugin_name = metadata.get("name")
+        if not isinstance(plugin_version_string, str):
+            raise TypeError("plugin.json[name] must be a string")
+
         # Get the plugin dependencies
         depends: list[str] = metadata.get("depends", [])
         if not isinstance(depends, list) and all(
@@ -147,12 +161,15 @@ class PluginContainer:
                 "plugin.json[depends] must be a list of string identifiers and version specifiers if defined.\nEg. [\"plugin_1 ~=1.0\", \"plugin_2 ~=1.3\"]"
             )
 
-        parsed_depends = list(map(PluginRequirement.from_string, depends))
+        parsed_depends = tuple(map(PluginRequirement.from_string, depends))
 
         return PluginContainer(
-            plugin_path,
-            PluginUID(plugin_identifier, plugin_version),
-            parsed_depends,
+            PluginData(
+                PluginUID(plugin_identifier, plugin_version),
+                plugin_path,
+                plugin_name,
+                parsed_depends,
+            )
         )
 
 
@@ -162,6 +179,7 @@ class PluginManager:
     def __init__(self, api: AppPrivateAPI):
         self.__api = weakref.ref(api)
         self.__plugins = {}
+        self.__plugin_change_callbacks = []
 
     def init(self):
         self.__find_plugins()
@@ -180,15 +198,15 @@ class PluginManager:
                 try:
                     plugin_path = os.path.dirname(manifest_path)
                     plugin_container = PluginContainer.from_path(plugin_path)
-                    plugin_uid = plugin_container.plugin_uid
+                    plugin_uid = plugin_container.data.uid
 
                     if plugin_uid not in self.__plugins:
                         self.__plugins[plugin_uid] = plugin_container
-                    elif self.__plugins[plugin_uid].plugin_path == plugin_path:
+                    elif self.__plugins[plugin_uid].data.path == plugin_path:
                         continue
                     else:
                         raise ValueError(
-                            f"Two plugins cannot have the same identifier and version.\n{self.__plugins[plugin_uid].plugin_path} and {plugin_path} have the same identifier and version."
+                            f"Two plugins cannot have the same identifier and version.\n{self.__plugins[plugin_uid].data.path} and {plugin_path} have the same identifier and version."
                         )
 
                 except Exception as e:
@@ -205,22 +223,22 @@ class PluginManager:
 
     def __load_plugin(self, plugin_container: PluginContainer):
         """Import and load a plugin."""
-        plugin_container.plugin_state = PluginState.Enabled
-        path = plugin_container.plugin_path
+        self.__set_plugin_state(plugin_container, PluginState.Enabled)
+        path = plugin_container.data.path
         if os.path.isdir(path):
             path = os.path.join(path, "__init__.py")
         spec = importlib.util.spec_from_file_location(
-            plugin_container.plugin_uid.plugin_identifier, path
+            plugin_container.data.uid.identifier, path
         )
         if spec is None:
             raise Exception
         mod = importlib.util.module_from_spec(spec)
         if mod is None:
             raise Exception
-        sys.modules[plugin_container.plugin_uid.plugin_identifier] = mod
+        sys.modules[plugin_container.data.uid.identifier] = mod
         spec.loader.exec_module(mod)
-        plugin_container.plugin_instance = mod.Plugin(self.api)
-        plugin_container.plugin_instance.on_load()
+        plugin_container.instance = mod.Plugin(self.api)
+        plugin_container.instance.on_load()
 
     def enable_plugin(self, plugin_uid: PluginUID):
         """Enable a plugin
@@ -231,11 +249,11 @@ class PluginManager:
         if not isinstance(plugin_uid, PluginUID):
             raise TypeError
         plugin_container = self.__plugins[plugin_uid]
-        if plugin_container.plugin_state is not PluginState.Disabled:
+        if plugin_container.state is not PluginState.Disabled:
             return
         if all(
-            any(uid in requirement and plugin.plugin_state is PluginState.Enabled for uid, plugin in self.__plugins.items())
-            for requirement in plugin_container.depends
+            any(uid in requirement and plugin.state is PluginState.Enabled for uid, plugin in self.__plugins.items())
+            for requirement in plugin_container.data.depends
         ):
             # all dependencies are already satisfied so the plugin can be enabled.
             self.__load_plugin(plugin_container)
@@ -243,7 +261,7 @@ class PluginManager:
         else:
             # at least one dependency has not been enabled yet.
             # Put this on the to-do list until its dependencies are enabled.
-            plugin_container.plugin_state = PluginState.Inactive
+            self.__set_plugin_state(plugin_container, PluginState.Inactive)
 
     def _recursive_enable_plugins(self):
         """Enable all inactive plugins that can be enabled until no more can be."""
@@ -251,9 +269,9 @@ class PluginManager:
         while enabled_count:
             enabled_count = 0
             for plugin_container in list(self.__plugins.values()):
-                if plugin_container.plugin_state is PluginState.Inactive and all(
-                    any(uid in requirement and plugin.plugin_state is PluginState.Enabled for uid, plugin in self.__plugins.items())
-                    for requirement in plugin_container.depends
+                if plugin_container.state is PluginState.Inactive and all(
+                    any(uid in requirement and plugin.state is PluginState.Enabled for uid, plugin in self.__plugins.items())
+                    for requirement in plugin_container.data.depends
                 ):
                     # all dependencies are satisfied so the plugin can be enabled.
                     try:
@@ -265,20 +283,20 @@ class PluginManager:
 
     def __unload_plugin(self, plugin_container: PluginContainer):
         """Unload and destroy a plugin."""
-        self._recursive_inactive_plugins(plugin_container.plugin_uid)
+        self._recursive_inactive_plugins(plugin_container.data.uid)
         try:
-            plugin_container.plugin_instance.on_unload()
+            plugin_container.instance.on_unload()
         except Exception as e:
             log.exception(e, exc_info=e)
-        plugin_container.plugin_instance = None
-        sys.modules.pop(plugin_container.plugin_uid.plugin_identifier, None)
+        plugin_container.instance = None
+        sys.modules.pop(plugin_container.data.uid.identifier, None)
 
     def disable_plugin(self, plugin_uid: PluginUID):
         """Disable a plugin and inactive all dependents."""
         plugin_container = self.__plugins[plugin_uid]
-        if plugin_container.plugin_state is PluginState.Enabled:
+        if plugin_container.state is PluginState.Enabled:
             self.__unload_plugin(plugin_container)
-        plugin_container.plugin_state = PluginState.Disabled
+        self.__set_plugin_state(plugin_container, PluginState.Disabled)
 
     def _recursive_inactive_plugins(self, plugin_uid: PluginUID):
         """
@@ -289,11 +307,11 @@ class PluginManager:
         """
         for plugin_container in self.__plugins.values():
             if (
-                plugin_container.plugin_state is PluginState.Enabled
-                and any(plugin_uid in requirement for requirement in plugin_container.depends)
+                plugin_container.state is PluginState.Enabled
+                and any(plugin_uid in requirement for requirement in plugin_container.data.depends)
             ):
                 self.__unload_plugin(plugin_container)
-                plugin_container.plugin_state = PluginState.Inactive
+                self.__set_plugin_state(plugin_container, PluginState.Inactive)
 
     def get_plugin(self, plugin_identifier: str) -> Plugin:
         """
@@ -301,7 +319,25 @@ class PluginManager:
         Do not store other plugin instances.
         Useful to use the API of another plugin.
         """
-        plugin = next((p for p in self.__plugins.values() if p.plugin_uid.plugin_identifier == plugin_identifier and p.plugin_state is PluginState.Enabled), None)
+        plugin = next((p for p in self.__plugins.values() if p.data.uid.identifier == plugin_identifier and p.state is PluginState.Enabled), None)
         if plugin is None:
             raise KeyError(f"Plugin {plugin_identifier} has not been enabled.")
-        return plugin.plugin_instance
+        return plugin.instance
+
+    def __set_plugin_state(self, plugin_container: PluginContainer, plugin_state: PluginState):
+        plugin_container.state = plugin_state
+        callback: PluginChangeCallback
+        for callback in self.__plugin_change_callbacks:
+            try:
+                callback(plugin_container.data.uid, plugin_container.state)
+            except Exception as e:
+                log.exception(e)
+
+    def register_plugin_change_event(self, callable: PluginChangeCallback):
+        """Register a function to be called when the enable state of a plugin changes."""
+        self.__plugin_change_callbacks.append(callable)
+
+    def iter_plugins(self) -> Generator[tuple[PluginData, PluginState], None, None]:
+        """Iterate over all plugins regardless of enabled state."""
+        for plugin in self.__plugins.values():
+            yield plugin.data, plugin.state

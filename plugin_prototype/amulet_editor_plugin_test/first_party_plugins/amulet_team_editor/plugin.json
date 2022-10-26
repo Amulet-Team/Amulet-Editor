@@ -1,5 +1,6 @@
 {
 	"identifier": "amulet_team_editor",
 	"version": "1.0.0",
+	"name": "Amulet 3D Editor",
 	"depends": []
 }

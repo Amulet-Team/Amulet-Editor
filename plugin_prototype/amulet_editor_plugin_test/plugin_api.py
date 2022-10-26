@@ -1,8 +1,8 @@
 from __future__ import annotations
-from typing import TYPE_CHECKING, Type
+from typing import TYPE_CHECKING, Type, Callable, Generator
 import weakref
 
-from .plugin_manager import PluginManager
+from .plugin_manager import PluginManager, PluginUID, PluginState, PluginData
 
 if TYPE_CHECKING:
     from .app import App
@@ -27,6 +27,26 @@ class AppPrivateAPI:
     @property
     def app(self) -> App:
         return self.__app()
+
+    def enable_plugin(self, plugin_uid: PluginUID):
+        """Enable a plugin
+
+        :param plugin_uid: The unique identifier of the plugin to enable
+        :raises: Exception if an error happened when loading the plugin.
+        """
+        self.__plugin_manager.enable_plugin(plugin_uid)
+
+    def disable_plugin(self, plugin_uid: PluginUID):
+        """Disable a plugin and inactive all dependents."""
+        self.__plugin_manager.disable_plugin(plugin_uid)
+
+    def register_plugin_change_event(self, callable: Callable[[PluginUID, PluginState], None]):
+        """Register a function to be called when the enable state of a plugin changes."""
+        self.__plugin_manager.register_plugin_change_event(callable)
+
+    def iter_plugins(self) -> Generator[tuple[PluginData, PluginState], None, None]:
+        """Iterate over all plugins regardless of enabled state."""
+        yield from self.__plugin_manager.iter_plugins()
 
     def get_plugin(self, plugin_identifier: str) -> Plugin:
         """
