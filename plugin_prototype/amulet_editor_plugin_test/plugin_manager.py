@@ -18,6 +18,8 @@ from copy import copy
 from packaging.version import Version
 from packaging.specifiers import SpecifierSet
 
+from PySide6.QtCore import Signal, QObject
+
 if TYPE_CHECKING:
     from .plugin import Plugin
     from .app import AppPrivateAPI
@@ -173,13 +175,13 @@ class PluginContainer:
         )
 
 
-class PluginManager:
+class PluginManager(QObject):
     __plugins: dict[PluginUID, PluginContainer]
 
     def __init__(self, api: AppPrivateAPI):
+        super().__init__()
         self.__api = weakref.ref(api)
         self.__plugins = {}
-        self.__plugin_change_callbacks = []
 
     def init(self):
         self.__find_plugins()
@@ -326,16 +328,9 @@ class PluginManager:
 
     def __set_plugin_state(self, plugin_container: PluginContainer, plugin_state: PluginState):
         plugin_container.state = plugin_state
-        callback: PluginChangeCallback
-        for callback in self.__plugin_change_callbacks:
-            try:
-                callback(plugin_container.data.uid, plugin_container.state)
-            except Exception as e:
-                log.exception(e)
+        self.plugin_state_change.emit(plugin_container.data.uid, plugin_container.state)
 
-    def register_plugin_change_event(self, callable: PluginChangeCallback):
-        """Register a function to be called when the enable state of a plugin changes."""
-        self.__plugin_change_callbacks.append(callable)
+    plugin_state_change = Signal(PluginUID, PluginState)
 
     def iter_plugins(self) -> Generator[tuple[PluginData, PluginState], None, None]:
         """Iterate over all plugins regardless of enabled state."""

@@ -1,7 +1,7 @@
 from __future__ import annotations
 from typing import TYPE_CHECKING
-from PySide6.QtCore import (QCoreApplication, QMetaObject, Qt)
-from PySide6.QtWidgets import (QMainWindow, QTableWidget, QTableWidgetItem, QVBoxLayout, QWidget)
+from PySide6.QtCore import QCoreApplication, QMetaObject, Qt, Slot
+from PySide6.QtWidgets import QMainWindow, QTableWidget, QTableWidgetItem, QVBoxLayout, QWidget
 from PySide6.QtGui import QColor
 
 from .plugin_manager import PluginData, PluginState, PluginUID
@@ -40,7 +40,7 @@ class MainWindow(QMainWindow):
         self.__init_table(self.centralwidget, self.verticalLayout)
         for plugin_data, plugin_state in self.__api.iter_plugins():
             self.__add_row(plugin_data, plugin_state)
-        self.__api.register_plugin_change_event(self.__on_plugin_state_change)
+        self.__api.plugin_state_change.connect(self.__on_plugin_state_change)
         self.setCentralWidget(self.centralwidget)
         self.translate()
         QMetaObject.connectSlotsByName(self)
@@ -98,6 +98,7 @@ class MainWindow(QMainWindow):
 
         self.__plugin_map[plugin_data.uid] = (enabled_item, state_item)
 
+    @Slot(PluginUID, PluginState)
     def __on_plugin_state_change(self, plugin_uid: PluginUID, plugin_state: PluginState):
         print("state change", plugin_uid, plugin_state)
         enabled_item, state_item = self.__plugin_map[plugin_uid]

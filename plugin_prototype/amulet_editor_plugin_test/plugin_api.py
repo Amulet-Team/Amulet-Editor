@@ -1,6 +1,7 @@
 from __future__ import annotations
-from typing import TYPE_CHECKING, Type, Callable, Generator
+from typing import TYPE_CHECKING, Type, Generator
 import weakref
+from PySide6.QtCore import Signal, QObject
 
 from .plugin_manager import PluginManager, PluginUID, PluginState, PluginData
 
@@ -10,7 +11,7 @@ if TYPE_CHECKING:
     from .plugin import Plugin
 
 
-class AppPrivateAPI:
+class AppPrivateAPI(QObject):
     """
     This class represents the private API for the app.
     This API must only be accessible to the plugin core and the App.
@@ -18,8 +19,10 @@ class AppPrivateAPI:
     """
 
     def __init__(self, app: App):
+        super().__init__()
         self.__app = weakref.ref(app)
         self.__plugin_manager = PluginManager(self)
+        self.__plugin_manager.plugin_state_change.connect(self.plugin_state_change)
 
     def init(self):
         self.__plugin_manager.init()
@@ -40,9 +43,7 @@ class AppPrivateAPI:
         """Disable a plugin and inactive all dependents."""
         self.__plugin_manager.disable_plugin(plugin_uid)
 
-    def register_plugin_change_event(self, callable: Callable[[PluginUID, PluginState], None]):
-        """Register a function to be called when the enable state of a plugin changes."""
-        self.__plugin_manager.register_plugin_change_event(callable)
+    plugin_state_change = Signal(PluginUID, PluginState)
 
     def iter_plugins(self) -> Generator[tuple[PluginData, PluginState], None, None]:
         """Iterate over all plugins regardless of enabled state."""
