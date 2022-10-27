@@ -12,12 +12,15 @@ class App(QApplication):
     def __init__(self):
         super().__init__()
         self.__api = AppPrivateAPI(self)
-        self.__window = None
+        self.__window1 = None
+        self.__window2 = None
 
     def _init(self):
         self.__api.init()
-        self.__window = MainWindow(self.__api)
-        self.__window.show()
+        self.__window1 = MainWindow(self.__api)
+        self.__window1.show()
+        self.__window2 = MainWindow(self.__api)
+        self.__window2.show()
 
     def exec(self):
         self._init()
