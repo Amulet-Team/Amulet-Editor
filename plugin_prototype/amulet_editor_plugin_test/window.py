@@ -1,24 +1,13 @@
 from __future__ import annotations
 from typing import TYPE_CHECKING
-from PySide6.QtCore import QCoreApplication, QMetaObject, Qt, Slot, QThread
+from PySide6.QtCore import QCoreApplication, QMetaObject, Qt, Slot
 from PySide6.QtWidgets import QMainWindow, QGridLayout, QVBoxLayout, QWidget, QLabel, QCheckBox
 
 from .plugin_manager import PluginData, PluginState, PluginUID
+from .thread import Thread
 
 if TYPE_CHECKING:
     from .plugin_api import AppPrivateAPI
-
-
-class Thread(QThread):
-    def __init__(self, *QThread_args, target=None, args=(), kwargs=(), **QThread_kwargs):
-        super().__init__(*QThread_args, **QThread_kwargs)
-        self.__target = target
-        self.__args = args
-        self.__kwargs = dict(kwargs)
-        self.finished.connect(lambda: self.deleteLater())
-
-    def run(self):
-        self.__target(*self.__args, **self.__kwargs)
 
 
 class MainWindow(QMainWindow):
