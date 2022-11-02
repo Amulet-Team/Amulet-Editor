@@ -280,14 +280,27 @@ class PluginManager(QObject):
                         plugin_container = PluginContainer.from_path(plugin_path)
                         plugin_uid = plugin_container.data.uid
 
+                        # Ensure that the module name does not shadow an existing module
+                        try:
+                            mod = importlib.import_module(plugin_uid.identifier)
+                        except ModuleNotFoundError:
+                            # No module with this name. We are all good
+                            pass
+                        else:
+                            # Imported a module with this name
+                            if plugin_path != mod.__path__[0] if hasattr(mod, "__path__") else plugin_path != os.path.splitext(mod.__file__)[0]:
+                                # If the path does not match the expected path then it shadows an existing module
+                                log.warning(f"Skipping {plugin_container.data.path} because it would shadow module {plugin_uid.identifier}.")
+                                continue
+
                         if plugin_uid not in self.__plugins:
                             self.__plugins[plugin_uid] = plugin_container
                         elif self.__plugins[plugin_uid].data.path != plugin_path:
-                            raise ValueError(
+                            log.warning(
                                 f"Two plugins cannot have the same identifier and version.\n{self.__plugins[plugin_uid].data.path} and {plugin_path} have the same identifier and version."
                             )
                     except Exception as e:
-                        log.exception(str(e))
+                        log.exception(e)
 
             for plugin_str, enabled in self.__plugins_config.items():
                 plugin_uid = PluginUID.from_string(plugin_str)

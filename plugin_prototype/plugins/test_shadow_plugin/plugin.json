@@ -1,0 +1,6 @@
+{
+	"identifier": "os",
+	"version": "1.0.0",
+	"name": "Test Shadow Plugin",
+	"depends": []
+}
