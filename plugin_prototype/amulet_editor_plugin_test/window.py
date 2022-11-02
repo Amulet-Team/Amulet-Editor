@@ -17,9 +17,6 @@ class Thread(QThread):
         self.__kwargs = dict(kwargs)
         self.finished.connect(lambda: self.deleteLater())
 
-    def __del__(self):
-        print("deleted")
-
     def run(self):
         self.__target(*self.__args, **self.__kwargs)
 
@@ -89,10 +86,8 @@ class MainWindow(QMainWindow):
 
         def on_change(state: int):
             if state == Qt.Unchecked:
-                print("evt disable", self, plugin_data.uid)
                 Thread(target=lambda : self.__api.disable_plugin(plugin_data.uid)).start()
             else:
-                print("evt enable", self, plugin_data.uid)
                 Thread(target=lambda: self.__api.enable_plugin(plugin_data.uid)).start()
 
         enabled_item.stateChanged.connect(on_change)
@@ -101,7 +96,6 @@ class MainWindow(QMainWindow):
 
     @Slot(PluginUID, PluginState)
     def __on_plugin_state_change(self, plugin_uid: PluginUID, plugin_state: PluginState):
-        print("state change", plugin_uid, plugin_state)
         enabled_item, state_item = self.__plugin_map[plugin_uid]
         enabled_state = bool(plugin_state)
         if enabled_item.isChecked() != enabled_state:
