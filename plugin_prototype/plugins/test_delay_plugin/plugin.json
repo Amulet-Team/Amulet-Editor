@@ -1,0 +1,6 @@
+{
+	"identifier": "test_delay_plugin",
+	"version": "1.0.0",
+	"name": "Test Delay Plugin",
+	"depends": []
+}
