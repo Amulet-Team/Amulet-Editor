@@ -14,6 +14,8 @@ from PySide6.QtGui import QIcon
 
 
 class AmuletEditor(QApplication):
+    """An extension of the vanilla Qt QApplication."""
+
     def __init__(self) -> None:
         super().__init__()
         self.setApplicationName("Amulet Editor")
