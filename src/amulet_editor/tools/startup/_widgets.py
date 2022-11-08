@@ -26,7 +26,7 @@ class QIconButton(QToolButton):
     def __init__(self, parent: QWidget) -> None:
         super().__init__(parent)
 
-        self._icon_name = "question-mark"
+        self._icon_name = "question-mark.svg"
 
         appearance.changed.connect(self.retheme)
 
