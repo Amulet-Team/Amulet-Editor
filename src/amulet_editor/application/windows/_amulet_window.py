@@ -34,6 +34,8 @@ DEFAULT_PANEL_WIDTH = 300
 
 
 class AmuletWindow(QMainWindow):
+    """The main Amulet window."""
+
     def __init__(self) -> None:
         super().__init__()
 
