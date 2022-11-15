@@ -1,0 +1,598 @@
+// -------------------------------------------------------
+// ------------------ Global Properties ------------------
+// -------------------------------------------------------
+
+// Colours
+$primary_x0_666: #9F9F9F !default;
+$primary_x0_909: #D8D8D8 !default;
+$primary: #F0F0F0 !default;
+$primary_x1_05: #FCFCFC !default;
+$primary_x1_1: #FFFFFF !default;
+$primary_x1_25: #FFFFFF !default;
+$primary_x1_3: #FFFFFF !default;
+$primary_x1_5: #FFFFFF !default;
+$primary_x1_6: #FFFFFF !default;
+$primary_x2: #FFFFFF !default;
+
+$primary_variant: #F0F0F0 !default;
+
+$on_primary: #000000 !default;
+$on_primary_x0_666: #000000 !default;
+
+$secondary_x0_5: #003C6B !default;
+$secondary_x0_666: #004F8E !default;
+$secondary: #0078D7 !default;
+
+$secondary_variant_x0_8: #0060AC !default;
+$secondary_variant_x0_909: #006CC2 !default;
+$secondary_variant: #0078D7 !default;
+
+$on_secondary: #FFFFFF !default;
+
+$background: #FFFFFF !default;
+$background_x1_15: #FFFFFF !default;
+
+$on_background: #000000 !default;
+
+$surface_x0_909: #CDCDCD !default;
+$surface: #E3E3E3 !default;
+$surface_x2: #FFFFFF !default;
+
+$on_surface: #000000 !default;
+
+$error: #FFFFDC !default;
+$on_error: #000000 !default;
+
+// Fonts
+$font_family: Cascadia Mono !default;
+$font_family_extra_light: Cascadia Mono ExtraLight !default;
+$font_family_light: Cascadia Mono Light !default;
+$font_family_semi_bold: Cascadia Mono SemiBold !default;
+$font_family_semi_light: Cascadia Mono SemiLight !default;
+
+/* ------------------------------------------------------- */
+/* --------- Qt Style Sheet - Generic Properties --------- */
+/* ------------------------------------------------------- */
+
+* {
+    font-size: 9pt;
+    font-family: $font_family;
+}
+* [subfamily="extra_light"] {
+    font-family: $font_family_extra_light;
+}
+* [subfamily="light"] {
+    font-family: $font_family_light;
+}
+* [subfamily="semi_bold"] {
+    font-family: $font_family_semi_bold;
+}
+* [subfamily="semi_light"] {
+    font-family: $font_family_semi_light;
+}
+
+/* ------------------------------------------------------- */
+/* --------- Qt Style Sheet - QWidget Properties --------- */
+/* ------------------------------------------------------- */
+
+QWidget[backgroundColor="background"] {
+    background-color: $background;
+    color: $on_background;
+}
+QWidget[backgroundColor="primary"] {
+    background-color: $primary;
+    color: $on_primary;
+}
+QWidget[backgroundColor="surface"] {
+    background-color: $surface;
+    color: $on_surface;
+}
+
+QWidget[border="none"] {
+    border: none;
+}
+QWidget[border="primary"] {
+    border: 1px solid $primary;
+    padding: 1px;
+}
+QWidget[border="on_primary"] {
+    border: 1px solid $on_primary;
+    padding: 1px;
+}
+QWidget[border="secondary"] {
+    border: 1px solid $secondary;
+    padding: 1px;
+}
+QWidget[border="on_secondary"] {
+    border: 1px solid $on_secondary;
+    padding: 1px;
+}
+QWidget[border="surface"] {
+    border: 1px solid $surface;
+    padding: 1px;
+}
+QWidget[border="on_surface"] {
+    border: 1px solid $on_surface;
+    padding: 1px;
+}
+QWidget[border="background"] {
+    border: 1px solid $background;
+    padding: 1px;
+}
+QWidget[border="on_background"] {
+    border: 1px solid $on_background;
+    padding: 1px;
+}
+
+QWidget[borderBottom="none"] {
+    border-bottom: none;
+}
+QWidget[borderBottom="primary"] {
+    border-bottom: 1px solid $primary;
+    padding-bottom: 1px;
+}
+QWidget[borderBottom="on_primary"] {
+    border-bottom: 1px solid $on_primary;
+    padding-bottom: 1px;
+}
+QWidget[borderBottom="secondary"] {
+    border-bottom: 1px solid $secondary;
+    padding-bottom: 1px;
+}
+QWidget[borderBottom="on_secondary"] {
+    border-bottom: 1px solid $on_secondary;
+    padding-bottom: 1px;
+}
+QWidget[borderBottom="surface"] {
+    border-bottom: 1px solid $surface;
+    padding-bottom: 1px;
+}
+QWidget[borderBottom="on_surface"] {
+    border-bottom: 1px solid $on_surface;
+    padding-bottom: 1px;
+}
+QWidget[borderBottom="background"] {
+    border-bottom: 1px solid $background;
+    padding-bottom: 1px;
+}
+QWidget[borderBottom="on_background"] {
+    border-bottom: 1px solid $on_background;
+    padding-bottom: 1px;
+}
+
+QWidget[borderLeft="none"] {
+    border-left: none;
+}
+QWidget[borderLeft="primary"] {
+    border-left: 1px solid $primary;
+    padding-left: 1px;
+}
+QWidget[borderLeft="on_primary"] {
+    border-left: 1px solid $on_primary;
+    padding-left: 1px;
+}
+QWidget[borderLeft="secondary"] {
+    border-left: 1px solid $secondary;
+    padding-left: 1px;
+}
+QWidget[borderLeft="on_secondary"] {
+    border-left: 1px solid $on_secondary;
+    padding-left: 1px;
+}
+QWidget[borderLeft="surface"] {
+    border-left: 1px solid $surface;
+    padding-left: 1px;
+}
+QWidget[borderLeft="on_surface"] {
+    border-left: 1px solid $on_surface;
+    padding-left: 1px;
+}
+QWidget[borderLeft="background"] {
+    border-left: 1px solid $background;
+    padding-left: 1px;
+}
+QWidget[borderLeft="on_background"] {
+    border-left: 1px solid $on_background;
+    padding-left: 1px;
+}
+
+QWidget[borderRight="none"] {
+    border-right: none;
+}
+QWidget[borderRight="primary"] {
+    border-right: 1px solid $primary;
+    padding-right: 1px;
+}
+QWidget[borderRight="on_primary"] {
+    border-right: 1px solid $on_primary;
+    padding-right: 1px;
+}
+QWidget[borderRight="secondary"] {
+    border-right: 1px solid $secondary;
+    padding-right: 1px;
+}
+QWidget[borderRight="on_secondary"] {
+    border-right: 1px solid $on_secondary;
+    padding-right: 1px;
+}
+QWidget[borderRight="surface"] {
+    border-right: 1px solid $surface;
+    padding-right: 1px;
+}
+QWidget[borderRight="on_surface"] {
+    border-right: 1px solid $on_surface;
+    padding-right: 1px;
+}
+QWidget[borderRight="background"] {
+    border-right: 1px solid $background;
+    padding-right: 1px;
+}
+QWidget[borderRight="on_background"] {
+    border-right: 1px solid $on_background;
+    padding-right: 1px;
+}
+
+QWidget[borderTop="none"] {
+    border-top: none;
+}
+QWidget[borderTop="primary"] {
+    border-top: 1px solid $primary;
+    padding-top: 1px;
+}
+QWidget[borderTop="on_primary"] {
+    border-top: 1px solid $on_primary;
+    padding-top: 1px;
+}
+QWidget[borderTop="secondary"] {
+    border-top: 1px solid $secondary;
+    padding-top: 1px;
+}
+QWidget[borderTop="on_secondary"] {
+    border-top: 1px solid $on_secondary;
+    padding-top: 1px;
+}
+QWidget[borderTop="surface"] {
+    border-top: 1px solid $surface;
+    padding-top: 1px;
+}
+QWidget[borderTop="on_surface"] {
+    border-top: 1px solid $on_surface;
+    padding-top: 1px;
+}
+QWidget[borderTop="background"] {
+    border-top: 1px solid $background;
+    padding-top: 1px;
+}
+QWidget[borderTop="on_background"] {
+    border-top: 1px solid $on_background;
+    padding-top: 1px;
+}
+
+QWidget[borderRadiusVisible=true] {
+    border-radius: 3px;
+}
+QWidget[borderRadiusVisible=false] {
+    border-radius: 0;
+}
+
+QWidget[color="primary"] {
+    color: $primary;
+}
+QWidget[color="on_primary"] {
+    color: $on_primary;
+}
+QWidget[color="secondary"] {
+    color: $secondary;
+}
+QWidget[color="on_secondary"] {
+    color: $on_secondary;
+}
+QWidget[color="surface"] {
+    color: $surface;
+}
+QWidget[color="on_surface"] {
+    color: $on_surface;
+}
+QWidget[color="background"] {
+    color: $background;
+}
+QWidget[color="on_background"] {
+    color: $on_background;
+}
+
+/* ------------------------------------------------------- */
+/* ----- Qt Style Sheet - Widget Specific Properties ----- */
+/* ------------------------------------------------------- */
+
+QMainWindow {
+    background-color: $background;
+    color: $on_background;
+}
+
+QComboBox {
+    background-color: $primary;
+    border: 1px solid $surface;
+    border-radius: 3px;
+    color: $on_background;
+    min-width: 6em;
+    padding: 1px 18px 2px 7px;
+    selection-background-color: $surface;
+}
+QComboBox:editable {
+    background-color: $primary;
+}
+QComboBox:!editable, QComboBox::drop-down:editable {
+    background-color: $primary;
+}
+QComboBox:!editable:on, QComboBox::drop-down:editable:on {
+    background-color: $primary;
+}
+QComboBox:on {
+    padding-top: 3px;
+    padding-left: 7px;
+}
+QComboBox::drop-down {
+    border-left: 1px solid $surface;
+    border-top-right-radius: 3px;
+    border-bottom-right-radius: 3px;
+    subcontrol-origin: padding;
+    subcontrol-position: top right;
+    width: 15px;
+}
+QComboBox QAbstractItemView {
+    background-color: $primary;
+    border: 1px solid $surface;
+    border-radius: 3px;
+}
+
+QLabel {
+    background: transparent;
+    color: $on_primary;
+}
+
+QLabel[heading="h1"] {
+    font-size: 26pt;
+}
+QLabel[heading="h2"] {
+    font-size: 22pt;
+}
+QLabel[heading="h3"] {
+    font-size: 20pt;
+}
+QLabel[heading="h4"] {
+    font-size: 14pt;
+}
+QLabel[heading="h5"] {
+    font-size: 12pt;
+}
+
+QHoverLabel {
+    background-color: $primary;
+    color: $on_primary;
+    border-bottom: 1px solid $background;
+    border-left: 3px solid $secondary;
+    border-right: 1px solid $background;
+    border-top: 1px solid $background;
+    font: bold 10pt $font_family;
+}
+
+QLineEdit {
+    background-color: $primary;
+    border-bottom: 2px solid $surface;
+    border-left: 1px solid $surface;
+    border-top: 1px solid $surface;
+    border-right: 1px solid $surface;
+    border-radius: 3px;
+    color: $on_primary;
+}
+QLineEdit:focus {
+    border-bottom: 2px solid $secondary;
+    border-radius: 3px;
+}
+QLineEdit[readOnly=true]:focus {
+    border-bottom: 2px solid $surface_x2;
+    border-radius: 3px;
+}
+
+QMenuBar {
+    background-color: $surface;
+    border: none;
+    color: $on_surface;
+    font: bold 9pt $font_family;
+    spacing: 0;
+}
+QMenuBar::item {
+    border: none;
+    margin-left: 9px;
+    margin-right: 9px;
+    margin-top: 5px;
+    margin-bottom: 5px;
+}
+QMenuBar::item:selected {
+    border: none;
+    background-color: $secondary_variant;
+    color: $on_secondary;
+    margin-left: 0;
+    margin-right: 0;
+    margin-top: 0;
+    margin-bottom: 0;
+}
+
+QMenu {
+    background-color: $primary;
+    border: 1px solid $background;
+    color: $on_primary;
+    font: 9pt $font_family;
+    selection-background-color: $secondary_variant;
+}
+QMenu::separator {
+    height: 1px;
+    background-color: $primary_x0_666;
+    color: $on_primary;
+    margin-left: 5px;
+    margin-right: 5px;
+}
+QMenu::item {
+    background-color: $primary;
+    padding: 4px 24px 4px 28px;
+    border: 1px transparent $background;
+}
+QMenu::item::selected {
+    color: $on_secondary;
+    background-color: $secondary_variant;
+}
+QMenu::item::pressed {
+    background-color: $secondary_variant;
+}
+QMenu::item::disabled {
+    color: $on_primary_x0_666;
+}
+QMenu::icon {
+  padding-left: 10px;
+  width: 14px;
+  height: 14px;
+}
+QMenu::indicator {
+  padding-left: 8px;
+  width: 12px;
+  height: 12px;
+}
+
+QPlainTextEdit {
+    background-color: $background;
+    color: $on_background;
+}
+QPlainTextEdit[readOnly=true] {
+    color: $on_surface;
+}
+
+QPushButton {
+    background-color: $primary_x1_05;
+    border: 1px solid $surface;
+    border-radius: 3px;
+    color: $on_primary;
+    padding-bottom: 5px;
+    padding-left: 10px;
+    padding-top: 5px;
+    padding-right: 10px;
+}
+QPushButton:checked {
+    background: qlineargradient(x1: 0, y1: 0, x2: 0, y2: 1, stop: 0 $primary_x0_909, stop: 1 $primary_x1_25);
+    border-bottom: 2px solid $secondary;
+}
+QPushButton:hover {
+    background: qlineargradient(x1: 0, y1: 0, x2: 0, y2: 1, stop: 0 $primary_x1_1, stop: 1 $primary_x1_25);
+}
+QPushButton:pressed {
+    background: qlineargradient(x1: 0, y1: 0, x2: 0, y2: 1, stop: 0 $primary_x0_909, stop: 1 $primary_x1_25);
+    border: 1px solid $surface_x0_909;
+    border-bottom: 2px solid $secondary;
+}
+QPushButton[backgroundColor="secondary"] {
+    background: $secondary_variant_x0_8;
+    border: 1px solid $secondary_x0_666;
+    color: $on_secondary;
+}
+QPushButton[backgroundColor="secondary"]:checked {
+    background: qlineargradient(x1: 0, y1: 0, x2: 0, y2: 1, stop: 0 $secondary_variant_x0_909, stop: 1 $secondary_variant);
+    border-bottom: 2px solid $secondary;
+}
+QPushButton[backgroundColor="secondary"]:hover {
+    background: qlineargradient(x1: 0, y1: 0, x2: 0, y2: 1, stop: 0 $secondary_variant_x0_909, stop: 1 $secondary_variant);
+}
+QPushButton[backgroundColor="secondary"]:pressed {
+    background: qlineargradient(x1: 0, y1: 0, x2: 0, y2: 1, stop: 0 $secondary_variant_x0_8, stop: 1 $secondary_variant);
+    border: 1px solid $secondary_x0_5;
+    border-bottom: 2px solid $secondary;
+}
+QPushButton:!enabled {
+    background: qlineargradient(x1: 0, y1: 0, x2: 0, y2: 1, stop: 0 $background, stop: 1 $background_x1_15);
+    border: 1px solid $surface;
+    color: $on_surface;
+}
+
+QScrollBar {
+    background: transparent;
+}
+QScrollBar::handle {
+    background: qlineargradient(x1: 0, y1: 0, x2: 0, y2: 1, stop: 0 $primary_x1_5, stop: 1 $primary_x1_25);
+    border: 1px solid $primary_x2;
+    border-radius: 3px;
+}
+QScrollBar::handle:hover {
+    background: qlineargradient(x1: 0, y1: 0, x2: 0, y2: 1, stop: 0 $primary_x1_6, stop: 1 $primary_x1_3);
+}
+QScrollBar::add-line:horizontal {
+    background: transparent;
+    width: 0;
+}
+QScrollBar::sub-line:horizontal {
+    background: transparent;
+    width: 0;
+}
+QScrollBar::add-line:vertical {
+    background: transparent;
+    height: 0;
+}
+QScrollBar::sub-line:vertical {
+    background: transparent;
+    height: 0;
+}
+
+QStatusBar {
+    background-color: $secondary;
+}
+
+QTextEdit {
+    background-color: $background;
+    color: $on_background;
+}
+QTextEdit[readOnly=true] {
+    color: $on_surface;
+}
+
+QToolButton {
+    background-color: $surface;
+    color: $on_surface;
+}
+QToolButton:checked {
+    background-color: $secondary_x0_666;
+    color: $on_secondary;
+}
+QToolButton:pressed {
+    background-color: $surface;
+    color: $on_surface;
+}
+QIconButton:checked {
+    background-color: $secondary_x0_666;
+    color: $on_secondary;
+}
+QIconButton:pressed {
+    background-color: $primary;
+    color: $on_primary;
+}
+
+QTreeView, QListView, QTableView, QColumnView {
+    background-color: $primary;
+    border: none;
+}
+QTreeView, QListView, QTableView, QColumnView::item {
+    background-color: $primary;
+    color: $on_primary;
+    border: none;
+}
+
+QToolTip {
+    background-color: $background;
+    color: $on_background;
+}
+
+/* QLinkCard[auto_hide=true]:!hover:!pressed:!checked {
+    background: transparent;
+    border: none;
+    color: $on_surface;
+}
+QLinkCard[auto_hide=true]:!hover:!pressed {
+    border: none;
+    color: $on_surface;
+} */

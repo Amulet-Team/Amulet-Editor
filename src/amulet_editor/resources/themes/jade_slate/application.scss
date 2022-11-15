@@ -1,0 +1,46 @@
+// -------------------------------------------------------
+// ------------------ Global Properties ------------------
+// -------------------------------------------------------
+
+// Colours
+$primary_x0_666: #181A19;
+$primary_x0_909: #202322;
+$primary: #242726;
+$primary_x1_05: #262928;
+$primary_x1_1: #282B2A;
+$primary_x1_25: #2D312F;
+$primary_x1_3: #2F3331;
+$primary_x1_5: #363A39;
+$primary_x1_6: #3A3E3D;
+$primary_x2: #484E4C;
+
+$primary_variant: #242726;
+
+$on_primary: #DAE5DF;
+$on_primary_x0_666: #909894;
+
+$secondary_x0_5: #21332D;
+$secondary_x0_666: #2C443C;
+$secondary: #43675B;
+
+$secondary_variant_x0_8: #365249;
+$secondary_variant_x0_909: #3C5D52;
+$secondary_variant: #43675B;
+
+$on_secondary: #DAE5DF;
+
+$background: #191C1B;
+$background_x1_15: #1C201F;
+
+$on_background: #BEC9C3;
+
+$surface_x0_909: #39423E;
+$surface: #3F4945;
+$surface_x2: #7E928A;
+
+$on_surface: #BEC9C3;
+
+$error: #FFB4A9;
+$on_error: #680003;
+
+@import "../default";
