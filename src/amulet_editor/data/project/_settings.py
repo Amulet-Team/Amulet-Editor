@@ -3,10 +3,12 @@ import os
 
 from amulet_editor.data import project
 
+DefaultTheme = "Amulet Dark"
+
 
 def default_settings() -> dict:
     return {
-        "theme": "Amulet Dark",
+        "theme": DefaultTheme,
         "startup_size": [1400, 720],
     }
 
