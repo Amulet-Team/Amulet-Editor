@@ -3,7 +3,7 @@ from typing import Optional
 from amulet_editor.data.build import get_resource
 from amulet_editor.models.widgets._label import QHoverLabel
 from PySide6 import QtGui
-from PySide6.QtCore import QEvent, QSize, QPoint
+from PySide6.QtCore import QEvent, QSize, QRect
 from PySide6.QtGui import QColor, QEnterEvent, QIcon, QPainter, QPaintEvent, QImage
 from PySide6.QtWidgets import QToolButton, QWidget, QStyleOption, QStyle
 from PySide6.QtSvgWidgets import QSvgWidget
@@ -29,7 +29,10 @@ class AStylableSvgWidget(QSvgWidget):
     Set the background via QSS and this widget will merge the colour of the background with the transparency of the SVG icon.
     """
     def paintEvent(self, event: QPaintEvent):
-        buffer = QImage(self.width(), self.height(), QImage.Format_ARGB32)
+        buffer_width = max(self.width(), 50)
+        buffer_height = max(self.height(), 50)
+
+        buffer = QImage(buffer_width, buffer_height, QImage.Format_ARGB32)
         buffer.fill(QColor(0, 0, 0, 0))  # Fill with transparency
 
         # Init the painter
@@ -37,6 +40,8 @@ class AStylableSvgWidget(QSvgWidget):
 
         # Draw the SVG
         self.renderer().render(painter)
+        # If the buffer is larger than the widget apply scaling
+        painter.scale(buffer_width/self.width(), buffer_height/self.height())
 
         # Use the alpha current alpha with the future colour
         painter.setCompositionMode(QPainter.CompositionMode_SourceIn)
@@ -50,9 +55,8 @@ class AStylableSvgWidget(QSvgWidget):
 
         # Draw the image to the widget.
         painter = QPainter(self)
-        painter.drawImage(QPoint(0, 0), buffer)
+        painter.drawImage(self.rect(), buffer)
         painter.end()
-        print("paint")
 
 
 class QIconButton(QToolButton):
