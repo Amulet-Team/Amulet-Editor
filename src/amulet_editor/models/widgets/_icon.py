@@ -3,9 +3,10 @@ from typing import Optional
 from amulet_editor.data.build import get_resource
 from amulet_editor.models.widgets._label import QHoverLabel
 from PySide6 import QtGui
-from PySide6.QtCore import QEvent, QSize
-from PySide6.QtGui import QColor, QEnterEvent, QIcon, QMouseEvent, QPainter
-from PySide6.QtWidgets import QToolButton, QWidget
+from PySide6.QtCore import QEvent, QSize, QPoint
+from PySide6.QtGui import QColor, QEnterEvent, QIcon, QPainter, QPaintEvent, QImage
+from PySide6.QtWidgets import QToolButton, QWidget, QStyleOption, QStyle
+from PySide6.QtSvgWidgets import QSvgWidget
 
 
 class QSvgIcon(QIcon):
@@ -20,6 +21,38 @@ class QSvgIcon(QIcon):
         painter.end()
 
         super().__init__(pixmap)
+
+
+class AStylableSvgWidget(QSvgWidget):
+    """
+    A subclass of QSvgWidget that adds support for colouring via style sheets.
+    Set the background via QSS and this widget will merge the colour of the background with the transparency of the SVG icon.
+    """
+    def paintEvent(self, event: QPaintEvent):
+        buffer = QImage(self.width(), self.height(), QImage.Format_ARGB32)
+        buffer.fill(QColor(0, 0, 0, 0))  # Fill with transparency
+
+        # Init the painter
+        painter = QPainter(buffer)
+
+        # Draw the SVG
+        self.renderer().render(painter)
+
+        # Use the alpha current alpha with the future colour
+        painter.setCompositionMode(QPainter.CompositionMode_SourceIn)
+        # Draw the normal background
+        opt = QStyleOption()
+        opt.initFrom(self)
+        self.style().drawPrimitive(QStyle.PE_Widget, opt, painter, self)
+
+        # Finish painting
+        painter.end()
+
+        # Draw the image to the widget.
+        painter = QPainter(self)
+        painter.drawImage(QPoint(0, 0), buffer)
+        painter.end()
+        print("paint")
 
 
 class QIconButton(QToolButton):
