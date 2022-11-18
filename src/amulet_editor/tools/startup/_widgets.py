@@ -5,13 +5,14 @@ from amulet_editor.application import appearance
 from amulet_editor.application.appearance import Color, Theme
 from amulet_editor.data import build
 from amulet_editor.models.minecraft import LevelData
-from amulet_editor.models.widgets._icon import QSvgIcon
+from amulet_editor.models.widgets._icon import QSvgIcon, AStylableSvgWidget
 from amulet_editor.models.widgets._label import QElidedLabel
 from PySide6.QtCore import QCoreApplication, QEvent, QSize, Qt
 from PySide6.QtGui import QEnterEvent, QImage, QPixmap
 from PySide6.QtWidgets import (
     QGridLayout,
     QHBoxLayout,
+    QVBoxLayout,
     QLabel,
     QLayout,
     QPushButton,
@@ -57,6 +58,34 @@ class QIconButton(QToolButton):
             self.repaint(appearance.theme().on_surface)
 
         return super().leaveEvent(event)
+
+
+class AIconButton(QPushButton):
+    """A QPushButton with a """
+    def __init__(self, icon_name: str = "question-mark.svg", parent: QWidget = None) -> None:
+        super().__init__(parent)
+        self.setProperty("hover", "false")
+        self._layout = QVBoxLayout(self)
+        self._layout.setContentsMargins(0, 0, 0, 0)
+        self._layout.setAlignment(Qt.AlignCenter)
+        self._icon = AStylableSvgWidget(build.get_resource(f"icons/tabler/{icon_name}"))
+        self._layout.addWidget(self._icon)
+
+    def setIcon(self, icon_name: Optional[str] = None):
+        self._icon.load(build.get_resource(f"icons/tabler/{icon_name}"))
+
+    def setIconSize(self, size: QSize):
+        self._icon.setFixedSize(size)
+
+    def enterEvent(self, event: QEnterEvent):
+        self.setProperty("hover", "true")
+        self.setStyleSheet("/* /")  # Force a style update.
+        super().enterEvent(event)
+
+    def leaveEvent(self, event: QEvent):
+        self.setProperty("hover", "false")
+        self.setStyleSheet("/* /")  # Force a style update.
+        super().leaveEvent(event)
 
 
 class QIconCard(QPushButton):

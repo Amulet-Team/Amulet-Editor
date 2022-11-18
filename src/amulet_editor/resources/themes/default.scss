@@ -587,18 +587,24 @@ QToolTip {
     color: $on_background;
 }
 
-QLinkCard[hover="false"] > AStylableSvgWidget {
+QLinkCard[hover="false"] > AStylableSvgWidget,
+AIconButton[hover="false"] > AStylableSvgWidget
+{
     background-color: $on_surface;
 }
 
-QLinkCard[hover="false"] > QElidedLabel {
-    color: $on_surface;
-}
-
-QLinkCard[hover="true"] > AStylableSvgWidget {
+QLinkCard[hover="true"] > AStylableSvgWidget,
+AIconButton[hover="true"] > AStylableSvgWidget
+{
     background-color: $on_primary;
 }
 
-QLinkCard[hover="true"] > QElidedLabel {
+QLinkCard[hover="false"] > QElidedLabel
+{
+    color: $on_surface;
+}
+
+QLinkCard[hover="true"] > QElidedLabel
+{
     color: $on_primary;
 }
