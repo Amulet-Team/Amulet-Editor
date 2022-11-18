@@ -1,4 +1,4 @@
-from amulet_editor.tools.startup._widgets import QIconButton
+from amulet_editor.models.widgets import AIconButton
 from PySide6.QtCore import QCoreApplication, QSize, Qt
 from PySide6.QtWidgets import (
     QFrame,
@@ -56,10 +56,9 @@ class SelectPackagesPage(QWidget):
         self.frm_project.setProperty("border", "surface")
         self.frm_project.setProperty("borderRadiusVisible", True)
 
-        self.btn_project = QIconButton(self.frm_project)
+        self.btn_project = AIconButton("adjustments-horizontal.svg")
         self.btn_project.setEnabled(False)
         self.btn_project.setFixedSize(QSize(27, 27))
-        self.btn_project.setIcon("adjustments-horizontal.svg")
         self.btn_project.setIconSize(QSize(15, 15))
         self.btn_project.setProperty("backgroundColor", "primary")
 

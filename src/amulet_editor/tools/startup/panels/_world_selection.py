@@ -7,8 +7,7 @@ from typing import Optional
 import amulet
 from amulet_editor.data import build, minecraft
 from amulet_editor.models.minecraft import LevelData
-from amulet_editor.models.widgets import QPixCard
-from amulet_editor.tools.startup._widgets import QIconButton
+from amulet_editor.models.widgets import QPixCard, AIconButton
 from PySide6.QtCore import QCoreApplication, QObject, QSize, Qt, QThread, Signal, Slot
 from PySide6.QtGui import QImage, QPixmap
 from PySide6.QtWidgets import (
@@ -249,10 +248,9 @@ class WorldSelectionPanel(QWidget):
         self.lne_search_level.setProperty("borderRight", "surface")
         self.lne_search_level.setProperty("color", "on_surface")
 
-        self.btn_search_level = QIconButton(self.frm_search_level)
+        self.btn_search_level = AIconButton("adjustments-horizontal.svg")
         self.btn_search_level.setCheckable(True)
         self.btn_search_level.setFixedSize(QSize(27, 27))
-        self.btn_search_level.setIcon("adjustments-horizontal.svg")
         self.btn_search_level.setIconSize(QSize(15, 15))
         self.btn_search_level.setProperty("backgroundColor", "primary")
 
@@ -301,9 +299,8 @@ class WorldSelectionPanel(QWidget):
         self.cbx_sort = QComboBox(self.wgt_search_options)
         self.cbx_sort.setFixedHeight(25)
 
-        self.btn_sort = QIconButton(self.frm_sort)
+        self.btn_sort = AIconButton("sort-descending.svg")
         self.btn_sort.setFixedSize(QSize(27, 27))
-        self.btn_sort.setIcon("sort-descending.svg")
         self.btn_sort.setIconSize(QSize(15, 15))
         self.btn_sort.setProperty("backgroundColor", "primary")
 

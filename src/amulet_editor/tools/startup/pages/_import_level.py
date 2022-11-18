@@ -5,9 +5,10 @@ from typing import Callable, Optional
 import amulet
 from amulet_editor.data import minecraft, paths
 from amulet_editor.models.generic import Observer
+from amulet_editor.models.widgets import AIconButton
 from amulet_editor.models.minecraft import LevelData
 from amulet_editor.tools.startup._models import Menu, ProjectData
-from amulet_editor.tools.startup._widgets import QIconButton, QLevelSelectionCard
+from amulet_editor.tools.startup._widgets import QLevelSelectionCard
 from amulet_editor.tools.startup.panels._world_selection import WorldSelectionPanel
 from PySide6.QtCore import QCoreApplication, QObject, QSize
 from PySide6.QtWidgets import (
@@ -67,7 +68,6 @@ class ImportLevelMenu(QObject):
             os.path.realpath(minecraft.save_directories()[0]),
             QFileDialog.ShowDirsOnly,
         )
-        self._widget.btn_import_level.setChecked(False)
 
         if os.path.exists(os.path.join(path, "level.dat")):
             path = str(os.path.sep).join(path.split("/"))
@@ -126,10 +126,8 @@ class ImportLevelWidget(QWidget):
         self.lne_import_level.setProperty("color", "on_surface")
         self.lne_import_level.setReadOnly(True)
 
-        self.btn_import_level = QIconButton(self.frm_import_level)
-        self.btn_import_level.setCheckable(True)
+        self.btn_import_level = AIconButton("folder.svg")
         self.btn_import_level.setFixedSize(QSize(27, 27))
-        self.btn_import_level.setIcon("folder.svg")
         self.btn_import_level.setIconSize(QSize(15, 15))
         self.btn_import_level.setProperty("backgroundColor", "primary")
 

@@ -1,11 +1,12 @@
 from typing import Optional
 
+from amulet_editor.data import build
 from amulet_editor.data.build import get_resource
 from amulet_editor.models.widgets._label import QHoverLabel
 from PySide6 import QtGui
-from PySide6.QtCore import QEvent, QSize, QRect
+from PySide6.QtCore import QEvent, QSize, Qt
 from PySide6.QtGui import QColor, QEnterEvent, QIcon, QPainter, QPaintEvent, QImage
-from PySide6.QtWidgets import QToolButton, QWidget, QStyleOption, QStyle
+from PySide6.QtWidgets import QToolButton, QWidget, QStyleOption, QStyle, QVBoxLayout, QPushButton
 from PySide6.QtSvgWidgets import QSvgWidget
 
 
@@ -108,3 +109,32 @@ class QIconButton(QToolButton):
 
     def leaveEvent(self, event: QEvent):
         self._hlbl_tooltip.hide()
+
+
+class AIconButton(QPushButton):
+    """A QPushButton containing a stylable icon."""
+    def __init__(self, icon_name: str = "question-mark.svg", parent: QWidget = None) -> None:
+        super().__init__(parent)
+        self.setProperty("hover", "false")
+        self._layout = QVBoxLayout(self)
+        self._layout.setContentsMargins(0, 0, 0, 0)
+        self._layout.setAlignment(Qt.AlignCenter)
+        self._icon = AStylableSvgWidget(build.get_resource(f"icons/tabler/{icon_name}"))
+        self._layout.addWidget(self._icon)
+
+    def setIcon(self, icon_name: Optional[str] = None):
+        self._icon.load(build.get_resource(f"icons/tabler/{icon_name}"))
+
+    def setIconSize(self, size: QSize):
+        self._icon.setFixedSize(size)
+
+    def enterEvent(self, event: QEnterEvent):
+        self.setProperty("hover", "true")
+        self.setStyleSheet("/* /")  # Force a style update.
+        super().enterEvent(event)
+
+    def leaveEvent(self, event: QEvent):
+        if not self.isChecked():
+            self.setProperty("hover", "false")
+        self.setStyleSheet("/* /")  # Force a style update.
+        super().leaveEvent(event)

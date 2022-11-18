@@ -4,10 +4,10 @@ from typing import Callable, Optional
 
 from amulet_editor.data import packages, paths, project
 from amulet_editor.models.generic import Observer
+from amulet_editor.models.widgets import AIconButton
 from amulet_editor.tools.programs import Programs
 from amulet_editor.tools.project import Project
 from amulet_editor.tools.startup._models import Menu, Navigate, ProjectData
-from amulet_editor.tools.startup._widgets import QIconButton
 from amulet_editor.tools.startup.pages._import_level import ImportLevelMenu
 from PySide6.QtCore import QCoreApplication, QObject, QSize
 from PySide6.QtWidgets import (
@@ -103,9 +103,8 @@ class NewProjectWidget(QWidget):
         self.lne_project_directory.setProperty("color", "on_surface")
         self.lne_project_directory.setReadOnly(True)
 
-        self.btn_project_directory = QIconButton(self.frm_project_directory)
+        self.btn_project_directory = AIconButton("folder.svg")
         self.btn_project_directory.setFixedSize(QSize(27, 27))
-        self.btn_project_directory.setIcon("folder.svg")
         self.btn_project_directory.setIconSize(QSize(15, 15))
         self.btn_project_directory.setProperty("backgroundColor", "primary")
 

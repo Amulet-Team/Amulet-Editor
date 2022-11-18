@@ -1,7 +1,7 @@
 from typing import Optional
 
 from amulet_editor.data import build
-from amulet_editor.models.widgets._icon import QSvgIcon, AStylableSvgWidget
+from amulet_editor.models.widgets._icon import AStylableSvgWidget
 from amulet_editor.models.widgets._label import QElidedLabel
 from PySide6.QtCore import QEvent, Qt
 from PySide6.QtGui import QEnterEvent, QPixmap
