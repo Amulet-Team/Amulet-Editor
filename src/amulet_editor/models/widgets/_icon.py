@@ -113,7 +113,7 @@ class QIconButton(QToolButton):
 
 class AIconButton(QPushButton):
     """A QPushButton containing a stylable icon."""
-    def __init__(self, icon_name: str = "question-mark.svg", parent: QWidget = None) -> None:
+    def __init__(self, icon_name: str = "question-mark.svg", parent: QWidget = None):
         super().__init__(parent)
         self.setProperty("hover", "false")
         self._layout = QVBoxLayout(self)
@@ -138,3 +138,30 @@ class AIconButton(QPushButton):
             self.setProperty("hover", "false")
         self.setStyleSheet("/* /")  # Force a style update.
         super().leaveEvent(event)
+
+
+class ATooltipIconButton(AIconButton):
+    # TODO: look into making this work without a subclass
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self._hlbl_tooltip: Optional[QHoverLabel] = None
+
+    def enterEvent(self, event: QEnterEvent):
+        if self._hlbl_tooltip is not None and len(self._hlbl_tooltip.text()) > 0:
+            self._hlbl_tooltip.show()
+        super().enterEvent(event)
+
+    def leaveEvent(self, event: QEvent):
+        if self._hlbl_tooltip is not None:
+            self._hlbl_tooltip.hide()
+        super().leaveEvent(event)
+
+    def toolTip(self) -> str:
+        return "" if self._hlbl_tooltip is None else self._hlbl_tooltip.text()
+
+    def setToolTip(self, label: str) -> None:
+        if self._hlbl_tooltip is None:
+            self._hlbl_tooltip = QHoverLabel(label, self)
+            self._hlbl_tooltip.hide()
+        else:
+            self._hlbl_tooltip.setText(label)
