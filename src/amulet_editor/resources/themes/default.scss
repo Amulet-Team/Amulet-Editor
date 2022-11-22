@@ -290,7 +290,10 @@ QWidget[color="on_secondary"] {
 QWidget[color="surface"] {
     color: $surface;
 }
-QWidget[color="on_surface"] {
+QWidget[color="on_surface"],
+QPlainTextEdit[readOnly=true],
+QTextEdit[readOnly=true]
+{
     color: $on_surface;
 }
 QWidget[color="background"] {
@@ -304,7 +307,11 @@ QWidget[color="on_background"] {
 /* ----- Qt Style Sheet - Widget Specific Properties ----- */
 /* ------------------------------------------------------- */
 
-QMainWindow {
+QMainWindow,
+QPlainTextEdit,
+QTextEdit,
+QToolTip
+{
     background-color: $background;
     color: $on_background;
 }
@@ -458,14 +465,6 @@ QMenu::indicator {
   height: 12px;
 }
 
-QPlainTextEdit {
-    background-color: $background;
-    color: $on_background;
-}
-QPlainTextEdit[readOnly=true] {
-    color: $on_surface;
-}
-
 QPushButton {
     background-color: $primary_x1_05;
     border: 1px solid $surface;
@@ -543,14 +542,6 @@ QStatusBar {
     background-color: $secondary;
 }
 
-QTextEdit {
-    background-color: $background;
-    color: $on_background;
-}
-QTextEdit[readOnly=true] {
-    color: $on_surface;
-}
-
 QToolButton,
 QToolButton:pressed
 {
@@ -558,13 +549,11 @@ QToolButton:pressed
     color: $on_surface;
 }
 QToolButton:checked,
-QIconButton:checked,
 AIconButton:checked
 {
     background-color: $secondary_x0_666;
     color: $on_secondary;
 }
-QIconButton:pressed,
 AIconButton:pressed
 {
     background-color: $primary;
@@ -581,10 +570,6 @@ QTreeView, QListView, QTableView, QColumnView::item {
     border: none;
 }
 
-QToolTip {
-    background-color: $background;
-    color: $on_background;
-}
 
 QLinkCard[hover="false"] > AStylableSvgWidget,
 AIconButton[hover="false"] > AStylableSvgWidget
