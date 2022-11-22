@@ -60,57 +60,6 @@ class AStylableSvgWidget(QSvgWidget):
         painter.end()
 
 
-class QIconButton(QToolButton):
-    def __init__(self, parent: QWidget) -> None:
-        super().__init__(parent)
-
-        self._icon_name = "question-mark"
-        self._icon_color = None
-
-        self._hlbl_tooltip = QHoverLabel("", self)
-        self._hlbl_tooltip.hide()
-
-    def setIcon(self, icon_name: Optional[str] = None) -> None:
-        if icon_name is not None:
-            self._icon_name = icon_name
-
-        icon_color = self._icon_color
-        self._icon_color = (
-            self.palette().brightText().color()
-            if self.isChecked()
-            else self.palette().text().color()
-        )
-
-        if icon_color != self._icon_color:
-            super().setIcon(
-                QSvgIcon(
-                    get_resource(f"icons/tabler/{self._icon_name}"),
-                    self.iconSize(),
-                    self._icon_color,
-                )
-            )
-            self.parent().update()  # Fix rendering artifacts
-
-    def toolTip(self) -> QHoverLabel:
-        return self._hlbl_tooltip
-
-    def setToolTip(self, label: QHoverLabel) -> None:
-        self._hlbl_tooltip = label
-
-    def event(self, event: QEvent) -> bool:
-        if type(event) == QtGui.QPaintEvent:
-            self.setIcon()
-
-        return super().event(event)
-
-    def enterEvent(self, event: QEnterEvent):
-        if len(self._hlbl_tooltip.text()) > 0:
-            self._hlbl_tooltip.show()
-
-    def leaveEvent(self, event: QEvent):
-        self._hlbl_tooltip.hide()
-
-
 class AIconButton(QPushButton):
     """A QPushButton containing a stylable icon."""
     def __init__(self, icon_name: str = "question-mark.svg", parent: QWidget = None):
