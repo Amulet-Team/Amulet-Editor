@@ -3,8 +3,6 @@ from typing import Optional
 from amulet_editor.application import appearance
 from amulet_editor.application.appearance import Color, Theme
 from amulet_editor.data import build
-from amulet_editor.models.widgets._icon import QSvgIcon
-from amulet_editor.models.widgets._label import QElidedLabel
 from PySide6.QtCore import QEvent, QSize, Qt
 from PySide6.QtGui import QEnterEvent, QPixmap
 from PySide6.QtWidgets import (
@@ -17,6 +15,9 @@ from PySide6.QtWidgets import (
     QVBoxLayout,
     QWidget,
 )
+
+from ._icon import QSvgIcon, AStylableSvgWidget
+from ._label import QElidedLabel
 
 
 class QPixCard(QPushButton):
