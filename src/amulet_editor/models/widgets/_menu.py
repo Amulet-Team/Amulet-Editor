@@ -15,11 +15,7 @@ from PySide6.QtWidgets import (
 
 class QMenuWidget(QWidget):
     def __init__(self, parent: Optional[QWidget] = None) -> None:
-        if parent is None:
-            super().__init__()
-        else:
-            super().__init__(parent)
-
+        super().__init__(parent)
         self.setupUi()
 
     @property
@@ -38,7 +34,7 @@ class QMenuWidget(QWidget):
         self._lbl_menu_title.setText(text)
 
     def menuTitle(self) -> str:
-        self._lbl_menu_title.text()
+        return self._lbl_menu_title.text()
 
     def setWidget(self, widget: QWidget) -> None:
         if widget not in self._swgt_menu.children():
