@@ -539,12 +539,24 @@ QToolTip {{
     color: "{on_background}";
 }}
 
+ALinkCard[hover="false"] > AStylableSvgWidget,
 AIconButton[hover="false"] > AStylableSvgWidget
 {{
     background-color: "{on_surface}";
 }}
 
+ALinkCard[hover="true"] > AStylableSvgWidget,
 AIconButton[hover="true"] > AStylableSvgWidget
 {{
     background-color: "{on_primary}";
+}}
+
+ALinkCard[hover="false"] > QElidedLabel
+{{
+    color: "{on_surface}";
+}}
+
+ALinkCard[hover="true"] > QElidedLabel
+{{
+    color: "{on_primary}";
 }}

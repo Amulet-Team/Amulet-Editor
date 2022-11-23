@@ -3,7 +3,6 @@ from functools import partial
 from typing import Optional
 
 import amulet
-from amulet_editor.models.widgets import QLinkCard
 from amulet_editor.data import build, project
 from amulet_editor.models.minecraft import LevelData
 from PySide6.QtCore import QDir, QSize, Qt, Signal
