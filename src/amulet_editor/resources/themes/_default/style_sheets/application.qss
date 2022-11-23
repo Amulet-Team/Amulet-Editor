@@ -511,11 +511,15 @@ QToolButton:pressed {{
     background-color: "{surface}";
     color: "{on_surface}";
 }}
-QIconButton:checked {{
+QIconButton:checked,
+AIconButton:checked,
+{{
     background-color: "{secondary.darker.50}";
     color: "{on_secondary}";
 }}
-QIconButton:pressed {{
+QIconButton:pressed,
+AIconButton:pressed,
+{{
     background-color: "{primary}";
     color: "{on_primary}";
 }}
