@@ -1,6 +1,6 @@
 from amulet_editor import __version__
 from amulet_editor.data import build
-from amulet_editor.tools.startup._widgets import QIconCard
+from amulet_editor.tools.startup._widgets import AIconCard
 from PySide6.QtCore import QCoreApplication, QSize, Qt
 from PySide6.QtGui import QImage, QPixmap
 from PySide6.QtWidgets import QLabel, QVBoxLayout, QWidget
@@ -40,24 +40,24 @@ class StartupPage(QWidget):
         self.lbl_app_version.setProperty("heading", "h5")
         self.lbl_app_version.setProperty("subfamily", "semi_light")
 
-        self.crd_open_level = QIconCard(
+        self.crd_open_level = AIconCard(
             build.get_resource(f"icons/tabler/file-symlink.svg"),
             QSize(25, 25),
-            self,
+            parent=self,
         )
         self.crd_open_level.setMinimumWidth(200)
 
-        self.crd_open_project = QIconCard(
+        self.crd_open_project = AIconCard(
             build.get_resource(f"icons/tabler/file-symlink.svg"),
             QSize(25, 25),
-            self,
+            parent=self,
         )
         self.crd_open_project.setMinimumWidth(200)
 
-        self.crd_new_project = QIconCard(
+        self.crd_new_project = AIconCard(
             build.get_resource(f"icons/tabler/file-plus.svg"),
             QSize(25, 25),
-            self,
+            parent=self,
         )
         self.crd_new_project.setMinimumWidth(200)
 
@@ -82,9 +82,9 @@ class StartupPage(QWidget):
         self.retranslateUi()
 
     def retranslateUi(self):
-        # Disable formatting to condense tranlate functions
+        # Disable formatting to condense translate functions
         # fmt: off
-        self.crd_open_level.setText(QCoreApplication.translate("StartupPage", "Open World", None), "h5")
-        self.crd_new_project.setText(QCoreApplication.translate("StartupPage", "New Project", None), "h5")
-        self.crd_open_project.setText(QCoreApplication.translate("StartupPage", "Open Project", None), "h5")
+        self.crd_open_level.setText(QCoreApplication.translate("StartupPage", "Open World", None))
+        self.crd_new_project.setText(QCoreApplication.translate("StartupPage", "New Project", None))
+        self.crd_open_project.setText(QCoreApplication.translate("StartupPage", "Open Project", None))
         # fmt: on

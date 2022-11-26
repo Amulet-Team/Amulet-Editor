@@ -1,13 +1,10 @@
 import pathlib
 from typing import Optional
-import warnings
 
-from amulet_editor.application import appearance
-from amulet_editor.application.appearance import Color, Theme
 from amulet_editor.data import build
 from amulet_editor.models.minecraft import LevelData
-from amulet_editor.models.widgets._icon import QSvgIcon
-from amulet_editor.models.widgets._label import QElidedLabel
+from amulet_editor.models.widgets import AStylableSvgWidget
+from amulet_editor.models.widgets import QElidedLabel
 from PySide6.QtCore import QCoreApplication, QEvent, QSize, Qt
 from PySide6.QtGui import QEnterEvent, QImage, QPixmap
 from PySide6.QtWidgets import (
@@ -18,117 +15,63 @@ from PySide6.QtWidgets import (
     QPushButton,
     QSizePolicy,
     QStackedWidget,
-    QToolButton,
     QWidget,
 )
 
 
-class QIconButton(QToolButton):
-    def __init__(self, parent: QWidget) -> None:
-        warnings.warn("QIconButton is depreciated. Use AIconButton instead", DeprecationWarning)
-        super().__init__(parent)
-
-        self._icon_name = "question-mark"
-
-        appearance.changed.connect(self.retheme)
-
-    def setIcon(self, icon_name: Optional[str] = None) -> None:
-        self._icon_name = icon_name
-
-        self.repaint(appearance.theme().on_surface)
-
-    def repaint(self, color: Color) -> None:
-        super().setIcon(
-            QSvgIcon(
-                build.get_resource(f"icons/tabler/{self._icon_name}"),
-                self.iconSize(),
-                color.get_qcolor(),
-            )
-        )
-        self.setStyleSheet(f"color: {color.get_hex()}")
-
-    def retheme(self, theme: Theme) -> None:
-        self.repaint(theme.on_surface)
-
-    def enterEvent(self, event: QEnterEvent) -> None:
-        self.repaint(appearance.theme().on_primary)
-        return super().enterEvent(event)
-
-    def leaveEvent(self, event: QEvent) -> None:
-        if self.isCheckable() and not self.isChecked():
-            self.repaint(appearance.theme().on_surface)
-
-        return super().leaveEvent(event)
-
-
-class QIconCard(QPushButton):
+class AIconCard(QPushButton):
     def __init__(
         self,
         icon: str,
         icon_size: QSize,
+        heading: str = "h5",
+        text: str = "",
+        *,
         parent: Optional[QWidget] = None,
     ) -> None:
         super().__init__(parent=parent)
-
-        self.icon_path = icon
-        self.icon_size = icon_size
-
-        self.lbl_icon = QLabel()
-        self.lbl_description = QElidedLabel()
-
-        self.lbl_icon.setAttribute(Qt.WA_TransparentForMouseEvents)
-        self.lbl_icon.setSizePolicy(QSizePolicy.Maximum, QSizePolicy.Maximum)
-
-        self.lbl_description.setAttribute(Qt.WA_TransparentForMouseEvents)
-        self.lbl_description.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Maximum)
-
-        layout = QHBoxLayout()
-        layout.addWidget(self.lbl_icon)
-        layout.addWidget(self.lbl_description)
-        layout.setAlignment(Qt.AlignCenter)
+        self.setProperty("hover", "false")
+        layout = QHBoxLayout(self)
         layout.setContentsMargins(5, 5, 5, 5)
+        layout.setAlignment(Qt.AlignCenter)
         layout.setSpacing(5)
-
         self.setLayout(layout)
-        self.setMinimumHeight(self.icon_size.height() + 10)
 
-        self.repaint(appearance.theme().on_surface)
+        self._svg_icon = AStylableSvgWidget(build.get_resource(icon))
+        self._svg_icon.setAttribute(Qt.WA_TransparentForMouseEvents)
+        self._svg_icon.setSizePolicy(QSizePolicy.Maximum, QSizePolicy.Maximum)
+        self._svg_icon.setFixedSize(icon_size)
+        layout.addWidget(self._svg_icon)
 
-        appearance.changed.connect(self.retheme)
+        self._lbl_description = QElidedLabel()
+        self._lbl_description.setAttribute(Qt.WA_TransparentForMouseEvents)
+        self._lbl_description.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Maximum)
+        self._lbl_description.setProperty("subfamily", "semi_light")
+        self._lbl_description.setText(text)
+        self._lbl_description.setProperty("heading", heading)
+        layout.addWidget(self._lbl_description)
 
-    def setText(self, text: str, heading: Optional[str]):
-        if heading is not None:
-            self.lbl_description.setProperty("heading", heading)
+        self.setMinimumHeight(icon_size.height() + 10)
 
-        self.lbl_description.setProperty("subfamily", "semi_light")
-        self.lbl_description.setText(text)
+    def setText(self, text: str):
+        self._lbl_description.setText(text)
+
+    def setHeading(self, heading: str):
+        self._lbl_description.setProperty("heading", heading)
 
     def setIcon(self, icon_path: str) -> None:
-        if self.icon_path is None:
-            layout: QHBoxLayout = self.layout()
-            layout.insertWidget(0, self.lbl_icon)
-        self.icon_path = icon_path
-        self.repaint(appearance.theme().on_surface)
+        self._svg_icon.load(build.get_resource(icon_path))
 
-    def repaint(self, color: Color) -> None:
-        if self.icon_path is not None:
-            self.lbl_icon.setPixmap(
-                QSvgIcon(self.icon_path, self.icon_size, color.get_qcolor()).pixmap(
-                    self.icon_size
-                )
-            )
-        self.setStyleSheet(f"color: {color.get_hex()}")
+    def enterEvent(self, event: QEnterEvent):
+        self.setProperty("hover", "true")
+        self.setStyleSheet("/* /")  # Force a style update.
+        super().enterEvent(event)
 
-    def retheme(self, theme: Theme) -> None:
-        self.repaint(theme.on_surface)
-
-    def enterEvent(self, event: QEnterEvent) -> None:
-        self.repaint(appearance.theme().on_primary)
-        return super().enterEvent(event)
-
-    def leaveEvent(self, event: QEvent) -> None:
-        self.repaint(appearance.theme().on_surface)
-        return super().leaveEvent(event)
+    def leaveEvent(self, event: QEvent):
+        if not self.isChecked():
+            self.setProperty("hover", "false")
+        self.setStyleSheet("/* /")  # Force a style update.
+        super().leaveEvent(event)
 
 
 class QLevelSelectionCard(QPushButton):

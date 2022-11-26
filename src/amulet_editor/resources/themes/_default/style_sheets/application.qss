@@ -511,13 +511,11 @@ QToolButton:pressed {{
     background-color: "{surface}";
     color: "{on_surface}";
 }}
-QIconButton:checked,
 AIconButton:checked
 {{
     background-color: "{secondary.darker.50}";
     color: "{on_secondary}";
 }}
-QIconButton:pressed,
 AIconButton:pressed
 {{
     background-color: "{primary}";
@@ -540,23 +538,27 @@ QToolTip {{
 }}
 
 ALinkCard[hover="false"] > AStylableSvgWidget,
-AIconButton[hover="false"] > AStylableSvgWidget
+AIconButton[hover="false"] > AStylableSvgWidget,
+AIconCard[hover="false"] > AStylableSvgWidget
 {{
     background-color: "{on_surface}";
 }}
 
 ALinkCard[hover="true"] > AStylableSvgWidget,
-AIconButton[hover="true"] > AStylableSvgWidget
+AIconButton[hover="true"] > AStylableSvgWidget,
+AIconCard[hover="true"] > AStylableSvgWidget
 {{
     background-color: "{on_primary}";
 }}
 
-ALinkCard[hover="false"] > QElidedLabel
+ALinkCard[hover="false"] > QElidedLabel,
+AIconCard[hover="false"] > QElidedLabel
 {{
     color: "{on_surface}";
 }}
 
-ALinkCard[hover="true"] > QElidedLabel
+ALinkCard[hover="true"] > QElidedLabel,
+AIconCard[hover="true"] > QElidedLabel
 {{
     color: "{on_primary}";
 }}
