@@ -122,3 +122,7 @@ venv.bak/
 
 # Visual Studio Code extensions
 .qt_for_python
+
+# Qt Creator
+*.pyproject.user
+*.ui.autosave
