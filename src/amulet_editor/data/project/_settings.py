@@ -1,7 +1,10 @@
 import json
 import os
+import logging
 
 from amulet_editor.data import project
+
+log = logging.getLogger(__name__)
 
 
 def default_settings() -> dict:
@@ -20,10 +23,17 @@ def project_settings() -> dict:
         return {}
 
     _settings_file = os.path.join(project.root(), ".amulet", "settings.json")
-    if not os.path.exists(_settings_file):
-        return {}
-
-    return json.load(_settings_file)
+    try:
+        with open(_settings_file) as f:
+            settings_ = json.load(f)
+        if not isinstance(settings_, dict):
+            raise TypeError("Settings was not a dictionary. Reverting to default values.")
+        return settings_
+    except OSError:
+        pass
+    except (json.JSONDecodeError, TypeError) as e:
+        log.error(e)
+    return {}
 
 
 def settings() -> dict:

@@ -5,7 +5,7 @@ from amulet_editor.application import appearance
 from amulet_editor.application.appearance import Theme
 from amulet_editor.data import packages, project
 from amulet_editor.models.package import AmuletTool
-from amulet_editor.models.widgets import QDragContainer, QDragIconButton, QIconButton
+from amulet_editor.models.widgets import ADragContainer, ATooltipIconButton
 from amulet_editor.tools.packages import Packages
 from amulet_editor.tools.settings import Settings
 from amulet_editor.tools.startup import Startup
@@ -194,29 +194,22 @@ class AmuletWindow(QMainWindow):
 
     def load_tool(self, tool: AmuletTool, static: bool = False) -> None:
         """
-        Loads tool into the main application toolbar.\n
+        Loads tool into the main application toolbar.
         Tools marked as static are considered core to the functionality of the editor and thus cannot be removed once loaded.
         """
-        if static:
-            icon_button = QIconButton(self.frm_static_tools)
-        else:
-            icon_button = QDragIconButton(self.wgt_dynamic_tools)
-            icon_button.setData(tool.name)
-
+        icon_button = ATooltipIconButton(tool.icon_name, self)
         icon_button.clicked.connect(partial(self.show_tool, tool))
-        icon_button.setAutoRaise(True)
         icon_button.setCheckable(True)
         icon_button.setFixedSize(QSize(40, 40))
-        icon_button.toolTip().setText(tool.name)
+        icon_button.setToolTip(tool.name)
         icon_button.setIconSize(QSize(30, 30))
-        icon_button.setIcon(tool.icon_name)
 
         self.btng_menus.addButton(icon_button)
 
         if static:
             self.lyt_static_tools.addWidget(icon_button)
         else:
-            self.wgt_dynamic_tools.addItem(icon_button)
+            self.wgt_dynamic_tools.add_item(icon_button)
 
         tool.page.changed.connect(partial(self.change_page, tool))
         tool.primary_panel.changed.connect(partial(self.change_primary_panel, tool))
@@ -310,7 +303,7 @@ class AmuletWindow(QMainWindow):
         self.frm_static_tools.setFixedWidth(40)
 
         # Configure widget for 'Dynamic Menu' items
-        self.wgt_dynamic_tools = QDragContainer(self.frm_static_tools)
+        self.wgt_dynamic_tools = ADragContainer(parent=self.frm_static_tools)
         self.wgt_dynamic_tools.layout().setAlignment(Qt.AlignTop)
         self.wgt_dynamic_tools.layout().setContentsMargins(0, 0, 0, 0)
         self.wgt_dynamic_tools.layout().setSpacing(0)

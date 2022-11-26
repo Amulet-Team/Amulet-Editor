@@ -1,5 +1,6 @@
 import pathlib
 from typing import Optional
+import warnings
 
 from amulet_editor.application import appearance
 from amulet_editor.application.appearance import Color, Theme
@@ -24,6 +25,7 @@ from PySide6.QtWidgets import (
 
 class QIconButton(QToolButton):
     def __init__(self, parent: QWidget) -> None:
+        warnings.warn("QIconButton is depreciated. Use AIconButton instead", DeprecationWarning)
         super().__init__(parent)
 
         self._icon_name = "question-mark.svg"

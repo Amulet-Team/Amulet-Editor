@@ -6,10 +6,11 @@ import amulet
 from amulet_editor.data import packages, project
 from amulet_editor.models.generic import Observer
 from amulet_editor.models.minecraft import LevelData
+from amulet_editor.models.widgets import AIconButton
 from amulet_editor.tools.programs import Programs
 from amulet_editor.tools.project import Project
 from amulet_editor.tools.startup._models import Menu, Navigate
-from amulet_editor.tools.startup._widgets import QIconButton, QLevelSelectionCard
+from amulet_editor.tools.startup._widgets import QLevelSelectionCard
 from amulet_editor.tools.startup.panels._world_selection import WorldSelectionPanel
 from PySide6.QtCore import QCoreApplication, QObject, QSize
 from PySide6.QtWidgets import (
@@ -157,10 +158,9 @@ class OpenWorldWidget(QWidget):
         self.lne_level_directory.setProperty("color", "on_surface")
         self.lne_level_directory.setReadOnly(True)
 
-        self.btn_level_directory = QIconButton(self.frm_level_directory)
+        self.btn_level_directory = AIconButton("folder.svg", self.frm_level_directory)
         self.btn_level_directory.setCheckable(True)
         self.btn_level_directory.setFixedSize(QSize(27, 27))
-        self.btn_level_directory.setIcon("folder.svg")
         self.btn_level_directory.setIconSize(QSize(15, 15))
         self.btn_level_directory.setProperty("backgroundColor", "primary")
 
