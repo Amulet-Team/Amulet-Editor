@@ -103,8 +103,8 @@ class Theme:
                     '"{}"'.format(
                         " ".join(
                             [
-                                self.font_family,
-                                self.font_subfamilies.get(font_data[1], ""),
+                                self._theme["font"]["family"],
+                                self._theme["font"].get("subfamilies", {}).get(font_data[1], ""),
                             ]
                         ).strip()
                     ),
@@ -145,19 +145,19 @@ class Theme:
                 )
 
         return style_sheet.format(
-            font_family=self.font_family,
-            background=self.background.get_hex(),
-            error=self.error.get_hex(),
-            primary=self.primary.get_hex(),
-            primary_variant=self.primary_variant.get_hex(),
-            secondary=self.secondary.get_hex(),
-            secondary_variant=self.secondary_variant.get_hex(),
-            surface=self.surface.get_hex(),
-            on_background=self.on_background.get_hex(),
-            on_error=self.on_error.get_hex(),
-            on_primary=self.on_primary.get_hex(),
-            on_secondary=self.on_secondary.get_hex(),
-            on_surface=self.on_surface.get_hex(),
+            font_family=self._theme["font"]["family"],
+            background=Color(self._theme["material_colors"]["background"]).get_hex(),
+            error=Color(self._theme["material_colors"]["error"]).get_hex(),
+            primary=Color(self._theme["material_colors"]["primary"]).get_hex(),
+            primary_variant=Color(self._theme["material_colors"]["primary_variant"]).get_hex(),
+            secondary=Color(self._theme["material_colors"]["secondary"]).get_hex(),
+            secondary_variant=Color(self._theme["material_colors"]["secondary_variant"]).get_hex(),
+            surface=Color(self._theme["material_colors"]["surface"]).get_hex(),
+            on_background=Color(self._theme["material_colors"]["on_background"]).get_hex(),
+            on_error=Color(self._theme["material_colors"]["on_error"]).get_hex(),
+            on_primary=Color(self._theme["material_colors"]["on_primary"]).get_hex(),
+            on_secondary=Color(self._theme["material_colors"]["on_secondary"]).get_hex(),
+            on_surface=Color(self._theme["material_colors"]["on_surface"]).get_hex(),
         )
 
     @property
@@ -165,61 +165,13 @@ class Theme:
         return self._theme["theme_name"]
 
     @property
-    def font_family(self) -> str:
-        return self._theme["font"]["family"]
-
-    @property
-    def font_subfamilies(self) -> dict[str, str]:
-        return self._theme["font"].get("subfamilies", {})
-
-    @property
-    def font_size(self) -> str:
-        return self._theme["font"]["size"]
-
-    @property
-    def primary(self) -> Color:
-        return Color(self._theme["material_colors"]["primary"])
-
-    @property
     def primary_variant(self) -> Color:
         return Color(self._theme["material_colors"]["primary_variant"])
-
-    @property
-    def on_primary(self) -> Color:
-        return Color(self._theme["material_colors"]["on_primary"])
-
-    @property
-    def secondary(self) -> Color:
-        return Color(self._theme["material_colors"]["secondary"])
-
-    @property
-    def secondary_variant(self) -> Color:
-        return Color(self._theme["material_colors"]["secondary_variant"])
-
-    @property
-    def on_secondary(self) -> Color:
-        return Color(self._theme["material_colors"]["on_secondary"])
 
     @property
     def background(self) -> Color:
         return Color(self._theme["material_colors"]["background"])
 
     @property
-    def on_background(self) -> Color:
-        return Color(self._theme["material_colors"]["on_background"])
-
-    @property
-    def surface(self) -> Color:
-        return Color(self._theme["material_colors"]["surface"])
-
-    @property
     def on_surface(self) -> Color:
         return Color(self._theme["material_colors"]["on_surface"])
-
-    @property
-    def error(self) -> Color:
-        return Color(self._theme["material_colors"]["error"])
-
-    @property
-    def on_error(self) -> Color:
-        return Color(self._theme["material_colors"]["on_error"])
