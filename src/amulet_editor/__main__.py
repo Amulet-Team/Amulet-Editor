@@ -35,13 +35,13 @@ except Exception as e:
 
 def main() -> None:
     try:
-        from amulet_editor.application._app import AmuletEditor
+        from amulet_editor.application._process import init, ProcessType
     except Exception as e:
         _on_error(e)
         raise
 
     try:
-        sys.exit(AmuletEditor().exec())
+        init(ProcessType.Home)
     except Exception as e:
         # TODO: Convert this to use logging
         print(f"Amulet Crashed. Sorry about that. Please report it to a developer if you think this is an issue. \n{traceback.format_exc()}")
