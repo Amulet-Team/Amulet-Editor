@@ -1,4 +1,5 @@
 from typing import Any
+import warnings
 
 from amulet_editor.models.widgets._icon import QIconButton
 from PySide6.QtCore import QCoreApplication, QEvent, QMimeData, Qt, Signal
@@ -8,6 +9,7 @@ from PySide6.QtWidgets import QHBoxLayout, QLayout, QVBoxLayout, QWidget
 
 class QDragIconButton(QIconButton):
     def __init__(self, *args, **kwargs) -> None:
+        warnings.warn("QDragIconButton is depreciated.", DeprecationWarning)
         super().__init__(*args, **kwargs)
 
         self.data = self._icon_name
@@ -53,6 +55,7 @@ class QDragContainer(QWidget):
     orderChanged = Signal(list)
 
     def __init__(self, *args, orientation=Qt.Orientation.Vertical, **kwargs) -> None:
+        warnings.warn("QDragContainer is depreciated. Use ADragContainer instead.", DeprecationWarning)
         super().__init__()
         self.setAcceptDrops(True)
 
@@ -111,3 +114,46 @@ class QDragContainer(QWidget):
             self.__layout__.itemAt(idx).widget().data
             for idx in range(self.__layout__.count())
         ]
+
+
+class ADragContainer(QWidget):
+    """
+    Generic list sorting handler.
+    """
+
+    # orderChanged = Signal(list)
+
+    def __init__(self, orientation: Qt.Orientation = Qt.Orientation.Vertical, parent: QWidget = None):
+        super().__init__(parent)
+        self.setMouseTracking(True)
+
+        self._layout = {
+            Qt.Orientation.Horizontal: QHBoxLayout,
+            Qt.Orientation.Vertical: QVBoxLayout
+        }[orientation](self)
+
+        self._drag = None
+
+    def mouseMoveEvent(self, event: QMouseEvent) -> None:
+        if event.buttons() == Qt.LeftButton:
+            if self._drag is None:
+                for i in range(self._layout.count()):
+                    child = self._layout.itemAt(i).widget()
+                    if child.underMouse():
+                        self._drag = child
+                        break
+            if self._drag is not None:
+                point = event.position().toPoint()
+                for i in range(self._layout.count()):
+                    child = self._layout.itemAt(i).widget()
+                    rect = child.rect()
+                    rect.moveTo(child.pos())
+                    if rect.contains(point):
+                        self._layout.removeWidget(self._drag)
+                        self._layout.insertWidget(i, self._drag)
+                        break
+        else:
+            self._drag = None
+
+    def add_item(self, item: QWidget):
+        self._layout.addWidget(item)
