@@ -27,14 +27,15 @@ def init(process_type: ProcessType):
     global _process_type
     if not isinstance(process_type, ProcessType):
         raise TypeError("Value must be an enum of ProcessType")
+
     if _process_type is ProcessType.Null:
+        _process_type = process_type
         if process_type is ProcessType.Null:
             raise ValueError("Cannot set a null process type.")
         elif process_type is ProcessType.Home:
-            sys.exit(app.AmuletEditor().exec())
+            sys.exit(app.AmuletEditorStartupApp().exec())
         elif process_type is ProcessType.Level:
-            raise NotImplementedError("Still need to implement this")
-        _process_type = process_type
+            sys.exit(app.AmuletEditorLevelApp().exec())
     else:
         raise RuntimeError(f"Process {os.getpid()} has already been initialised.")
 
