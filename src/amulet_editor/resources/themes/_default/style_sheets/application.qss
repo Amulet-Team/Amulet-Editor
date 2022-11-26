@@ -540,23 +540,27 @@ QToolTip {{
 }}
 
 ALinkCard[hover="false"] > AStylableSvgWidget,
-AIconButton[hover="false"] > AStylableSvgWidget
+AIconButton[hover="false"] > AStylableSvgWidget,
+AIconCard[hover="false"] > AStylableSvgWidget
 {{
     background-color: "{on_surface}";
 }}
 
 ALinkCard[hover="true"] > AStylableSvgWidget,
-AIconButton[hover="true"] > AStylableSvgWidget
+AIconButton[hover="true"] > AStylableSvgWidget,
+AIconCard[hover="true"] > AStylableSvgWidget
 {{
     background-color: "{on_primary}";
 }}
 
-ALinkCard[hover="false"] > QElidedLabel
+ALinkCard[hover="false"] > QElidedLabel,
+AIconCard[hover="false"] > QElidedLabel
 {{
     color: "{on_surface}";
 }}
 
-ALinkCard[hover="true"] > QElidedLabel
+ALinkCard[hover="true"] > QElidedLabel,
+AIconCard[hover="true"] > QElidedLabel
 {{
     color: "{on_primary}";
 }}

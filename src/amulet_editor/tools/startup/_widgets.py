@@ -7,7 +7,8 @@ from amulet_editor.application.appearance import Color, Theme
 from amulet_editor.data import build
 from amulet_editor.models.minecraft import LevelData
 from amulet_editor.models.widgets._icon import QSvgIcon
-from amulet_editor.models.widgets._label import QElidedLabel
+from amulet_editor.models.widgets import AStylableSvgWidget
+from amulet_editor.models.widgets import QElidedLabel
 from PySide6.QtCore import QCoreApplication, QEvent, QSize, Qt
 from PySide6.QtGui import QEnterEvent, QImage, QPixmap
 from PySide6.QtWidgets import (
@@ -129,6 +130,61 @@ class QIconCard(QPushButton):
     def leaveEvent(self, event: QEvent) -> None:
         self.repaint(appearance.theme().on_surface)
         return super().leaveEvent(event)
+
+
+class AIconCard(QPushButton):
+    def __init__(
+        self,
+        icon: str,
+        icon_size: QSize,
+        heading: str = "h5",
+        text: str = "",
+        *,
+        parent: Optional[QWidget] = None,
+    ) -> None:
+        super().__init__(parent=parent)
+        self.setProperty("hover", "false")
+        layout = QHBoxLayout(self)
+        layout.setContentsMargins(5, 5, 5, 5)
+        layout.setAlignment(Qt.AlignCenter)
+        layout.setSpacing(5)
+        self.setLayout(layout)
+
+        self._svg_icon = AStylableSvgWidget(build.get_resource(icon))
+        self._svg_icon.setAttribute(Qt.WA_TransparentForMouseEvents)
+        self._svg_icon.setSizePolicy(QSizePolicy.Maximum, QSizePolicy.Maximum)
+        self._svg_icon.setFixedSize(icon_size)
+        layout.addWidget(self._svg_icon)
+
+        self._lbl_description = QElidedLabel()
+        self._lbl_description.setAttribute(Qt.WA_TransparentForMouseEvents)
+        self._lbl_description.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Maximum)
+        self._lbl_description.setProperty("subfamily", "semi_light")
+        self._lbl_description.setText(text)
+        self._lbl_description.setProperty("heading", heading)
+        layout.addWidget(self._lbl_description)
+
+        self.setMinimumHeight(icon_size.height() + 10)
+
+    def setText(self, text: str):
+        self._lbl_description.setText(text)
+
+    def setHeading(self, heading: str):
+        self._lbl_description.setProperty("heading", heading)
+
+    def setIcon(self, icon_path: str) -> None:
+        self._svg_icon.load(build.get_resource(icon_path))
+
+    def enterEvent(self, event: QEnterEvent):
+        self.setProperty("hover", "true")
+        self.setStyleSheet("/* /")  # Force a style update.
+        super().enterEvent(event)
+
+    def leaveEvent(self, event: QEvent):
+        if not self.isChecked():
+            self.setProperty("hover", "false")
+        self.setStyleSheet("/* /")  # Force a style update.
+        super().leaveEvent(event)
 
 
 class QLevelSelectionCard(QPushButton):
