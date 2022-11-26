@@ -35,7 +35,7 @@ except Exception as e:
 
 def main() -> None:
     try:
-        from amulet_editor.application.context._amulet_app import AmuletEditor
+        from amulet_editor.application._app import AmuletEditor
     except Exception as e:
         _on_error(e)
         raise
