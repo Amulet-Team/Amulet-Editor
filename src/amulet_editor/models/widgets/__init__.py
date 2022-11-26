@@ -1,5 +1,6 @@
-from amulet_editor.models.widgets._card import ALinkCard, QPixCard
-from amulet_editor.models.widgets._draggable import ADragContainer
-from amulet_editor.models.widgets._icon import AStylableSvgWidget, AIconButton, ATooltipIconButton
-from amulet_editor.models.widgets._label import QElidedLabel
-from amulet_editor.models.widgets._menu import QMenuWidget
+from ._card import ALinkCard, QPixCard
+from ._draggable import ADragContainer
+from ._icon import AStylableSvgWidget, AIconButton, ATooltipIconButton
+from ._label import QElidedLabel
+from ._menu import QMenuWidget
+from ._line import QHLine
