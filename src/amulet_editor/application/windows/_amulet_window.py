@@ -303,7 +303,7 @@ class AmuletWindow(QMainWindow):
         self.frm_static_tools.setFixedWidth(40)
 
         # Configure widget for 'Dynamic Menu' items
-        self.wgt_dynamic_tools = ADragContainer(parent=self.frm_static_tools)
+        self.wgt_dynamic_tools = ADragContainer(self.frm_static_tools)
         self.wgt_dynamic_tools.layout().setAlignment(Qt.AlignTop)
         self.wgt_dynamic_tools.layout().setContentsMargins(0, 0, 0, 0)
         self.wgt_dynamic_tools.layout().setSpacing(0)
