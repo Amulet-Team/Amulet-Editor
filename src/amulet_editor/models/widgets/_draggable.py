@@ -10,7 +10,7 @@ class ADragContainer(QWidget):
 
     # orderChanged = Signal(list)
 
-    def __init__(self, orientation: Qt.Orientation = Qt.Orientation.Vertical, parent: QWidget = None):
+    def __init__(self, parent: QWidget = None, orientation: Qt.Orientation = Qt.Orientation.Vertical):
         super().__init__(parent)
         self.setMouseTracking(True)
 
