@@ -1,6 +1,7 @@
 {
 	"files": [
 		"src\\amulet_editor\\application\\windows\\_amulet_landing_window\\pages\\home\\_home.ui",
-		"src\\amulet_editor\\application\\windows\\_amulet_landing_window\\pages\\open_world\\_open_world.ui"
+		"src\\amulet_editor\\application\\windows\\_amulet_landing_window\\pages\\open_world\\_open_world.ui",
+		"src\\amulet_editor\\models\\widgets\\_toolbar\\_toolbar.ui"
 	]
 }
