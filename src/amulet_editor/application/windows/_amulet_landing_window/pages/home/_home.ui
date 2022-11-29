@@ -100,10 +100,10 @@
         <set>Qt::AlignCenter</set>
        </property>
        <property name="subfamily" stdset="0">
-        <cstring>semi_light</cstring>
+        <string notr="true">semi_light</string>
        </property>
        <property name="heading" stdset="0">
-        <cstring>h1</cstring>
+        <string notr="true">h1</string>
        </property>
       </widget>
      </item>
@@ -116,13 +116,13 @@
         <set>Qt::AlignCenter</set>
        </property>
        <property name="color" stdset="0">
-        <cstring>secondary</cstring>
+        <string notr="true">secondary</string>
        </property>
        <property name="heading" stdset="0">
-        <cstring>h5</cstring>
+        <string notr="true">h5</string>
        </property>
        <property name="subfamily" stdset="0">
-        <cstring>semi_light</cstring>
+        <string notr="true">semi_light</string>
        </property>
       </widget>
      </item>

@@ -57,17 +57,17 @@ class Ui_HomePage(QWidget):
         self.lbl_app_name = QLabel(self)
         self.lbl_app_name.setObjectName("lbl_app_name")
         self.lbl_app_name.setAlignment(Qt.AlignCenter)
-        self.lbl_app_name.setProperty("subfamily", QByteArray("semi_light"))
-        self.lbl_app_name.setProperty("heading", QByteArray("h1"))
+        self.lbl_app_name.setProperty("subfamily", "semi_light")
+        self.lbl_app_name.setProperty("heading", "h1")
         self._central_layout.addWidget(self.lbl_app_name)
 
         self.lbl_app_version = QLabel(self)
         self.lbl_app_version.setObjectName("lbl_app_version")
         self.lbl_app_version.setText("")
         self.lbl_app_version.setAlignment(Qt.AlignCenter)
-        self.lbl_app_version.setProperty("color", QByteArray("secondary"))
-        self.lbl_app_version.setProperty("heading", QByteArray("h5"))
-        self.lbl_app_version.setProperty("subfamily", QByteArray("semi_light"))
+        self.lbl_app_version.setProperty("color", "secondary")
+        self.lbl_app_version.setProperty("heading", "h5")
+        self.lbl_app_version.setProperty("subfamily", "semi_light")
         self._central_layout.addWidget(self.lbl_app_version)
 
         self._vertical_spacer = QSpacerItem(
