@@ -1,17 +1,16 @@
 # -*- coding: utf-8 -*-
-
 ################################################################################
 ## Form generated from reading UI file '_home.ui'
 ##
-## Created by: Qt User Interface Compiler version 6.5.0
+## Created by: Qt User Interface Compiler version 6.4.0
 ##
 ## WARNING! All changes made in this file will be lost when recompiling UI file!
 ################################################################################
-
 from PySide6.QtCore import QCoreApplication, QMetaObject, QSize, Qt
 from PySide6.QtWidgets import (
     QComboBox,
     QGridLayout,
+    QHBoxLayout,
     QLabel,
     QPushButton,
     QSizePolicy,
@@ -21,17 +20,31 @@ from PySide6.QtWidgets import (
 )
 
 
-class HomePage(QWidget):
+class Ui_HomePage(QWidget):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         if not self.objectName():
             self.setObjectName("HomePage")
-        self.resize(1129, 945)
+        self.resize(748, 788)
 
-        self._vertical_layout = QVBoxLayout(self)
-        self._vertical_layout.setSpacing(5)
-        self._vertical_layout.setObjectName("_vertical_layout")
-        self._vertical_layout.setContentsMargins(50, 50, 50, 50)
+        self.horizontalLayout = QHBoxLayout(self)
+        self.horizontalLayout.setSpacing(5)
+        self.horizontalLayout.setObjectName("horizontalLayout")
+        self.horizontalLayout.setContentsMargins(0, 0, 0, 0)
+
+        self.horizontalSpacer_2 = QSpacerItem(
+            40, 20, QSizePolicy.Expanding, QSizePolicy.Minimum
+        )
+        self.horizontalLayout.addItem(self.horizontalSpacer_2)
+
+        self._central_layout = QVBoxLayout()
+        self._central_layout.setObjectName("_central_layout")
+        self._central_layout.setContentsMargins(50, 50, 50, 50)
+
+        self.verticalSpacer_2 = QSpacerItem(
+            20, 40, QSizePolicy.Minimum, QSizePolicy.Expanding
+        )
+        self._central_layout.addItem(self.verticalSpacer_2)
 
         self.lbl_app_icon = QLabel(self)
         self.lbl_app_icon.setObjectName("lbl_app_icon")
@@ -39,27 +52,28 @@ class HomePage(QWidget):
         self.lbl_app_icon.setMaximumSize(QSize(16777215, 128))
         self.lbl_app_icon.setText("")
         self.lbl_app_icon.setAlignment(Qt.AlignCenter)
-        self._vertical_layout.addWidget(self.lbl_app_icon)
+        self._central_layout.addWidget(self.lbl_app_icon)
 
         self.lbl_app_name = QLabel(self)
         self.lbl_app_name.setObjectName("lbl_app_name")
         self.lbl_app_name.setAlignment(Qt.AlignCenter)
-        self.lbl_app_name.setProperty("subfamily", "semi_light")
-        self.lbl_app_name.setProperty("heading", "h1")
-        self._vertical_layout.addWidget(self.lbl_app_name)
+        self.lbl_app_name.setProperty("subfamily", QByteArray("semi_light"))
+        self.lbl_app_name.setProperty("heading", QByteArray("h1"))
+        self._central_layout.addWidget(self.lbl_app_name)
 
         self.lbl_app_version = QLabel(self)
         self.lbl_app_version.setObjectName("lbl_app_version")
         self.lbl_app_version.setText("")
         self.lbl_app_version.setAlignment(Qt.AlignCenter)
-        self.lbl_app_version.setProperty("color", "secondary")
-        self.lbl_app_version.setProperty("heading", "h5")
-        self.lbl_app_version.setProperty("subfamily", "semi_light")
-        self._vertical_layout.addWidget(self.lbl_app_version)
+        self.lbl_app_version.setProperty("color", QByteArray("secondary"))
+        self.lbl_app_version.setProperty("heading", QByteArray("h5"))
+        self.lbl_app_version.setProperty("subfamily", QByteArray("semi_light"))
+        self._central_layout.addWidget(self.lbl_app_version)
+
         self._vertical_spacer = QSpacerItem(
             20, 20, QSizePolicy.Minimum, QSizePolicy.Fixed
         )
-        self._vertical_layout.addItem(self._vertical_spacer)
+        self._central_layout.addItem(self._vertical_spacer)
 
         self.gridLayout = QGridLayout()
         self.gridLayout.setObjectName("gridLayout")
@@ -94,10 +108,26 @@ class HomePage(QWidget):
         self.btn_open_project.setEnabled(False)
         self.gridLayout.addWidget(self.btn_open_project, 2, 1, 1, 1)
         self.gridLayout.setColumnStretch(0, 1)
-        self._vertical_layout.addLayout(self.gridLayout)
+        self._central_layout.addLayout(self.gridLayout)
+
+        self.verticalSpacer = QSpacerItem(
+            20, 40, QSizePolicy.Minimum, QSizePolicy.Expanding
+        )
+        self._central_layout.addItem(self.verticalSpacer)
+        self.horizontalLayout.addLayout(self._central_layout)
+
+        self.horizontalSpacer = QSpacerItem(
+            40, 20, QSizePolicy.Expanding, QSizePolicy.Minimum
+        )
+        self.horizontalLayout.addItem(self.horizontalSpacer)
+
+        self.quick_access = QWidget(self)
+        self.quick_access.setObjectName("quick_access")
+        self.horizontalLayout.addWidget(self.quick_access)
+        self.horizontalLayout.setStretch(0, 1)
+        self.horizontalLayout.setStretch(2, 1)
 
         self.localise()
-
         QMetaObject.connectSlotsByName(self)
 
     def localise(self):

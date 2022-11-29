@@ -1,13 +1,11 @@
 # -*- coding: utf-8 -*-
-
 ################################################################################
 ## Form generated from reading UI file '_open_world.ui'
 ##
-## Created by: Qt User Interface Compiler version 6.5.0
+## Created by: Qt User Interface Compiler version 6.4.0
 ##
 ## WARNING! All changes made in this file will be lost when recompiling UI file!
 ################################################################################
-
 from PySide6.QtCore import QCoreApplication, QMetaObject, QSize, Qt
 from PySide6.QtWidgets import (
     QFrame,
@@ -22,7 +20,7 @@ from PySide6.QtWidgets import (
 )
 
 
-class OpenWorldPage(QWidget):
+class Ui_OpenWorldPage(QWidget):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         if not self.objectName():
@@ -53,6 +51,7 @@ class OpenWorldPage(QWidget):
         self._lbl_title.setObjectName("_lbl_title")
         self._lbl_title.setAlignment(Qt.AlignCenter)
         self._lyt_header.addWidget(self._lbl_title)
+
         self._horizontal_spacer = QSpacerItem(
             30, 30, QSizePolicy.Fixed, QSizePolicy.Minimum
         )
@@ -92,13 +91,13 @@ class OpenWorldPage(QWidget):
         self.btn_level_directory.setMaximumSize(QSize(27, 27))
         self._lyt_world_directory.addWidget(self.btn_level_directory)
         self._vertical_layout.addLayout(self._lyt_world_directory)
+
         self._vertical_spacer = QSpacerItem(
             20, 40, QSizePolicy.Minimum, QSizePolicy.Expanding
         )
         self._vertical_layout.addItem(self._vertical_spacer)
 
         self.localise()
-
         QMetaObject.connectSlotsByName(self)
 
     def localise(self):

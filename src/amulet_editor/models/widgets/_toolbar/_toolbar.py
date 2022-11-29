@@ -11,11 +11,11 @@ from PySide6.QtWidgets import QSizePolicy, QSpacerItem, QVBoxLayout, QWidget
 from amulet_editor.models.widgets import ADragContainer
 
 
-class Ui_AToolBar_(QWidget):
+class Ui_AToolBar(QWidget):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         if not self.objectName():
-            self.setObjectName("AToolBar_")
+            self.setObjectName("AToolBar")
         self.resize(829, 720)
 
         self.verticalLayout = QVBoxLayout(self)
@@ -40,4 +40,4 @@ class Ui_AToolBar_(QWidget):
         QMetaObject.connectSlotsByName(self)
 
     def localise(self):
-        self.setWindowTitle(QCoreApplication.translate("AToolBar_", "Form", None))
+        self.setWindowTitle(QCoreApplication.translate("AToolBar", "Form", None))
