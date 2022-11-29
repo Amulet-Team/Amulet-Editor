@@ -18,6 +18,7 @@ class ADragContainer(QWidget):
             Qt.Orientation.Horizontal: QHBoxLayout,
             Qt.Orientation.Vertical: QVBoxLayout
         }[orientation](self)
+        self._layout.setContentsMargins(0, 0, 0, 0)
 
         self._drag = None
 
