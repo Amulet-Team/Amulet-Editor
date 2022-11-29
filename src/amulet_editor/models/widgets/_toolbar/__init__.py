@@ -1,22 +1,27 @@
-from PySide6.QtCore import QSize
+from PySide6.QtCore import QSize, Signal
 
-from ._toolbar import AToolBar_
+from ._toolbar import Ui_AToolBar
 from .._icon import ATooltipIconButton
 
 
-class AToolBar(AToolBar_):
+class AToolBar(Ui_AToolBar):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self._static_tools: dict[str, ATooltipIconButton] = {}
         self._dynamic_tools: dict[str, ATooltipIconButton] = {}
-        # self.add_static_button("amulet:settings", "settings.svg", "Settings")
 
-    def _make_button(self, icon: str, name: str) -> ATooltipIconButton:
+    tool_change = Signal(str)
+
+    def _make_button(self, uid: str, icon: str, name: str) -> ATooltipIconButton:
         button = ATooltipIconButton(icon, self)
         button.setToolTip(name)
         button.setCheckable(True)
         button.setFixedSize(QSize(40, 40))
         button.setIconSize(QSize(30, 30))
+
+        def on_click(evt):
+            self.tool_change.emit(uid)
+        button.clicked.connect(on_click)
         return button
 
     def add_static_button(self, uid: str, icon: str, name: str):
@@ -30,7 +35,7 @@ class AToolBar(AToolBar_):
         """
         if uid in self._static_tools:
             raise ValueError(f"A button with unique identifier {uid} has already been registered")
-        button = self._make_button(icon, name)
+        button = self._make_button(uid, icon, name)
         self._static_tools[uid] = button
         self._lyt_fixed_tools.insertWidget(1, button)
 
@@ -48,7 +53,7 @@ class AToolBar(AToolBar_):
         """
         if uid in self._dynamic_tools:
             raise ValueError(f"A button with unique identifier {uid} has already been registered")
-        button = self._make_button(icon, name)
+        button = self._make_button(uid, icon, name)
         self._dynamic_tools[uid] = button
         self._wgt_dynamic_tools.add_item(button)
 
