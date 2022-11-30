@@ -32,7 +32,7 @@ class AmuletEditorStartupApp(AmuletEditorBaseApp):
     def __init__(self):
         super().__init__()
         self._main_window = AmuletLandingWindow()
-        self._main_window.showNormal()
+        self._main_window.showMaximized()
 
 
 class AmuletEditorLevelApp(AmuletEditorBaseApp):
