@@ -7,11 +7,11 @@
 ## WARNING! All changes made in this file will be lost when recompiling UI file!
 ################################################################################
 from PySide6.QtCore import QCoreApplication, QMetaObject
-from PySide6.QtWidgets import QSizePolicy, QSpacerItem, QVBoxLayout, QWidget
+from PySide6.QtWidgets import QFrame, QSizePolicy, QSpacerItem, QVBoxLayout
 from amulet_editor.models.widgets import ADragContainer
 
 
-class Ui_AToolBar(QWidget):
+class Ui_AToolBar(QFrame):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         if not self.objectName():

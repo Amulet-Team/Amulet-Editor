@@ -9,7 +9,7 @@ class AmuletLandingWindow(Ui_AmuletLandingWindow):
         super().__init__()
 
         self.toolbar.add_static_button("amulet:settings", "settings.svg", "Settings")
-        # self.toolbar.setProperty("backgroundColor", "surface")
+        self.toolbar.setProperty("backgroundColor", "surface")
         self.toolbar.add_dynamic_button("amulet:home", "home.svg", "Home")
         self.home = HomePage(self)
         self.settings = SettingsPage(self)
