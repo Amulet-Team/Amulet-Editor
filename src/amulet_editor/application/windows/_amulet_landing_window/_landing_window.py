@@ -7,7 +7,10 @@
 ## WARNING! All changes made in this file will be lost when recompiling UI file!
 ################################################################################
 from PySide6.QtCore import QCoreApplication, QMetaObject
-from PySide6.QtWidgets import QHBoxLayout, QMainWindow, QStackedWidget, QWidget
+from PySide6.QtWidgets import QFrame, QHBoxLayout, QMainWindow, QWidget
+from amulet_editor.application.windows._amulet_landing_window._view_container import (
+    ViewContainer,
+)
 from amulet_editor.models.widgets._toolbar import AToolBar
 
 
@@ -27,15 +30,18 @@ class Ui_AmuletLandingWindow(QMainWindow):
 
         self.toolbar = AToolBar(self.central_widget)
         self.toolbar.setObjectName("toolbar")
+        self.toolbar.setFrameShape(QFrame.NoFrame)
+        self.toolbar.setFrameShadow(QFrame.Raised)
+        self.toolbar.setProperty("backgroundColor", "surface")
         self.horizontalLayout.addWidget(self.toolbar)
 
-        self.tool_widget = QStackedWidget(self.central_widget)
-        self.tool_widget.setObjectName("tool_widget")
-        self.horizontalLayout.addWidget(self.tool_widget)
+        self._view_container = ViewContainer(self.central_widget)
+        self._view_container.setObjectName("_view_container")
+        self.horizontalLayout.addWidget(self._view_container)
+        self.horizontalLayout.setStretch(1, 1)
         self.setCentralWidget(self.central_widget)
 
         self.localise()
-        self.tool_widget.setCurrentIndex(-1)
         QMetaObject.connectSlotsByName(self)
 
     def localise(self):
