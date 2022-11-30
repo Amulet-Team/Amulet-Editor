@@ -74,7 +74,6 @@ class AIconButton(QPushButton):
 
 
 class ATooltipIconButton(AIconButton):
-    # TODO: look into making this work without a subclass
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self._hlbl_tooltip: Optional[QHoverLabel] = None
