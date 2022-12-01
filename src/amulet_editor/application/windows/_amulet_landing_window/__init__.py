@@ -61,16 +61,18 @@ class AmuletLandingWindow(Ui_AmuletLandingWindow):
         self.home.enable()
         self.settings = SettingsPlugin(self)
         self.settings.enable()
-        self.enable_view("amulet:home")
+        self.activate_view("amulet:home")
 
-    def enable_view(self, uid: UID):
+    def activate_view(self, uid: UID):
         """
         Enable a view registered to the given identifier.
+        If a view of this type already exists it will be activated otherwise a new view will be created in the active container.
 
         :param uid: The unique identifier to enable
         """
         if uid not in self._views:
             raise ValueError(f"There is no view registered to uid {uid}")
+        # TODO: check if a view of this type exists
         view = self._views[uid]()
         self._view_container.set_view(view)
         self._toolbar.activate(uid)
@@ -89,7 +91,7 @@ class AmuletLandingWindow(Ui_AmuletLandingWindow):
         if uid in self._views:
             raise ValueError(f"uid {uid} has already been registered.")
         self._views[uid] = view
-        self._toolbar.add_dynamic_button(uid, icon, name, lambda: self.enable_view(uid))
+        self._toolbar.add_dynamic_button(uid, icon, name, lambda: self.activate_view(uid))
 
     def add_button(self, uid: str, icon: str, name: str, callback: Callable[[], None] = None):
         """
