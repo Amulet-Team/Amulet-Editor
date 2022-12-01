@@ -8,9 +8,7 @@
 ################################################################################
 from PySide6.QtCore import QCoreApplication, QMetaObject
 from PySide6.QtWidgets import QFrame, QHBoxLayout, QMainWindow, QWidget
-from amulet_editor.application.windows._amulet_landing_window._view_container import (
-    ViewContainer,
-)
+from amulet_editor.application.windows._amulet_landing_window._view import ViewContainer
 from amulet_editor.models.widgets._toolbar import AToolBar
 
 
@@ -28,12 +26,12 @@ class Ui_AmuletLandingWindow(QMainWindow):
         self.horizontalLayout.setObjectName("horizontalLayout")
         self.horizontalLayout.setContentsMargins(0, 0, 0, 0)
 
-        self.toolbar = AToolBar(self.central_widget)
-        self.toolbar.setObjectName("toolbar")
-        self.toolbar.setFrameShape(QFrame.NoFrame)
-        self.toolbar.setFrameShadow(QFrame.Raised)
-        self.toolbar.setProperty("backgroundColor", "surface")
-        self.horizontalLayout.addWidget(self.toolbar)
+        self._toolbar = AToolBar(self.central_widget)
+        self._toolbar.setObjectName("_toolbar")
+        self._toolbar.setFrameShape(QFrame.NoFrame)
+        self._toolbar.setFrameShadow(QFrame.Raised)
+        self._toolbar.setProperty("backgroundColor", "surface")
+        self.horizontalLayout.addWidget(self._toolbar)
 
         self._view_container = ViewContainer(self.central_widget)
         self._view_container.setObjectName("_view_container")

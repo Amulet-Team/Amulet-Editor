@@ -1,18 +1,20 @@
 from __future__ import annotations
-from typing import final, Callable
+from typing import final, Type, Callable
 
 from PySide6.QtCore import Slot
 
 from ._landing_window import Ui_AmuletLandingWindow
 from .pages.settings import SettingsPage
-from .pages.home import HomePage
-from ._view_container import ViewContainer
+from .views.home import HomeView
+from ._view import ViewContainer, View
 
 
 # Terminology
 # A tool button is a button in the toolbar
 # A view is a program that exists within Amulet
 # A view container is an object that can contain a view
+
+UID = str
 
 
 class Plugin:
@@ -30,16 +32,7 @@ class Plugin:
 
 class HomePlugin(Plugin):
     def enable(self):
-        self.window.toolbar.add_dynamic_button("amulet:home", "home.svg", "Home", self._on_click)
-        self.window.toolbar.add_dynamic_button("amulet:home2", "home-2.svg", "Home")
-        self.window.register_view("amulet:home", self._enable_view)
-
-    def _on_click(self):
-        self._enable_view()
-
-    def _enable_view(self):
-        self.window.toolbar.activate("amulet:home")
-        self.window.active_view_container.set_view(HomePage())
+        self.window.register_view("amulet:home", "home.svg", "Home", HomeView)
 
 
 class SettingsPlugin(Plugin):
@@ -47,7 +40,7 @@ class SettingsPlugin(Plugin):
 
     def enable(self):
         self._windows = []
-        self.window.toolbar.add_static_button("amulet:settings", "settings.svg", "Settings", self._on_click)
+        self.window.private_add_button("amulet:settings", "settings.svg", "Settings", self._on_click)
 
     def _on_click(self):
         settings = SettingsPage()
@@ -59,7 +52,9 @@ class AmuletLandingWindow(Ui_AmuletLandingWindow):
     def __init__(self):
         super().__init__()
 
-        self._views = {}
+        self._views: dict[UID, Type[View]] = {}
+        # TODO: improve this to support multiple view containers
+        self._orphan_views: dict[UID, list[View]] = {}
 
         # Load plugins
         self.home = HomePlugin(self)
@@ -68,27 +63,54 @@ class AmuletLandingWindow(Ui_AmuletLandingWindow):
         self.settings.enable()
         self.enable_view("amulet:home")
 
-    def register_view(self, uid: str, initialiser: Callable[[], None]):
-        """
-        Register a callback for when a view is activated.
-
-        :param uid: The uid of the view.
-        :param initialiser: A function to activate the view.
-        """
-        if uid in self._views:
-            raise ValueError(f"uid {uid} has already been registered.")
-        self._views[uid] = initialiser
-
-    def enable_view(self, uid: str):
+    def enable_view(self, uid: UID):
         """
         Enable a view registered to the given identifier.
 
         :param uid: The unique identifier to enable
         """
-        self._views[uid]()
+        if uid not in self._views:
+            raise ValueError(f"There is no view registered to uid {uid}")
+        view = self._views[uid]()
+        self._view_container.set_view(view)
+        self._toolbar.activate(uid)
 
-    @property
-    def active_view_container(self) -> ViewContainer:
-        """Get the view container that is currently active."""
-        # There is currently only one view container so this is hard coded.
-        return self._view_container
+    def register_view(self, uid: UID, icon: str, name: str, view: Type[View]):
+        """
+        Register a callback for when a view is activated.
+
+        :param uid: The unique identifier of the view.
+        :param icon: The icon path to use in the toolbar.
+        :param name: The name of the view to use in the icon tooltip.
+        :param view: A function that has no inputs and returns a View instance.
+        """
+        if not issubclass(view, View):
+            raise TypeError("view must be a subclass of View")
+        if uid in self._views:
+            raise ValueError(f"uid {uid} has already been registered.")
+        self._views[uid] = view
+        self._toolbar.add_dynamic_button(uid, icon, name, lambda: self.enable_view(uid))
+
+    def add_button(self, uid: str, icon: str, name: str, callback: Callable[[], None] = None):
+        """
+        Add an icon to the toolbar.
+
+        :param uid: The unique identifier of the button.
+        :param icon: The icon path to use in the toolbar.
+        :param name: The name of the view to use in the icon tooltip.
+        :param callback: The function to call when the button is clicked.
+        :return:
+        """
+        self._toolbar.add_dynamic_button(uid, icon, name, callback)
+
+    def private_add_button(self, uid: str, icon: str, name: str, callback: Callable[[], None] = None):
+        """
+        Add an icon to the toolbar.
+
+        :param uid: The unique identifier of the button.
+        :param icon: The icon path to use in the toolbar.
+        :param name: The name of the view to use in the icon tooltip.
+        :param callback: The function to call when the button is clicked.
+        :return:
+        """
+        self._toolbar.add_static_button(uid, icon, name, callback)

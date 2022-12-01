@@ -28,7 +28,7 @@
      <number>0</number>
     </property>
     <item>
-     <widget class="AToolBar" name="toolbar">
+     <widget class="AToolBar" name="_toolbar">
       <property name="frameShape">
        <enum>QFrame::NoFrame</enum>
       </property>
@@ -50,7 +50,7 @@
   <customwidget>
    <class>ViewContainer</class>
    <extends>QWidget</extends>
-   <header>amulet_editor.application.windows._amulet_landing_window._view_container</header>
+   <header>amulet_editor.application.windows._amulet_landing_window._view</header>
    <container>1</container>
   </customwidget>
   <customwidget>
