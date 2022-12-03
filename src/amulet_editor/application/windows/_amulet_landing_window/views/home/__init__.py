@@ -8,10 +8,13 @@ from .home import HomePage
 from .open_world import OpenWorldPage
 
 
-class HomeView(View):
+class HomeView(QWidget, View):
     def __init__(self, parent: Optional[QWidget] = None, f: Qt.WindowFlags = Qt.WindowFlags()):
         super().__init__(parent, f)
         self._layout = QVBoxLayout(self)
+        self._set_landing_page()
+
+    def activate_view(self):
         self._set_landing_page()
 
     def setCentralWidget(self, widget: QWidget):

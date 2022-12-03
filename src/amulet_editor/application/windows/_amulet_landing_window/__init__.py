@@ -1,8 +1,6 @@
 from __future__ import annotations
 from typing import final, Type, Callable
 
-from PySide6.QtCore import Slot
-
 from ._landing_window import Ui_AmuletLandingWindow
 from .pages.settings import SettingsPage
 from .views.home import HomeView
@@ -49,11 +47,12 @@ class SettingsPlugin(Plugin):
 
 
 class AmuletLandingWindow(Ui_AmuletLandingWindow):
-    def __init__(self):
-        super().__init__()
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
 
-        self._views: dict[UID, Type[View]] = {}
-        # TODO: improve this to support multiple view containers
+        self._view_constructors: dict[UID, Type[View]] = {}
+        self._view_containers: list[ViewContainer] = [self._view_container]
+        self._active_view = self._view_container
         self._orphan_views: dict[UID, list[View]] = {}
 
         # Load plugins
@@ -63,19 +62,34 @@ class AmuletLandingWindow(Ui_AmuletLandingWindow):
         self.settings.enable()
         self.activate_view("amulet:home")
 
-    def activate_view(self, uid: UID):
+    def activate_view(self, view_uid: UID):
         """
         Enable a view registered to the given identifier.
         If a view of this type already exists it will be activated otherwise a new view will be created in the active container.
 
-        :param uid: The unique identifier to enable
+        :param view_uid: The unique identifier to enable
         """
-        if uid not in self._views:
-            raise ValueError(f"There is no view registered to uid {uid}")
-        # TODO: check if a view of this type exists
-        view = self._views[uid]()
-        self._view_container.set_view(view)
-        self._toolbar.activate(uid)
+        if view_uid not in self._view_constructors:
+            raise ValueError(f"There is no view registered to view_uid {view_uid}")
+
+        # Scan the view containers to see if a view of this type already exists
+        for existing_view in self._view_containers:
+            if existing_view.view_uid == view_uid:
+                break
+        else:
+            existing_view = None
+
+        if existing_view is None:
+            # Replace the active view
+            view = self._view_constructors[view_uid]()
+            old_view = self._view_container.swap_view(view_uid, view)
+            # TODO: implement view caching
+            if old_view is not None:
+                old_view.deleteLater()
+        else:
+            existing_view.get_view().activate_view()
+
+        self._toolbar.activate(view_uid)
 
     def register_view(self, uid: UID, icon: str, name: str, view: Type[View]):
         """
@@ -88,9 +102,9 @@ class AmuletLandingWindow(Ui_AmuletLandingWindow):
         """
         if not issubclass(view, View):
             raise TypeError("view must be a subclass of View")
-        if uid in self._views:
+        if uid in self._view_constructors:
             raise ValueError(f"uid {uid} has already been registered.")
-        self._views[uid] = view
+        self._view_constructors[uid] = view
         self._toolbar.add_dynamic_button(uid, icon, name, lambda: self.activate_view(uid))
 
     def add_button(self, uid: str, icon: str, name: str, callback: Callable[[], None] = None):
