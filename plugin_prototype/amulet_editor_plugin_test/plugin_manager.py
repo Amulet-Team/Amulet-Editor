@@ -21,6 +21,8 @@ from packaging.specifiers import SpecifierSet
 
 from PySide6.QtCore import Signal, QObject
 
+from .thread import InvokeMethod
+
 if TYPE_CHECKING:
     from .plugin import Plugin
     from .app import AppPrivateAPI
@@ -310,26 +312,6 @@ class PluginManager(QObject):
                     except Exception as e:
                         log.exception(e)
 
-    def __load_plugin(self, plugin_container: PluginContainer):
-        """Import and load a plugin."""
-        with self.__lock:
-            path = plugin_container.data.path
-            if os.path.isdir(path):
-                path = os.path.join(path, "__init__.py")
-            spec = importlib.util.spec_from_file_location(
-                plugin_container.data.uid.identifier, path
-            )
-            if spec is None:
-                raise Exception
-            mod = importlib.util.module_from_spec(spec)
-            if mod is None:
-                raise Exception
-            sys.modules[plugin_container.data.uid.identifier] = mod
-            spec.loader.exec_module(mod)
-            plugin_container.instance = mod.Plugin(self.api)
-            plugin_container.instance.on_load()
-            self.__set_plugin_state(plugin_container, PluginState.Enabled)
-
     def enable_plugin(self, plugin_uid: PluginUID):
         """Enable a plugin
 
@@ -355,6 +337,33 @@ class PluginManager(QObject):
                 # Put this on the to-do list until its dependencies are enabled.
                 self.__set_plugin_state(plugin_container, PluginState.Inactive)
 
+    def __load_plugin(self, plugin_container: PluginContainer):
+        """Import and load a plugin."""
+        with self.__lock:
+            path = plugin_container.data.path
+            if os.path.isdir(path):
+                path = os.path.join(path, "__init__.py")
+            spec = importlib.util.spec_from_file_location(
+                plugin_container.data.uid.identifier, path
+            )
+            if spec is None:
+                raise Exception
+            mod = importlib.util.module_from_spec(spec)
+            if mod is None:
+                raise Exception
+            sys.modules[plugin_container.data.uid.identifier] = mod
+            spec.loader.exec_module(mod)
+
+            def init_plugin():
+                # User code must be run from the main thread to avoid issues.
+                plugin_container.instance = mod.Plugin(self.api)
+                plugin_container.instance.on_load()
+
+            print("start")
+            InvokeMethod(init_plugin)
+            print("finished")
+            self.__set_plugin_state(plugin_container, PluginState.Enabled)
+
     def _recursive_enable_plugins(self):
         """Enable all inactive plugins that can be enabled until no more can be."""
         with self.__lock:
@@ -374,17 +383,6 @@ class PluginManager(QObject):
                         else:
                             enabled_count += 1
 
-    def __unload_plugin(self, plugin_container: PluginContainer):
-        """Unload and destroy a plugin."""
-        with self.__lock:
-            self._recursive_inactive_plugins(plugin_container.data.uid)
-            try:
-                plugin_container.instance.on_unload()
-            except Exception as e:
-                log.exception(e, exc_info=e)
-            plugin_container.instance = None
-            sys.modules.pop(plugin_container.data.uid.identifier, None)
-
     def disable_plugin(self, plugin_uid: PluginUID):
         """Disable a plugin and inactive all dependents."""
         with self.__lock:
@@ -397,6 +395,19 @@ class PluginManager(QObject):
             elif plugin_container.state is PluginState.Enabled:
                 self.__unload_plugin(plugin_container)
             self.__set_plugin_state(plugin_container, PluginState.Disabled)
+
+    def __unload_plugin(self, plugin_container: PluginContainer):
+        """Unload and destroy a plugin."""
+        with self.__lock:
+            self._recursive_inactive_plugins(plugin_container.data.uid)
+            try:
+                print("start")
+                InvokeMethod(plugin_container.instance.on_unload)
+                print("finished")
+            except Exception as e:
+                log.exception(e, exc_info=e)
+            plugin_container.instance = None
+            sys.modules.pop(plugin_container.data.uid.identifier, None)
 
     def _recursive_inactive_plugins(self, plugin_uid: PluginUID):
         """

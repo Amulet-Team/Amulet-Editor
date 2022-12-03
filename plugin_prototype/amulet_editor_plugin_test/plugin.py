@@ -21,13 +21,14 @@ class Plugin:
     def on_load(self):
         """
         Logic run when the plugin is enabled.
-        You should assume that the dependencies are not be loaded yet.
+        All dependencies will be enabled when this is called.
         """
         pass
 
     def on_unload(self):
         """
-        Logic run when the plugin is disabled
+        Logic run when the plugin is disabled.
+        Dependents will be unloaded at this point but dependencies are not.
         """
         pass
 

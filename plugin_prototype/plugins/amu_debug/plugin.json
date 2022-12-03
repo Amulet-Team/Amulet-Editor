@@ -1,0 +1,6 @@
+{
+	"identifier": "amu_debug",
+	"version": "1.0.0",
+	"name": "Plugin Debug Tools",
+	"depends": []
+}
