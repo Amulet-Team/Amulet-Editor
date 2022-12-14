@@ -35,6 +35,14 @@ except Exception as e:
 
 def main() -> None:
     try:
+        from multiprocessing import freeze_support
+    except Exception as e:
+        _on_error(e)
+        raise
+    else:
+        freeze_support()
+
+    try:
         import amulet_editor.application._app as app
         from amulet_editor.data.process._process import bootstrap, ProcessType
     except Exception as e:
