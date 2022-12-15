@@ -9,15 +9,13 @@ import sys
 from enum import Enum
 from typing import Callable
 from multiprocessing import Process
+from . import _messaging
 
 
 class ProcessType(Enum):
     Null = 0  # The default unset value
     Main = 1  # The main process
     Child = 2  # A child process
-
-
-_process_type = ProcessType.Null
 
 
 def bootstrap(
@@ -48,6 +46,7 @@ def bootstrap(
 
 def bootstrap_process(
     process_type: ProcessType,
+    state: _messaging.StateType,
     # Attributes can be added here
     main: Callable[..., int],
     *main_args,
@@ -62,6 +61,7 @@ def bootstrap_process(
     :param main_args: The arguments to pass to main.
     :param main_kwargs: The keyword arguments to pass to main.
     """
+    _messaging.init_state(state)
     # Set module variables here
     bootstrap(process_type, main, *main_args, **main_kwargs)
 
@@ -81,37 +81,27 @@ def spawn(
     :param main_kwargs: The keyword arguments to pass to main.
     """
     """Spawn a new process with the given process type."""
-    if _process_type is not ProcessType.Main:
+    if get_process_type() is not ProcessType.Main:
         raise RuntimeError("Only the main process can spawn new processes.")
     if not isinstance(process_type, ProcessType):
         raise TypeError("Value must be an enum of ProcessType")
     if process_type is ProcessType.Null:
         raise ValueError("Cannot set a null process type.")
+    child_process, state = _messaging.get_new_state()
     p = Process(
         target=bootstrap_process,
         args=(
             process_type,
+            state,
+            # Attributes can be added here
             main,
             *main_args,
         ),
         kwargs=main_kwargs
     )
+    child_process.process = p
     p.start()
 
 
 def get_process_type() -> ProcessType:
     return _process_type
-
-
-def call_up():
-    if _process_type is ProcessType.Child:
-        raise NotImplementedError
-    else:
-        raise RuntimeError("Can only call up from child processes.")
-
-
-def call_down():
-    if _process_type is ProcessType.Main:
-        raise NotImplementedError
-    else:
-        raise RuntimeError("Can only call down from main process.")
