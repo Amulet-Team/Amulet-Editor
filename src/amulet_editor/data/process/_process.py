@@ -9,6 +9,7 @@ import sys
 from enum import Enum
 from typing import Callable
 from multiprocessing import Process
+
 from . import _messaging
 
 
@@ -46,7 +47,7 @@ def bootstrap(
 
 def bootstrap_process(
     process_type: ProcessType,
-    state: _messaging.StateType,
+    messaging_state: _messaging.StateType,
     # Attributes can be added here
     main: Callable[..., int],
     *main_args,
@@ -57,11 +58,12 @@ def bootstrap_process(
     This must only be used from within the spawn function.
 
     :param process_type: The type of process.
+    :param messaging_state: The state of the messaging module.
     :param main: The main function to call.
     :param main_args: The arguments to pass to main.
     :param main_kwargs: The keyword arguments to pass to main.
     """
-    _messaging.init_state(state)
+    _messaging.init_state(messaging_state)
     # Set module variables here
     bootstrap(process_type, main, *main_args, **main_kwargs)
 
