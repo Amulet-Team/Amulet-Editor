@@ -19,6 +19,9 @@ class ProcessType(Enum):
     Child = 2  # A child process
 
 
+_process_type = ProcessType.Null
+
+
 def bootstrap(
     process_type: ProcessType,
     main: Callable[..., int],
