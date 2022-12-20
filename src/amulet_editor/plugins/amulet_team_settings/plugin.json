@@ -1,0 +1,7 @@
+{
+	"identifier": "amulet_team_settings",
+	"version": "1.0.0",
+	"name": "Amulet Settings",
+	"depends": ["amulet_team_app~=1.0"],
+	"locked": "true"
+}

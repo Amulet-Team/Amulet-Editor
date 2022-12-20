@@ -1,0 +1,65 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ui version="4.0">
+ <class>AmuletLandingWindow</class>
+ <widget class="QMainWindow" name="AmuletLandingWindow">
+  <property name="geometry">
+   <rect>
+    <x>0</x>
+    <y>0</y>
+    <width>800</width>
+    <height>600</height>
+   </rect>
+  </property>
+  <property name="windowTitle">
+   <string>MainWindow</string>
+  </property>
+  <widget class="QWidget" name="central_widget">
+   <layout class="QHBoxLayout" name="horizontalLayout" stretch="0,1">
+    <property name="leftMargin">
+     <number>0</number>
+    </property>
+    <property name="topMargin">
+     <number>0</number>
+    </property>
+    <property name="rightMargin">
+     <number>0</number>
+    </property>
+    <property name="bottomMargin">
+     <number>0</number>
+    </property>
+    <item>
+     <widget class="AToolBar" name="_toolbar">
+      <property name="frameShape">
+       <enum>QFrame::NoFrame</enum>
+      </property>
+      <property name="frameShadow">
+       <enum>QFrame::Raised</enum>
+      </property>
+      <property name="backgroundColor" stdset="0">
+       <string notr="true">surface</string>
+      </property>
+     </widget>
+    </item>
+    <item>
+     <widget class="ViewContainer" name="_view_container" native="true"/>
+    </item>
+   </layout>
+  </widget>
+ </widget>
+ <customwidgets>
+  <customwidget>
+   <class>ViewContainer</class>
+   <extends>QWidget</extends>
+   <header>amulet_editor.application.windows._amulet_landing_window._view</header>
+   <container>1</container>
+  </customwidget>
+  <customwidget>
+   <class>AToolBar</class>
+   <extends>QFrame</extends>
+   <header>amulet_editor.models.widgets._toolbar</header>
+   <container>1</container>
+  </customwidget>
+ </customwidgets>
+ <resources/>
+ <connections/>
+</ui>
