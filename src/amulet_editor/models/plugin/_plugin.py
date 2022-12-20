@@ -1,15 +1,40 @@
 from __future__ import annotations
 
+from typing import Optional, Type
+
 from runtime_final import final
+
+from ._api import PluginAPI
+
+
+"""
+Rules for plugin developers.
+1) You must use weakref.proxy if you store the plugin instance. Not doing so will crash the program when stopping the plugin.
+2) You cannot directly import other plugins. You must interact with other plugins through their exposed API through get_plugin_api.
+"""
 
 
 class Plugin:
-    # Plugin identifiers for other plugins that must be loaded before this plugin
-    PluginDepends: list[str] = []
+    """
+    This is the base class for all plugins.
+    To implement your own plugin, you must subclass and extend this class.
+    The methods and attributes in this class are private to the plugin.
+    The methods documented below are used by the plugin engine to drive the plugin.
+    The permissions of each method are documented with the method.
+
+    Functions and attributes can be exposed to other plugins via the PluginAPI class.
+    Subclass PluginAPI and overwriting APIClass will change the API used by the plugin.
+    """
+
+    __api: Optional[PluginAPI]
+    # The plugin API class to use. Plugins may overwrite this to change the API class.
+    APIClass: Type[PluginAPI] = PluginAPI
 
     @final
     def __init__(self):
+        self.__api = None
         self.on_init()
+        self.public_api  # noqa
 
     def on_init(self):
         """
@@ -19,42 +44,42 @@ class Plugin:
         """
         pass
 
-    def on_load(self):
+    def on_start(self):
         """
-        Logic run when the plugin is enabled.
-        All dependencies will be enabled when this is called.
+        Logic run when the plugin is started.
+        All dependencies will be started when this is called.
+        Plugins may override this method but must not call it.
+        """
+        pass
+
+    def on_stop(self):
+        """
+        Logic run when the plugin is stopped.
+        Dependents will be stopped at this point but dependencies are not.
+        This must leave the program in the same state as it was before on_start was called.
         Plugins may override this method but must not call it.
         """
         pass
 
     @final
-    def unload(self):
+    def get_plugin_api(self, plugin_identifier: str) -> PluginAPI:
         """
-        Unload a plugin and all of its components.
-        Plugins must not override or call this method.
+        Get the public API for a plugin.
+        Plugins must not store the returned object.
         """
-        self.on_unload()
-        # TODO: unregister any registered components
+        raise NotImplementedError
 
-    def on_unload(self):
+    @final
+    @property
+    def public_api(self) -> PluginAPI:
         """
-        Logic run when the plugin is disabled.
-        Dependents will be unloaded at this point but dependencies are not.
-        Plugins may override this method but must not call it.
+        The public API for this plugin.
+        Defaults to a blank API.
+        Overwrite APIClass class variable with a subclass of PluginAPI to change the class that is used.
         """
-        pass
-
-    # @final
-    # def get_plugin(self, plugin_identifier: str) -> Plugin:
-    #     """
-    #     Get the instance of a plugin.
-    #     Do not store other plugin instances.
-    #     Useful to use the API of another plugin.
-    #     """
-    #     return self.__api().get_plugin(plugin_identifier)
-    #
-    # @final
-    # def register_view(self, plugin: Plugin, view_name: str, view: Type[View]):
-    #     """Register a new view"""
-    #     # this would be better split into a couple of functions
-    #     self.__api().register_view(self, view_name, view)
+        if self.__api is None:
+            api_class = self.APIClass
+            if not issubclass(api_class, PluginAPI):
+                raise TypeError("APIClass must be a subclass of PluginAPI")
+            self.__api = api_class(self)
+        return self.__api
