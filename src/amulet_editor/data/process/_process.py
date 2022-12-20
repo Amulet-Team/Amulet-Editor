@@ -92,12 +92,12 @@ def spawn(
         raise TypeError("Value must be an enum of ProcessType")
     if process_type is ProcessType.Null:
         raise ValueError("Cannot set a null process type.")
-    child_process, state = _messaging.get_new_state()
+    child_process, messaging_state = _messaging.get_new_state()
     p = Process(
         target=bootstrap_process,
         args=(
             process_type,
-            state,
+            messaging_state,
             # Attributes can be added here
             main,
             *main_args,
