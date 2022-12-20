@@ -17,11 +17,11 @@
                 "name": "Amulet Editor",
                 "type": "python",
                 "request": "launch",
-                "program": "${workspaceFolder}/amulet_editor/__main__.py",
+                "program": "${workspaceFolder}/src/amulet_editor/__main__.py",
                 "console": "internalConsole",
                 "cwd": "${workspaceFolder}",
                 "env": {
-                    "PYTHONPATH": "${workspaceFolder}"
+                    "PYTHONPATH": "${workspaceFolder}/src"
                 }
             }
         ],
@@ -45,21 +45,21 @@
         "files.watcherExclude": {
             "/target/**": true
         },
-        "python.analysis.autoSearchPaths": false,
-        "python.analysis.extraPaths": [
-            "${workspaceFolder}/src/main/python"
-        ],
-        "python.formatting.provider": "black",
-        "python.linting.enabled": true,
-        "python.sortImports.args": [
+        "isort.args": [
             "--profile",
             "black"
         ],
-        "python.testing.cwd": "${workspaceFolder}/src/main/python",
+        "python.analysis.autoSearchPaths": false,
+        "python.analysis.extraPaths": [
+            "${workspaceFolder}/src/"
+        ],
+        "python.formatting.provider": "black",
+        "python.linting.enabled": true,
+        "python.testing.cwd": "${workspaceFolder}/src/",
         "python.testing.unittestArgs": [
             "-v",
             "-s",
-            "${workspaceFolder}/src/unittest/python",
+            "${workspaceFolder}/tests",
             "-p",
             "test_*.py"
         ],
