@@ -17,12 +17,12 @@ from amulet_editor.data.paths._plugin import plugin_directory
 
 
 log = logging.getLogger(__name__)
-PluginDirs = (
-    os.path.abspath(
-        os.path.join(amulet_editor.__path__[0], "plugins")
-    ),
-    os.path.abspath(plugin_directory())
+
+FirstPartyPluginDir = os.path.abspath(
+    os.path.join(amulet_editor.__path__[0], "plugins")
 )
+ThirdPartyPluginDir = os.path.abspath(plugin_directory())
+PluginDirs = (FirstPartyPluginDir, ThirdPartyPluginDir)
 
 TracePattern = re.compile(r"\s*File\s*\"(?P<path>.*?)\"")
 
