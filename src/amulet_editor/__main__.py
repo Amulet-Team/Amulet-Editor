@@ -43,14 +43,14 @@ def main() -> None:
         freeze_support()
 
     try:
-        import amulet_editor.application._app as app
+        from amulet_editor.data.plugin._manager import init
         from amulet_editor.data.process._process import bootstrap, ProcessType
     except Exception as e:
         _on_error(e)
         raise
 
     try:
-        bootstrap(ProcessType.Main, app.AmuletEditorStartupApp().exec)
+        bootstrap(ProcessType.Main, init)
     except Exception as e:
         # TODO: Convert this to use logging
         print(f"Amulet Crashed. Sorry about that. Please report it to a developer if you think this is an issue. \n{traceback.format_exc()}")

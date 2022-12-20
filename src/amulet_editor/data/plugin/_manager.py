@@ -110,7 +110,7 @@ def local_reload_plugin(plugin_uid: PluginUID):
     raise NotImplementedError
 
 
-def _init():
+def init():
     """Find plugins and initialise the state."""
     with _lock:
         scan_plugins()
@@ -184,6 +184,3 @@ def uninstall_plugin(plugin_uid: PluginUID):
         raise NotImplementedError
     else:
         raise RuntimeError("The plugin state can only be modified in the main process.")
-
-
-_init()
