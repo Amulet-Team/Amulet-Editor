@@ -48,7 +48,7 @@ _child_down_queues: list[ChildProcess] = []
 _child_up_queue: Optional[Queue] = None
 
 # A map from python function identifier to the function object.
-_functions: dict[str, Callable]
+_functions: dict[str, Callable] = {}
 
 _up_thread: Optional[FunctionQueueThread] = None
 _down_thread: Optional[FunctionQueueThread] = None

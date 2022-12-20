@@ -18,7 +18,7 @@ log = logging.getLogger(__name__)
 
 _lock = RLock()
 _plugins: dict[PluginUID, PluginContainer] = {}
-_plugins_config: dict[str, bool]
+_plugins_config: dict[str, bool] = {}
 
 
 def plugin_uids() -> tuple[PluginUID, ...]:
