@@ -18,12 +18,6 @@ if TYPE_CHECKING:
 _plugin_classes: dict[int, Type[PluginContainer]] = {}
 
 
-def _plugin_class(cls: Type[PluginContainer]):
-    if cls.FormatVersion in _plugin_classes:
-        raise ValueError(f"Two classes have been registered with format version {cls.FormatVersion}")
-    _plugin_classes[cls.FormatVersion] = cls
-
-
 class PluginContainer(ABC):
     data: PluginData
     instance: Optional[Plugin]  # The instance of the plugin.
@@ -67,8 +61,12 @@ class PluginContainer(ABC):
     def from_data(cls, plugin_path: str, plugin_data: dict) -> PluginContainer:
         raise NotImplementedError
 
+    def __init_subclass__(cls, **kwargs):
+        if cls.FormatVersion in _plugin_classes:
+            raise ValueError(f"Two classes have been registered with format version {cls.FormatVersion}")
+        _plugin_classes[cls.FormatVersion] = cls
 
-@_plugin_class
+
 class PluginContainerV1(PluginContainer):
     FormatVersion = 1
 
