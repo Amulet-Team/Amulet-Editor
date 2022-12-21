@@ -6,6 +6,7 @@ from typing import TYPE_CHECKING, Optional, Type
 from abc import ABC, abstractmethod
 from packaging.version import Version
 
+from amulet_editor.data.plugin._modules import FirstPartyPluginDir
 from ._data import PluginData
 from ._state import PluginState
 from ._requirement import PluginRequirement
@@ -54,11 +55,15 @@ class PluginContainer(ABC):
         except KeyError:
             raise ValueError(f"Unknown plugin format version {format_version}")
         else:
-            return cls2.from_data(plugin_path, plugin_data)
+            return cls2.from_data(
+                plugin_path,
+                plugin_data,
+                os.path.dirname(plugin_path) == FirstPartyPluginDir
+            )
 
     @classmethod
     @abstractmethod
-    def from_data(cls, plugin_path: str, plugin_data: dict) -> PluginContainer:
+    def from_data(cls, plugin_path: str, plugin_data: dict, first_party: bool) -> PluginContainer:
         raise NotImplementedError
 
     def __init_subclass__(cls, **kwargs):
@@ -71,7 +76,7 @@ class PluginContainerV1(PluginContainer):
     FormatVersion = 1
 
     @classmethod
-    def from_data(cls, plugin_path: str, plugin_data: dict) -> PluginContainerV1:
+    def from_data(cls, plugin_path: str, plugin_data: dict, first_party: bool) -> PluginContainerV1:
         """
         Populate a PluginContainer instance from the data in a directory.
         plugin_path is the system path to a directory containing a plugin.json file.
@@ -103,6 +108,9 @@ class PluginContainerV1(PluginContainer):
                 "plugin.json[depends] must be a list of string identifiers and version specifiers if defined.\nEg. [\"plugin_1 ~=1.0\", \"plugin_2 ~=1.3\"]"
             )
 
+        # Get the locked state
+        locked = bool(first_party and plugin_data.get("locked"))
+
         parsed_depends = tuple(map(PluginRequirement.from_string, depends))
 
         return cls(
@@ -111,5 +119,6 @@ class PluginContainerV1(PluginContainer):
                 plugin_path,
                 plugin_name,
                 parsed_depends,
+                locked,
             )
         )

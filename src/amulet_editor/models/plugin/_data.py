@@ -13,3 +13,4 @@ class PluginData(NamedTuple):
     path: str  # The root path of the plugin.
     name: str  # The public name of the plugin.
     depends: tuple[PluginRequirement, ...]  # The plugins that this plugin depends on. This plugin will only be loaded once these plugins have been loaded.
+    locked: bool  # Is the plugin locked on. Only accessible to first party plugins.
