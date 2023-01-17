@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import logging
 import os.path
-from os.path import relpath, normpath
+from os.path import relpath, normpath, dirname
 from typing import List
 import sys
 import traceback
@@ -28,7 +28,14 @@ TracePattern = re.compile(r"\s*File\s*\"(?P<path>.*?)\"")
 
 
 def get_trace_paths() -> List[str]:
-    return list(reversed([normpath(TracePattern.match(line).group("path")) for line in traceback.format_stack()]))[1:]
+    return list(
+        reversed(
+            [
+                normpath(TracePattern.match(line).group("path"))
+                for line in traceback.format_stack()
+            ]
+        )
+    )[1:]
 
 
 class CustomDict(UserDict):
@@ -40,14 +47,21 @@ class CustomDict(UserDict):
     def __getitem__(self, key):
         mod = super().__getitem__(key)
         try:
+            if mod.__file__ is None:
+                # Namespace package does not have a file
+                raise AttributeError
+
             module_path = normpath(mod.__file__)
-            plugin_dir = next(filter(module_path.startswith, PluginDirs), None)
+            # Find the plugin directory this module is from (if any)
+            plugin_dir = next(filter(lambda path: module_path != path and module_path.startswith(path), PluginDirs), None)
         except AttributeError:
             pass
         else:
             if plugin_dir is not None:
                 plugin_dir = normpath(plugin_dir)
-                plugin_path = os.path.join(plugin_dir, relpath(module_path, plugin_dir).split(os.sep)[0])
+                plugin_path = os.path.join(
+                    plugin_dir, relpath(module_path, plugin_dir).split(os.sep)[0]
+                )
                 for frame in get_trace_paths()[2:]:
                     if frame.startswith(plugin_path):
                         break
