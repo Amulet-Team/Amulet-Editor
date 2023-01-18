@@ -16,7 +16,6 @@ from copy import copy
 
 from PySide6.QtCore import QThread, Signal, QObject
 
-import amulet_editor
 from amulet_editor.data.paths._plugin import (
     first_party_plugin_directory,
     third_party_plugin_directory,
@@ -262,28 +261,8 @@ def _enable_plugin(plugin_uid: PluginUID):
         if plugin_container.state is not PluginState.Disabled:
             # Cannot enable a plugin that is not currently disabled.
             return
-        if all(
-            any(
-                uid in requirement and plugin.state is PluginState.Enabled
-                for uid, plugin in _plugins.items()
-            )
-            for requirement in plugin_container.data.depends
-        ):
-            # all dependencies are already satisfied so the plugin can be enabled.
-            try:
-                _load_plugin(plugin_container)
-            except Exception as e:
-                log.exception(e)
-            _recursive_enable_plugins()
-        else:
-            # at least one dependency has not been enabled yet.
-            # Put this on the to-do list until its dependencies are enabled.
-            _set_plugin_state(plugin_container, PluginState.Inactive)
+        _set_plugin_state(plugin_container, PluginState.Inactive)
 
-
-def _recursive_enable_plugins():
-    """Enable all inactive plugins that can be enabled until no more can be. This must only be called by the job thread."""
-    with _plugin_lock:
         enabled_count = -1
         while enabled_count:
             enabled_count = 0
@@ -297,42 +276,36 @@ def _recursive_enable_plugins():
                 ):
                     # all dependencies are satisfied so the plugin can be enabled.
                     try:
-                        _load_plugin(plugin_container)
+                        log.debug(f"enabling plugin {plugin_container.data.uid}")
+                        path = plugin_container.data.path
+                        if os.path.isdir(path):
+                            path = os.path.join(path, "__init__.py")
+
+                        spec = importlib.util.spec_from_file_location(
+                            plugin_container.data.uid.identifier, path
+                        )
+                        if spec is None:
+                            raise Exception
+                        mod = importlib.util.module_from_spec(spec)
+                        if mod is None:
+                            raise Exception
+                        sys.modules[plugin_container.data.uid.identifier] = mod
+                        spec.loader.exec_module(mod)
+
+                        def init_plugin():
+                            # User code must be run from the main thread to avoid issues.
+                            plugin_container.instance = mod
+                            if hasattr(plugin_container.instance, "on_start"):
+                                plugin_container.instance.on_start()
+
+                        invoke(init_plugin)
+
+                        _set_plugin_state(plugin_container, PluginState.Enabled)
+                        log.debug(f"enabled plugin {plugin_container.data.uid}")
                     except Exception as e:
                         log.exception(e)
                     else:
                         enabled_count += 1
-
-
-def _load_plugin(plugin_container: PluginContainer):
-    """Import and load a plugin. This must only be called by the job thread."""
-    with _plugin_lock:
-        log.debug(f"enabling plugin {plugin_container.data.uid}")
-        path = plugin_container.data.path
-        if os.path.isdir(path):
-            path = os.path.join(path, "__init__.py")
-
-        spec = importlib.util.spec_from_file_location(
-            plugin_container.data.uid.identifier, path
-        )
-        if spec is None:
-            raise Exception
-        mod = importlib.util.module_from_spec(spec)
-        if mod is None:
-            raise Exception
-        sys.modules[plugin_container.data.uid.identifier] = mod
-        spec.loader.exec_module(mod)
-
-        def init_plugin():
-            # User code must be run from the main thread to avoid issues.
-            plugin_container.instance = mod
-            if hasattr(plugin_container.instance, "on_start"):
-                plugin_container.instance.on_start()
-
-        invoke(init_plugin)
-
-        _set_plugin_state(plugin_container, PluginState.Enabled)
-        log.debug(f"enabled plugin {plugin_container.data.uid}")
 
 
 @register_global_function
@@ -364,32 +337,28 @@ def _disable_plugin(plugin_uid: PluginUID):
 
 def _unload_plugin(plugin_container: PluginContainer):
     """Unload and destroy a plugin. This must only be called by the job thread."""
-    with _plugin_lock:
-        _recursive_inactive_plugins(plugin_container.data.uid)
-        try:
-            print("start")
-            plugin_container.instance.on_stop()
-            print("finished")
-        except Exception as e:
-            log.exception(e, exc_info=e)
-        plugin_container.instance = None
-        sys.modules.pop(plugin_container.data.uid.identifier, None)
+    _recursive_inactive_plugins(plugin_container.data.uid)
+    try:
+        invoke(plugin_container.instance.on_stop)
+    except Exception as e:
+        log.exception(e, exc_info=e)
+    plugin_container.instance = None
+    sys.modules.pop(plugin_container.data.uid.identifier, None)
+    # TODO: remove all submodules
 
 
 def _recursive_inactive_plugins(plugin_uid: PluginUID):
     """
-    Recursively inactive all dependents of a plugin This must only be called by the job thread..
+    Recursively inactive all dependents of a plugin This must only be called by the job thread.
     When a plugin is disabled none of its dependents are valid any more so they must be inactivated.
     :param plugin_uid: The plugin unique identifier to find dependents of.
     """
-    with _plugin_lock:
-        for plugin_container in _plugins.values():
-            if plugin_container.state is PluginState.Enabled and any(
-                plugin_uid in requirement
-                for requirement in plugin_container.data.depends
-            ):
-                _unload_plugin(plugin_container)
-                _set_plugin_state(plugin_container, PluginState.Inactive)
+    for plugin_container in _plugins.values():
+        if plugin_container.state is PluginState.Enabled and any(
+            plugin_uid in requirement for requirement in plugin_container.data.depends
+        ):
+            _unload_plugin(plugin_container)
+            _set_plugin_state(plugin_container, PluginState.Inactive)
 
 
 @register_global_function
