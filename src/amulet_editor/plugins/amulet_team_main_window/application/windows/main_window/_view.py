@@ -26,27 +26,23 @@ class ViewContainer(QWidget):
         self._uid = None
         self._layout = QVBoxLayout(self)
         self._view: Optional[ViewType] = None
-        self._view_uid: Optional[str] = None
 
     @property
-    def view_uid(self) -> Optional[str]:
-        return self._view_uid
+    def view_cls(self) -> Optional[str]:
+        return self._view.__class__
 
     def get_view(self) -> Optional[ViewType]:
         return self._view
 
-    def swap_view(self, view_uid: str, view: ViewType) -> Optional[ViewType]:
+    def swap_view(self, view: ViewType) -> Optional[ViewType]:
         """
         Swap the contained view.
         This orphans and returns the old view.
         It is the job of the caller to either hide and store it for later use or destroy it.
 
-        :param view_uid: The unique identifier associated with the view.
         :param view: The view instance to set. This must be an instance of QWidget or a subclass of QWidget and View.
         :return: The old orphaned view instance.
         """
-        if not isinstance(view_uid, str):
-            raise TypeError("view_uid must be a string")
         if not isinstance(view, View):
             raise TypeError("view must be an instance of View")
         if not isinstance(view, QWidget):

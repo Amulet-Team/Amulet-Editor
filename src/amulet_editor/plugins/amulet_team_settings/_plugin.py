@@ -4,14 +4,16 @@ from PySide6.QtCore import Qt
 
 from .settings import SettingsPage
 
-from amulet_team_main_window.api import add_static_button
+from amulet_team_main_window.api import add_static_toolbar_button
 
 
 _windows: list = []
 
 
 def on_start():
-    add_static_button("amulet_team:settings", "settings.svg", "Settings", _on_click)
+    add_static_toolbar_button(
+        "amulet_team:settings", "settings.svg", "Settings", _on_click
+    )
 
 
 def _on_click(self):
