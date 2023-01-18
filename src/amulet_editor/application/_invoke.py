@@ -1,7 +1,7 @@
 from __future__ import annotations
 from typing import TypeVar, Callable
 from PySide6.QtCore import Slot, Signal, QObject, Qt
-from ._app import AmuletApp
+from PySide6.QtGui import QGuiApplication
 
 from runtime_final import final
 
@@ -31,7 +31,7 @@ class InvokeMethod(QObject):
         self = cls()
         self.__method = method
         self.__return = None
-        app = AmuletApp.instance()
+        app = QGuiApplication.instance()
         self.start_signal.connect(
             self.execute,
             Qt.DirectConnection
