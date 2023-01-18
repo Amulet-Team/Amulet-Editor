@@ -3,18 +3,11 @@ from typing import Optional
 
 from PySide6.QtCore import Qt
 from PySide6.QtWidgets import QApplication
-from PySide6.QtGui import QIcon, QGuiApplication
+from PySide6.QtGui import QIcon
 
 from amulet_editor import __version__
 from amulet_editor.data import build
 import amulet_editor.data.plugin._manager as plugin_manager
-
-
-def hide_instance():
-    raise RuntimeError("You cannot access the app instance.")
-
-
-QGuiApplication.instance = hide_instance
 
 
 class AmuletApp(QApplication):
@@ -28,10 +21,5 @@ class AmuletApp(QApplication):
         plugin_manager.init()
 
 
-app: Optional[AmuletApp] = None
-
-
 def main():
-    global app
-    app = AmuletApp()
-    sys.exit(app.exec())
+    sys.exit(AmuletApp().exec())

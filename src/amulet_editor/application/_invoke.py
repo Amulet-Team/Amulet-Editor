@@ -1,7 +1,7 @@
 from __future__ import annotations
 from typing import TypeVar, Callable
 from PySide6.QtCore import Slot, Signal, QObject, Qt
-from . import _app
+from ._app import AmuletApp
 
 from runtime_final import final
 
@@ -31,15 +31,16 @@ class InvokeMethod(QObject):
         self = cls()
         self.__method = method
         self.__return = None
+        app = AmuletApp.instance()
         self.start_signal.connect(
             self.execute,
             Qt.DirectConnection
-            if _app.app.thread() is self.thread()
+            if app.thread() is self.thread()
             else Qt.BlockingQueuedConnection,
         )
         # Move to the application thread
-        self.moveToThread(_app.app.thread())
-        self.setParent(_app.app)
+        self.moveToThread(app.thread())
+        self.setParent(app)
         # Connect slots and start execute
 
         self.start_signal.emit()
