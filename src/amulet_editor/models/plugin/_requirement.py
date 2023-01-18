@@ -7,7 +7,9 @@ from packaging.specifiers import SpecifierSet
 from ._uid import PluginUID
 
 
-RequirementPattern = re.compile(r"(?P<identifier>[a-zA-Z_]+[a-zA-Z_0-9]*)(?P<requirement>.*)")
+RequirementPattern = re.compile(
+    r"(?P<identifier>[a-zA-Z_]+[a-zA-Z_0-9]*)(?P<requirement>.*)"
+)
 
 
 class PluginRequirement(NamedTuple):
@@ -18,11 +20,15 @@ class PluginRequirement(NamedTuple):
     def from_string(cls, requirement: str):
         match = RequirementPattern.fullmatch(requirement)
         if match is None:
-            raise ValueError(f"\"{requirement}\" is not a valid requirement.\n It must be a python identifier followed by an optional PEP 440 compatible version specifier")
+            raise ValueError(
+                f'"{requirement}" is not a valid requirement.\n It must be a python identifier followed by an optional PEP 440 compatible version specifier'
+            )
         specifier = SpecifierSet(match.group("requirement"))
         return cls(match.group("identifier"), specifier)
 
     def __contains__(self, item: PluginUID):
         if not isinstance(item, PluginUID):
             raise TypeError
-        return item.identifier == self.plugin_identifier and item.version in self.specifier
+        return (
+            item.identifier == self.plugin_identifier and item.version in self.specifier
+        )

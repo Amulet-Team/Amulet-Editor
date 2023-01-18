@@ -1,10 +1,7 @@
 from __future__ import annotations
-from typing import final, Type, Callable
-
-from PySide6.QtCore import Qt
+from typing import Type, Callable
 
 from ._landing_window import Ui_AmuletLandingWindow
-from .views.home import HomeView
 from ._view import ViewContainer, View
 
 
@@ -16,38 +13,6 @@ from ._view import ViewContainer, View
 UID = str
 
 
-# class Plugin:
-#     @final
-#     def __init__(self, window: AmuletLandingWindow):
-#         # Temporary
-#         self.window = window
-#
-#     def enable(self):
-#         pass
-#
-#     def disable(self):
-#         pass
-#
-#
-# class HomePlugin(Plugin):
-#     def enable(self):
-#         self.window.register_view("amulet_team:home", "home.svg", "Home", HomeView)
-#
-#
-# class SettingsPlugin(Plugin):
-#     _windows: list
-#
-#     def enable(self):
-#         self._windows = []
-#         self.window.private_add_button("amulet_team:settings", "settings.svg", "Settings", self._on_click)
-#
-#     def _on_click(self):
-#         settings = SettingsPage()
-#         settings.setWindowModality(Qt.ApplicationModal)
-#         settings.showNormal()
-#         self._windows.append(settings)
-
-
 class AmuletMainWindow(Ui_AmuletLandingWindow):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -56,13 +21,6 @@ class AmuletMainWindow(Ui_AmuletLandingWindow):
         self._view_containers: list[ViewContainer] = [self._view_container]
         self._active_view = self._view_container
         self._orphan_views: dict[UID, list[View]] = {}
-
-        # Load plugins
-        # self.home = HomePlugin(self)
-        # self.home.enable()
-        # self.settings = SettingsPlugin(self)
-        # self.settings.enable()
-        # self.activate_view("amulet_team:home")
 
     def activate_view(self, view_uid: UID):
         """
@@ -107,9 +65,13 @@ class AmuletMainWindow(Ui_AmuletLandingWindow):
         if uid in self._view_constructors:
             raise ValueError(f"uid {uid} has already been registered.")
         self._view_constructors[uid] = view
-        self._toolbar.add_dynamic_button(uid, icon, name, lambda: self.activate_view(uid))
+        self._toolbar.add_dynamic_button(
+            uid, icon, name, lambda: self.activate_view(uid)
+        )
 
-    def add_button(self, uid: str, icon: str, name: str, callback: Callable[[], None] = None):
+    def add_button(
+        self, uid: str, icon: str, name: str, callback: Callable[[], None] = None
+    ):
         """
         Add an icon to the toolbar.
 
@@ -121,9 +83,13 @@ class AmuletMainWindow(Ui_AmuletLandingWindow):
         """
         self._toolbar.add_dynamic_button(uid, icon, name, callback)
 
-    def private_add_button(self, uid: str, icon: str, name: str, callback: Callable[[], None] = None):
+    def add_static_button(
+        self, uid: str, icon: str, name: str, callback: Callable[[], None] = None
+    ):
         """
-        Add an icon to the toolbar.
+        Add a static icon to the toolbar.
+        These should be reserved for special cases.
+        Third party plugins should use :meth:`add_button`.
 
         :param uid: The unique identifier of the button.
         :param icon: The icon path to use in the toolbar.

@@ -1,9 +1,11 @@
 {
 	"files": [
-		"src\\amulet_editor\\application\\windows\\_amulet_landing_window\\_landing_window.ui",
-		"src\\amulet_editor\\application\\windows\\_amulet_landing_window\\pages\\home\\_home.ui",
-		"src\\amulet_editor\\application\\windows\\_amulet_landing_window\\pages\\open_world\\_open_world.ui",
-		"src\\amulet_editor\\application\\windows\\_amulet_landing_window\\pages\\settings\\_settings.ui",
-		"src\\amulet_editor\\models\\widgets\\_toolbar\\_toolbar.ui"
+		"src\\amulet_editor\\application\\windows_\\_amulet_landing_window\\_landing_window.ui",
+		"src\\amulet_editor\\application\\windows_\\_amulet_landing_window\\views\\home\\home\\_home.ui",
+		"src\\amulet_editor\\application\\windows_\\_amulet_landing_window\\views\\home\\open_world\\_open_world.ui",
+		"src\\amulet_editor\\plugins\\amulet_team_main_window\\_amulet_main_window\\_landing_window.ui",
+		"src\\amulet_editor\\plugins\\amulet_team_main_window\\_amulet_main_window\\views\\home\\home\\_home.ui",
+		"src\\amulet_editor\\plugins\\amulet_team_main_window\\_amulet_main_window\\views\\home\\open_world\\_open_world.ui",
+		"src\\amulet_editor\\plugins\\amulet_team_settings\\settings\\_settings.ui"
 	]
 }

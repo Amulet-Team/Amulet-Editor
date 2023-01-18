@@ -1,7 +1,7 @@
 {
-	"identifier": "amulet_team_settings",
+	"identifier": "amulet_team_home_page",
 	"version": "1.0.0",
-	"name": "Amulet Settings",
+	"name": "Amulet Home Page",
 	"depends": ["amulet_team_main_window~=1.0"],
 	"locked": "true"
 }

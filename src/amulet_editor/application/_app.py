@@ -1,15 +1,23 @@
-from amulet_editor import __version__
-from amulet_editor.data import packages, build
-from amulet_editor.application import appearance
-from amulet_editor.application.appearance import Theme
-from amulet_editor.application.windows._amulet_window import AmuletWindow
-from amulet_editor.application.windows._amulet_landing_window import AmuletLandingWindow
+import sys
+from typing import Optional
+
 from PySide6.QtCore import Qt
 from PySide6.QtWidgets import QApplication
-from PySide6.QtGui import QIcon
+from PySide6.QtGui import QIcon, QGuiApplication
+
+from amulet_editor import __version__
+from amulet_editor.data import build
+import amulet_editor.data.plugin._manager as plugin_manager
 
 
-class AmuletEditorBaseApp(QApplication):
+def hide_instance():
+    raise RuntimeError("You cannot access the app instance.")
+
+
+QGuiApplication.instance = hide_instance
+
+
+class AmuletApp(QApplication):
     def __init__(self) -> None:
         super().__init__()
         self.setApplicationName("Amulet Editor")
@@ -17,26 +25,13 @@ class AmuletEditorBaseApp(QApplication):
         self.setWindowIcon(QIcon(build.get_resource("icons/amulet/Icon.ico")))
         self.setAttribute(Qt.AA_UseHighDpiPixmaps)
 
-        # Load builtin packages
-        packages.install_builtins()
-
-        # Apply theme
-        appearance.changed.connect(self.apply_theme)
-        self.apply_theme(appearance.theme())
-
-    def apply_theme(self, theme: Theme) -> None:
-        theme.apply(self)
+        plugin_manager.init()
 
 
-class AmuletEditorStartupApp(AmuletEditorBaseApp):
-    def __init__(self):
-        super().__init__()
-        self._main_window = AmuletLandingWindow()
-        self._main_window.showMaximized()
+app: Optional[AmuletApp] = None
 
 
-class AmuletEditorLevelApp(AmuletEditorBaseApp):
-    def __init__(self):
-        super().__init__()
-        self._main_window = AmuletWindow()
-        self._main_window.showMaximized()
+def main():
+    global app
+    app = AmuletApp()
+    sys.exit(app.exec())

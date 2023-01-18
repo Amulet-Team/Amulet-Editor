@@ -8,7 +8,7 @@
 ################################################################################
 from PySide6.QtCore import QCoreApplication, QMetaObject
 from PySide6.QtWidgets import QFrame, QHBoxLayout, QMainWindow, QWidget
-from amulet_editor.application.windows._amulet_landing_window._view import ViewContainer
+from ._view import ViewContainer
 from amulet_editor.models.widgets._toolbar import AToolBar
 
 

@@ -50,7 +50,7 @@
   <customwidget>
    <class>ViewContainer</class>
    <extends>QWidget</extends>
-   <header>amulet_editor.application.windows._amulet_landing_window._view</header>
+   <header>._view</header>
    <container>1</container>
   </customwidget>
   <customwidget>

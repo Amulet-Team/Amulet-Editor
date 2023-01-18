@@ -1,15 +1,20 @@
+from __future__ import annotations
+
 from typing import Optional
 
 from PySide6.QtCore import Qt
 from PySide6.QtWidgets import QWidget, QVBoxLayout
 
-from amulet_editor.application.windows._amulet_landing_window._view import View
 from .home import HomePage
 from .open_world import OpenWorldPage
 
+from amulet_team_main_window.application.windows.main_window import View
+
 
 class HomeView(QWidget, View):
-    def __init__(self, parent: Optional[QWidget] = None, f: Qt.WindowFlags = Qt.WindowFlags()):
+    def __init__(
+        self, parent: Optional[QWidget] = None, f: Qt.WindowFlags = Qt.WindowFlags()
+    ):
         super().__init__(parent, f)
         self._layout = QVBoxLayout(self)
         self._set_landing_page()
@@ -27,9 +32,7 @@ class HomeView(QWidget, View):
     def _set_landing_page(self):
         page = HomePage(self)
         # Connect signals
-        page.btn_open_world.clicked.connect(
-            self._set_open_world_page
-        )
+        page.btn_open_world.clicked.connect(self._set_open_world_page)
         # page.crd_new_project.clicked.connect(
         #     partial(self.set_menu_page, NewProjectMenu)
         # )

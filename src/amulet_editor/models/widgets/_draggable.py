@@ -10,13 +10,17 @@ class ADragContainer(QWidget):
 
     # orderChanged = Signal(list)
 
-    def __init__(self, parent: QWidget = None, orientation: Qt.Orientation = Qt.Orientation.Vertical):
+    def __init__(
+        self,
+        parent: QWidget = None,
+        orientation: Qt.Orientation = Qt.Orientation.Vertical,
+    ):
         super().__init__(parent)
         self.setMouseTracking(True)
 
         self._layout = {
             Qt.Orientation.Horizontal: QHBoxLayout,
-            Qt.Orientation.Vertical: QVBoxLayout
+            Qt.Orientation.Vertical: QVBoxLayout,
         }[orientation](self)
         self._layout.setContentsMargins(0, 0, 0, 0)
 

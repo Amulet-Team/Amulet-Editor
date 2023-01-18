@@ -1,7 +1,7 @@
 from __future__ import annotations
 from typing import TypeVar, Callable
 from PySide6.QtCore import Slot, Signal, QObject, Qt
-from PySide6.QtWidgets import QApplication
+from . import _app
 
 from runtime_final import final
 
@@ -20,7 +20,7 @@ class InvokeMethod(QObject):
         self.__return = None
 
     @classmethod
-    def invoke(cls, app: QApplication, method: Callable[[], T]) -> T:
+    def invoke(cls, method: Callable[[], T]) -> T:
         """
         Invoke a method in the main thread and optionally get the return value in a callback.
 
@@ -31,10 +31,15 @@ class InvokeMethod(QObject):
         self = cls()
         self.__method = method
         self.__return = None
-        self.start_signal.connect(self.execute, Qt.DirectConnection if app.thread() is self.thread() else Qt.BlockingQueuedConnection)
+        self.start_signal.connect(
+            self.execute,
+            Qt.DirectConnection
+            if _app.app.thread() is self.thread()
+            else Qt.BlockingQueuedConnection,
+        )
         # Move to the application thread
-        self.moveToThread(app.thread())
-        self.setParent(app)
+        self.moveToThread(_app.app.thread())
+        self.setParent(_app.app)
         # Connect slots and start execute
 
         self.start_signal.emit()

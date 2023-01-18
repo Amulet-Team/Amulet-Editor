@@ -76,7 +76,9 @@ class ALinkCard(QPushButton):
         self.lbl_description.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Maximum)
         layout.addWidget(self.lbl_description)
 
-        self.svg_ext_icon = AStylableSvgWidget(build.get_resource(f"icons/tabler/external-link.svg"))
+        self.svg_ext_icon = AStylableSvgWidget(
+            build.get_resource(f"icons/tabler/external-link.svg")
+        )
         self.svg_ext_icon.setAttribute(Qt.WA_TransparentForMouseEvents)
         self.svg_ext_icon.setFixedSize(15, 15)
         self.svg_ext_icon.setHidden(True)

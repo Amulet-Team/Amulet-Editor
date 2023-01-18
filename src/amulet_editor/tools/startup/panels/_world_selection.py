@@ -248,7 +248,9 @@ class WorldSelectionPanel(QWidget):
         self.lne_search_level.setProperty("borderRight", "surface")
         self.lne_search_level.setProperty("color", "on_surface")
 
-        self.btn_search_level = AIconButton("adjustments-horizontal.svg", self.frm_search_level)
+        self.btn_search_level = AIconButton(
+            "adjustments-horizontal.svg", self.frm_search_level
+        )
         self.btn_search_level.setCheckable(True)
         self.btn_search_level.setFixedSize(QSize(27, 27))
         self.btn_search_level.setIconSize(QSize(15, 15))

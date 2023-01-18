@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 
+
 def _on_error(e):
     """Code to handle errors"""
     err_list = []
@@ -29,8 +30,8 @@ try:
     if sys.version_info[:2] < (3, 9):
         raise Exception("Must be using Python 3.9+")
     import traceback
-except Exception as e:
-    _on_error(e)
+except Exception as e_:
+    _on_error(e_)
 
 
 def main() -> None:
@@ -43,17 +44,19 @@ def main() -> None:
         freeze_support()
 
     try:
-        from amulet_editor.data.plugin._manager import init
+        from amulet_editor.application._app import main
         from amulet_editor.data.process._process import bootstrap, ProcessType
     except Exception as e:
         _on_error(e)
         raise
 
     try:
-        bootstrap(ProcessType.Main, init)
+        bootstrap(ProcessType.Main, main)
     except Exception as e:
         # TODO: Convert this to use logging
-        print(f"Amulet Crashed. Sorry about that. Please report it to a developer if you think this is an issue. \n{traceback.format_exc()}")
+        print(
+            f"Amulet Crashed. Sorry about that. Please report it to a developer if you think this is an issue. \n{traceback.format_exc()}"
+        )
         input("Press ENTER to continue...")
         raise e
 

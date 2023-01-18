@@ -14,11 +14,12 @@ class AToolBar(QFrame):
     A toolbar is a strip of buttons.
     The first half can be rearranged and the second half are fixed.
     """
+
     def __init__(
         self,
         parent: Optional[QWidget] = None,
         f: Qt.WindowFlags = Qt.WindowFlags(),
-        orientation=Qt.Vertical
+        orientation=Qt.Vertical,
     ):
         super().__init__(parent, f)
 
@@ -43,9 +44,13 @@ class AToolBar(QFrame):
         self._buttons: dict[str, ATooltipIconButton] = {}
         self._lock = RLock()
 
-    def _make_button(self, uid: str, icon: str, name: str, callback: Callable[[], None] = None) -> ATooltipIconButton:
+    def _make_button(
+        self, uid: str, icon: str, name: str, callback: Callable[[], None] = None
+    ) -> ATooltipIconButton:
         if uid in self._buttons:
-            raise ValueError(f"A button with unique identifier {uid} has already been registered")
+            raise ValueError(
+                f"A button with unique identifier {uid} has already been registered"
+            )
 
         button = ATooltipIconButton(icon, self)
         button.setToolTip(name)
@@ -59,11 +64,14 @@ class AToolBar(QFrame):
                     callback()
                 except Exception:
                     pass
+
         button.clicked.connect(on_click)
         self._buttons[uid] = button
         return button
 
-    def add_static_button(self, uid: str, icon: str, name: str, callback: Callable[[], None] = None):
+    def add_static_button(
+        self, uid: str, icon: str, name: str, callback: Callable[[], None] = None
+    ):
         """
         Add a static button.
         This is reserved for internal use only.
@@ -77,7 +85,9 @@ class AToolBar(QFrame):
             button = self._make_button(uid, icon, name, callback)
             self._lyt_fixed_tools.insertWidget(1, button)
 
-    def add_dynamic_button(self, uid: str, icon: str, name: str, callback: Callable[[], None] = None):
+    def add_dynamic_button(
+        self, uid: str, icon: str, name: str, callback: Callable[[], None] = None
+    ):
         """
         Add a dynamic button.
         Plugins can add their own dynamic buttons.

@@ -58,17 +58,21 @@ class PluginContainer(ABC):
             return cls2.from_data(
                 plugin_path,
                 plugin_data,
-                os.path.dirname(plugin_path) == FirstPartyPluginDir
+                os.path.dirname(plugin_path) == FirstPartyPluginDir,
             )
 
     @classmethod
     @abstractmethod
-    def from_data(cls, plugin_path: str, plugin_data: dict, first_party: bool) -> PluginContainer:
+    def from_data(
+        cls, plugin_path: str, plugin_data: dict, first_party: bool
+    ) -> PluginContainer:
         raise NotImplementedError
 
     def __init_subclass__(cls, **kwargs):
         if cls.FormatVersion in _plugin_classes:
-            raise ValueError(f"Two classes have been registered with format version {cls.FormatVersion}")
+            raise ValueError(
+                f"Two classes have been registered with format version {cls.FormatVersion}"
+            )
         _plugin_classes[cls.FormatVersion] = cls
 
 
@@ -76,7 +80,9 @@ class PluginContainerV1(PluginContainer):
     FormatVersion = 1
 
     @classmethod
-    def from_data(cls, plugin_path: str, plugin_data: dict, first_party: bool) -> PluginContainerV1:
+    def from_data(
+        cls, plugin_path: str, plugin_data: dict, first_party: bool
+    ) -> PluginContainerV1:
         """
         Populate a PluginContainer instance from the data in a directory.
         plugin_path is the system path to a directory containing a plugin.json file.
@@ -86,7 +92,9 @@ class PluginContainerV1(PluginContainer):
         if not isinstance(plugin_identifier, str):
             raise TypeError("plugin.json[identifier] must be a string")
         if not plugin_identifier.isidentifier():
-            raise ValueError("plugin.json[identifier] must be a valid python identifier")
+            raise ValueError(
+                "plugin.json[identifier] must be a valid python identifier"
+            )
 
         # Get the plugin version
         plugin_version_string = plugin_data.get("version")
@@ -101,11 +109,9 @@ class PluginContainerV1(PluginContainer):
 
         # Get the plugin dependencies
         depends: list[str] = plugin_data.get("depends", [])
-        if not isinstance(depends, list) and all(
-                isinstance(d, str) for d in depends
-        ):
+        if not isinstance(depends, list) and all(isinstance(d, str) for d in depends):
             raise TypeError(
-                "plugin.json[depends] must be a list of string identifiers and version specifiers if defined.\nEg. [\"plugin_1 ~=1.0\", \"plugin_2 ~=1.3\"]"
+                'plugin.json[depends] must be a list of string identifiers and version specifiers if defined.\nEg. ["plugin_1 ~=1.0", "plugin_2 ~=1.3"]'
             )
 
         # Get the locked state

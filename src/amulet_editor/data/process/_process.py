@@ -30,7 +30,7 @@ def bootstrap(
 ):
     """
     Bootstrap the process.
-    This handles setting the process type and launching the main function and exiting when complete.
+    This handles setting the process type and launching the main function.
 
     :param process_type: The type of process.
     :param main: The main function to call.
@@ -45,7 +45,7 @@ def bootstrap(
     if process_type is ProcessType.Null:
         raise ValueError("Cannot set a null process type.")
     _process_type = process_type
-    sys.exit(main(*main_args, **main_kwargs))
+    main(*main_args, **main_kwargs)
 
 
 def bootstrap_process(
@@ -102,7 +102,7 @@ def spawn(
             main,
             *main_args,
         ),
-        kwargs=main_kwargs
+        kwargs=main_kwargs,
     )
     child_process.process = p
     p.start()

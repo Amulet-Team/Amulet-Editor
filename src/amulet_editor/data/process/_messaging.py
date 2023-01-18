@@ -19,7 +19,9 @@ CallableT = TypeVar("CallableT", bound=Callable)
 class FunctionCall(NamedTuple):
     address: str  # The address of the function to call.
     args: tuple[Any]  # The arguments to pass to the function. Must be picklable.
-    kwargs: dict[str, Any]  # The keyword arguments to pass to the function. Must be picklable.
+    kwargs: dict[
+        str, Any
+    ]  # The keyword arguments to pass to the function. Must be picklable.
 
 
 @dataclass

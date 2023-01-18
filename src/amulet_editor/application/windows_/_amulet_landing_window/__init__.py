@@ -1,8 +1,9 @@
 from __future__ import annotations
 from typing import final, Type, Callable
 
+from PySide6.QtCore import Qt
+
 from ._landing_window import Ui_AmuletLandingWindow
-from .pages.settings import SettingsPage
 from .views.home import HomeView
 from ._view import ViewContainer, View
 
@@ -30,7 +31,7 @@ class Plugin:
 
 class HomePlugin(Plugin):
     def enable(self):
-        self.window.register_view("amulet:home", "home.svg", "Home", HomeView)
+        self.window.register_view("amulet_team:home", "home.svg", "Home", HomeView)
 
 
 class SettingsPlugin(Plugin):
@@ -38,10 +39,13 @@ class SettingsPlugin(Plugin):
 
     def enable(self):
         self._windows = []
-        self.window.private_add_button("amulet:settings", "settings.svg", "Settings", self._on_click)
+        self.window.private_add_button(
+            "amulet_team:settings", "settings.svg", "Settings", self._on_click
+        )
 
     def _on_click(self):
         settings = SettingsPage()
+        settings.setWindowModality(Qt.ApplicationModal)
         settings.showNormal()
         self._windows.append(settings)
 
@@ -60,7 +64,7 @@ class AmuletLandingWindow(Ui_AmuletLandingWindow):
         self.home.enable()
         self.settings = SettingsPlugin(self)
         self.settings.enable()
-        self.activate_view("amulet:home")
+        self.activate_view("amulet_team:home")
 
     def activate_view(self, view_uid: UID):
         """
@@ -105,9 +109,13 @@ class AmuletLandingWindow(Ui_AmuletLandingWindow):
         if uid in self._view_constructors:
             raise ValueError(f"uid {uid} has already been registered.")
         self._view_constructors[uid] = view
-        self._toolbar.add_dynamic_button(uid, icon, name, lambda: self.activate_view(uid))
+        self._toolbar.add_dynamic_button(
+            uid, icon, name, lambda: self.activate_view(uid)
+        )
 
-    def add_button(self, uid: str, icon: str, name: str, callback: Callable[[], None] = None):
+    def add_button(
+        self, uid: str, icon: str, name: str, callback: Callable[[], None] = None
+    ):
         """
         Add an icon to the toolbar.
 
@@ -119,7 +127,9 @@ class AmuletLandingWindow(Ui_AmuletLandingWindow):
         """
         self._toolbar.add_dynamic_button(uid, icon, name, callback)
 
-    def private_add_button(self, uid: str, icon: str, name: str, callback: Callable[[], None] = None):
+    def private_add_button(
+        self, uid: str, icon: str, name: str, callback: Callable[[], None] = None
+    ):
         """
         Add an icon to the toolbar.
 

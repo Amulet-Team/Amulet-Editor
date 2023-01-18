@@ -9,7 +9,7 @@ from runtime_final import final
 
 @final
 class PluginUID(NamedTuple):
-    identifier: str  # The package name. This is the name used when importing the package. Eg "my_name_my_plugin". This must be a valid python identifier.
+    identifier: str  # The package name. This is the name used when importing the package. Eg "my_name_my_plugin_v1". This must be a valid python identifier.
     version: Version  # The version number of the plugin.
 
     def to_string(self):

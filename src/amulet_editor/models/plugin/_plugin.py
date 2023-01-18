@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import Optional, Type
+from typing import Optional, Type, TypeVar
 
 from runtime_final import final
 
@@ -10,8 +10,10 @@ from ._api import PluginAPI
 """
 Rules for plugin developers.
 1) You must use weakref.proxy if you store the plugin instance. Not doing so will crash the program when stopping the plugin.
-2) You cannot directly import other plugins. You must interact with other plugins through their exposed API through get_plugin_api.
 """
+
+
+PluginAPIT = TypeVar("PluginAPIT", bound=PluginAPI)
 
 
 class Plugin:
@@ -62,7 +64,7 @@ class Plugin:
         pass
 
     @final
-    def get_plugin_api(self, plugin_identifier: str) -> PluginAPI:
+    def get_plugin(self, plugin_cls: Type[PluginAPIT]) -> PluginAPIT:
         """
         Get the public API for a plugin.
         Plugins must not store the returned object.
