@@ -1,3 +1,1 @@
-from ._plugin import SettingsPlugin
-
-Plugin = SettingsPlugin
+from ._plugin import on_start

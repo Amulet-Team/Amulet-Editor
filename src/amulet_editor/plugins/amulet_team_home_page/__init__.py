@@ -1,3 +1,1 @@
-from ._plugin import HomePagePlugin
-
-Plugin = HomePagePlugin
+from ._plugin import on_start

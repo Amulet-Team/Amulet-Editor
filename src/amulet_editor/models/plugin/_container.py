@@ -2,21 +2,37 @@ from __future__ import annotations
 
 import json
 import os.path
-from typing import TYPE_CHECKING, Optional, Type
+from typing import Optional, Type, Protocol
 from abc import ABC, abstractmethod
 from packaging.version import Version
 
-from amulet_editor.data.plugin._modules import FirstPartyPluginDir
+from amulet_editor.data.paths._plugin import first_party_plugin_directory
 from ._data import PluginData
 from ._state import PluginState
 from ._requirement import PluginRequirement
 from ._uid import PluginUID
 
-if TYPE_CHECKING:
-    from ._plugin import Plugin
-
 
 _plugin_classes: dict[int, Type[PluginContainer]] = {}
+
+
+class Plugin(Protocol):
+    def on_start(self):
+        """
+        Logic run when the plugin is started.
+        All dependencies will be started when this is called.
+        Plugins may implement this method but must not call it.
+        """
+        ...
+
+    def on_stop(self):
+        """
+        Logic run when the plugin is stopped.
+        Dependents will be stopped at this point but dependencies are not.
+        This must leave the program in the same state as it was before on_start was called.
+        Plugins may implement this method but must not call it.
+        """
+        ...
 
 
 class PluginContainer(ABC):
@@ -58,7 +74,7 @@ class PluginContainer(ABC):
             return cls2.from_data(
                 plugin_path,
                 plugin_data,
-                os.path.dirname(plugin_path) == FirstPartyPluginDir,
+                os.path.dirname(plugin_path) == first_party_plugin_directory(),
             )
 
     @classmethod

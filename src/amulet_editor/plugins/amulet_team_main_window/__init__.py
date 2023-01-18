@@ -1,3 +1,1 @@
-from ._plugin import MainWindowPlugin, MainWindowPluginAPI
-
-Plugin = MainWindowPlugin
+from ._plugin import on_start

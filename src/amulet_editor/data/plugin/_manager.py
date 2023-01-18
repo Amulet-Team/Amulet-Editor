@@ -17,18 +17,21 @@ from copy import copy
 from PySide6.QtCore import QThread, Signal, QObject
 
 import amulet_editor
+from amulet_editor.data.paths._plugin import (
+    first_party_plugin_directory,
+    third_party_plugin_directory,
+)
 from amulet_editor.data.process import ProcessType, get_process_type
 from amulet_editor.data.process._messaging import (
     register_global_function,
     call_in_parent,
     call_in_children,
 )
-from amulet_editor.models.plugin import PluginUID, PluginData, Plugin
+from amulet_editor.models.plugin import PluginUID, PluginData
 from amulet_editor.models.plugin._state import PluginState
 from amulet_editor.models.plugin._requirement import PluginRequirement
 from amulet_editor.models.plugin._container import PluginContainer
 from amulet_editor.application._invoke import invoke
-from amulet_editor.data.paths._plugin import plugin_directory
 
 
 log = logging.getLogger(__name__)
@@ -44,12 +47,7 @@ TODO: look into generating stub files for the active plugins to help with develo
 Plugins can import directly from other plugins to access static classes and functions 
 """
 
-
-FirstPartyPluginDir = os.path.abspath(
-    os.path.join(amulet_editor.__path__[0], "plugins")
-)
-ThirdPartyPluginDir = os.path.abspath(plugin_directory())
-PluginDirs = [FirstPartyPluginDir, ThirdPartyPluginDir]
+PluginDirs = [first_party_plugin_directory(), third_party_plugin_directory()]
 
 
 class PluginJobType(Enum):
@@ -191,9 +189,7 @@ def _set_plugin_state(plugin_container: PluginContainer, plugin_state: PluginSta
     plugin_container.state = plugin_state
     # self.__plugins_config[plugin_container.data.uid.to_string()] = bool(plugin_state)
     # self.__save_plugin_config()
-    _event.plugin_state_change.emit(
-        plugin_container.data.uid, plugin_container.state
-    )
+    _event.plugin_state_change.emit(plugin_container.data.uid, plugin_container.state)
 
 
 def scan_plugins():
@@ -329,8 +325,9 @@ def _load_plugin(plugin_container: PluginContainer):
 
         def init_plugin():
             # User code must be run from the main thread to avoid issues.
-            plugin_container.instance = mod.Plugin()
-            plugin_container.instance.on_start()
+            plugin_container.instance = mod
+            if hasattr(plugin_container.instance, "on_start"):
+                plugin_container.instance.on_start()
 
         invoke(init_plugin)
 
