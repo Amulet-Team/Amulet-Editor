@@ -1,5 +1,4 @@
 from typing import Type, Callable
-from uuid import uuid4
 
 from amulet_team_main_window import _plugin
 from .models.view import View
@@ -20,6 +19,11 @@ def get_active_window() -> AmuletMainWindow:
 def register_view(view_cls: Type[View], icon: str, name: str):
     for window in get_windows():
         window.register_view(view_cls, icon, name)
+
+
+def unregister_view(view_cls: Type[View]):
+    for window in get_windows():
+        window.unregister_view(view_cls)
 
 
 def add_toolbar_button(
