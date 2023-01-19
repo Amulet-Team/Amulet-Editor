@@ -12,13 +12,17 @@ ProjectRoot = os.path.dirname(os.path.dirname(__file__))
 
 def main():
     paths = []
-    for path in glob.glob(os.path.join(ProjectRoot, "src", "**", "*.ui"), recursive=True):
+    for path in glob.glob(
+        os.path.join(ProjectRoot, "src", "**", "*.ui"), recursive=True
+    ):
         if os.path.isfile(path):
             paths.append(os.path.relpath(path, ProjectRoot))
 
-    with open(os.path.join(os.path.dirname(__file__), "..", "Amulet-Editor.pyproject"), "w") as f:
+    with open(
+        os.path.join(os.path.dirname(__file__), "..", "Amulet-Editor.pyproject"), "w"
+    ) as f:
         json.dump({"files": paths}, f, indent="\t")
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()

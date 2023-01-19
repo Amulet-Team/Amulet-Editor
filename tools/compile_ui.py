@@ -22,7 +22,9 @@ def _compile_ui_file(ui_path: str):
     if os.path.exists(py_path):
         with open(py_path) as f:
             if "Created by: Qt User Interface Compiler" not in f.read():
-                print(f"Skipping compilation of {ui_path} because a user generated python file would be overwritten.")
+                print(
+                    f"Skipping compilation of {ui_path} because a user generated python file would be overwritten."
+                )
                 return
 
     # Convert the UI file to python code
@@ -44,12 +46,18 @@ def _compile_ui_file(ui_path: str):
     # Add super class
     py = py.replace("(object)", f"({super_name})")
     # Replace setupUi with constructor
-    py = re.sub(f"def setupUi\\(self, {class_name}\\):", "def __init__(self, *args, **kwargs):\n        super().__init__(*args, **kwargs)", py)
+    py = re.sub(
+        f"def setupUi\\(self, {class_name}\\):",
+        "def __init__(self, *args, **kwargs):\n        super().__init__(*args, **kwargs)",
+        py,
+    )
     # Replace retranslateUi with localise
-    py = re.sub(f"def retranslateUi\\(self, {class_name}\\):", "def localise(self):", py)
+    py = re.sub(
+        f"def retranslateUi\\(self, {class_name}\\):", "def localise(self):", py
+    )
     py = py.replace(f"self.retranslateUi({class_name})", "self.localise()")
     # Replace class name with self
-    py = re.sub(f"(?<!\")\\b{class_name}\\b(?!\")", "self", py)
+    py = re.sub(f'(?<!")\\b{class_name}\\b(?!")', "self", py)
     # Add in line breaks before assignments
     py = re.sub(f"\r?\n(?=\s*self\..*? = )", "\n\n", py)
     py = re.sub(f"\r?\n(?=\s*self\.localise\(\))", "\n\n", py)
@@ -59,7 +67,15 @@ def _compile_ui_file(ui_path: str):
         pyf.write(py)
 
     # Remove unused variables
-    subprocess.run(["autoflake", "--in-place", "--remove-unused-variables", "--imports=PySide6", py_path])
+    subprocess.run(
+        [
+            "autoflake",
+            "--in-place",
+            "--remove-unused-variables",
+            "--imports=PySide6",
+            py_path,
+        ]
+    )
     # Reformat
     subprocess.run([sys.executable, "-m", "black", py_path])
 
@@ -67,9 +83,11 @@ def _compile_ui_file(ui_path: str):
 def main():
     # For each UI file in the project
     with ThreadPoolExecutor() as executor:
-        for ui_path in glob.glob(os.path.join(ProjectRoot, "src", "**", "*.ui"), recursive=True):
+        for ui_path in glob.glob(
+            os.path.join(ProjectRoot, "src", "**", "*.ui"), recursive=True
+        ):
             executor.submit(_compile_ui_file, ui_path)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()
