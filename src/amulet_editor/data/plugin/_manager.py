@@ -1,12 +1,12 @@
 from __future__ import annotations
 from typing import NamedTuple, Optional
-from threading import RLock, Thread
+from threading import RLock
 import os
 from os.path import relpath, normpath, dirname
 import glob
 import logging
 import importlib
-from queue import Queue
+from queue import Queue, Empty
 from enum import Enum
 import sys
 from collections import UserDict
@@ -15,6 +15,7 @@ import traceback
 from copy import copy
 
 from PySide6.QtCore import QThread, Signal, QObject
+from PySide6.QtWidgets import QApplication
 
 from amulet_editor.data.paths._plugin import (
     first_party_plugin_directory,
@@ -75,11 +76,20 @@ _plugin_queue: Queue = Queue()
 _enabled_plugins: dict[str, PluginUID] = {}
 
 
-class PluginJobThread(Thread):
+class PluginJobThread(QThread):
     def run(self):
-        print("starting thread")
         while True:
-            job: PluginJob = _plugin_queue.get()
+            job: Optional[PluginJob] = None
+            while True:
+                try:
+                    job = _plugin_queue.get(timeout=0.1)
+                except Empty:
+                    if self.isInterruptionRequested():
+                        log.debug("Exiting job thread")
+                        return
+                    continue
+                else:
+                    break
             if job.job_type is PluginJobType.Enable:
                 _enable_plugin(job.plugin_identifier)
             elif job.job_type is PluginJobType.Disable:
@@ -155,7 +165,7 @@ def init():
     It can only be called once.
     """
     with _plugin_lock:
-        if _job_thread.is_alive():
+        if _job_thread.isRunning():
             raise RuntimeError("Plugin manager has already been initialised.")
         sys.modules = CustomDict(sys.modules)
         scan_plugins()
@@ -164,6 +174,14 @@ def init():
             if plugin_state.get(plugin_uid) or plugin_container.data.locked:
                 local_enable_plugin(plugin_uid)
         _job_thread.start()
+
+        def on_exit():
+            _job_thread.requestInterruption()
+            _job_thread.wait()
+
+        app = QApplication.instance()
+        if isinstance(app, QApplication):
+            app.lastWindowClosed.connect(on_exit)
 
 
 def plugin_uids() -> tuple[PluginUID, ...]:
