@@ -1,3 +1,4 @@
+from __future__ import annotations
 import sys
 from typing import Optional
 
@@ -12,7 +13,7 @@ from . import appearance
 
 
 class AmuletApp(QApplication):
-    def __init__(self) -> None:
+    def __init__(self):
         super().__init__()
         self.setApplicationName("Amulet Editor")
         self.setApplicationVersion(__version__)
@@ -22,6 +23,10 @@ class AmuletApp(QApplication):
         appearance.theme().apply(self)
 
         plugin_manager.init()
+
+    @staticmethod
+    def instance() -> Optional[AmuletApp]:
+        return QApplication.instance()
 
 
 def main():
