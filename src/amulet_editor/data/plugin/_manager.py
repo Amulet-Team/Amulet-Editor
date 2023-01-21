@@ -82,12 +82,12 @@ class PluginJobThread(QThread):
         while True:
             job: Optional[PluginJob] = None
             while True:
+                if self.isInterruptionRequested():
+                    log.debug("Exiting plugin job thread")
+                    return
                 try:
                     job = _plugin_queue.get(timeout=0.1)
                 except Empty:
-                    if self.isInterruptionRequested():
-                        log.debug("Exiting job thread")
-                        return
                     continue
                 else:
                     break
@@ -159,7 +159,7 @@ class CustomDict(UserDict):
     #     return mod
 
 
-def init():
+def load():
     """
     Find plugins and initialise the state.
     This must be called before any other functions in this module can be called.
@@ -176,11 +176,19 @@ def init():
                 local_enable_plugin(plugin_uid)
         _job_thread.start()
 
-        def on_exit():
-            _job_thread.requestInterruption()
-            _job_thread.wait()
 
-        QApplication.instance().aboutToQuit.connect(on_exit)
+def unload():
+    """
+    Called just before application exit to tear down all plugins.
+    :return:
+    """
+    # Shut down the job thread so that it cannot process anything
+    _job_thread.requestInterruption()
+    _job_thread.wait()
+
+    with _plugin_lock:
+        for plugin_uid in _plugins.keys():
+            _disable_plugin(plugin_uid)
 
 
 def plugin_uids() -> tuple[PluginUID, ...]:
@@ -196,9 +204,6 @@ def get_plugins_state() -> dict[PluginUID, bool]:
     """
     # TODO: load this from the global and local configuration files
     return {}
-
-
-# def get_plugin_api()
 
 
 def _set_plugin_state(plugin_container: PluginContainer, plugin_state: PluginState):
@@ -309,13 +314,16 @@ def _enable_plugin(plugin_uid: PluginUID):
                         sys.modules[plugin_container.data.uid.identifier] = mod
                         spec.loader.exec_module(mod)
 
-                        def init_plugin():
-                            # User code must be run from the main thread to avoid issues.
-                            plugin_container.instance = mod
-                            if hasattr(plugin_container.instance, "on_start"):
-                                plugin_container.instance.on_start()
+                        plugin_container.instance = mod
 
-                        invoke(init_plugin)
+                        try:
+                            on_start = plugin_container.instance.on_start
+                        except AttributeError:
+                            # The plugin does not have an on_start method
+                            pass
+                        else:
+                            # User code must be run from the main thread to avoid issues.
+                            invoke(on_start)
 
                         _set_plugin_state(plugin_container, PluginState.Enabled)
                         log.debug(f"enabled plugin {plugin_container.data.uid}")
@@ -356,9 +364,16 @@ def _unload_plugin(plugin_container: PluginContainer):
     """Unload and destroy a plugin. This must only be called by the job thread."""
     _recursive_inactive_plugins(plugin_container.data.uid)
     try:
-        invoke(plugin_container.instance.on_stop)
-    except Exception as e:
-        log.exception(e, exc_info=e)
+        on_stop = plugin_container.instance.on_stop
+    except AttributeError:
+        # The plugin does not have an on_stop method
+        pass
+    else:
+        # User code must be run from the main thread to avoid issues.
+        try:
+            invoke(on_stop)
+        except Exception as e:
+            log.exception(e)
     plugin_container.instance = None
     sys.modules.pop(plugin_container.data.uid.identifier, None)
     # TODO: remove all submodules

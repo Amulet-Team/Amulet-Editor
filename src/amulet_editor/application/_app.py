@@ -22,7 +22,8 @@ class AmuletApp(QApplication):
 
         appearance.theme().apply(self)
 
-        plugin_manager.init()
+        self.lastWindowClosed.connect(plugin_manager.unload)
+        plugin_manager.load()
 
     @staticmethod
     def instance() -> Optional[AmuletApp]:
