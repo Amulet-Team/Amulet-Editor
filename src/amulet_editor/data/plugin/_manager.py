@@ -1,4 +1,5 @@
 from __future__ import annotations
+
 from typing import NamedTuple, Optional
 from threading import RLock
 import os
@@ -179,9 +180,7 @@ def init():
             _job_thread.requestInterruption()
             _job_thread.wait()
 
-        app = QApplication.instance()
-        if isinstance(app, QApplication):
-            app.lastWindowClosed.connect(on_exit)
+        QApplication.instance().aboutToQuit.connect(on_exit)
 
 
 def plugin_uids() -> tuple[PluginUID, ...]:
