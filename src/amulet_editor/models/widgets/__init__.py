@@ -4,3 +4,4 @@ from ._icon import AStylableSvgWidget, AIconButton, ATooltipIconButton
 from ._label import QElidedLabel
 from ._menu import QMenuWidget
 from ._line import QHLine
+from ._traceback_dialog import TracebackDialog
