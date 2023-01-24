@@ -2,7 +2,7 @@ from __future__ import annotations
 import sys
 from typing import Optional
 
-from PySide6.QtCore import Qt
+from PySide6.QtCore import Qt, Slot
 from PySide6.QtWidgets import QApplication
 from PySide6.QtGui import QIcon
 
@@ -22,12 +22,22 @@ class AmuletApp(QApplication):
 
         appearance.theme().apply(self)
 
-        self.lastWindowClosed.connect(plugin_manager.unload)
+        self.lastWindowClosed.connect(self._last_window_closed)
         plugin_manager.load()
 
     @staticmethod
     def instance() -> Optional[AmuletApp]:
         return QApplication.instance()
+
+    @Slot()
+    def _last_window_closed(self):
+        # The unload method opens a window and then closes it.
+        # We must unbind this signal so that it does not end in a loop.
+        self.lastWindowClosed.disconnect(self._last_window_closed)
+        # unload all the plugins
+        plugin_manager.unload()
+        # Forcefully quit the application just in case a plugin opened a window during unload.
+        self.quit()
 
 
 def main():
