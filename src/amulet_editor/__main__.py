@@ -8,7 +8,7 @@ def _on_error(e):
         import traceback
 
         err_list.append(traceback.format_exc())
-    except:
+    except ImportError:
         pass
     if isinstance(e, ImportError):
         err_list.append(
@@ -44,21 +44,36 @@ def main() -> None:
         freeze_support()
 
     try:
+        import logging
+        import argparse
         from amulet_editor.application._app import main
         from amulet_editor.data.process._process import bootstrap, ProcessType
+
+        parser = argparse.ArgumentParser()
+        parser.add_argument(
+            "--debug",
+            help="Log debug information.",
+            action="store_const",
+            dest="loglevel",
+            const=logging.DEBUG,
+            default=logging.WARNING,
+        )
+        args, _ = parser.parse_known_args()
+
+        logging.basicConfig(level=args.loglevel, format="%(levelname)s - %(message)s")
+        logging.getLogger().setLevel(args.loglevel)
     except Exception as e:
         _on_error(e)
-        raise
-
-    try:
-        bootstrap(ProcessType.Main, main)
-    except Exception as e:
-        # TODO: Convert this to use logging
-        print(
-            f"Amulet Crashed. Sorry about that. Please report it to a developer if you think this is an issue. \n{traceback.format_exc()}"
-        )
-        input("Press ENTER to continue...")
-        raise e
+    else:
+        try:
+            bootstrap(ProcessType.Main, main)
+        except Exception as e:
+            logging.exception(e)
+            logging.error(
+                f"Amulet Crashed. Sorry about that. Please report it to a developer if you think this is an issue."
+            )
+            input("Press ENTER to continue...")
+            raise e
 
 
 if __name__ == "__main__":
