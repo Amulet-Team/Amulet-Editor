@@ -317,13 +317,13 @@ def _enable_plugin(plugin_uid: PluginUID):
                         plugin_container.instance = mod
 
                         try:
-                            on_start = plugin_container.instance.on_start
+                            load_plugin = plugin_container.instance.load_plugin
                         except AttributeError:
-                            # The plugin does not have an on_start method
+                            # The plugin does not have a load_plugin method
                             pass
                         else:
                             # User code must be run from the main thread to avoid issues.
-                            invoke(on_start)
+                            invoke(load_plugin)
 
                         _set_plugin_state(plugin_container, PluginState.Enabled)
                         log.debug(f"enabled plugin {plugin_container.data.uid}")
@@ -364,14 +364,14 @@ def _unload_plugin(plugin_container: PluginContainer):
     """Unload and destroy a plugin. This must only be called by the job thread."""
     _recursive_inactive_plugins(plugin_container.data.uid)
     try:
-        on_stop = plugin_container.instance.on_stop
+        unload_plugin = plugin_container.instance.unload_plugin
     except AttributeError:
-        # The plugin does not have an on_stop method
+        # The plugin does not have an unload_plugin method
         pass
     else:
         # User code must be run from the main thread to avoid issues.
         try:
-            invoke(on_stop)
+            invoke(unload_plugin)
         except Exception as e:
             log.exception(e)
     plugin_container.instance = None

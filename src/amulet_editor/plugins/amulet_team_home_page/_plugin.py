@@ -9,10 +9,10 @@ from amulet_team_main_window.api import (
 from .home import HomeView
 
 
-def on_start():
+def load_plugin():
     register_view(HomeView, "home.svg", "Home")
     get_active_window().activate_view(HomeView)
 
 
-def on_stop():
+def unload_plugin():
     unregister_view(HomeView)

@@ -1,1 +1,1 @@
-from ._plugin import on_start
+from ._plugin import load_plugin

@@ -7,7 +7,7 @@ from amulet_team_main_window.application.windows.main_window import AmuletMainWi
 window: Optional[AmuletMainWindow] = None
 
 
-def on_start():
+def load_plugin():
     global window
     window = AmuletMainWindow()
     window.showMaximized()

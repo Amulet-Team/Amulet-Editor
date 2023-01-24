@@ -17,7 +17,7 @@ _plugin_classes: dict[int, Type[PluginContainer]] = {}
 
 
 class Plugin(Protocol):
-    def on_start(self):
+    def load_plugin(self):
         """
         Logic run when the plugin is started.
         All dependencies will be started when this is called.
@@ -25,11 +25,11 @@ class Plugin(Protocol):
         """
         ...
 
-    def on_stop(self):
+    def unload_plugin(self):
         """
         Logic run when the plugin is stopped.
         Dependents will be stopped at this point but dependencies are not.
-        This must leave the program in the same state as it was before on_start was called.
+        This must leave the program in the same state as it was before load_plugin was called.
         Plugins may implement this method but must not call it.
         """
         ...
