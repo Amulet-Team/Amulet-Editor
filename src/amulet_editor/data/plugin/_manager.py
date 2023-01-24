@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import time
 from typing import NamedTuple, Optional
 from threading import RLock
 import os
@@ -15,8 +16,10 @@ import re
 import traceback
 from copy import copy
 
-from PySide6.QtCore import QThread, Signal, QObject
-from PySide6.QtWidgets import QApplication
+from PySide6.QtCore import QThread, Signal, QObject, QTimer, QCoreApplication
+
+from amulet_editor.application._splash import Splash
+from amulet_editor.application._invoke import invoke
 
 from amulet_editor.data.paths._plugin import (
     first_party_plugin_directory,
@@ -32,7 +35,7 @@ from amulet_editor.models.plugin import PluginUID, PluginData
 from amulet_editor.models.plugin._state import PluginState
 from amulet_editor.models.plugin._requirement import PluginRequirement
 from amulet_editor.models.plugin._container import PluginContainer
-from amulet_editor.application._invoke import invoke
+from amulet_editor.models.widgets import TracebackDialog
 
 
 log = logging.getLogger(__name__)
@@ -75,6 +78,9 @@ _plugin_queue: Queue = Queue()
 # A map from the package identifier to the UID.
 # Only plugins that are currently enabled will appear in this dictionary.
 _enabled_plugins: dict[str, PluginUID] = {}
+
+_splash_load_screen: Optional[Splash] = None
+_splash_unload_screen: Optional[Splash] = None
 
 
 class PluginJobThread(QThread):
@@ -165,16 +171,30 @@ def load():
     This must be called before any other functions in this module can be called.
     It can only be called once.
     """
+    global _splash_load_screen
+    log.debug("Loading plugin manager")
+    if _job_thread.isRunning():
+        raise RuntimeError("Plugin manager has already been initialised.")
+    log.debug("Waiting for plugin lock")
     with _plugin_lock:
-        if _job_thread.isRunning():
-            raise RuntimeError("Plugin manager has already been initialised.")
+        log.debug("Acquired the plugin lock")
+
+        _splash_load_screen = Splash()
+        _splash_load_screen.setModal(True)
+        _splash_load_screen.show()
+
         sys.modules = CustomDict(sys.modules)
         scan_plugins()
         plugin_state = get_plugins_state()
         for plugin_uid, plugin_container in _plugins.items():
             if plugin_state.get(plugin_uid) or plugin_container.data.locked:
-                local_enable_plugin(plugin_uid)
+                _enable_plugin(plugin_uid)
         _job_thread.start()
+
+        _splash_load_screen.close()
+        _splash_load_screen = None
+
+    log.debug("Finished loading plugins.")
 
 
 def unload():
@@ -182,13 +202,36 @@ def unload():
     Called just before application exit to tear down all plugins.
     :return:
     """
+    global _splash_unload_screen
+
+    log.debug("Unloading plugin manager")
+
     # Shut down the job thread so that it cannot process anything
+    log.debug("Waiting for the plugin job thread to finish")
     _job_thread.requestInterruption()
     _job_thread.wait()
+    log.debug("Plugin job thread finished")
 
+    log.debug("Waiting for plugin lock")
     with _plugin_lock:
+        log.debug("Acquired the plugin lock")
+
+        _splash_unload_screen = Splash()
+        _splash_unload_screen.setModal(True)
+        _splash_unload_screen.show()
+
+        t = time.time()
+
         for plugin_uid in _plugins.keys():
             _disable_plugin(plugin_uid)
+
+        sleep_time = 0.5 - (time.time() - t)
+        if sleep_time > 0:
+            time.sleep(sleep_time)
+        _splash_unload_screen.close()
+        _splash_unload_screen = None
+
+    log.debug("Finished unloading plugins")
 
 
 def plugin_uids() -> tuple[PluginUID, ...]:
@@ -299,6 +342,10 @@ def _enable_plugin(plugin_uid: PluginUID):
                     # all dependencies are satisfied so the plugin can be enabled.
                     try:
                         log.debug(f"enabling plugin {plugin_container.data.uid}")
+                        if _splash_load_screen is not None:
+                            _splash_load_screen.showMessage(
+                                f"Enabling plugin {plugin_container.data.uid.identifier}"
+                            )
                         path = plugin_container.data.path
                         if os.path.isdir(path):
                             path = os.path.join(path, "__init__.py")
@@ -329,6 +376,16 @@ def _enable_plugin(plugin_uid: PluginUID):
                         log.debug(f"enabled plugin {plugin_container.data.uid}")
                     except Exception as e:
                         log.exception(e)
+                        dialog = TracebackDialog(
+                            title=f"Error while loading plugin {plugin_container.data.uid.identifier} {plugin_container.data.uid.version}",
+                            error=str(e),
+                            traceback=traceback.format_exc(),
+                        )
+                        dialog.exec()
+
+                        # Since the plugin failed to load we must try and disable it
+                        _set_plugin_state(plugin_container, PluginState.Enabled)
+                        _disable_plugin(plugin_container.data.uid)
                     else:
                         enabled_count += 1
 
@@ -363,6 +420,14 @@ def _disable_plugin(plugin_uid: PluginUID):
 def _unload_plugin(plugin_container: PluginContainer):
     """Unload and destroy a plugin. This must only be called by the job thread."""
     _recursive_inactive_plugins(plugin_container.data.uid)
+    if _splash_load_screen is not None:
+        _splash_load_screen.showMessage(
+            f"Disabling plugin {plugin_container.data.uid.identifier}"
+        )
+    elif _splash_unload_screen is not None:
+        _splash_unload_screen.showMessage(
+            f"Disabling plugin {plugin_container.data.uid.identifier}"
+        )
     try:
         unload_plugin = plugin_container.instance.unload_plugin
     except AttributeError:
@@ -374,6 +439,12 @@ def _unload_plugin(plugin_container: PluginContainer):
             invoke(unload_plugin)
         except Exception as e:
             log.exception(e)
+            dialog = TracebackDialog(
+                title=f"Error while unloading plugin {plugin_container.data.uid.identifier} {plugin_container.data.uid.version}",
+                error=str(e),
+                traceback=traceback.format_exc(),
+            )
+            dialog.exec()
     plugin_container.instance = None
     sys.modules.pop(plugin_container.data.uid.identifier, None)
     # TODO: remove all submodules
