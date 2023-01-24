@@ -18,6 +18,7 @@ class InvokeMethod(QObject):
         super().__init__()
         self.__method = None
         self.__return = None
+        self.__exception = None
 
     @classmethod
     def invoke(cls, method: Callable[[], T]) -> T:
@@ -31,6 +32,7 @@ class InvokeMethod(QObject):
         self = cls()
         self.__method = method
         self.__return = None
+        self.__exception = None
         app = QGuiApplication.instance()
         self.start_signal.connect(
             self.execute,
@@ -45,13 +47,19 @@ class InvokeMethod(QObject):
 
         self.start_signal.emit()
         self.setParent(None)
-        return self.__return
+        if self.__exception is not None:
+            raise self.__exception
+        else:
+            return self.__return
 
     start_signal = Signal()
 
     @Slot()
     def execute(self):
-        self.__return = self.__method()
+        try:
+            self.__return = self.__method()
+        except Exception as e:
+            self.__exception = e
 
 
 invoke = InvokeMethod.invoke
