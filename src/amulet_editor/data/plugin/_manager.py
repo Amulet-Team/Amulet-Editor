@@ -264,6 +264,15 @@ def get_plugins_state() -> dict[PluginUID, bool]:
 
 def _set_plugin_state(plugin_container: PluginContainer, plugin_state: PluginState):
     plugin_container.state = plugin_state
+    uid = plugin_container.data.uid
+    identifier = uid.identifier
+    if plugin_state is PluginState.Enabled:
+        if identifier in _enabled_plugins:
+            raise RuntimeError(f"A plugin with identifier {identifier} has already been enabled.")
+        _enabled_plugins[identifier] = uid
+    elif identifier in _enabled_plugins:
+        del _enabled_plugins[identifier]
+
     # self.__plugins_config[plugin_container.data.uid.to_string()] = bool(plugin_state)
     # self.__save_plugin_config()
     _event.plugin_state_change.emit(plugin_container.data.uid, plugin_container.state)
@@ -354,6 +363,7 @@ def _enable_plugin(plugin_uid: PluginUID):
                 ):
                     # all dependencies are satisfied so the plugin can be enabled.
                     try:
+                        _set_plugin_state(plugin_container, PluginState.Enabled)
                         log.debug(f"enabling plugin {plugin_container.data.uid}")
                         if _splash_load_screen is not None:
                             _splash_load_screen.showMessage(
@@ -385,7 +395,6 @@ def _enable_plugin(plugin_uid: PluginUID):
                             # User code must be run from the main thread to avoid issues.
                             invoke(load_plugin)
 
-                        _set_plugin_state(plugin_container, PluginState.Enabled)
                         log.debug(f"enabled plugin {plugin_container.data.uid}")
                     except Exception as e:
                         log.exception(e)
@@ -397,7 +406,6 @@ def _enable_plugin(plugin_uid: PluginUID):
                         dialog.exec()
 
                         # Since the plugin failed to load we must try and disable it
-                        _set_plugin_state(plugin_container, PluginState.Enabled)
                         _disable_plugin(plugin_container.data.uid)
                     else:
                         enabled_count += 1
