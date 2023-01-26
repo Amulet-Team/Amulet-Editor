@@ -4,7 +4,7 @@ import time
 from typing import NamedTuple, Optional
 from threading import RLock
 import os
-from os.path import relpath, normpath, dirname
+from os.path import relpath, normpath, dirname, samefile
 import glob
 import logging
 import importlib
@@ -182,6 +182,19 @@ def load():
         _splash_load_screen = Splash()
         _splash_load_screen.setModal(True)
         _splash_load_screen.show()
+
+        # Remove the plugin directories from sys.path so that they are not directly importable
+        for i in range(len(sys.path)-1, -1, -1):
+            path = sys.path[i]
+            for plugin_path in PluginDirs:
+                try:
+                    is_same = samefile(path, plugin_path)
+                except FileNotFoundError:
+                    pass
+                else:
+                    if is_same:
+                        sys.path.pop(i)
+                        break
 
         sys.modules = CustomDict(sys.modules)
         scan_plugins()
