@@ -5,10 +5,11 @@ import time
 from typing import NamedTuple, Optional
 from threading import RLock
 import os
-from os.path import relpath, normpath, dirname, samefile
+from os.path import normpath, samefile
 import glob
 import logging
-import importlib
+from importlib import import_module
+from importlib.util import spec_from_file_location, module_from_spec
 from queue import Queue, Empty
 from enum import Enum
 import sys
@@ -17,7 +18,7 @@ import re
 import traceback
 from copy import copy
 
-from PySide6.QtCore import QThread, Signal, QObject, QTimer, QCoreApplication
+from PySide6.QtCore import QThread, Signal, QObject
 
 from amulet_editor.application._splash import Splash
 from amulet_editor.application._invoke import invoke
@@ -32,9 +33,8 @@ from amulet_editor.data.process._messaging import (
     call_in_parent,
     call_in_children,
 )
-from amulet_editor.models.plugin import PluginUID, PluginData
+from amulet_editor.models.plugin import PluginUID
 from amulet_editor.models.plugin._state import PluginState
-from amulet_editor.models.plugin._requirement import PluginRequirement
 from amulet_editor.models.plugin._container import PluginContainer
 from amulet_editor.models.widgets import TracebackDialog
 
@@ -155,7 +155,9 @@ class CustomSysModules(UserDict):
             while frame:
                 importer_name = frame.f_globals.get("__name__")
                 if importer_name is None:
-                    raise RuntimeError(f"Could not find __name__ attribute for frame\n{frame}")
+                    raise RuntimeError(
+                        f"Could not find __name__ attribute for frame\n{frame}"
+                    )
                 importer_root_name = importer_name.split(".")[0]
 
                 if importer_root_name in _enabled_plugins:
@@ -167,16 +169,23 @@ class CustomSysModules(UserDict):
 
                     importer_uid = _enabled_plugins[importer_root_name]
                     plugin_container = _plugins[importer_uid]
-                    if any(dependency.plugin_identifier == imported_root_name for dependency in plugin_container.data.depends):
+                    if any(
+                        dependency.plugin_identifier == imported_root_name
+                        for dependency in plugin_container.data.depends
+                    ):
                         # imported by a plugin that has the dependency listed
                         break
 
-                    raise RuntimeError(f"Plugin {importer_root_name} imported plugin {imported_root_name} which it does not have authority for.\nYou must list a plugin dependency to be able to import it.")
+                    raise RuntimeError(
+                        f"Plugin {importer_root_name} imported plugin {imported_root_name} which it does not have authority for.\nYou must list a plugin dependency to be able to import it."
+                    )
 
                 frame = frame.f_back
 
             else:
-                raise RuntimeError(f"Plugin module {imported_name} was imported by a non-plugin module")
+                raise RuntimeError(
+                    f"Plugin module {imported_name} was imported by a non-plugin module"
+                )
 
         return super().__getitem__(imported_name)
 
@@ -207,7 +216,7 @@ def load():
         _splash_load_screen.show()
 
         # Remove the plugin directories from sys.path so that they are not directly importable
-        for i in range(len(sys.path)-1, -1, -1):
+        for i in range(len(sys.path) - 1, -1, -1):
             path = sys.path[i]
             for plugin_path in PluginDirs:
                 try:
@@ -291,7 +300,9 @@ def _set_plugin_state(plugin_container: PluginContainer, plugin_state: PluginSta
     identifier = uid.identifier
     if plugin_state is PluginState.Enabled:
         if identifier in _enabled_plugins:
-            raise RuntimeError(f"A plugin with identifier {identifier} has already been enabled.")
+            raise RuntimeError(
+                f"A plugin with identifier {identifier} has already been enabled."
+            )
         _enabled_plugins[identifier] = uid
     elif identifier in _enabled_plugins:
         del _enabled_plugins[identifier]
@@ -319,7 +330,7 @@ def scan_plugins():
 
                     # Ensure that the module name does not shadow an existing module
                     try:
-                        mod = importlib.import_module(plugin_uid.identifier)
+                        mod = import_module(plugin_uid.identifier)
                     except ModuleNotFoundError:
                         # No module with this name. We are all good
                         pass
@@ -396,12 +407,12 @@ def _enable_plugin(plugin_uid: PluginUID):
                         if os.path.isdir(path):
                             path = os.path.join(path, "__init__.py")
 
-                        spec = importlib.util.spec_from_file_location(
+                        spec = spec_from_file_location(
                             plugin_container.data.uid.identifier, path
                         )
                         if spec is None:
                             raise Exception
-                        mod = importlib.util.module_from_spec(spec)
+                        mod = module_from_spec(spec)
                         if mod is None:
                             raise Exception
                         sys.modules[plugin_container.data.uid.identifier] = mod
