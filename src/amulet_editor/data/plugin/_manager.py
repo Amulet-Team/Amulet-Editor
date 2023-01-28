@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import inspect
 import time
 from typing import NamedTuple, Optional
 from threading import RLock
@@ -130,39 +131,61 @@ def get_trace_paths() -> list[str]:
     )[1:]
 
 
-class CustomDict(UserDict):
+class CustomSysModules(UserDict):
     def __init__(self, original: dict):
         super().__init__()
         # self.data = original  # I would prefer to do this but getitem does not get called if this line is used instead.
         self.data = copy(original)
 
-    # def __getitem__(self, key):
-    #     mod = super().__getitem__(key)
-    #     try:
-    #         if mod.__file__ is None:
-    #             # Namespace package does not have a file
-    #             raise AttributeError
-    #
-    #         module_path = normpath(mod.__file__)
-    #         # Find the plugin directory this module is from (if any)
-    #         plugin_dir = next(filter(lambda path: module_path != path and module_path.startswith(path), PluginDirs), None)
-    #     except AttributeError:
-    #         pass
-    #     else:
-    #         if plugin_dir is not None:
-    #             plugin_dir = normpath(plugin_dir)
-    #             plugin_path = os.path.join(
-    #                 plugin_dir, relpath(module_path, plugin_dir).split(os.sep)[0]
-    #             )
-    #             for frame in get_trace_paths()[2:]:
-    #                 if frame.startswith(plugin_path):
-    #                     break
-    #                 elif any(map(frame.startswith, PluginDirs)):
-    #                     raise ImportError(
-    #                         "Plugins cannot directly import other plugins. You must use the plugin API to interact with other plugins.\n"
-    #                         f"Plugin {frame} tried to import {key}"
-    #                     )
-    #     return mod
+    def __getitem__(self, imported_name: str):
+        if not isinstance(imported_name, str):
+            raise TypeError
+
+        # Plugins can only be imported by other plugins that have the dependency listed.
+        # We step back through the stack.
+        # If we find a plugin that does not have the authority then we raise an error.
+        # If we do not find a plugin in the stack we raise an error
+
+        # Get the root module name of the module being imported. Eg a.b.c => a
+        imported_root_name = imported_name.split(".")[0]
+        # If the imported module is an enabled plugin
+        if imported_root_name in _enabled_plugins:
+            # Find what imported it
+            frame = inspect.currentframe().f_back
+            while frame:
+                importer_name = frame.f_globals.get("__name__")
+                if importer_name is None:
+                    raise RuntimeError(f"Could not find __name__ attribute for frame\n{frame}")
+                importer_root_name = importer_name.split(".")[0]
+
+                if importer_root_name in _enabled_plugins:
+                    # We found the plugin that imported the plugin module
+
+                    if importer_root_name == imported_root_name:
+                        # imported by itself
+                        break
+
+                    importer_uid = _enabled_plugins[importer_root_name]
+                    plugin_container = _plugins[importer_uid]
+                    if any(dependency.plugin_identifier == imported_root_name for dependency in plugin_container.data.depends):
+                        # imported by a plugin that has the dependency listed
+                        break
+
+                    raise RuntimeError(f"Plugin {importer_root_name} imported plugin {imported_root_name} which it does not have authority for.\nYou must list a plugin dependency to be able to import it.")
+
+                frame = frame.f_back
+
+            else:
+                raise RuntimeError(f"Plugin module {imported_name} was imported by a non-plugin module")
+
+        return super().__getitem__(imported_name)
+
+    def _remove_plugin(self, plugin_name: str):
+        plugin_prefix = f"{plugin_name}."
+        key: str
+        for key in list(self.data.keys()):
+            if key == plugin_name or key.startswith(plugin_prefix):
+                del self[key]
 
 
 def load():
@@ -196,7 +219,7 @@ def load():
                         sys.path.pop(i)
                         break
 
-        sys.modules = CustomDict(sys.modules)
+        sys.modules = CustomSysModules(sys.modules)
         scan_plugins()
         plugin_state = get_plugins_state()
         for plugin_uid, plugin_container in _plugins.items():
@@ -467,8 +490,11 @@ def _unload_plugin(plugin_container: PluginContainer):
             )
             dialog.exec()
     plugin_container.instance = None
-    sys.modules.pop(plugin_container.data.uid.identifier, None)
-    # TODO: remove all submodules
+
+    # Remove the module from sys.modules
+    modules = sys.modules
+    if isinstance(modules, CustomSysModules):
+        modules._remove_plugin(plugin_container.data.uid.identifier)
 
 
 def _recursive_inactive_plugins(plugin_uid: PluginUID):
