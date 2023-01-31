@@ -6,7 +6,7 @@
 ##
 ## WARNING! All changes made in this file will be lost when recompiling UI file!
 ################################################################################
-from PySide6.QtCore import QCoreApplication, QMetaObject
+from PySide6.QtCore import QCoreApplication, QMetaObject, QEvent
 from PySide6.QtWidgets import QFrame, QHBoxLayout, QMainWindow, QWidget
 from ._view import ViewContainer
 from amulet_editor.models.widgets._toolbar import AToolBar
@@ -41,6 +41,11 @@ class Ui_AmuletLandingWindow(QMainWindow):
 
         self.localise()
         QMetaObject.connectSlotsByName(self)
+
+    def changeEvent(self, event: QEvent):
+        super().changeEvent(event)
+        if event.type() == QEvent.LanguageChange:
+            self.localise()
 
     def localise(self):
         self.setWindowTitle(

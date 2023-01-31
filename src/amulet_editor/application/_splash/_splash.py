@@ -6,7 +6,7 @@
 ##
 ## WARNING! All changes made in this file will be lost when recompiling UI file!
 ################################################################################
-from PySide6.QtCore import QCoreApplication, QMetaObject, Qt
+from PySide6.QtCore import QCoreApplication, QMetaObject, Qt, QEvent
 from PySide6.QtWidgets import QDialog, QLabel, QVBoxLayout
 
 
@@ -35,6 +35,11 @@ class Ui_Splash(QDialog):
 
         self.localise()
         QMetaObject.connectSlotsByName(self)
+
+    def changeEvent(self, event: QEvent):
+        super().changeEvent(event)
+        if event.type() == QEvent.LanguageChange:
+            self.localise()
 
     def localise(self):
         self.setWindowTitle(QCoreApplication.translate("Splash", "Form", None))

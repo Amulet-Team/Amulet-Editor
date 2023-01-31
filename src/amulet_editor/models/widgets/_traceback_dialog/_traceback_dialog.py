@@ -6,7 +6,7 @@
 ##
 ## WARNING! All changes made in this file will be lost when recompiling UI file!
 ################################################################################
-from PySide6.QtCore import QCoreApplication, QMetaObject, QSize, Qt
+from PySide6.QtCore import QCoreApplication, QMetaObject, QSize, Qt, QEvent
 from PySide6.QtWidgets import (
     QDialog,
     QDialogButtonBox,
@@ -78,6 +78,11 @@ class Ui_TracebackDialog(QDialog):
         self._ok_button_box.rejected.connect(self.reject)
         self._ok_button_box.accepted.connect(self.accept)
         QMetaObject.connectSlotsByName(self)
+
+    def changeEvent(self, event: QEvent):
+        super().changeEvent(event)
+        if event.type() == QEvent.LanguageChange:
+            self.localise()
 
     def localise(self):
         self.setWindowTitle(

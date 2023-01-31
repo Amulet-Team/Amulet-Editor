@@ -6,7 +6,7 @@
 ##
 ## WARNING! All changes made in this file will be lost when recompiling UI file!
 ################################################################################
-from PySide6.QtCore import QCoreApplication, QMetaObject, QSize, Qt
+from PySide6.QtCore import QCoreApplication, QMetaObject, QSize, Qt, QEvent
 from PySide6.QtWidgets import (
     QFrame,
     QHBoxLayout,
@@ -99,6 +99,11 @@ class Ui_OpenWorldPage(QWidget):
 
         self.localise()
         QMetaObject.connectSlotsByName(self)
+
+    def changeEvent(self, event: QEvent):
+        super().changeEvent(event)
+        if event.type() == QEvent.LanguageChange:
+            self.localise()
 
     def localise(self):
         self.setWindowTitle(QCoreApplication.translate("OpenWorldPage", "Form", None))
