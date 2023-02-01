@@ -13,7 +13,7 @@
   <property name="windowTitle">
    <string>Form</string>
   </property>
-  <layout class="QHBoxLayout" name="horizontalLayout" stretch="1,0,1,0">
+  <layout class="QHBoxLayout" name="_layout" stretch="1,0,1,0">
    <property name="spacing">
     <number>5</number>
    </property>
@@ -30,7 +30,7 @@
     <number>0</number>
    </property>
    <item>
-    <spacer name="horizontalSpacer_2">
+    <spacer name="_left_spacer">
      <property name="orientation">
       <enum>Qt::Horizontal</enum>
      </property>
@@ -57,7 +57,7 @@
       <number>50</number>
      </property>
      <item>
-      <spacer name="verticalSpacer_2">
+      <spacer name="_top_spacer">
        <property name="orientation">
         <enum>Qt::Vertical</enum>
        </property>
@@ -70,7 +70,7 @@
       </spacer>
      </item>
      <item>
-      <widget class="QLabel" name="lbl_app_icon">
+      <widget class="QLabel" name="_lbl_app_icon">
        <property name="minimumSize">
         <size>
          <width>0</width>
@@ -92,7 +92,7 @@
       </widget>
      </item>
      <item>
-      <widget class="QLabel" name="lbl_app_name">
+      <widget class="QLabel" name="_lbl_app_name">
        <property name="text">
         <string>Amulet Editor</string>
        </property>
@@ -108,7 +108,7 @@
       </widget>
      </item>
      <item>
-      <widget class="QLabel" name="lbl_app_version">
+      <widget class="QLabel" name="_lbl_app_version">
        <property name="text">
         <string notr="true"/>
        </property>
@@ -127,7 +127,7 @@
       </widget>
      </item>
      <item>
-      <spacer name="_vertical_spacer">
+      <spacer name="_middel_spacer">
        <property name="orientation">
         <enum>Qt::Vertical</enum>
        </property>
@@ -143,7 +143,7 @@
       </spacer>
      </item>
      <item>
-      <layout class="QGridLayout" name="gridLayout" columnstretch="1,0">
+      <layout class="QGridLayout" name="_button_layout" columnstretch="1,0">
        <item row="1" column="1">
         <widget class="QPushButton" name="btn_new_project">
          <property name="enabled">
@@ -155,14 +155,14 @@
         </widget>
        </item>
        <item row="1" column="0">
-        <widget class="QLabel" name="label_2">
+        <widget class="QLabel" name="_lbl_new_project">
          <property name="text">
           <string>Create a new project</string>
          </property>
         </widget>
        </item>
        <item row="2" column="0">
-        <widget class="QLabel" name="label_3">
+        <widget class="QLabel" name="_lbl_new_project_2">
          <property name="text">
           <string>Open an existing project</string>
          </property>
@@ -179,7 +179,7 @@
         <widget class="QComboBox" name="cbo_language"/>
        </item>
        <item row="0" column="0">
-        <widget class="QLabel" name="label">
+        <widget class="QLabel" name="_lbl_open_level">
          <property name="text">
           <string>Open an existing level</string>
          </property>
@@ -198,7 +198,7 @@
       </layout>
      </item>
      <item>
-      <spacer name="verticalSpacer">
+      <spacer name="_bottom_spacer">
        <property name="orientation">
         <enum>Qt::Vertical</enum>
        </property>
@@ -213,7 +213,7 @@
     </layout>
    </item>
    <item>
-    <spacer name="horizontalSpacer">
+    <spacer name="_right_spacer">
      <property name="orientation">
       <enum>Qt::Horizontal</enum>
      </property>
@@ -226,7 +226,7 @@
     </spacer>
    </item>
    <item>
-    <widget class="QWidget" name="quick_access" native="true"/>
+    <widget class="QWidget" name="_quick_access" native="true"/>
    </item>
   </layout>
  </widget>

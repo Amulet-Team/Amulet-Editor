@@ -27,105 +27,105 @@ class Ui_HomePage(QWidget):
             self.setObjectName("HomePage")
         self.resize(748, 788)
 
-        self.horizontalLayout = QHBoxLayout(self)
-        self.horizontalLayout.setSpacing(5)
-        self.horizontalLayout.setObjectName("horizontalLayout")
-        self.horizontalLayout.setContentsMargins(0, 0, 0, 0)
+        self._layout = QHBoxLayout(self)
+        self._layout.setSpacing(5)
+        self._layout.setObjectName("_layout")
+        self._layout.setContentsMargins(0, 0, 0, 0)
 
-        self.horizontalSpacer_2 = QSpacerItem(
+        self._left_spacer = QSpacerItem(
             40, 20, QSizePolicy.Expanding, QSizePolicy.Minimum
         )
-        self.horizontalLayout.addItem(self.horizontalSpacer_2)
+        self._layout.addItem(self._left_spacer)
 
         self._central_layout = QVBoxLayout()
         self._central_layout.setObjectName("_central_layout")
         self._central_layout.setContentsMargins(50, 50, 50, 50)
 
-        self.verticalSpacer_2 = QSpacerItem(
+        self._top_spacer = QSpacerItem(
             20, 40, QSizePolicy.Minimum, QSizePolicy.Expanding
         )
-        self._central_layout.addItem(self.verticalSpacer_2)
+        self._central_layout.addItem(self._top_spacer)
 
-        self.lbl_app_icon = QLabel(self)
-        self.lbl_app_icon.setObjectName("lbl_app_icon")
-        self.lbl_app_icon.setMinimumSize(QSize(0, 128))
-        self.lbl_app_icon.setMaximumSize(QSize(16777215, 128))
-        self.lbl_app_icon.setText("")
-        self.lbl_app_icon.setAlignment(Qt.AlignCenter)
-        self._central_layout.addWidget(self.lbl_app_icon)
+        self._lbl_app_icon = QLabel(self)
+        self._lbl_app_icon.setObjectName("_lbl_app_icon")
+        self._lbl_app_icon.setMinimumSize(QSize(0, 128))
+        self._lbl_app_icon.setMaximumSize(QSize(16777215, 128))
+        self._lbl_app_icon.setText("")
+        self._lbl_app_icon.setAlignment(Qt.AlignCenter)
+        self._central_layout.addWidget(self._lbl_app_icon)
 
-        self.lbl_app_name = QLabel(self)
-        self.lbl_app_name.setObjectName("lbl_app_name")
-        self.lbl_app_name.setAlignment(Qt.AlignCenter)
-        self.lbl_app_name.setProperty("subfamily", "semi_light")
-        self.lbl_app_name.setProperty("heading", "h1")
-        self._central_layout.addWidget(self.lbl_app_name)
+        self._lbl_app_name = QLabel(self)
+        self._lbl_app_name.setObjectName("_lbl_app_name")
+        self._lbl_app_name.setAlignment(Qt.AlignCenter)
+        self._lbl_app_name.setProperty("subfamily", "semi_light")
+        self._lbl_app_name.setProperty("heading", "h1")
+        self._central_layout.addWidget(self._lbl_app_name)
 
-        self.lbl_app_version = QLabel(self)
-        self.lbl_app_version.setObjectName("lbl_app_version")
-        self.lbl_app_version.setText("")
-        self.lbl_app_version.setAlignment(Qt.AlignCenter)
-        self.lbl_app_version.setProperty("color", "secondary")
-        self.lbl_app_version.setProperty("heading", "h5")
-        self.lbl_app_version.setProperty("subfamily", "semi_light")
-        self._central_layout.addWidget(self.lbl_app_version)
+        self._lbl_app_version = QLabel(self)
+        self._lbl_app_version.setObjectName("_lbl_app_version")
+        self._lbl_app_version.setText("")
+        self._lbl_app_version.setAlignment(Qt.AlignCenter)
+        self._lbl_app_version.setProperty("color", "secondary")
+        self._lbl_app_version.setProperty("heading", "h5")
+        self._lbl_app_version.setProperty("subfamily", "semi_light")
+        self._central_layout.addWidget(self._lbl_app_version)
 
-        self._vertical_spacer = QSpacerItem(
+        self._middel_spacer = QSpacerItem(
             20, 20, QSizePolicy.Minimum, QSizePolicy.Fixed
         )
-        self._central_layout.addItem(self._vertical_spacer)
+        self._central_layout.addItem(self._middel_spacer)
 
-        self.gridLayout = QGridLayout()
-        self.gridLayout.setObjectName("gridLayout")
+        self._button_layout = QGridLayout()
+        self._button_layout.setObjectName("_button_layout")
 
         self.btn_new_project = QPushButton(self)
         self.btn_new_project.setObjectName("btn_new_project")
         self.btn_new_project.setEnabled(False)
-        self.gridLayout.addWidget(self.btn_new_project, 1, 1, 1, 1)
+        self._button_layout.addWidget(self.btn_new_project, 1, 1, 1, 1)
 
-        self.label_2 = QLabel(self)
-        self.label_2.setObjectName("label_2")
-        self.gridLayout.addWidget(self.label_2, 1, 0, 1, 1)
+        self._lbl_new_project = QLabel(self)
+        self._lbl_new_project.setObjectName("_lbl_new_project")
+        self._button_layout.addWidget(self._lbl_new_project, 1, 0, 1, 1)
 
-        self.label_3 = QLabel(self)
-        self.label_3.setObjectName("label_3")
-        self.gridLayout.addWidget(self.label_3, 2, 0, 1, 1)
+        self._lbl_new_project_2 = QLabel(self)
+        self._lbl_new_project_2.setObjectName("_lbl_new_project_2")
+        self._button_layout.addWidget(self._lbl_new_project_2, 2, 0, 1, 1)
 
         self.btn_open_world = QPushButton(self)
         self.btn_open_world.setObjectName("btn_open_world")
-        self.gridLayout.addWidget(self.btn_open_world, 0, 1, 1, 1)
+        self._button_layout.addWidget(self.btn_open_world, 0, 1, 1, 1)
 
         self.cbo_language = QComboBox(self)
         self.cbo_language.setObjectName("cbo_language")
-        self.gridLayout.addWidget(self.cbo_language, 3, 0, 1, 2)
+        self._button_layout.addWidget(self.cbo_language, 3, 0, 1, 2)
 
-        self.label = QLabel(self)
-        self.label.setObjectName("label")
-        self.gridLayout.addWidget(self.label, 0, 0, 1, 1)
+        self._lbl_open_level = QLabel(self)
+        self._lbl_open_level.setObjectName("_lbl_open_level")
+        self._button_layout.addWidget(self._lbl_open_level, 0, 0, 1, 1)
 
         self.btn_open_project = QPushButton(self)
         self.btn_open_project.setObjectName("btn_open_project")
         self.btn_open_project.setEnabled(False)
-        self.gridLayout.addWidget(self.btn_open_project, 2, 1, 1, 1)
-        self.gridLayout.setColumnStretch(0, 1)
-        self._central_layout.addLayout(self.gridLayout)
+        self._button_layout.addWidget(self.btn_open_project, 2, 1, 1, 1)
+        self._button_layout.setColumnStretch(0, 1)
+        self._central_layout.addLayout(self._button_layout)
 
-        self.verticalSpacer = QSpacerItem(
+        self._bottom_spacer = QSpacerItem(
             20, 40, QSizePolicy.Minimum, QSizePolicy.Expanding
         )
-        self._central_layout.addItem(self.verticalSpacer)
-        self.horizontalLayout.addLayout(self._central_layout)
+        self._central_layout.addItem(self._bottom_spacer)
+        self._layout.addLayout(self._central_layout)
 
-        self.horizontalSpacer = QSpacerItem(
+        self._right_spacer = QSpacerItem(
             40, 20, QSizePolicy.Expanding, QSizePolicy.Minimum
         )
-        self.horizontalLayout.addItem(self.horizontalSpacer)
+        self._layout.addItem(self._right_spacer)
 
-        self.quick_access = QWidget(self)
-        self.quick_access.setObjectName("quick_access")
-        self.horizontalLayout.addWidget(self.quick_access)
-        self.horizontalLayout.setStretch(0, 1)
-        self.horizontalLayout.setStretch(2, 1)
+        self._quick_access = QWidget(self)
+        self._quick_access.setObjectName("_quick_access")
+        self._layout.addWidget(self._quick_access)
+        self._layout.setStretch(0, 1)
+        self._layout.setStretch(2, 1)
 
         self.localise()
         QMetaObject.connectSlotsByName(self)
@@ -137,22 +137,22 @@ class Ui_HomePage(QWidget):
 
     def localise(self):
         self.setWindowTitle(QCoreApplication.translate("HomePage", "Form", None))
-        self.lbl_app_name.setText(
+        self._lbl_app_name.setText(
             QCoreApplication.translate("HomePage", "Amulet Editor", None)
         )
         self.btn_new_project.setText(
             QCoreApplication.translate("HomePage", "New Project", None)
         )
-        self.label_2.setText(
+        self._lbl_new_project.setText(
             QCoreApplication.translate("HomePage", "Create a new project", None)
         )
-        self.label_3.setText(
+        self._lbl_new_project_2.setText(
             QCoreApplication.translate("HomePage", "Open an existing project", None)
         )
         self.btn_open_world.setText(
             QCoreApplication.translate("HomePage", "Open Level", None)
         )
-        self.label.setText(
+        self._lbl_open_level.setText(
             QCoreApplication.translate("HomePage", "Open an existing level", None)
         )
         self.btn_open_project.setText(
