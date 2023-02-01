@@ -86,10 +86,10 @@ class Ui_AmuletTracebackDialog(QDialog):
 
     def localise(self):
         self.setWindowTitle(
-            QCoreApplication.translate("TracebackDialog", "Dialog", None)
+            QCoreApplication.translate("AmuletTracebackDialog", "window_title", None)
         )
         self._alert_image.setText("")
         self._error_text.setText("")
         self._copy_button.setText(
-            QCoreApplication.translate("TracebackDialog", "Copy Error", None)
+            QCoreApplication.translate("AmuletTracebackDialog", "copy_error", None)
         )

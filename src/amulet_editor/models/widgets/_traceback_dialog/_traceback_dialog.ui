@@ -11,7 +11,7 @@
    </rect>
   </property>
   <property name="windowTitle">
-   <string>Dialog</string>
+   <string>window_title</string>
   </property>
   <layout class="QVBoxLayout" name="_main_layout">
    <item>
@@ -69,7 +69,7 @@
      <item>
       <widget class="QPushButton" name="_copy_button">
        <property name="text">
-        <string>Copy Error</string>
+        <string>copy_error</string>
        </property>
       </widget>
      </item>

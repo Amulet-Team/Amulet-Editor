@@ -138,23 +138,23 @@ class Ui_HomePage(QWidget):
     def localise(self):
         self.setWindowTitle(QCoreApplication.translate("HomePage", "Form", None))
         self._lbl_app_name.setText(
-            QCoreApplication.translate("HomePage", "Amulet Editor", None)
+            QCoreApplication.translate("HomePage", "amulet_editor", None)
         )
         self.btn_new_project.setText(
-            QCoreApplication.translate("HomePage", "New Project", None)
+            QCoreApplication.translate("HomePage", "btn_create_project", None)
         )
         self._lbl_new_project.setText(
-            QCoreApplication.translate("HomePage", "Create a new project", None)
+            QCoreApplication.translate("HomePage", "lbl_create_project", None)
         )
         self._lbl_new_project_2.setText(
-            QCoreApplication.translate("HomePage", "Open an existing project", None)
+            QCoreApplication.translate("HomePage", "lbl_open_project", None)
         )
         self.btn_open_world.setText(
-            QCoreApplication.translate("HomePage", "Open Level", None)
+            QCoreApplication.translate("HomePage", "btn_open_level", None)
         )
         self._lbl_open_level.setText(
-            QCoreApplication.translate("HomePage", "Open an existing level", None)
+            QCoreApplication.translate("HomePage", "lbl_open_level", None)
         )
         self.btn_open_project.setText(
-            QCoreApplication.translate("HomePage", "Open Project", None)
+            QCoreApplication.translate("HomePage", "btn_open_project", None)
         )

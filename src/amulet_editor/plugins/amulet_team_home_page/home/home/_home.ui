@@ -94,7 +94,7 @@
      <item>
       <widget class="QLabel" name="_lbl_app_name">
        <property name="text">
-        <string>Amulet Editor</string>
+        <string>amulet_editor</string>
        </property>
        <property name="alignment">
         <set>Qt::AlignCenter</set>
@@ -150,28 +150,28 @@
           <bool>false</bool>
          </property>
          <property name="text">
-          <string>New Project</string>
+          <string>btn_create_project</string>
          </property>
         </widget>
        </item>
        <item row="1" column="0">
         <widget class="QLabel" name="_lbl_new_project">
          <property name="text">
-          <string>Create a new project</string>
+          <string>lbl_create_project</string>
          </property>
         </widget>
        </item>
        <item row="2" column="0">
         <widget class="QLabel" name="_lbl_new_project_2">
          <property name="text">
-          <string>Open an existing project</string>
+          <string>lbl_open_project</string>
          </property>
         </widget>
        </item>
        <item row="0" column="1">
         <widget class="QPushButton" name="btn_open_world">
          <property name="text">
-          <string>Open Level</string>
+          <string>btn_open_level</string>
          </property>
         </widget>
        </item>
@@ -181,7 +181,7 @@
        <item row="0" column="0">
         <widget class="QLabel" name="_lbl_open_level">
          <property name="text">
-          <string>Open an existing level</string>
+          <string>lbl_open_level</string>
          </property>
         </widget>
        </item>
@@ -191,7 +191,7 @@
           <bool>false</bool>
          </property>
          <property name="text">
-          <string>Open Project</string>
+          <string>btn_open_project</string>
          </property>
         </widget>
        </item>
