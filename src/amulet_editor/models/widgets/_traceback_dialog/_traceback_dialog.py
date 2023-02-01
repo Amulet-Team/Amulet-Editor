@@ -20,11 +20,11 @@ from PySide6.QtWidgets import (
 )
 
 
-class Ui_TracebackDialog(QDialog):
+class Ui_AmuletTracebackDialog(QDialog):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         if not self.objectName():
-            self.setObjectName("TracebackDialog")
+            self.setObjectName("AmuletTracebackDialog")
         self.resize(400, 300)
 
         self._main_layout = QVBoxLayout(self)

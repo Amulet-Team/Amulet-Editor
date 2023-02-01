@@ -1,11 +1,11 @@
 from PySide6.QtCore import Slot, Qt, QSize
 from PySide6.QtGui import QGuiApplication, QIcon
 
-from ._traceback_dialog import Ui_TracebackDialog
+from ._traceback_dialog import Ui_AmuletTracebackDialog
 from amulet_editor.data.build import get_resource
 
 
-class TracebackDialog(Ui_TracebackDialog):
+class AmuletTracebackDialog(Ui_AmuletTracebackDialog):
     def __init__(
         self,
         parent=None,

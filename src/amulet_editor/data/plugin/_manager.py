@@ -36,7 +36,7 @@ from amulet_editor.data.process._messaging import (
 from amulet_editor.models.plugin import PluginUID
 from amulet_editor.models.plugin._state import PluginState
 from amulet_editor.models.plugin._container import PluginContainer
-from amulet_editor.models.widgets import TracebackDialog
+from amulet_editor.models.widgets import AmuletTracebackDialog
 
 
 log = logging.getLogger(__name__)
@@ -432,7 +432,7 @@ def _enable_plugin(plugin_uid: PluginUID):
                         log.debug(f"enabled plugin {plugin_container.data.uid}")
                     except Exception as e:
                         log.exception(e)
-                        dialog = TracebackDialog(
+                        dialog = AmuletTracebackDialog(
                             title=f"Error while loading plugin {plugin_container.data.uid.identifier} {plugin_container.data.uid.version}",
                             error=str(e),
                             traceback=traceback.format_exc(),
@@ -494,7 +494,7 @@ def _unload_plugin(plugin_container: PluginContainer):
             invoke(unload_plugin)
         except Exception as e:
             log.exception(e)
-            dialog = TracebackDialog(
+            dialog = AmuletTracebackDialog(
                 title=f"Error while unloading plugin {plugin_container.data.uid.identifier} {plugin_container.data.uid.version}",
                 error=str(e),
                 traceback=traceback.format_exc(),
