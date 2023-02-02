@@ -2,6 +2,9 @@
 	"identifier": "amulet_team_home_page",
 	"version": "1.0.0",
 	"name": "Amulet Home Page",
-	"depends": ["amulet_team_main_window~=1.0"],
+	"depends": [
+		"amulet_team_locale~=1.0",
+		"amulet_team_main_window~=1.0"
+	],
 	"locked": "true"
 }

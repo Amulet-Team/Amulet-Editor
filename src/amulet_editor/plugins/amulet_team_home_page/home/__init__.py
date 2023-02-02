@@ -2,13 +2,14 @@ from __future__ import annotations
 
 from typing import Optional
 
-from PySide6.QtCore import Qt
+from PySide6.QtCore import Qt, Slot
 from PySide6.QtWidgets import QWidget, QVBoxLayout
 
 from .home import HomePage
 from .open_world import OpenWorldPage
 
 from amulet_team_main_window.application.windows.main_window import View
+from amulet_team_locale import set_locale
 
 
 class HomeView(QWidget, View):
@@ -36,6 +37,12 @@ class HomeView(QWidget, View):
         # page.crd_new_project.clicked.connect(
         #     partial(self.set_menu_page, NewProjectMenu)
         # )
+
+        @Slot(int)
+        def _locale_change(index: int):
+            set_locale(page.cbo_language.currentData())
+
+        page.cbo_language.currentIndexChanged.connect(_locale_change)
         self.setCentralWidget(page)
 
     def _set_open_world_page(self):
