@@ -15,7 +15,6 @@ from PySide6.QtWidgets import QWidget
 
 class Startup(AmuletTool):
     def __init__(self) -> None:
-
         self._page = AmuletView()
         self._primary_panel = AmuletView()
         self._secondary_panel = AmuletView()

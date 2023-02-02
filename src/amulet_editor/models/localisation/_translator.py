@@ -15,7 +15,14 @@ class ATranslator(QTranslator):
     def isEmpty(self) -> bool:
         return super().isEmpty() and not self._translations
 
-    def load_lang(self, locale: QLocale, filename: str, prefix: str = "", directory: str = "", suffix: str = ".lang") -> bool:
+    def load_lang(
+        self,
+        locale: QLocale,
+        filename: str,
+        prefix: str = "",
+        directory: str = "",
+        suffix: str = ".lang",
+    ) -> bool:
         self._translations.clear()
 
         def get_codes():
@@ -29,7 +36,9 @@ class ATranslator(QTranslator):
 
         for ui_language_name in get_codes():
             for ext in [suffix, ""]:
-                path = directory + os.path.sep + filename + prefix + ui_language_name + ext
+                path = (
+                    directory + os.path.sep + filename + prefix + ui_language_name + ext
+                )
                 if os.path.isfile(path):
                     with open(path) as lang:
                         for line in lang.readlines():
@@ -45,5 +54,13 @@ class ATranslator(QTranslator):
                     return True
         return False
 
-    def translate(self, context: str, source_text: str, disambiguation: Optional[bytes] = None, n: int = -1) -> str:
-        return super().translate(context, source_text, disambiguation, n) or self._translations.get(f"{context}.{source_text}", None)
+    def translate(
+        self,
+        context: str,
+        source_text: str,
+        disambiguation: Optional[bytes] = None,
+        n: int = -1,
+    ) -> str:
+        return super().translate(
+            context, source_text, disambiguation, n
+        ) or self._translations.get(f"{context}.{source_text}", None)

@@ -29,10 +29,19 @@ class HomePage(Ui_HomePage):
                     continue
                 locales.add(locale_key)
                 locale = QLocale(language, territory)
-                native_language = locale.nativeLanguageName() or locale.languageToString(language)
-                native_territory = locale.nativeTerritoryName() or locale.territoryToString(territory)
+                native_language = (
+                    locale.nativeLanguageName() or locale.languageToString(language)
+                )
+                native_territory = (
+                    locale.nativeTerritoryName() or locale.territoryToString(territory)
+                )
 
                 if native_language and native_territory:
-                    self.cbo_language.addItem(f"{native_language} - {native_territory}", userData=locale)
-                    if default_locale.language() == language and default_locale.territory() == territory:
-                        self.cbo_language.setCurrentIndex(self.cbo_language.count()-1)
+                    self.cbo_language.addItem(
+                        f"{native_language} - {native_territory}", userData=locale
+                    )
+                    if (
+                        default_locale.language() == language
+                        and default_locale.territory() == territory
+                    ):
+                        self.cbo_language.setCurrentIndex(self.cbo_language.count() - 1)

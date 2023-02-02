@@ -6,7 +6,6 @@ from PySide6.QtCore import QObject, Signal
 
 
 class ThemeManager(QObject):
-
     changed = Signal(object)
 
     def __init__(self) -> None:

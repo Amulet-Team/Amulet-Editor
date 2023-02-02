@@ -33,7 +33,6 @@ class ParsedLevel:
 
 
 class LevelParser(QObject):
-
     parsed_level = Signal(ParsedLevel)
 
     @Slot(str)
@@ -59,7 +58,6 @@ class LevelParser(QObject):
 
 
 class WorldSelectionPanel(QWidget):
-
     level_data = Signal(LevelData)
     parse = Signal(str)
 

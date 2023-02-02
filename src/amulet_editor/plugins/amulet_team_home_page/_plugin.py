@@ -35,7 +35,11 @@ def load_plugin():
 
 
 def _locale_changed():
-    _translator.load_lang(QLocale(), "", directory=os.path.join(*amulet_team_home_page.__path__, "resources", "lang"))
+    _translator.load_lang(
+        QLocale(),
+        "",
+        directory=os.path.join(*amulet_team_home_page.__path__, "resources", "lang"),
+    )
 
 
 def unload_plugin():

@@ -5,7 +5,6 @@ from PySide6.QtWidgets import QWidget
 
 
 class AmuletView(QObject):
-
     changed = Signal(QWidget)
 
     def __init__(self, widget: Optional[QWidget] = None) -> None:

@@ -50,7 +50,11 @@ class AmuletApp(QApplication):
 
     @Slot()
     def _locale_changed(self):
-        self._translator.load_lang(QLocale(), "", directory=os.path.join(*amulet_editor.__path__, "resources", "lang"))
+        self._translator.load_lang(
+            QLocale(),
+            "",
+            directory=os.path.join(*amulet_editor.__path__, "resources", "lang"),
+        )
 
 
 def main():
