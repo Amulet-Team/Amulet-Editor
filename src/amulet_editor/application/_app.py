@@ -1,13 +1,17 @@
 from __future__ import annotations
-import sys
 from typing import Optional
+import sys
+import os
 
-from PySide6.QtCore import Qt, Slot
+from PySide6.QtCore import Qt, Slot, QLocale, QCoreApplication
 from PySide6.QtWidgets import QApplication
 from PySide6.QtGui import QIcon
 
+import amulet_editor
 from amulet_editor import __version__
 from amulet_editor.data import build
+from amulet_editor.data._localisation import locale_changed
+from amulet_editor.models.localisation import ATranslator
 import amulet_editor.data.plugin._manager as plugin_manager
 from . import appearance
 
@@ -19,6 +23,11 @@ class AmuletApp(QApplication):
         self.setApplicationVersion(__version__)
         self.setWindowIcon(QIcon(build.get_resource("icons/amulet/Icon.ico")))
         self.setAttribute(Qt.AA_UseHighDpiPixmaps)
+
+        self._translator = ATranslator()
+        self._locale_changed()
+        QCoreApplication.installTranslator(self._translator)
+        locale_changed.connect(self._locale_changed)
 
         appearance.theme().apply(self)
 
@@ -38,6 +47,10 @@ class AmuletApp(QApplication):
         plugin_manager.unload()
         # Forcefully quit the application just in case a plugin opened a window during unload.
         self.quit()
+
+    @Slot()
+    def _locale_changed(self):
+        self._translator.load_lang(QLocale(), "", directory=os.path.join(*amulet_editor.__path__, "resources", "lang"))
 
 
 def main():
