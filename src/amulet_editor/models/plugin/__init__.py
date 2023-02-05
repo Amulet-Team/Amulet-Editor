@@ -1,2 +1,2 @@
-from ._uid import PluginUID
-from ._data import PluginData
+from ._uid import LibraryUID
+from ._data import PluginData, PluginDataDepends

@@ -4,7 +4,7 @@ from typing import NamedTuple
 import re
 from packaging.specifiers import SpecifierSet
 
-from ._uid import PluginUID
+from ._uid import LibraryUID
 
 
 RequirementPattern = re.compile(
@@ -12,7 +12,7 @@ RequirementPattern = re.compile(
 )
 
 
-class PluginRequirement(NamedTuple):
+class Requirement(NamedTuple):
     plugin_identifier: str  # The package name
     specifier: SpecifierSet  # The version specifier. It is recommended to use the compatible format. Eg. "~=1.0"
 
@@ -26,8 +26,8 @@ class PluginRequirement(NamedTuple):
         specifier = SpecifierSet(match.group("requirement"))
         return cls(match.group("identifier"), specifier)
 
-    def __contains__(self, item: PluginUID):
-        if not isinstance(item, PluginUID):
+    def __contains__(self, item: LibraryUID):
+        if not isinstance(item, LibraryUID):
             raise TypeError
         return (
             item.identifier == self.plugin_identifier and item.version in self.specifier

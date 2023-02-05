@@ -5,12 +5,13 @@ import os.path
 from typing import Optional, Type, Protocol
 from abc import ABC, abstractmethod
 from packaging.version import Version
+from packaging.specifiers import SpecifierSet
 
 from amulet_editor.data.paths._plugin import first_party_plugin_directory
-from ._data import PluginData
+from ._data import PluginData, PluginDataDepends
 from ._state import PluginState
-from ._requirement import PluginRequirement
-from ._uid import PluginUID
+from ._requirement import Requirement
+from ._uid import LibraryUID
 
 
 _plugin_classes: dict[int, Type[PluginContainer]] = {}
@@ -124,23 +125,50 @@ class PluginContainerV1(PluginContainer):
             raise TypeError("plugin.json[name] must be a string")
 
         # Get the plugin dependencies
-        depends: list[str] = plugin_data.get("depends", [])
-        if not isinstance(depends, list) and all(isinstance(d, str) for d in depends):
+        depends_raw: dict = plugin_data.get("depends")
+        if not isinstance(depends_raw, dict):
             raise TypeError(
-                'plugin.json[depends] must be a list of string identifiers and version specifiers if defined.\nEg. ["plugin_1 ~=1.0", "plugin_2 ~=1.3"]'
+                'plugin.json[depends] must be a dictionary of the form {"python": "~=3.9", "library": [], "plugin": []}'
             )
+
+        python_raw = depends_raw.get("python")
+        if not isinstance(python_raw, str):
+            raise TypeError(
+                'plugin.json[depends][python] must be a string of the form "~=3.9"'
+            )
+        python = SpecifierSet(python_raw)
+
+        library_depends_raw: dict = depends_raw.get("library", [])
+        if not isinstance(library_depends_raw, list) and all(
+            isinstance(d, str) for d in library_depends_raw
+        ):
+            raise TypeError(
+                'plugin.json[depends][library] must be a list of string identifiers and version specifiers if defined.\nEg. ["PySide6~=6.4"]'
+            )
+        library_depends = tuple(map(Requirement.from_string, library_depends_raw))
+
+        plugin_depends_raw: dict = depends_raw.get("plugin", [])
+        if not isinstance(plugin_depends_raw, list) and all(
+            isinstance(d, str) for d in plugin_depends_raw
+        ):
+            raise TypeError(
+                'plugin.json[depends][plugin] must be a list of string identifiers and version specifiers if defined.\nEg. ["plugin_1~=1.0", "plugin_2~=1.3"]'
+            )
+        plugin_depends = tuple(map(Requirement.from_string, plugin_depends_raw))
 
         # Get the locked state
         locked = bool(first_party and plugin_data.get("locked"))
 
-        parsed_depends = tuple(map(PluginRequirement.from_string, depends))
-
         return cls(
             PluginData(
-                PluginUID(plugin_identifier, plugin_version),
+                LibraryUID(plugin_identifier, plugin_version),
                 plugin_path,
                 plugin_name,
-                parsed_depends,
+                PluginDataDepends(
+                    python,
+                    library_depends,
+                    plugin_depends,
+                ),
                 locked,
             )
         )

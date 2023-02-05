@@ -16,7 +16,7 @@ import sys
 from collections import UserDict
 import re
 import traceback
-from copy import copy
+import builtins
 
 from PySide6.QtCore import QThread, Signal, QObject
 
@@ -33,7 +33,7 @@ from amulet_editor.data.process._messaging import (
     call_in_parent,
     call_in_children,
 )
-from amulet_editor.models.plugin import PluginUID
+from amulet_editor.models.plugin import LibraryUID
 from amulet_editor.models.plugin._state import PluginState
 from amulet_editor.models.plugin._container import PluginContainer
 from amulet_editor.models.widgets import AmuletTracebackDialog
@@ -62,7 +62,7 @@ class PluginJobType(Enum):
 
 
 class PluginJob(NamedTuple):
-    plugin_identifier: PluginUID
+    plugin_identifier: LibraryUID
     job_type: PluginJobType
 
 
@@ -70,7 +70,7 @@ class PluginJob(NamedTuple):
 _plugin_lock = RLock()
 
 # The plugin data
-_plugins: dict[PluginUID, PluginContainer] = {}
+_plugins: dict[LibraryUID, PluginContainer] = {}
 
 # A queue of jobs to apply to the plugins.
 # Any function in this module can add jobs to this queue but only the job thread can remove items.
@@ -78,7 +78,7 @@ _plugin_queue: Queue = Queue()
 
 # A map from the package identifier to the UID.
 # Only plugins that are currently enabled will appear in this dictionary.
-_enabled_plugins: dict[str, PluginUID] = {}
+_enabled_plugins: dict[str, LibraryUID] = {}
 
 _splash_load_screen: Optional[Splash] = None
 _splash_unload_screen: Optional[Splash] = None
@@ -108,7 +108,7 @@ class PluginJobThread(QThread):
 
 
 class Event(QObject):
-    plugin_state_change = Signal(PluginUID, PluginState)
+    plugin_state_change = Signal(LibraryUID, PluginState)
 
 
 # The thread to process plugin jobs.
@@ -131,61 +131,88 @@ def get_trace_paths() -> list[str]:
     )[1:]
 
 
-class CustomSysModules(UserDict):
-    def __init__(self, original: dict):
-        super().__init__()
-        # self.data = original  # I would prefer to do this but getitem does not get called if this line is used instead.
-        self.data = copy(original)
+def _validate_import(imported_name: str, frame):
+    # Plugins can only import libraries and plugins they have specified as a dependency.
+    # Plugins can only be imported by other plugins.
+    # We step back through the stack.
+    # If we find a plugin that does not have the authority then we raise an error.
+    # If we do not find a plugin in the stack we raise an error
 
-    def __getitem__(self, imported_name: str):
-        if not isinstance(imported_name, str):
-            raise TypeError
+    # Get the root module name of the module being imported. Eg a.b.c => a
+    imported_root_name = imported_name.split(".")[0]
 
-        # Plugins can only be imported by other plugins that have the dependency listed.
-        # We step back through the stack.
-        # If we find a plugin that does not have the authority then we raise an error.
-        # If we do not find a plugin in the stack we raise an error
+    # Find what imported the module
+    while frame.f_globals.get("__name__").split(".")[0] == "importlib":
+        # Skip over the import mechanisms
+        frame = frame.f_back
 
-        # Get the root module name of the module being imported. Eg a.b.c => a
-        imported_root_name = imported_name.split(".")[0]
-        # If the imported module is an enabled plugin
+    if frame.f_globals.get("__name__") == __name__ and frame.f_code.co_qualname in {
+        "_enable_plugin",
+        "wrap_importer.<locals>._import",
+    }:
+        return
+
+    importer_name = frame.f_globals.get("__name__")
+    if importer_name is None:
+        raise RuntimeError(f"Could not find __name__ attribute for frame\n{frame}")
+
+    importer_root_name = importer_name.split(".")[0]
+    if importer_root_name in _enabled_plugins:
+        # The module was imported by a plugin
+        importer_uid = _enabled_plugins[importer_root_name]
+        plugin_container = _plugins[importer_uid]
         if imported_root_name in _enabled_plugins:
-            # Find what imported it
-            frame = inspect.currentframe().f_back
-            while frame:
-                importer_name = frame.f_globals.get("__name__")
-                if importer_name is None:
-                    raise RuntimeError(
-                        f"Could not find __name__ attribute for frame\n{frame}"
-                    )
-                importer_root_name = importer_name.split(".")[0]
-
-                if importer_root_name in _enabled_plugins:
-                    # We found the plugin that imported the plugin module
-
-                    if importer_root_name == imported_root_name:
-                        # imported by itself
-                        break
-
-                    importer_uid = _enabled_plugins[importer_root_name]
-                    plugin_container = _plugins[importer_uid]
-                    if any(
-                        dependency.plugin_identifier == imported_root_name
-                        for dependency in plugin_container.data.depends
-                    ):
-                        # imported by a plugin that has the dependency listed
-                        break
-
+            # A plugin imported a plugin
+            if importer_root_name != imported_root_name:
+                # a plugin imported a different plugin
+                if not any(
+                    dependency.plugin_identifier == imported_root_name
+                    for dependency in plugin_container.data.depends.plugins
+                ):
+                    # imported by a plugin that does not have the dependency listed
                     raise RuntimeError(
                         f"Plugin {importer_root_name} imported plugin {imported_root_name} which it does not have authority for.\nYou must list a plugin dependency to be able to import it."
                     )
+        else:
+            # A plugin imported a normal module
+            if (
+                imported_root_name not in sys.builtin_module_names
+                and importer_root_name not in sys.stdlib_module_names
+            ):
+                # Plugins don't need to specify native python libraries.
+                pass
+            elif not any(
+                dependency.plugin_identifier == imported_root_name
+                for dependency in plugin_container.data.depends.libraries
+            ):
+                raise RuntimeError(
+                    f"Plugin {importer_root_name} imported library {imported_root_name} which it does not have authority for.\nYou must list a library dependency to be able to import it."
+                )
+    elif imported_root_name in _enabled_plugins:
+        raise RuntimeError(
+            f"Plugin module {imported_name} was imported by a non-plugin module {importer_name} {frame.f_code.co_qualname}"
+        )
 
+
+class CustomSysModules(UserDict):
+    def __init__(self, original: dict):
+        super().__init__()
+        self.data = original  # I would prefer to do this but getitem does not get called if this line is used instead.
+        # self.data = copy(original)
+
+    def __getitem__(self, imported_name: str):
+        print(imported_name)
+        if not isinstance(imported_name, str):
+            raise TypeError
+
+        # Find the first frame before UserDict code
+        frame = inspect.currentframe()
+        if frame is not None:
+            frame = frame.f_back
+            while frame.f_globals.get("__name__") == "collections.abc":
                 frame = frame.f_back
 
-            else:
-                raise RuntimeError(
-                    f"Plugin module {imported_name} was imported by a non-plugin module"
-                )
+            _validate_import(imported_name, frame)
 
         return super().__getitem__(imported_name)
 
@@ -195,6 +222,22 @@ class CustomSysModules(UserDict):
         for key in list(self.data.keys()):
             if key == plugin_name or key.startswith(plugin_prefix):
                 del self[key]
+
+
+def wrap_importer(imp):
+    def _import(name, globals=None, locals=None, fromlist=(), level=0):
+        if level:
+            name_split = globals["__name__"].split(".")
+            imported_name = f"{'.'.join(name_split[:len(name_split)-level+1])}.{name}"
+        else:
+            imported_name = name
+        frame = inspect.currentframe()
+        if frame is not None:
+            frame = frame.f_back
+            _validate_import(imported_name, frame)
+        return imp(name, globals=globals, locals=locals, fromlist=fromlist, level=level)
+
+    return _import
 
 
 def load():
@@ -229,6 +272,7 @@ def load():
                         break
 
         sys.modules = CustomSysModules(sys.modules)
+        builtins.__import__ = wrap_importer(builtins.__import__)
         scan_plugins()
         plugin_state = get_plugins_state()
         for plugin_uid, plugin_container in _plugins.items():
@@ -279,13 +323,13 @@ def unload():
     log.debug("Finished unloading plugins")
 
 
-def plugin_uids() -> tuple[PluginUID, ...]:
+def plugin_uids() -> tuple[LibraryUID, ...]:
     """Get a tuple of all plugin unique identifiers that are installed."""
     with _plugin_lock:
         return tuple(_plugins)
 
 
-def get_plugins_state() -> dict[PluginUID, bool]:
+def get_plugins_state() -> dict[LibraryUID, bool]:
     """
     Get the state (enabled or disabled) for each plugin.
     If a plugin is not included it defaults to False.
@@ -358,7 +402,7 @@ def scan_plugins():
 
 
 @register_global_function
-def local_enable_plugin(plugin_uid: PluginUID):
+def local_enable_plugin(plugin_uid: LibraryUID):
     """
     Load and initialise a plugin in the current processes.
     Any plugins that are inactive because they depend on this plugin will also be enabled.
@@ -370,13 +414,13 @@ def local_enable_plugin(plugin_uid: PluginUID):
     _plugin_queue.put(PluginJob(plugin_uid, PluginJobType.Enable))
 
 
-def _enable_plugin(plugin_uid: PluginUID):
+def _enable_plugin(plugin_uid: LibraryUID):
     """Enable a plugin. This must only be called by the job thread.
     :param plugin_uid: The unique identifier of the plugin to enable
     :raises: Exception if an error happened when loading the plugin.
     """
     with _plugin_lock:
-        if not isinstance(plugin_uid, PluginUID):
+        if not isinstance(plugin_uid, LibraryUID):
             raise TypeError
         plugin_container = _plugins[plugin_uid]
         if plugin_container.state is not PluginState.Disabled:
@@ -393,7 +437,7 @@ def _enable_plugin(plugin_uid: PluginUID):
                         uid in requirement and plugin.state is PluginState.Enabled
                         for uid, plugin in _plugins.items()
                     )
-                    for requirement in plugin_container.data.depends
+                    for requirement in plugin_container.data.depends.plugins
                 ):
                     # all dependencies are satisfied so the plugin can be enabled.
                     try:
@@ -446,7 +490,7 @@ def _enable_plugin(plugin_uid: PluginUID):
 
 
 @register_global_function
-def local_disable_plugin(plugin_uid: PluginUID):
+def local_disable_plugin(plugin_uid: LibraryUID):
     """
     Disable and destroy a plugin in the current process.
     Any dependent plugins will be disabled before disabling this plugin.
@@ -458,10 +502,10 @@ def local_disable_plugin(plugin_uid: PluginUID):
     _plugin_queue.put(PluginJob(plugin_uid, PluginJobType.Disable))
 
 
-def _disable_plugin(plugin_uid: PluginUID):
+def _disable_plugin(plugin_uid: LibraryUID):
     """Disable a plugin and inactive all dependents. This must only be called by the job thread."""
     with _plugin_lock:
-        if not isinstance(plugin_uid, PluginUID):
+        if not isinstance(plugin_uid, LibraryUID):
             raise TypeError
         plugin_container = _plugins[plugin_uid]
         if plugin_container.state is PluginState.Disabled:
@@ -508,7 +552,7 @@ def _unload_plugin(plugin_container: PluginContainer):
         modules._remove_plugin(plugin_container.data.uid.identifier)
 
 
-def _recursive_inactive_plugins(plugin_uid: PluginUID):
+def _recursive_inactive_plugins(plugin_uid: LibraryUID):
     """
     Recursively inactive all dependents of a plugin This must only be called by the job thread.
     When a plugin is disabled none of its dependents are valid any more so they must be inactivated.
@@ -516,14 +560,15 @@ def _recursive_inactive_plugins(plugin_uid: PluginUID):
     """
     for plugin_container in _plugins.values():
         if plugin_container.state is PluginState.Enabled and any(
-            plugin_uid in requirement for requirement in plugin_container.data.depends
+            plugin_uid in requirement
+            for requirement in plugin_container.data.depends.plugins
         ):
             _unload_plugin(plugin_container)
             _set_plugin_state(plugin_container, PluginState.Inactive)
 
 
 @register_global_function
-def local_reload_plugin(plugin_uid: PluginUID):
+def local_reload_plugin(plugin_uid: LibraryUID):
     """
     Disable a plugin if enabled and reload from source.
     Only effects the current process.
@@ -536,7 +581,7 @@ def local_reload_plugin(plugin_uid: PluginUID):
 
 
 @register_global_function
-def global_enable_plugin(plugin_uid: PluginUID):
+def global_enable_plugin(plugin_uid: LibraryUID):
     """
     Enable a plugin for all processes.
     This returns immediately and is completed asynchronously.
@@ -555,7 +600,7 @@ def global_enable_plugin(plugin_uid: PluginUID):
 
 
 @register_global_function
-def global_disable_plugin(plugin_uid: PluginUID):
+def global_disable_plugin(plugin_uid: LibraryUID):
     """
     Disable a plugin for all processes.
     This returns immediately and is completed asynchronously.
@@ -574,7 +619,7 @@ def global_disable_plugin(plugin_uid: PluginUID):
 
 
 @register_global_function
-def global_reload_plugin(plugin_uid: PluginUID):
+def global_reload_plugin(plugin_uid: LibraryUID):
     """
     Reload a plugin for all processes.
     This returns immediately and is completed asynchronously.
@@ -606,7 +651,7 @@ def global_reload_plugin(plugin_uid: PluginUID):
 #         raise RuntimeError("The plugin state can only be modified in the main process.")
 #
 #
-# def uninstall_plugin(plugin_uid: PluginUID):
+# def uninstall_plugin(plugin_uid: LibraryUID):
 #     """
 #     Disable and uninstall a plugin.
 #

@@ -2,6 +2,9 @@
 	"identifier": "amulet_team_settings",
 	"version": "1.0.0",
 	"name": "Amulet Settings",
-	"depends": ["amulet_team_main_window~=1.0"],
+	"depends": {
+		"python": "~=3.9",
+		"plugin": ["amulet_team_main_window~=1.0"]
+	},
 	"locked": "true"
 }
