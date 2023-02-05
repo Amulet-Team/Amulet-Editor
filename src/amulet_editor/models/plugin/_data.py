@@ -12,8 +12,8 @@ class PluginDataDepends(NamedTuple):
     """Static, publicly accessible data about a plugin's dependencies"""
 
     python: SpecifierSet
-    libraries: tuple[Requirement, ...]
-    plugins: tuple[
+    library: tuple[Requirement, ...]
+    plugin: tuple[
         Requirement, ...
     ]  # The plugins that this plugin depends on. This plugin will only be loaded once these plugins have been loaded.
 

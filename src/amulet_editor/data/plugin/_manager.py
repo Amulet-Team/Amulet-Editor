@@ -10,6 +10,7 @@ import glob
 import logging
 from importlib import import_module
 from importlib.util import spec_from_file_location, module_from_spec
+from importlib.metadata import version
 from queue import Queue, Empty
 from enum import Enum
 import sys
@@ -17,6 +18,8 @@ from collections import UserDict
 import re
 import traceback
 import builtins
+
+from packaging.version import Version
 
 from PySide6.QtCore import QThread, Signal, QObject
 
@@ -36,10 +39,12 @@ from amulet_editor.data.process._messaging import (
 from amulet_editor.models.plugin import LibraryUID
 from amulet_editor.models.plugin._state import PluginState
 from amulet_editor.models.plugin._container import PluginContainer
+from amulet_editor.models.plugin._requirement import Requirement
 from amulet_editor.models.widgets import AmuletTracebackDialog
 
 
 log = logging.getLogger(__name__)
+PythonVersion = Version(".".join(map(str, sys.version_info[:3])))
 
 
 """
@@ -166,8 +171,8 @@ def _validate_import(imported_name: str, frame):
             if importer_root_name != imported_root_name:
                 # a plugin imported a different plugin
                 if not any(
-                    dependency.plugin_identifier == imported_root_name
-                    for dependency in plugin_container.data.depends.plugins
+                    dependency.identifier == imported_root_name
+                    for dependency in plugin_container.data.depends.plugin
                 ):
                     # imported by a plugin that does not have the dependency listed
                     raise RuntimeError(
@@ -182,8 +187,8 @@ def _validate_import(imported_name: str, frame):
                 # Plugins don't need to specify native python libraries.
                 pass
             elif not any(
-                dependency.plugin_identifier == imported_root_name
-                for dependency in plugin_container.data.depends.libraries
+                dependency.identifier == imported_root_name
+                for dependency in plugin_container.data.depends.library
             ):
                 raise RuntimeError(
                     f"Plugin {importer_root_name} imported library {imported_root_name} which it does not have authority for.\nYou must list a library dependency to be able to import it."
@@ -414,6 +419,17 @@ def local_enable_plugin(plugin_uid: LibraryUID):
     _plugin_queue.put(PluginJob(plugin_uid, PluginJobType.Enable))
 
 
+def _has_library(requirement: Requirement):
+    try:
+        return version(requirement.identifier) in requirement.specifier
+    except Exception:
+        return False
+
+
+def _has_plugin(requirement: Requirement):
+    return requirement.identifier in _enabled_plugins and _enabled_plugins[requirement.identifier] in requirement
+
+
 def _enable_plugin(plugin_uid: LibraryUID):
     """Enable a plugin. This must only be called by the job thread.
     :param plugin_uid: The unique identifier of the plugin to enable
@@ -432,12 +448,11 @@ def _enable_plugin(plugin_uid: LibraryUID):
         while enabled_count:
             enabled_count = 0
             for plugin_container in list(_plugins.values()):
-                if plugin_container.state is PluginState.Inactive and all(
-                    any(
-                        uid in requirement and plugin.state is PluginState.Enabled
-                        for uid, plugin in _plugins.items()
-                    )
-                    for requirement in plugin_container.data.depends.plugins
+                if (
+                    plugin_container.state is PluginState.Inactive
+                    and PythonVersion in plugin_container.data.depends.python
+                    and all(map(_has_library, plugin_container.data.depends.library))
+                    and all(map(_has_plugin, plugin_container.data.depends.plugin))
                 ):
                     # all dependencies are satisfied so the plugin can be enabled.
                     try:
@@ -561,7 +576,7 @@ def _recursive_inactive_plugins(plugin_uid: LibraryUID):
     for plugin_container in _plugins.values():
         if plugin_container.state is PluginState.Enabled and any(
             plugin_uid in requirement
-            for requirement in plugin_container.data.depends.plugins
+            for requirement in plugin_container.data.depends.plugin
         ):
             _unload_plugin(plugin_container)
             _set_plugin_state(plugin_container, PluginState.Inactive)

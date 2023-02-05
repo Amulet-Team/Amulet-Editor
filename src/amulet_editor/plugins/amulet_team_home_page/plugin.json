@@ -6,7 +6,7 @@
 		"python": "~=3.9",
 		"library": [
 			"PySide6~=6.2",
-			"amulet_editor~=1.0"
+			"amulet_editor~=1.0a0"
 		],
 		"plugin": [
 			"amulet_team_locale~=1.0",

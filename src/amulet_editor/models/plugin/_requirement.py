@@ -13,7 +13,7 @@ RequirementPattern = re.compile(
 
 
 class Requirement(NamedTuple):
-    plugin_identifier: str  # The package name
+    identifier: str  # The package name
     specifier: SpecifierSet  # The version specifier. It is recommended to use the compatible format. Eg. "~=1.0"
 
     @classmethod
@@ -29,6 +29,4 @@ class Requirement(NamedTuple):
     def __contains__(self, item: LibraryUID):
         if not isinstance(item, LibraryUID):
             raise TypeError
-        return (
-            item.identifier == self.plugin_identifier and item.version in self.specifier
-        )
+        return item.identifier == self.identifier and item.version in self.specifier
