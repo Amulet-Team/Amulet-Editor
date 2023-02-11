@@ -176,13 +176,13 @@ def _validate_import(imported_name: str, frame):
                 ):
                     # imported by a plugin that does not have the dependency listed
                     raise RuntimeError(
-                        f"Plugin {importer_root_name} imported plugin {imported_root_name} which it does not have authority for.\nYou must list a plugin dependency to be able to import it."
+                        f"Plugin {importer_root_name} imported plugin {imported_root_name} which it does not have authority for.\nYou must list a plugin dependency in your plugin's metadata to be able to import it."
                     )
         else:
             # A plugin imported a normal module
             if (
-                imported_root_name not in sys.builtin_module_names
-                and importer_root_name not in sys.stdlib_module_names
+                imported_root_name in sys.builtin_module_names
+                or imported_root_name in sys.stdlib_module_names
             ):
                 # Plugins don't need to specify native python libraries.
                 pass
@@ -191,7 +191,7 @@ def _validate_import(imported_name: str, frame):
                 for dependency in plugin_container.data.depends.library
             ):
                 raise RuntimeError(
-                    f"Plugin {importer_root_name} imported library {imported_root_name} which it does not have authority for.\nYou must list a library dependency to be able to import it."
+                    f"Plugin {importer_root_name} imported library {imported_root_name} which it does not have authority for.\nYou must list a dependency in your plugin's metadata to be able to import it."
                 )
     elif imported_root_name in _enabled_plugins:
         raise RuntimeError(
@@ -427,7 +427,10 @@ def _has_library(requirement: Requirement):
 
 
 def _has_plugin(requirement: Requirement):
-    return requirement.identifier in _enabled_plugins and _enabled_plugins[requirement.identifier] in requirement
+    return (
+        requirement.identifier in _enabled_plugins
+        and _enabled_plugins[requirement.identifier] in requirement
+    )
 
 
 def _enable_plugin(plugin_uid: LibraryUID):
