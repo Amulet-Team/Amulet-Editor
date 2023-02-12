@@ -206,7 +206,6 @@ class CustomSysModules(UserDict):
         # self.data = copy(original)
 
     def __getitem__(self, imported_name: str):
-        print(imported_name)
         if not isinstance(imported_name, str):
             raise TypeError
 
