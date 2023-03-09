@@ -76,19 +76,48 @@ BuiltInClassAttrs = {
     "__signature__",
     "__subclasshook__",
     "__text_signature__",
+    "__weakref__",
     "__weakrefoffset__",
 }
 
 BuiltInModuleAttrs = {
+    "__annotations__",
+    "__builtins__",
+    "__cached__",
     "__doc__",
     "__file__",
     "__loader__",
     "__name__",
     "__package__",
+    "__path__",
     "__spec__",
 }
 
-PySide6Map: dict[str, list[str]] = {}
+C2Py = {
+    "double": "float",
+    "uint": "int",
+    "uchar": "int",
+    "qlonglong": "int",
+    "qulonglong": "int",
+    "HANDLE": "object",
+    "QJsonObject": "object",
+    "QKeyframeAnimation": "Qt3DAnimation.QKeyframeAnimation",
+    "QModelIndexList": "list",
+    "QQuickCloseEvent": "object",
+    "QQuickWebEngineDownloadRequest": "object",
+    "QRemoteObjectSourceLocation": "object",
+    "QString": "str",
+    "QStringList": "list[str]",
+    "QVariant": "object",
+    "QVariantMap": "dict",
+    "QWebEngineClientCertificateSelection": "object",
+    "QWebEngineFileSystemAccessRequest": "object",
+    "QWebEngineNavigationRequest": "object",
+    "qreal": "float",
+}
+
+PySide6ModuleMap: dict[str, list[str]] = {}
+PySide6NamespaceMap: dict[str, list[tuple[str, str]]] = {}
 
 
 def _generate_pyside6_map(mod):
@@ -99,7 +128,12 @@ def _generate_pyside6_map(mod):
             print(f"Could not import module {sub_module.name}")
         else:
             for name in dir(sub_mod):
-                PySide6Map.setdefault(name, []).append(sub_mod.__name__)
+                PySide6ModuleMap.setdefault(name, []).append(sub_mod.__name__)
+                cls = getattr(sub_mod, name)
+                if inspect.isclass(cls):
+                    for attr_name in dir(cls):
+                        # PySide6NamespaceMap.setdefault(f"{cls.__qualname__}.{attr_name}", []).append((sub_mod.__name__, cls.__qualname__))
+                        PySide6NamespaceMap.setdefault(attr_name, []).append((sub_mod.__name__, f"{cls.__qualname__}.{attr_name}"))
 
 
 _generate_pyside6_map(PySide6)
@@ -290,18 +324,6 @@ def get_module(obj) -> Optional[ModuleType]:
     return None if mod_name is None else importlib.import_module(mod_name)
 
 
-# def add_import(obj, module_alias: dict[str, str]):
-#     mod = inspect.getmodule(obj)
-#     if mod is None:
-#         mod_str = obj.__module__
-#         if mod_str in module_alias:
-#             mod_str = module_alias[mod_str]
-#             mod = importlib.import_module(mod_str)
-#     if mod is None:
-#         raise RuntimeError
-#     return mod
-
-
 class Stub:
     def __init__(self, module: ModuleType):
         self._module = module
@@ -359,8 +381,6 @@ class Stub:
         for attr_name in dir(self._module):
             if attr_name in BuiltInModuleAttrs:
                 continue
-            # if attr_name.startswith("_"):
-            #     continue
             attr = getattr(self._module, attr_name)
             self._generate_attr(self._module, "", attr_name, attr)
 
@@ -429,13 +449,16 @@ class Stub:
         elif isinstance(attr, (bool, float, int)):
             self._contents.write(f"{Indent * self._indentation}{attr_name} = {attr}\n")
         elif isinstance(attr, str):
-            self._contents.write(f"{Indent * self._indentation}{attr_name} = \"{attr}\"\n")
+            escaped_string = attr.replace('"', '\\"')
+            if "\n" in escaped_string:
+                self._contents.write(f"{Indent * self._indentation}{attr_name} = \"\"\"{escaped_string}\"\"\"\n")
+            else:
+                self._contents.write(f"{Indent * self._indentation}{attr_name} = \"{escaped_string}\"\n")
         elif inspect.ismodule(attr):
             self._imports.import_module(attr.__name__, local_qualname)
         elif isinstance(attr, Signal):
-            self._contents.write(f"{Indent * self._indentation}{attr_name} = {self._format_signal(attr)}\n")
+            self._contents.write(f"{Indent * self._indentation}{attr_name} = {self._format_signal(container, attr)}\n")
         elif inspect.isclass(attr) or inspect.isfunction(attr) or inspect.ismethod(attr) or inspect.ismethoddescriptor(attr) or inspect.isbuiltin(attr):
-            # if inspect.isclass(container) and hasattr(super(container, container), attr_name)
             if defmod is None or defmod is self._module:
                 if local_qualname == qualname:
                     # This is the definition
@@ -452,9 +475,9 @@ class Stub:
         else:
             self._imports.import_attr("typing", "Any")
             self._contents.write(f"{Indent * self._indentation}{attr_name} = Any  # 5\n")
-            print(f"unhandled module variable {self._module.__name__}.{local_qualname} {attr}")
+            print(f"unhandled attribute {self._module.__name__}.{local_qualname} {attr}")
 
-    def _format_signal(self, signal: Signal) -> str:
+    def _format_signal(self, container, signal: Signal) -> str:
         if not isinstance(signal, Signal):
             raise TypeError
         self._imports.import_attr("PySide6.QtCore", "Signal")
@@ -463,10 +486,10 @@ class Stub:
             raise RuntimeError(str(signal))
 
         args = match.group("args")
-        fixed_args = self._split_and_fix_args(args)
-        return f"Signal({', '.join(fixed_args)})"
+        fixed_args = self._split_and_fix_args(container, args)
+        return f"Signal({', '.join(fixed_args)})  # {signal}"
 
-    def _split_and_fix_args(self, a: str) -> list[str]:
+    def _split_and_fix_args(self, container, a: str) -> list[str]:
         args = []
         bracket_count = 0
         start_index = 0
@@ -477,39 +500,59 @@ class Stub:
             elif c in ")}]>":
                 bracket_count -= 1
             elif c == "," and bracket_count == 0:
-                args.append(self._import_and_fix_string_type(a[start_index:index].strip()))
+                args.append(self._import_and_fix_string_type(container, a[start_index:index].strip()))
                 start_index = index + 1
         if index:
-            args.append(self._import_and_fix_string_type(a[start_index:index + 1].strip()))
+            args.append(self._import_and_fix_string_type(container, a[start_index:index + 1].strip()))
         return args
 
-    def _import_and_fix_string_type(self, t: str) -> str:
+    def _import_and_fix_string_type(self, container, t: str) -> str:
         match = re.fullmatch(r"(const )?(?P<name>[a-zA-Z0-9_]+(::[a-zA-Z0-9_]+)*)(<(?P<template>[a-zA-Z0-9_:*&,<>]*?)>)?[*&]?", t)
 
         if match is None:
             raise RuntimeError
 
-        t = match.group("name").replace("::", ".")
+        name = match.group("name").replace("::", ".")
+        prefix, *suffixl = name.split(".", 1)
+        suffix = "." + suffixl[0] if suffixl else ""
         template = match.group("template")
 
-        if t == "QString":
-            return "str"
-        elif t == "QList" and template:
-            return f"list[{self._split_and_fix_args(template)}]"
-        elif t in {"QHash", "QMultiMap"}:
-            return f"dict[{self._split_and_fix_args(template)}]"
-        elif template:
-            raise RuntimeError
+        if template:
+            if name == "QList":
+                name = f"list[{self._split_and_fix_args(container, template)}]"
+            elif name in {"QHash", "QMultiMap"}:
+                name = f"dict[{self._split_and_fix_args(container, template)}]"
+            else:
+                raise RuntimeError(f"Unknown template type {t}")
 
-        self._find_and_import_pyside6(t)
+        else:
+            if name in {"float", "int", "str", "bool"}:
+                pass
+            elif name == "void":
+                if t == "void*":
+                    name = "object"
+                else:
+                    print("void")
+            elif prefix in PySide6ModuleMap:
+                pass
+            elif prefix in PySide6NamespaceMap:
+                name = PySide6NamespaceMap[prefix][0][1]
+            elif prefix in C2Py:
+                name = C2Py[prefix] + suffix
+            elif hasattr(container, prefix):
+                name = f"{container.__qualname__}.{name}"
+            else:
+                raise RuntimeError(f"Unknown type {t}")
 
-        return t
+        if not (name in {"object", "float", "int", "str", "bool", "list", "dict"} or name.startswith(("list[", "dict["))):
+            root_name = name.split(".")[0]
+            module_name = PySide6ModuleMap[root_name][0]
+            if module_name == get_module_name(self._module):
+                name = f"{get_module_name(self._module)}.{name}"
+            else:
+                self._imports.import_attr(module_name, root_name)
 
-    def _find_and_import_pyside6(self, t: str):
-        if t not in {"float", "int", "str", "bool"}:
-            name = t.split(".")[0]
-            if name in PySide6Map:
-                self._imports.import_attr(PySide6Map[name][0], name)
+        return name
 
     def _generate_callable(self, func):
         indent = "    " * self._indentation
@@ -579,9 +622,6 @@ class Stub:
     def _streamline_type(self, obj, replace: dict[str, str]):
         if obj is None or obj is inspect.Signature.empty:
             return
-        # elif isinstance(obj, (Default, Instance, Invalid)):
-        #     replace[repr(obj)] = "..."
-        #     return
         mod_name, qualname, name = get_path(obj)
         if mod_name == "builtins":
             return
@@ -621,7 +661,6 @@ def generate_stubs(*modules: ModuleType):
                     init_path = os.path.join(path, "__init__.pyi")
                     if os.path.isfile(init_path):
                         os.remove(init_path)
-                        # raise RuntimeError(f"Module and Init both exist. {mod_path} {init_path}")
                     os.rename(mod_path, init_path)
                 fix_packages(path)
 
