@@ -1,0 +1,13 @@
+{
+	"identifier": "amulet_team_inspector",
+	"version": "1.0.0",
+	"name": "Amulet Inspector",
+	"depends": {
+		"python": "~=3.9",
+		"library": [
+			"PySide6~=6.2",
+			"amulet_editor~=1.0a0"
+		]
+	},
+	"locked": "true"
+}
