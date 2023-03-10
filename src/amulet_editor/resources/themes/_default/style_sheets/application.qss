@@ -23,6 +23,10 @@
 /* --------- Qt Style Sheet - QWidget Properties --------- */
 /* ------------------------------------------------------- */
 
+QWidget {{
+    background-color: "{background}";
+}}
+
 QWidget[backgroundColor="background"] {{
     background-color: "{background}";
     color: "{on_background}";

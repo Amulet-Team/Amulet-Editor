@@ -1,0 +1,12 @@
+{
+	"identifier": "amulet_team_locale",
+	"version": "1.0.0",
+	"name": "Amulet Locale",
+	"depends": {
+		"python": "~=3.9",
+		"library": [
+			"amulet_editor~=1.0a0"
+		]
+	},
+	"locked": "true"
+}

@@ -8,6 +8,7 @@ import os
 import subprocess
 import sys
 import re
+import traceback
 import xml.etree.ElementTree as ET
 from concurrent.futures import ThreadPoolExecutor
 
@@ -22,7 +23,9 @@ def _compile_ui_file(ui_path: str):
     if os.path.exists(py_path):
         with open(py_path) as f:
             if "Created by: Qt User Interface Compiler" not in f.read():
-                print(f"Skipping compilation of {ui_path} because a user generated python file would be overwritten.")
+                print(
+                    f"Skipping compilation of {ui_path} because a user generated python file would be overwritten."
+                )
                 return
 
     # Convert the UI file to python code
@@ -44,32 +47,68 @@ def _compile_ui_file(ui_path: str):
     # Add super class
     py = py.replace("(object)", f"({super_name})")
     # Replace setupUi with constructor
-    py = re.sub(f"def setupUi\\(self, {class_name}\\):", "def __init__(self, *args, **kwargs):\n        super().__init__(*args, **kwargs)", py)
-    # Replace retranslateUi with localise
-    py = re.sub(f"def retranslateUi\\(self, {class_name}\\):", "def localise(self):", py)
+    py = re.sub(
+        f"def setupUi\\(self, {class_name}\\):",
+        "def __init__(self, *args, **kwargs):\n        super().__init__(*args, **kwargs)",
+        py,
+    )
+
     py = py.replace(f"self.retranslateUi({class_name})", "self.localise()")
     # Replace class name with self
-    py = re.sub(f"(?<!\")\\b{class_name}\\b(?!\")", "self", py)
+    py = re.sub(f'(?<!")\\b{class_name}\\b(?!")', "self", py)
     # Add in line breaks before assignments
-    py = re.sub(f"\r?\n(?=\s*self\..*? = )", "\n\n", py)
-    py = re.sub(f"\r?\n(?=\s*self\.localise\(\))", "\n\n", py)
+    py = re.sub(r"\r?\n(?=\s*self\..*? = )", "\n\n", py)
+    py = re.sub(r"\r?\n(?=\s*self\.localise\(\))", "\n\n", py)
+    # Replace retranslateUi with localise
+    py = py.replace(
+        "def retranslateUi(self, self):",
+        "def changeEvent(self, event: QEvent):\n        super().changeEvent(event)\n        if event.type() == QEvent.LanguageChange:\n            self.localise()\n    def localise(self):",
+    )
+    py = re.sub(
+        r"from PySide6\.QtCore import \(.*?\)",
+        lambda match: match.group(0)[:-1] + ", QEvent)",
+        py,
+        flags=re.DOTALL,
+    )
 
     # Write the file back
     with open(py_path, "w") as pyf:
         pyf.write(py)
 
     # Remove unused variables
-    subprocess.run(["autoflake", "--in-place", "--remove-unused-variables", "--imports=PySide6", py_path])
-    # Reformat
-    subprocess.run([sys.executable, "-m", "black", py_path])
+    subprocess.run(
+        [
+            "autoflake",
+            "--in-place",
+            "--remove-unused-variables",
+            "--imports=PySide6",
+            py_path,
+        ]
+    )
+
+    return py_path
+
+
+def _try_compile_ui_file(ui_path: str):
+    try:
+        return _compile_ui_file(ui_path)
+    except Exception:
+        print(traceback.format_exc())
 
 
 def main():
+    futures = []
     # For each UI file in the project
     with ThreadPoolExecutor() as executor:
-        for ui_path in glob.glob(os.path.join(ProjectRoot, "src", "**", "*.ui"), recursive=True):
-            executor.submit(_compile_ui_file, ui_path)
+        for ui_path in glob.glob(
+            os.path.join(ProjectRoot, "src", "**", "*.ui"), recursive=True
+        ):
+            futures.append(executor.submit(_try_compile_ui_file, ui_path))
+
+    paths = [f.result() for f in futures]
+    if paths:
+        subprocess.run([sys.executable, "-m", "black", *paths])
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()

@@ -1,50 +1,61 @@
-import os
-import subprocess
+from __future__ import annotations
+from typing import Optional
 import sys
+import os
 
-import amulet_editor
-from amulet_editor import __version__
-from amulet_editor.data import packages, build
-from amulet_editor.application import appearance
-from amulet_editor.application.appearance import Theme
-from amulet_editor.application.windows._amulet_window import AmuletWindow
-from PySide6.QtCore import Qt
+from PySide6.QtCore import Qt, Slot, QLocale, QCoreApplication
 from PySide6.QtWidgets import QApplication
 from PySide6.QtGui import QIcon
 
+import amulet_editor
+from amulet_editor import __version__
+from amulet_editor.data import build
+from amulet_editor.data._localisation import locale_changed
+from amulet_editor.models.localisation import ATranslator
+import amulet_editor.data.plugin._manager as plugin_manager
+from . import appearance
 
-class AmuletEditor(QApplication):
-    def __init__(self) -> None:
+
+class AmuletApp(QApplication):
+    def __init__(self):
         super().__init__()
         self.setApplicationName("Amulet Editor")
         self.setApplicationVersion(__version__)
         self.setWindowIcon(QIcon(build.get_resource("icons/amulet/Icon.ico")))
         self.setAttribute(Qt.AA_UseHighDpiPixmaps)
 
-        # Load builtin packages
-        packages.install_builtins()
+        self._translator = ATranslator()
+        self._locale_changed()
+        QCoreApplication.installTranslator(self._translator)
+        locale_changed.connect(self._locale_changed)
 
-        # Create window
-        self.main_window = AmuletWindow()
-        self.main_window.act_new_window.triggered.connect(self.new_instance)
+        appearance.theme().apply(self)
 
-        # Apply theme after generating components
-        appearance.changed.connect(self.apply_theme)
-        self.apply_theme(appearance.theme())
+        self.lastWindowClosed.connect(self._last_window_closed)
+        plugin_manager.load()
 
-        # Show window
-        self.main_window.showMaximized()
+    @staticmethod
+    def instance() -> Optional[AmuletApp]:
+        return QApplication.instance()
 
-    def apply_theme(self, theme: Theme) -> None:
-        theme.apply(self)
+    @Slot()
+    def _last_window_closed(self):
+        # The unload method opens a window and then closes it.
+        # We must unbind this signal so that it does not end in a loop.
+        self.lastWindowClosed.disconnect(self._last_window_closed)
+        # unload all the plugins
+        plugin_manager.unload()
+        # Forcefully quit the application just in case a plugin opened a window during unload.
+        self.quit()
 
-    def new_instance(self):
-        subprocess.Popen(
-            [
-                sys.executable,
-                os.path.join(
-                    os.path.dirname(amulet_editor.__file__),
-                    "__main__.py",
-                ),
-            ]
+    @Slot()
+    def _locale_changed(self):
+        self._translator.load_lang(
+            QLocale(),
+            "",
+            directory=os.path.join(*amulet_editor.__path__, "resources", "lang"),
         )
+
+
+def main():
+    sys.exit(AmuletApp().exec())

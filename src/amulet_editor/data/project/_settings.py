@@ -27,12 +27,14 @@ def project_settings() -> dict:
         with open(_settings_file) as f:
             settings_ = json.load(f)
         if not isinstance(settings_, dict):
-            raise TypeError("Settings was not a dictionary. Reverting to default values.")
+            raise TypeError(
+                "Settings was not a dictionary. Reverting to default values."
+            )
         return settings_
     except OSError:
         pass
     except (json.JSONDecodeError, TypeError) as e:
-        log.error(e)
+        log.exception(e)
     return {}
 
 

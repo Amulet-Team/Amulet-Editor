@@ -13,6 +13,7 @@ class AStylableSvgWidget(QSvgWidget):
     A subclass of QSvgWidget that adds support for colouring via style sheets.
     Set the background via QSS and this widget will merge the colour of the background with the transparency of the SVG icon.
     """
+
     def paintEvent(self, event: QPaintEvent):
         buffer_width = max(self.width(), 50)
         buffer_height = max(self.height(), 50)
@@ -26,7 +27,7 @@ class AStylableSvgWidget(QSvgWidget):
         # Draw the SVG
         self.renderer().render(painter)
         # If the buffer is larger than the widget apply scaling
-        painter.scale(buffer_width/self.width(), buffer_height/self.height())
+        painter.scale(buffer_width / self.width(), buffer_height / self.height())
 
         # Use the alpha current alpha with the future colour
         painter.setCompositionMode(QPainter.CompositionMode_SourceIn)
@@ -46,6 +47,7 @@ class AStylableSvgWidget(QSvgWidget):
 
 class AIconButton(QPushButton):
     """A QPushButton containing a stylable icon."""
+
     def __init__(self, icon_name: str = "question-mark.svg", parent: QWidget = None):
         super().__init__(parent)
         self.setProperty("hover", "false")
@@ -74,7 +76,6 @@ class AIconButton(QPushButton):
 
 
 class ATooltipIconButton(AIconButton):
-    # TODO: look into making this work without a subclass
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self._hlbl_tooltip: Optional[QHoverLabel] = None

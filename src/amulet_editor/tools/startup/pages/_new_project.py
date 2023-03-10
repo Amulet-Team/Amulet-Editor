@@ -103,7 +103,9 @@ class NewProjectWidget(QWidget):
         self.lne_project_directory.setProperty("color", "on_surface")
         self.lne_project_directory.setReadOnly(True)
 
-        self.btn_project_directory = AIconButton("folder.svg", self.frm_project_directory)
+        self.btn_project_directory = AIconButton(
+            "folder.svg", self.frm_project_directory
+        )
         self.btn_project_directory.setFixedSize(QSize(27, 27))
         self.btn_project_directory.setIconSize(QSize(15, 15))
         self.btn_project_directory.setProperty("backgroundColor", "primary")

@@ -5,8 +5,8 @@ from amulet_editor.data import system
 from PySide6.QtCore import QStandardPaths
 
 
-def application_directory() -> str:
-    """Returns a path to the directory used for storage of persistant data.
+def application_data_directory() -> str:
+    """Returns a path to the directory used for storage of persistent data.
     Generates appropriate directories if path does not already exist."""
 
     if system.is_windows():

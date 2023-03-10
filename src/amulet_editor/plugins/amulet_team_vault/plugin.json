@@ -1,0 +1,13 @@
+{
+	"identifier": "amulet_team_vault",
+	"version": "1.0.0",
+	"name": "Amulet Vault",
+	"depends": {
+		"python": "~=3.9",
+		"plugin": [
+			"amulet_team_main_window~=1.0",
+			"amulet_team_settings~=1.0"
+		]
+	},
+	"locked": "true"
+}

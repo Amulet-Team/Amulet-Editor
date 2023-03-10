@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 
+
 def _on_error(e):
     """Code to handle errors"""
     err_list = []
@@ -7,7 +8,7 @@ def _on_error(e):
         import traceback
 
         err_list.append(traceback.format_exc())
-    except:
+    except ImportError:
         pass
     if isinstance(e, ImportError):
         err_list.append(
@@ -29,24 +30,50 @@ try:
     if sys.version_info[:2] < (3, 9):
         raise Exception("Must be using Python 3.9+")
     import traceback
-except Exception as e:
-    _on_error(e)
+except Exception as e_:
+    _on_error(e_)
 
 
 def main() -> None:
     try:
-        from amulet_editor.application._process import init, ProcessType
+        from multiprocessing import freeze_support
     except Exception as e:
         _on_error(e)
         raise
+    else:
+        freeze_support()
 
     try:
-        init(ProcessType.Home)
+        import logging
+        import argparse
+        from amulet_editor.application._app import main
+        from amulet_editor.data.process._process import bootstrap, ProcessType
+
+        parser = argparse.ArgumentParser()
+        parser.add_argument(
+            "--debug",
+            help="Log debug information.",
+            action="store_const",
+            dest="loglevel",
+            const=logging.DEBUG,
+            default=logging.WARNING,
+        )
+        args, _ = parser.parse_known_args()
+
+        logging.basicConfig(level=args.loglevel, format="%(levelname)s - %(message)s")
+        logging.getLogger().setLevel(args.loglevel)
     except Exception as e:
-        # TODO: Convert this to use logging
-        print(f"Amulet Crashed. Sorry about that. Please report it to a developer if you think this is an issue. \n{traceback.format_exc()}")
-        input("Press ENTER to continue...")
-        raise e
+        _on_error(e)
+    else:
+        try:
+            bootstrap(ProcessType.Main, main)
+        except Exception as e:
+            logging.exception(e)
+            logging.error(
+                f"Amulet Crashed. Sorry about that. Please report it to a developer if you think this is an issue."
+            )
+            input("Press ENTER to continue...")
+            raise e
 
 
 if __name__ == "__main__":

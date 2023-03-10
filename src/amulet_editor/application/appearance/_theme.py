@@ -40,7 +40,6 @@ class Color:
 
 class Theme:
     def __init__(self, theme_dir: str) -> None:
-
         with open(os.path.join(theme_dir, "theme.json"), "r") as fh:
             self._theme: dict[str, Any] = json.load(fh)
 
