@@ -7,6 +7,7 @@
 		"src\\amulet_editor\\models\\widgets\\_traceback_dialog\\_traceback_dialog.ui",
 		"src\\amulet_editor\\plugins\\amulet_team_home_page\\home\\home\\_home.ui",
 		"src\\amulet_editor\\plugins\\amulet_team_home_page\\home\\open_world\\_open_world.ui",
+		"src\\amulet_editor\\plugins\\amulet_team_inspector\\_inspector\\_inspector.ui",
 		"src\\amulet_editor\\plugins\\amulet_team_main_window\\application\\windows\\main_window\\_landing_window.ui",
 		"src\\amulet_editor\\plugins\\amulet_team_settings\\settings\\_settings.ui"
 	]

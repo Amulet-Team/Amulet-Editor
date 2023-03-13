@@ -2,8 +2,13 @@ from __future__ import annotations
 from typing import Type, Callable, TYPE_CHECKING
 from uuid import uuid4
 
+from PySide6.QtGui import QShortcut
+from PySide6.QtCore import Qt
+
 from ._landing_window import Ui_AmuletLandingWindow
 from ._view import ViewContainer, View
+
+from amulet_team_inspector import show_inspector
 
 if TYPE_CHECKING:
     from amulet_editor.models.widgets._toolbar import AToolBar
@@ -27,6 +32,8 @@ class AmuletMainWindow(Ui_AmuletLandingWindow):
         self._view_classes: dict[Type[View], UUID] = {}
         self._view_containers: list[ViewContainer] = [self._view_container]
         self._active_view = self._view_container
+        f12 = QShortcut(Qt.Key.Key_F12, self)
+        f12.activated.connect(show_inspector)
 
     def activate_view(self, view_cls: Type[View]):
         """
