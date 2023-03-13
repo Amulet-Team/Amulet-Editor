@@ -18,6 +18,6 @@ def load_plugin():
 
 def _on_click(self):
     settings = SettingsPage()
-    settings.setWindowModality(Qt.ApplicationModal)
+    settings.setWindowModality(Qt.WindowModality.ApplicationModal)
     settings.showNormal()
     self._windows.append(settings)
