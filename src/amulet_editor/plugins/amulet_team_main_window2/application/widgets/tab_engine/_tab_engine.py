@@ -62,7 +62,7 @@ class TabEngineTabButton(QFrame):
 
     def __init__(self, label: str, icon: Optional[QIcon]):
         super().__init__()
-        self.setSizePolicy(QSizePolicy.Preferred, QSizePolicy.Fixed)
+        self.setSizePolicy(QSizePolicy.Policy.Preferred, QSizePolicy.Policy.Fixed)
         self.layout = QHBoxLayout()
         self.layout.setContentsMargins(0, 0, 0, 0)
         self.setLayout(self.layout)
@@ -170,7 +170,7 @@ class TabEngineTabContainerWidget(QWidget):
 
     def mousePressEvent(self, event: QMouseEvent):
         # If left-clicked
-        if event.button() == Qt.LeftButton:
+        if event.button() == Qt.MouseButton.LeftButton:
             # Store the click position
             self.drag_start_pos = event.position().toPoint()
             # Get the tab button that was clicked (if any)
@@ -195,7 +195,7 @@ class TabEngineTabContainerWidget(QWidget):
             # Drag has already started. Update the widget display.
             pass
         elif (
-            event.buttons() & Qt.LeftButton
+            event.buttons() & Qt.MouseButton.LeftButton
             and self.active_button is not None
             and not self.drag_start_pos.isNull()
             and (
@@ -207,7 +207,7 @@ class TabEngineTabContainerWidget(QWidget):
             # Get the tab display
             pixmap = self.active_button.grab()
             target_pixmap = QPixmap(pixmap.size())
-            target_pixmap.fill(Qt.transparent)
+            target_pixmap.fill(Qt.GlobalColor.transparent)
             painter = QPainter(target_pixmap)
             painter.setOpacity(0.85)
             painter.drawPixmap(0, 0, pixmap)
@@ -225,7 +225,7 @@ class TabEngineTabContainerWidget(QWidget):
         if self.dragged_widget is None:
             # If not dragging. Reset values
             self.drag_start_pos = QPoint()
-        elif not event.buttons() & Qt.LeftButton:
+        elif not event.buttons() & Qt.MouseButton.LeftButton:
             # If dragging and left mouse has been released. Drop the widget
             # Find where the drop happened and update the widget
             self.releaseMouse()
@@ -292,7 +292,7 @@ class TabEngineTabContainer(QScrollArea):
         self.widget.tab_changed.connect(self.tab_changed)
         self.setWidget(self.widget)
 
-        self.setSizePolicy(QSizePolicy.Preferred, QSizePolicy.Fixed)
+        self.setSizePolicy(QSizePolicy.Policy.Preferred, QSizePolicy.Policy.Preferred)
         self.setWidgetResizable(True)
         self.setFrameShape(QFrame.Shape.NoFrame)
         self.setVerticalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
