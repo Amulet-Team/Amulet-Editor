@@ -3,6 +3,7 @@ from __future__ import annotations
 import inspect
 import time
 from typing import NamedTuple, Optional
+from types import FrameType
 from threading import RLock
 import os
 from os.path import normpath, samefile
@@ -136,7 +137,7 @@ def get_trace_paths() -> list[str]:
     )[1:]
 
 
-def _validate_import(imported_name: str, frame):
+def _validate_import(imported_name: str, frame: FrameType):
     # Plugins can only import libraries and plugins they have specified as a dependency.
     # Plugins can only be imported by other plugins.
     # We step back through the stack.
@@ -151,9 +152,9 @@ def _validate_import(imported_name: str, frame):
         # Skip over the import mechanisms
         frame = frame.f_back
 
-    if frame.f_globals.get("__name__") == __name__ and frame.f_code.co_qualname in {
+    if frame.f_globals.get("__name__") == __name__ and frame.f_code.co_name in {
         "_enable_plugin",
-        "wrap_importer.<locals>._import",
+        "wrap_importer_import",
     }:
         return
 
@@ -194,8 +195,9 @@ def _validate_import(imported_name: str, frame):
                     f"Plugin {importer_root_name} imported library {imported_root_name} which it does not have authority for.\nYou must list a dependency in your plugin's metadata to be able to import it."
                 )
     elif imported_root_name in _enabled_plugins:
+        code = frame.f_code
         raise RuntimeError(
-            f"Plugin module {imported_name} was imported by a non-plugin module {importer_name} {frame.f_code.co_qualname}"
+            f"Plugin module {imported_name} was imported by a non-plugin module {importer_name} {getattr(code, 'co_qualname', None) or getattr(code, 'co_name', 'could not resolve function name')}"
         )
 
 
@@ -229,7 +231,7 @@ class CustomSysModules(UserDict):
 
 
 def wrap_importer(imp):
-    def _import(name, globals=None, locals=None, fromlist=(), level=0):
+    def wrap_importer_import(name, globals=None, locals=None, fromlist=(), level=0):
         if level:
             name_split = globals["__name__"].split(".")
             imported_name = f"{'.'.join(name_split[:len(name_split)-level+1])}.{name}"
@@ -241,7 +243,7 @@ def wrap_importer(imp):
             _validate_import(imported_name, frame)
         return imp(name, globals=globals, locals=locals, fromlist=fromlist, level=level)
 
-    return _import
+    return wrap_importer_import
 
 
 def load():
