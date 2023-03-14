@@ -1,5 +1,6 @@
 from __future__ import annotations
 from typing import Optional, Union as Intersection, Union
+from enum import IntEnum
 
 from PySide6.QtWidgets import (
     QWidget,
@@ -21,6 +22,10 @@ from PySide6.QtGui import (
     QMouseEvent,
     QResizeEvent,
     QWheelEvent,
+    QColor,
+    QPaintEvent,
+    QPolygon,
+    QCursor,
 )
 from PySide6.QtCore import (
     Signal,
@@ -29,6 +34,8 @@ from PySide6.QtCore import (
     Qt,
     QObject,
     QSize,
+    QEvent,
+    QRect,
 )
 
 from amulet_editor.data.build import get_resource
@@ -86,6 +93,111 @@ class TabEngineTabButton(QFrame):
         return QSize(-1, button_size().height())
 
 
+class DropArea(IntEnum):
+    Top = 0
+    Right = 1
+    Bottom = 2
+    Left = 3
+    Middle = 4
+
+
+class DragSplitRenderer(QWidget):
+    """A class to implement custom drawing while the user is dragging a tab."""
+    def __init__(self, target: QWidget):
+        super().__init__(target)
+        self.target = target
+        self.setWindowFlags(Qt.WindowType.FramelessWindowHint)
+        self.setAttribute(Qt.WidgetAttribute.WA_TranslucentBackground)
+        self.setAttribute(Qt.WidgetAttribute.WA_TransparentForMouseEvents)
+
+        self.shape = QSize(-1, -1)
+        self.polygons: list[QPolygon] = []
+        self.drop_area: Optional[DropArea] = None
+
+        self.move(0, 0)
+        self.resize(target.size())
+        self._compute_polygons()
+        self.show()
+
+    def _compute_polygons(self):
+        shape = self.size()
+        if shape != self.shape:
+            width = self.width()
+            height = self.height()
+            inset_amount = 3.5
+            inset_width = int(width / inset_amount)
+            inset_height = int(height / inset_amount)
+
+            top_left = QPoint(0, 0)
+            top_right = QPoint(width, 0)
+            bottom_right = QPoint(width, height)
+            bottom_left = QPoint(0, height)
+
+            middle_top_left = QPoint(inset_width, inset_height)
+            middle_top_right = QPoint(width - inset_width, inset_height)
+            middle_bottom_right = QPoint(width - inset_width, height - inset_height)
+            middle_bottom_left = QPoint(inset_width, height - inset_height)
+
+            self.polygons = [
+                QPolygon([top_left, top_right, middle_top_right, middle_top_left]),
+                QPolygon([top_right, bottom_right, middle_bottom_right, middle_top_right]),
+                QPolygon([bottom_right, bottom_left, middle_bottom_left, middle_bottom_right]),
+                QPolygon([bottom_left, top_left, middle_top_left, middle_bottom_left]),
+                QPolygon([middle_top_left, middle_top_right, middle_bottom_right, middle_bottom_left]),
+            ]
+
+            self.shape = shape
+
+    def resizeEvent(self, event: QResizeEvent):
+        self._compute_polygons()
+
+    def paintEvent(self, event: QPaintEvent):
+        painter = QPainter(self)
+
+        cursor_point = QCursor.pos() - self.mapToGlobal(QPoint(0, 0))
+
+        normal_colour = QColor(115, 215, 255, 128)
+        painter.setBrush(normal_colour)
+        painter.setPen(QColor(115, 215, 255))
+        self.drop_area = None
+
+        for drop, poly in zip(DropArea, self.polygons):
+            if self.drop_area is None and poly.containsPoint(cursor_point, Qt.FillRule.OddEvenFill):
+                painter.setBrush(QColor(115, 215, 255, 190))
+                painter.drawPolygon(poly)
+                painter.setBrush(normal_colour)
+                self.drop_area = drop
+            else:
+                painter.drawPolygon(poly)
+            painter.drawPolyline(poly)
+
+        painter.end()
+
+
+class DragTabRenderer(QWidget):
+    """A class to implement custom drawing while the user is dragging a tab."""
+    def __init__(self, target: QWidget):
+        super().__init__(target)
+        self.target = target
+        self.setWindowFlags(Qt.WindowType.FramelessWindowHint)
+        self.setAttribute(Qt.WidgetAttribute.WA_TranslucentBackground)
+        self.setAttribute(Qt.WidgetAttribute.WA_TransparentForMouseEvents)
+
+        self.drop_index = 0
+
+        self.move(0, 0)
+        self.resize(target.size())
+        self.show()
+
+    def paintEvent(self, event: QPaintEvent):
+        painter = QPainter(self)
+
+        normal_colour = QColor(115, 215, 255, 128)
+        painter.setBrush(normal_colour)
+        painter.drawRect(self.rect())
+        painter.end()
+
+
 class TabEngineTabContainerWidget(QWidget):
     """
     A widget containing tab buttons.
@@ -99,6 +211,8 @@ class TabEngineTabContainerWidget(QWidget):
 
     # The widget being dragged or None
     dragged_widget: Optional[Intersection[QWidget, TabPage]]
+    # The widget that was previously highlighted
+    highlight_widget: Union[None, tuple[TabEngineStackedTabWidget, DragSplitRenderer], tuple[TabEngineTabContainerWidget, DragTabRenderer]]
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -109,6 +223,7 @@ class TabEngineTabContainerWidget(QWidget):
         self.layout.setContentsMargins(0, 0, 0, 0)
         self.active_button = None
         self.dragged_widget = None
+        self.highlight_widget = None
 
     def add_tab(self, label: str, icon: QIcon = None):
         tab = TabEngineTabButton(label, icon)
@@ -193,7 +308,25 @@ class TabEngineTabContainerWidget(QWidget):
         # If the mouse has been clicked and dragged beyond the minimum distance then start dragging
         if self.dragged_widget is not None:
             # Drag has already started. Update the widget display.
-            pass
+            widget = self._get_drop_widget(event.globalPosition().toPoint())
+            if self.highlight_widget is not None:
+                old_widget, render_widget = self.highlight_widget
+                if old_widget is widget:
+                    # Draw hook already installed. Just update it
+                    render_widget.update()
+                else:
+                    # Not hovering over this widget anymore
+                    render_widget.close()
+                    self.highlight_widget = None
+
+            if self.highlight_widget is None:
+                if isinstance(widget, TabEngineStackedTabWidget):
+                    render_widget = DragSplitRenderer(widget)
+                    self.highlight_widget = widget, render_widget
+                elif isinstance(widget, TabEngineTabContainerWidget):
+                    render_widget = DragTabRenderer(widget)
+                    self.highlight_widget = widget, render_widget
+
         elif (
             event.buttons() & Qt.MouseButton.LeftButton
             and self.active_button is not None
@@ -221,6 +354,15 @@ class TabEngineTabContainerWidget(QWidget):
         else:
             super().mouseMoveEvent(event)
 
+    def _get_drop_widget(self, point: QPoint) -> Union[None, TabEngineTabContainerWidget, TabEngineStackedTabWidget]:
+        """Get the widget that the dragged widget will be dropped into."""
+        widget = QApplication.widgetAt(point)
+        while widget is not None:
+            if isinstance(widget, (TabEngineTabContainerWidget, TabEngineStackedTabWidget)):
+                return widget
+            widget = widget.parent()
+        return None
+
     def mouseReleaseEvent(self, event: QMouseEvent):
         if self.dragged_widget is None:
             # If not dragging. Reset values
@@ -230,16 +372,16 @@ class TabEngineTabContainerWidget(QWidget):
             # Find where the drop happened and update the widget
             self.releaseMouse()
 
-            widget = QApplication.widgetAt(event.globalPosition().toPoint())
-            while widget is not None:
-                if isinstance(widget, TabEngineTabContainerWidget):
-                    # Dropped into a tab bar
-                    print("tab bar")
-                    widget.container.tab_bar.tab_widget.add_page(self.dragged_widget)
-                    break
-                elif isinstance(widget, TabEngineStackedTabWidget):
-                    # Dropped into a splitter
-                    print("splitter")
+            widget, render_widget = self.highlight_widget or (None, None)
+            if isinstance(widget, TabEngineTabContainerWidget) and isinstance(render_widget, DragTabRenderer):
+                # Dropped into a tab bar
+                widget.container.tab_bar.tab_widget.add_page(self.dragged_widget)
+            elif isinstance(widget, TabEngineStackedTabWidget) and isinstance(render_widget, DragSplitRenderer):
+                drop_area = render_widget.drop_area
+                if drop_area is DropArea.Middle:
+                    widget.add_page(self.dragged_widget)
+                else:
+                    # Dropped onto a stacked tab widget. Replace the widget with a splitter
                     splitter = widget.splitter
                     splitter_index = splitter.indexOf(widget)
                     sizes = splitter.sizes()
@@ -252,20 +394,20 @@ class TabEngineTabContainerWidget(QWidget):
 
                     tab_widget = TabEngineStackedTabWidget()
                     tab_widget.add_page(self.dragged_widget)
-                    # TODO
-                    new_splitter.addWidget(tab_widget)
+                    if drop_area in {DropArea.Top, DropArea.Bottom}:
+                        new_splitter.setOrientation(Qt.Orientation.Vertical)
+                    else:
+                        new_splitter.setOrientation(Qt.Orientation.Horizontal)
+                    if drop_area in {DropArea.Top, DropArea.Left}:
+                        new_splitter.insertWidget(0, tab_widget)
+                    else:
+                        new_splitter.addWidget(tab_widget)
 
                     splitter.insertWidget(splitter_index, new_splitter)
                     splitter.setSizes(sizes)
                     new_splitter.setSizes([2048, 2048])
-
-                    # splitter.replaceWidget(splitter_index, new_splitter)
-                    # widget.setParent(new_splitter)
-                    break
-                widget = widget.parent()
             else:
                 # Dropped into space or a non-compatible widget
-                print("dropped in space")
                 new_window = sub_window.AmuletSubWindow(
                     main_window.AmuletMainWindow.main_window()
                 )
@@ -274,9 +416,13 @@ class TabEngineTabContainerWidget(QWidget):
                 new_window.move(event.globalPosition().toPoint())
                 new_window.show()
 
+            if render_widget is not None:
+                render_widget.close()
+
             self.container.tab_bar.tab_widget.clean_up()
             self.drag_start_pos = QPoint()
             self.dragged_widget = None
+            self.highlight_widget = None
         else:
             super().mouseReleaseEvent(event)
 
@@ -403,13 +549,6 @@ class TabEngineTabBar(QWidget):
         self._check_size()
 
 
-def print_tree(widget: QObject, indent=0):
-    if isinstance(widget, QWidget):
-        print("\t" * indent + str(widget))
-        for sub_widget in widget.children():
-            print_tree(sub_widget, indent + 1)
-
-
 class TabEngineStackedTabWidget(QWidget):
     """A custom class that behaves like a QTabWidget"""
 
@@ -429,10 +568,10 @@ class TabEngineStackedTabWidget(QWidget):
 
     @Slot()
     def _add(self):
-        print_tree(self.topLevelWidget())
         # from PySide6.QtWidgets import QLabel
         # i = random.randint(0, 9)
         # self.add_tab(QLabel(f"Test Widget {i}"), "test" + "a"*random.randint(0, 20) + str(i))
+        pass
 
     def _validate_page(
         self, page: Intersection[QWidget, TabPage]
