@@ -2,17 +2,24 @@ from __future__ import annotations
 from typing import Optional
 import sys
 import os
+import argparse
+import logging
 
 from PySide6.QtCore import Qt, Slot, QLocale, QCoreApplication
 from PySide6.QtWidgets import QApplication
 from PySide6.QtGui import QIcon
 
+import amulet
 import amulet_editor
 from amulet_editor import __version__
+from amulet_editor.models.localisation import ATranslator
+from amulet_editor.models.widgets import DisplayException
 from amulet_editor.data import build
 from amulet_editor.data._localisation import locale_changed
-from amulet_editor.models.localisation import ATranslator
 import amulet_editor.data.plugin._manager as plugin_manager
+from amulet_editor.data.project import _level
+import amulet_editor.data.process._messaging3 as messaging
+
 from . import appearance
 
 
@@ -57,5 +64,52 @@ class AmuletApp(QApplication):
         )
 
 
-def main():
-    sys.exit(AmuletApp().exec())
+def app_main():
+    parser = argparse.ArgumentParser()
+
+    parser.add_argument(
+        "--level_path",
+        type=str,
+        help="The Minecraft world or structure to open. Default opens no level",
+        action="store",
+        dest="level_path",
+        default=None
+    )
+
+    parser.add_argument(
+        "--logging_level",
+        type=int,
+        help="The logging level to set. CRITICAL=50, ERROR=40, WARNING=30, INFO=20, DEBUG=10. Default is WARNING",
+        action="store",
+        dest="logging_level",
+        default=logging.WARNING
+    )
+
+    parser.add_argument(
+        "--broker",
+        help=argparse.SUPPRESS,
+        action="store_true",
+        dest="broker",
+    )
+
+    args, _ = parser.parse_known_args()
+
+    logging.basicConfig(level=args.logging_level, format="%(levelname)s - %(message)s")
+    logging.getLogger().setLevel(args.logging_level)
+
+    messaging.init_state(args.broker)
+    if args.broker:
+        app = QApplication()
+
+    else:
+        # The broker cannot have a level
+        level_path: Optional[str] = args.level_path
+        if level_path is None:
+            _level.level = None
+        else:
+            with DisplayException(f"Failed loading level at path {level_path}"):
+                _level.level = amulet.load_level(level_path)
+
+        app = AmuletApp()
+
+    sys.exit(app.exec())
