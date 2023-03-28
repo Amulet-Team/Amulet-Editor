@@ -43,7 +43,7 @@ class DisplayException:
         pass
 
     def __exit__(self, exc_type, exc_val, exc_tb):
-        if exc_type:
+        if exc_type and isinstance(exc_val, Exception):
             dialog = AmuletTracebackDialog(
                 title=self._msg,
                 error=str(exc_val),
