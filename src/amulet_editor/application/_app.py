@@ -4,6 +4,7 @@ import sys
 import os
 import argparse
 import logging
+from datetime import datetime
 
 from PySide6.QtCore import Qt, Slot, QLocale, QCoreApplication
 from PySide6.QtWidgets import QApplication
@@ -19,8 +20,11 @@ from amulet_editor.data._localisation import locale_changed
 import amulet_editor.data.plugin._manager as plugin_manager
 from amulet_editor.data.project import _level
 import amulet_editor.data.process._messaging3 as messaging
+from amulet_editor.data.paths import logging_directory
 
 from . import appearance
+
+log = logging.getLogger(__name__)
 
 
 class AmuletApp(QApplication):
@@ -86,6 +90,15 @@ def app_main():
     )
 
     parser.add_argument(
+        "--logging_format",
+        type=str,
+        help="The logging format to use. Default is \"%(levelname)s - %(message)s\"",
+        action="store",
+        dest="logging_format",
+        default="%(levelname)s - %(message)s"
+    )
+
+    parser.add_argument(
         "--broker",
         help=argparse.SUPPRESS,
         action="store_true",
@@ -94,22 +107,30 @@ def app_main():
 
     args, _ = parser.parse_known_args()
 
-    logging.basicConfig(level=args.logging_level, format="%(levelname)s - %(message)s")
-    logging.getLogger().setLevel(args.logging_level)
+    logging.basicConfig(level=args.logging_level, format=args.logging_format, force=True)
+
+    file_path = os.path.join(logging_directory(), f"amulet-log-{datetime.now().strftime('%Y-%m-%d-%H-%M-%S')}-{os.getpid()}.txt")
+    file_handler = logging.FileHandler(file_path)
+    file_handler.setFormatter(logging.Formatter(args.logging_format))
+    logging.getLogger().addHandler(file_handler)
 
     messaging.init_state(args.broker)
     if args.broker:
+        # Dummy application to get a main loop.
         app = QApplication()
-
     else:
         # The broker cannot have a level
         level_path: Optional[str] = args.level_path
         if level_path is None:
             _level.level = None
         else:
+            log.debug("Loading level.")
             with DisplayException(f"Failed loading level at path {level_path}"):
                 _level.level = amulet.load_level(level_path)
 
         app = AmuletApp()
 
-    sys.exit(app.exec())
+    log.debug("Entering main loop.")
+    exit_code = app.exec()
+    log.debug(f"Exiting with code {exit_code}")
+    sys.exit(exit_code)

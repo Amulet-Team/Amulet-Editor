@@ -38,7 +38,13 @@ def main() -> None:
         from multiprocessing import freeze_support
         freeze_support()
         import logging
+
         from amulet_editor.application._app import app_main
+        from amulet_editor.models.widgets import AmuletTracebackDialog
+
+        # Initialise logging at the highest level until configured otherwise.
+        logging.basicConfig(level=logging.WARNING, format="%(levelname)s - %(message)s")
+        logging.getLogger().setLevel(logging.WARNING)
 
     except Exception as e:
         _on_error(e)
@@ -50,6 +56,20 @@ def main() -> None:
             logging.error(
                 f"Amulet Crashed. Sorry about that. Please report it to a developer if you think this is an issue."
             )
+            try:
+                import traceback
+                from PySide6.QtWidgets import QApplication
+                if QApplication.instance() is None:
+                    # QDialog needs an app otherwise it crashes
+                    app = QApplication()
+                dialog = AmuletTracebackDialog(
+                    title="Error Initialising Application",
+                    error=str(e),
+                    traceback="".join(traceback.format_exc()),
+                )
+                dialog.exec()
+            except:
+                pass
             input("Press ENTER to continue...")
             raise e
 
