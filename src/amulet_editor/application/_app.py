@@ -6,7 +6,7 @@ import argparse
 import logging
 from datetime import datetime
 
-from PySide6.QtCore import Qt, Slot, QLocale, QCoreApplication
+from PySide6.QtCore import Qt, Slot, QLocale, QCoreApplication, QTimer
 from PySide6.QtWidgets import QApplication
 from PySide6.QtGui import QIcon
 
@@ -43,7 +43,7 @@ class AmuletApp(QApplication):
         appearance.theme().apply(self)
 
         self.lastWindowClosed.connect(self._last_window_closed)
-        plugin_manager.load()
+        QTimer.singleShot(0, plugin_manager.load)
 
     @staticmethod
     def instance() -> Optional[AmuletApp]:
@@ -119,6 +119,7 @@ def app_main():
         # Dummy application to get a main loop.
         app = QApplication()
     else:
+        app = AmuletApp()
         # The broker cannot have a level
         level_path: Optional[str] = args.level_path
         if level_path is None:
@@ -127,8 +128,6 @@ def app_main():
             log.debug("Loading level.")
             with DisplayException(f"Failed loading level at path {level_path}"):
                 _level.level = amulet.load_level(level_path)
-
-        app = AmuletApp()
 
     log.debug("Entering main loop.")
     exit_code = app.exec()
