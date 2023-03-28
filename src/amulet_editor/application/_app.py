@@ -114,7 +114,8 @@ def app_main():
     file_handler.setFormatter(logging.Formatter(args.logging_format))
     logging.getLogger().addHandler(file_handler)
 
-    messaging.init_state(args.broker)
+    messaging.init_rpc(args.broker)
+
     if args.broker:
         # Dummy application to get a main loop.
         app = QApplication()

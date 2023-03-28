@@ -27,41 +27,70 @@ If the broker connection is lost by the child (process crashed or killed by user
 from __future__ import annotations
 
 import logging
-from typing import Optional, Any, Callable, Sequence, Mapping, TypeVar
+import sys
+import time
+from typing import Any, Callable, Sequence, Mapping, TypeVar, Optional
 from uuid import uuid4
 import pickle
 from weakref import WeakValueDictionary
 import traceback
+import subprocess
+import struct
 
 from PySide6.QtWidgets import QApplication
-from PySide6.QtCore import QObject, Signal
 from PySide6.QtNetwork import QLocalSocket, QLocalServer
 
+from amulet_editor.data.project import get_level
 from amulet_editor.models.widgets import DisplayException, AmuletTracebackDialog
 
-server_address = str(uuid4())
-BrokerAddress = "com.amuletmc.broker"
+log = logging.getLogger(__name__)
 
-_is_broker = False
-_listener: Optional[RemoteProcedureCallingListener] = None
-_broker_connection: Optional[RemoteProcedureCallingConnection] = None
-_remote_functions: WeakValueDictionary[str, Callable] = WeakValueDictionary()
-
-
+CallableT = TypeVar("CallableT", bound=Callable)
 UUID = bytes
 SuccessCallbackT = Callable[[Any], Any]
 ErrorCallbackT = Callable[[Exception], Any]
 # The function address and args to pass
 CallDataT = tuple[str, Sequence, Mapping]
 CallDataStorage = dict[UUID, tuple[CallDataT, tuple[SuccessCallbackT, ErrorCallbackT]]]
-T = TypeVar("T", bound=Callable)
 
 
-def register_remote_procedure(func: T) -> T:
+_is_broker = False
+server_uuid = str(uuid4())
+BrokerAddress = "com.amuletmc.broker"
+_remote_functions: WeakValueDictionary[str, Callable] = WeakValueDictionary()
+
+
+def _get_func_address(func: CallableT) -> str:
+    try:
+        modname = getattr(func, "__module__")
+        qualname = getattr(func, "__qualname__")
+    except AttributeError:
+        raise ValueError("func must be a static function with __module__ and __qualname__ attributes")
+    else:
+        return f"{modname}.{qualname}"
+
+
+def register_remote_procedure(func: CallableT) -> CallableT:
     """Register the callable to allow calling from a remote process."""
-    name = f"{func.__module__}.{func.__qualname__}"
-    _remote_functions[name] = func
+    _remote_functions[_get_func_address(func)] = func
     return func
+
+
+@register_remote_procedure
+def get_server_uuid() -> str:
+    """Get the unique identifier for the server."""
+    return server_uuid
+
+
+@register_remote_procedure
+def is_landing_process() -> Optional[bool]:
+    """
+    Is this process a landing process (i.e. no level associated with it)
+    :return: None if this is the broker process, False if this process has a level otherwise True
+    """
+    if _is_broker:
+        return None
+    return get_level() is None
 
 
 @register_remote_procedure
@@ -80,83 +109,99 @@ def call_global(address, args, kwargs):
     raise NotImplementedError
 
 
-@register_remote_procedure
-def get_server_address():
-    """Get the unique identifier for the QLocalServer in this process"""
-    return server_address
+# class register_global_remote_procedure:
+#     """A decorator that enables a function to be called in all processes."""
+#     def __init__(self, func: Callable):
+#         if not callable(func):
+#             raise TypeError("func must be callable")
+#         self._func = register_remote_procedure(func)
+#
+#     def __call__(self, *args, **kwargs):
+#         if _is_broker:
+#             # Call in all child processes
+#             raise NotImplementedError
+#         else:
+#             # Call in broker
+#             raise NotImplementedError
 
 
-class register_global_remote_procedure:
-    """A decorator that enables a function to be called in all processes."""
-    def __init__(self, func: Callable):
-        if not callable(func):
-            raise TypeError("func must be callable")
-        self._func = register_remote_procedure(func)
-
-    def __call__(self, *args, **kwargs):
-        if _is_broker:
-            # Call in all child processes
-            raise NotImplementedError
-        else:
-            # Call in broker
-            raise NotImplementedError
+_remote_call_listener = QLocalServer()
+# A dictionary mapping connections to an optional bool storing if the connection is a landing process.
+# This allows us to open the landing window or exit the broker process when a connection is closed.
+_listener_connections: dict[RemoteProcedureCallingConnection, Optional[bool]] = {}
 
 
-class RemoteProcedureCallingConnection(QObject):
-    def __init__(self, parent=None):
-        """Use one of the classmethods to construct this class."""
-        super().__init__(parent)
+def _on_listener_connect():
+    socket = _remote_call_listener.nextPendingConnection()
+    connection = RemoteProcedureCallingConnection(socket)
+    _listener_connections[connection] = None
+    log.debug(f"New listener connection {socket}")
 
+    if _is_broker:
+        def is_landing_success(response: bool):
+            log.debug(f"New connection is_landing {response}")
+            _listener_connections[connection] = response
+
+        def is_landing_err(tb_str):
+            logging.exception(tb_str)
+
+        connection.call(
+            is_landing_success,
+            is_landing_err,
+            is_landing_process,
+        )
+
+    def on_disconnect():
+        is_landing = _listener_connections.pop(connection, None)
+        log.debug(f"Listener connection disconnected {socket}. {is_landing}")
+        if _is_broker and not any(map(lambda x: x is not None, _listener_connections.copy().values())):
+            # If this is the broker
+            # There are no more boolean connections
+            if is_landing is None:
+                # If the closed process is the broker process or some other error
+                pass
+            elif is_landing:
+                # If the closed process was a landing page. Exit
+                QApplication.quit()
+            else:
+                # The last process closed was not a landing process so open a landing process
+                subprocess.Popen([sys.executable, sys.argv[0]], start_new_session=True, stdin=subprocess.DEVNULL, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+
+    socket.disconnected.connect(on_disconnect)
+
+
+_remote_call_listener.newConnection.connect(_on_listener_connect)
+
+
+class RemoteProcedureCallingConnection:
+    """A subclass of QLocalSocket to facilitate calling a procedure in a remote process and getting the return value."""
+
+    def __init__(self, socket: QLocalSocket = None):
+        self.socket = socket or QLocalSocket()
         # A dictionary mapping the UUID for the call to the callback functions.
         self._calls: CallDataStorage = {}
-        self._connection: Optional[QLocalSocket] = None
+        self.socket.readyRead.connect(self._process_msg)
 
-    @classmethod
-    def from_address(cls, address: str) -> RemoteProcedureCallingConnection:
-        """Create a connection to a QLocalServer at the given address."""
-        self = cls()
-        self._connection = QLocalSocket()
-        self._connection.connectToServer(address)
-        self._init_connection()
-        return self
-
-    @classmethod
-    def from_socket(cls, socket: QLocalSocket) -> RemoteProcedureCallingConnection:
-        """Create a connection with an existing QLocalSocket."""
-        self = cls()
-        self._connection = socket
-        self._init_connection()
-        return self
-
-    def _init_connection(self):
-        self._connection.readyRead.connect(self._process_response)
-        self._connection.disconnected.connect(self.disconnected)
-
-    # The connection has been disconnected
-    disconnected = Signal()
-
-    @property
     def has_pending_calls(self) -> bool:
         """Have calls been sent but a response is still pending."""
         return bool(self._calls)
 
-    @property
     def pending_calls(self) -> CallDataStorage:
         """The data for all calls whose response is still pending."""
         return self._calls.copy()
 
     def call(
         self,
-        address: str,
-        args: Sequence,
-        kwargs: Mapping,
         success_callback: SuccessCallbackT,
         error_callback: ErrorCallbackT,
+        func: Callable,
+        *args,
+        **kwargs,
     ):
         """
         Call a function in the connected process.
 
-        :param address: The address of the function to call in the remote process.
+        :param func: The function to call in the remote process. This must be a static function.
         :param args: The arguments to pass to the remote function (Must be pickleable)
         :param kwargs: The keyword arguments to pass to the remote function (Must be pickleable)
         :param success_callback: A function to call with the return value.
@@ -164,126 +209,156 @@ class RemoteProcedureCallingConnection(QObject):
         :return:
         """
         identifier = str(uuid4()).encode()
+        address = _get_func_address(func)
+        log.debug(f"Calling remote function {address}(*{args}, **{kwargs}) {identifier.decode()}")
         self._calls[identifier] = ((address, args, kwargs), (success_callback, error_callback))
-        payload = identifier + pickle.dumps((
-            address,
-            args,
-            kwargs
-        ))
-        self._connection.write(payload)
+        payload = self.encode_request(identifier, address, args, kwargs)
+        print("send request", payload)
+        self.socket.write(payload)
 
-    def _process_response(self):
-        with DisplayException("Exception parsing incoming connection."):
-            payload = self._connection.readAll().data()
-            identifier = payload[:36]
-            payload = payload[36:]
-            is_exception, response = pickle.loads(payload)
+    def _process_msg(self):
+        while self.socket.bytesAvailable():
+            # It is possible for there to be more than one payload here.
+            # readyRead will only be re-emitted when the buffer is empty.
+            try:
+                with DisplayException("Exception processing remote procedure call."):
+                    payload_length_data = self.socket.read(4).data()
+                    if len(payload_length_data) != 4:
+                        raise RuntimeError("Error in data sent over socket.")
+                    payload_length = struct.unpack(">I", payload_length_data)[0]
+                    payload = self.socket.read(payload_length).data()
+                    if len(payload) != payload_length:
+                        raise RuntimeError("Error in data sent over socket.")
+                    print("receive", payload)
+                    identifier, is_response, payload = payload[:36], payload[36], payload[37:]
+                    if is_response:
+                        log.debug(f"New response from {self.socket} {identifier}")
+                        _, (success_callback, error_callback) = self._calls.pop(identifier)
 
-        _, (success_callback, error_callback) = self._calls.pop(identifier)
-        if is_exception:
-            with DisplayException(f"Calling error_callback {error_callback}"):
-                error_callback(response)
-        else:
-            with DisplayException(f"Calling success_callback {success_callback}"):
-                success_callback(response)
+                        is_success, response = pickle.loads(payload)
 
+                        if is_success:
+                            log.debug("Response was a success. Calling success callback.")
+                            success_callback(response)
+                        else:
+                            log.debug("Response was an error. Calling error callback.")
+                            error_callback(response)
+                    else:
+                        log.debug(f"New request from {self.socket}")
 
-class RemoteProcedureCallingListener(QObject):
-    def __init__(self, parent=None):
-        super().__init__(parent)
-        self._connections = []
-        self._server: Optional[QLocalServer] = None
+                        try:
+                            address, args, kwargs = pickle.loads(payload)
+                            func = _remote_functions.get(address, None)
+                            if func is None:
+                                raise Exception(f"Could not find function {address}")
+
+                            log.debug(f"Calling function {address}(*{args}, **{kwargs}) as requested by {self.socket} {identifier.decode()}")
+                            response = func(*args, **kwargs)
+                            log.debug(f"Sending response back to caller. {response}")
+                            payload = self.encode_success_response(identifier, response)
+                            print("send response", payload)
+                            self.socket.write(payload)
+
+                        except Exception:
+                            log.debug(f"Exception processing request {identifier}")
+                            payload = self.encode_error_response(identifier, traceback.format_exc())
+                            print("send error response", payload)
+                            self.socket.write(payload)
+            except Exception as e:
+                log.exception(e)
+
+    @staticmethod
+    def _add_size(payload: bytes) -> bytes:
+        payload_size = len(payload)
+        return struct.pack(">I", payload_size) + payload
 
     @classmethod
-    def from_address(cls, address: str):
-        self = cls()
-        self._server = QLocalServer()
-        if self._server.listen(address):
-            self._server.newConnection.connect(self.on_connect)
-        else:
-            print(self._server.errorString())
-        return self
+    def encode_request(cls, identifier: bytes, address: str, args, kwargs):
+        """
+        Encode an RPC request.
 
-    def on_connect(self):
-        print("connected")
-        connection = self._server.nextPendingConnection()
-        self._connections.append(connection)
+        :param identifier: A UUID4 string unique to this call.
+        :param address: The address of the function to call.
+        :param args: The arguments to pass to the function.
+        :param kwargs: The keyword arguments to pass to the function.
+        :return: The encoded bytes object
+        """
 
-        def remove():
-            print("disconnected")
-            self._connections.remove(connection)
+        return cls._add_size(identifier + b"\x00" + pickle.dumps((address, args, kwargs)))
 
-        def read():
-            print("reading")
-            try:
-                payload = connection.readAll().data()
-                identifier = payload[:36]
-                payload = payload[36:]
-            except Exception as e:
-                logging.exception(e)
-                return
+    @classmethod
+    def encode_success_response(cls, identifier: bytes, response: Any) -> bytes:
+        return cls._add_size(identifier + b"\x01" + pickle.dumps((True, response)))
 
-            try:
-                address, args, kwargs = pickle.loads(payload)
-                func = _remote_functions.get(address, None)
-                if func is None:
-                    connection.write(
-                        identifier + pickle.dumps((
-                            True,
-                            f"Could not find function {address}"
-                        ))
-                    )
-                    return
-
-                response = func(*args, **kwargs)
-
-                response_payload = identifier + pickle.dumps((
-                    False,
-                    response
-                ))
-                connection.write(response_payload)
-
-            except Exception:
-                connection.write(
-                    identifier + pickle.dumps((
-                        True,
-                        traceback.format_exc()
-                    ))
-                )
-
-        connection.disconnected.connect(remove)
-        connection.readyRead.connect(read)
+    @classmethod
+    def encode_error_response(cls, identifier: bytes, msg: str) -> bytes:
+        return cls._add_size(identifier + b"\x01" + pickle.dumps((False, msg)))
 
 
-def init_state(broker=False):
+_broker_connection = RemoteProcedureCallingConnection()
+
+
+def init_rpc(broker=False):
     """Init the messaging state"""
-    global _is_broker, _listener, _broker_connection
+    global _is_broker
+    log.debug("Initialising RPC.")
     _is_broker = bool(broker)
-    _listener = RemoteProcedureCallingListener.from_address(BrokerAddress if _is_broker else server_address)
-    _broker_connection = RemoteProcedureCallingConnection.from_address(BrokerAddress)
 
-    if _is_broker:
-        def success(result):
-            print("success", server_address, result)
-            if result != server_address:
-                QApplication.quit()
+    address = BrokerAddress if _is_broker else server_uuid
+    log.debug(f"Connecting listener to address {address}")
+    if not _remote_call_listener.listen(address):
+        msg = _remote_call_listener.errorString()
+        log.exception(msg)
+        raise Exception(msg)
 
-        def error(tb_str):
-            print("err", tb_str)
+    def on_connect():
+        log.debug("Connected to broker process.")
+
+        if _is_broker:
+            def on_success_response(result):
+                if result == server_uuid:
+                    log.debug("I am the broker")
+                    _broker_connection.socket.close()
+                else:
+                    log.debug("Exiting because a broker already exists.")
+                    QApplication.quit()
+
+            def on_error_response(tb_str):
+                log.exception(tb_str)
+                dialog = AmuletTracebackDialog(
+                    title="Broker exception",
+                    error="Broker exception",
+                    traceback=tb_str,
+                )
+                dialog.exec()
+
+            _broker_connection.call(
+                on_success_response,
+                on_error_response,
+                get_server_uuid
+            )
+
+    def on_error():
+        if _is_broker:
+            err = _broker_connection.socket.errorString()
+            log.critical(err)
             dialog = AmuletTracebackDialog(
-                title="Broker exception",
-                error="Broker exception",
-                traceback=tb_str,
+                title="Could not connect to broker from broker.",
+                error="Could not connect to broker from broker.",
+                traceback=err,
             )
             dialog.exec()
+        else:
+            log.debug("Error connecting to broker process. Initialising broker process.")
+            # If it could not connect, try booting the broker process and try again.
+            # TODO: pass in logging arguments.
+            # TODO: Make this work for PyInstaller builds.
+            subprocess.Popen([sys.executable, sys.argv[0], "--broker", "--logging_level", "1", "--logging_format", "%(levelname)s - %(name)s %(thread)d - %(message)s"], start_new_session=True, stdin=subprocess.DEVNULL, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+            # Give the broker a chance to load
+            time.sleep(1)
+            _broker_connection.socket.connectToServer(BrokerAddress)
 
-        _broker_connection.call(
-            f"{__name__}.{get_server_address.__qualname__}",
-            [],
-            {},
-            success,
-            error
-        )
-    else:
-        pass
-        # TODO: initialise the broker if it does not exist.
+    log.debug("Connecting to broker.")
+    _broker_connection.socket.connected.connect(on_connect)
+    _broker_connection.socket.errorOccurred.connect(on_error)
+    _broker_connection.socket.connectToServer(BrokerAddress)
