@@ -1,7 +1,6 @@
 import os
 from typing import Optional
 
-from amulet_editor.data import system
 from PySide6.QtCore import QStandardPaths
 
 
@@ -9,35 +8,27 @@ def application_data_directory() -> str:
     """Returns a path to the directory used for storage of persistent data.
     Generates appropriate directories if path does not already exist."""
 
-    if system.is_windows():
-        directory = os.path.join(
-            os.getenv("APPDATA"),
-            "Amulet-Editor",
-        )
-    elif system.is_mac():
-        directory = os.path.join(
-            os.path.expanduser("~"),
-            "Library",
-            "Application Support",
-            "Amulet-Editor",
-        )
-    elif system.is_linux():
-        directory = os.path.join(
-            os.path.expanduser("~"),
-            ".local",
-            "share",
-            "amulet-editor",
-        )
+    directory = os.path.join(
+        os.path.normpath(
+            QStandardPaths.writableLocation(QStandardPaths.StandardLocation.AppDataLocation)
+        ),
+        "Amulet-Editor"
+    )
     os.makedirs(directory, exist_ok=True)
+    return directory
 
+
+def logging_directory() -> str:
+    directory = os.path.join(application_data_directory(), "logs")
+    os.makedirs(directory, exist_ok=True)
     return directory
 
 
 def project_directory(project_name: Optional[str] = None) -> str:
     """Returns a path to the default location for storing Amulet projects."""
 
-    documents = str(os.path.sep).join(
-        QStandardPaths.writableLocation(QStandardPaths.DocumentsLocation).split("/")
+    documents = os.path.normpath(
+        QStandardPaths.writableLocation(QStandardPaths.StandardLocation.DocumentsLocation)
     )
 
     directory = os.path.join(
