@@ -5,3 +5,7 @@ HomePage.lbl_create_project=Create a new project
 HomePage.btn_create_project=New Project
 HomePage.lbl_open_project=Open an existing project
 HomePage.btn_open_project=Open Project
+
+OpenWorldPage.open_level=Open Level
+OpenWorldPage.open_file=Open File
+OpenWorldPage.open_directory=Open Directory

@@ -11,7 +11,6 @@ from PySide6.QtWidgets import (
     QFrame,
     QHBoxLayout,
     QLabel,
-    QLineEdit,
     QPushButton,
     QSizePolicy,
     QSpacerItem,
@@ -28,10 +27,8 @@ class Ui_OpenWorldPage(QWidget):
         self.resize(264, 247)
         self.setProperty("backgroundColor", "background")
 
-        self._vertical_layout = QVBoxLayout(self)
-        self._vertical_layout.setSpacing(5)
-        self._vertical_layout.setObjectName("_vertical_layout")
-        self._vertical_layout.setContentsMargins(50, 50, 50, 50)
+        self.verticalLayout = QVBoxLayout(self)
+        self.verticalLayout.setObjectName("verticalLayout")
 
         self._lyt_header = QHBoxLayout()
         self._lyt_header.setObjectName("_lyt_header")
@@ -56,46 +53,31 @@ class Ui_OpenWorldPage(QWidget):
             30, 30, QSizePolicy.Fixed, QSizePolicy.Minimum
         )
         self._lyt_header.addItem(self._horizontal_spacer)
-        self._vertical_layout.addLayout(self._lyt_header)
+        self.verticalLayout.addLayout(self._lyt_header)
 
         self.frame = QFrame(self)
         self.frame.setObjectName("frame")
         self.frame.setFrameShape(QFrame.HLine)
         self.frame.setFrameShadow(QFrame.Raised)
         self.frame.setProperty("borderTop", "surface")
-        self._vertical_layout.addWidget(self.frame)
+        self.verticalLayout.addWidget(self.frame)
 
-        self._lbl_level_directory = QLabel(self)
-        self._lbl_level_directory.setObjectName("_lbl_level_directory")
-        self._lbl_level_directory.setProperty("color", "on_primary")
-        self._vertical_layout.addWidget(self._lbl_level_directory)
+        self.horizontalLayout = QHBoxLayout()
+        self.horizontalLayout.setObjectName("horizontalLayout")
 
-        self._lyt_world_directory = QHBoxLayout()
-        self._lyt_world_directory.setObjectName("_lyt_world_directory")
+        self.load_file_button = QPushButton(self)
+        self.load_file_button.setObjectName("load_file_button")
+        self.horizontalLayout.addWidget(self.load_file_button)
 
-        self.lne_level_directory = QLineEdit(self)
-        self.lne_level_directory.setObjectName("lne_level_directory")
-        self.lne_level_directory.setMinimumSize(QSize(0, 25))
-        self.lne_level_directory.setMaximumSize(QSize(16777215, 25))
-        self.lne_level_directory.setReadOnly(True)
-        self.lne_level_directory.setProperty("color", "on_surface")
-        self._lyt_world_directory.addWidget(self.lne_level_directory)
-
-        self.btn_level_directory = QPushButton(self)
-        self.btn_level_directory.setObjectName("btn_level_directory")
-        sizePolicy.setHeightForWidth(
-            self.btn_level_directory.sizePolicy().hasHeightForWidth()
-        )
-        self.btn_level_directory.setSizePolicy(sizePolicy)
-        self.btn_level_directory.setMinimumSize(QSize(27, 27))
-        self.btn_level_directory.setMaximumSize(QSize(27, 27))
-        self._lyt_world_directory.addWidget(self.btn_level_directory)
-        self._vertical_layout.addLayout(self._lyt_world_directory)
+        self.load_directory_button = QPushButton(self)
+        self.load_directory_button.setObjectName("load_directory_button")
+        self.horizontalLayout.addWidget(self.load_directory_button)
+        self.verticalLayout.addLayout(self.horizontalLayout)
 
         self._vertical_spacer = QSpacerItem(
             20, 40, QSizePolicy.Minimum, QSizePolicy.Expanding
         )
-        self._vertical_layout.addItem(self._vertical_spacer)
+        self.verticalLayout.addItem(self._vertical_spacer)
 
         self.localise()
         QMetaObject.connectSlotsByName(self)
@@ -109,9 +91,11 @@ class Ui_OpenWorldPage(QWidget):
         self.setWindowTitle(QCoreApplication.translate("OpenWorldPage", "Form", None))
         self.btn_back.setText("")
         self._lbl_title.setText(
-            QCoreApplication.translate("OpenWorldPage", "Open World", None)
+            QCoreApplication.translate("OpenWorldPage", "open_level", None)
         )
-        self._lbl_level_directory.setText(
-            QCoreApplication.translate("OpenWorldPage", "World Directory", None)
+        self.load_file_button.setText(
+            QCoreApplication.translate("OpenWorldPage", "open_file", None)
         )
-        self.btn_level_directory.setText("")
+        self.load_directory_button.setText(
+            QCoreApplication.translate("OpenWorldPage", "open_directory", None)
+        )

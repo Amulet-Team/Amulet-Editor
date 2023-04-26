@@ -16,22 +16,7 @@
   <property name="backgroundColor" stdset="0">
    <string notr="true">background</string>
   </property>
-  <layout class="QVBoxLayout" name="_vertical_layout">
-   <property name="spacing">
-    <number>5</number>
-   </property>
-   <property name="leftMargin">
-    <number>50</number>
-   </property>
-   <property name="topMargin">
-    <number>50</number>
-   </property>
-   <property name="rightMargin">
-    <number>50</number>
-   </property>
-   <property name="bottomMargin">
-    <number>50</number>
-   </property>
+  <layout class="QVBoxLayout" name="verticalLayout">
    <item>
     <layout class="QHBoxLayout" name="_lyt_header">
      <item>
@@ -62,7 +47,7 @@
      <item>
       <widget class="QLabel" name="_lbl_title">
        <property name="text">
-        <string>Open World</string>
+        <string>open_level</string>
        </property>
        <property name="alignment">
         <set>Qt::AlignCenter</set>
@@ -101,61 +86,18 @@
     </widget>
    </item>
    <item>
-    <widget class="QLabel" name="_lbl_level_directory">
-     <property name="text">
-      <string>World Directory</string>
-     </property>
-     <property name="color" stdset="0">
-      <string notr="true">on_primary</string>
-     </property>
-    </widget>
-   </item>
-   <item>
-    <layout class="QHBoxLayout" name="_lyt_world_directory">
+    <layout class="QHBoxLayout" name="horizontalLayout">
      <item>
-      <widget class="QLineEdit" name="lne_level_directory">
-       <property name="minimumSize">
-        <size>
-         <width>0</width>
-         <height>25</height>
-        </size>
-       </property>
-       <property name="maximumSize">
-        <size>
-         <width>16777215</width>
-         <height>25</height>
-        </size>
-       </property>
-       <property name="readOnly">
-        <bool>true</bool>
-       </property>
-       <property name="color" stdset="0">
-        <string notr="true">on_surface</string>
+      <widget class="QPushButton" name="load_file_button">
+       <property name="text">
+        <string>open_file</string>
        </property>
       </widget>
      </item>
      <item>
-      <widget class="QPushButton" name="btn_level_directory">
-       <property name="sizePolicy">
-        <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
-         <horstretch>0</horstretch>
-         <verstretch>0</verstretch>
-        </sizepolicy>
-       </property>
-       <property name="minimumSize">
-        <size>
-         <width>27</width>
-         <height>27</height>
-        </size>
-       </property>
-       <property name="maximumSize">
-        <size>
-         <width>27</width>
-         <height>27</height>
-        </size>
-       </property>
+      <widget class="QPushButton" name="load_directory_button">
        <property name="text">
-        <string/>
+        <string>open_directory</string>
        </property>
       </widget>
      </item>
