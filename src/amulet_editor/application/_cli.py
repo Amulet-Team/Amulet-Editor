@@ -53,3 +53,13 @@ def parse_args() -> Args:
         _args, _ = parser.parse_known_args()
 
     return _args
+
+
+def spawn_process(path: str = None):
+    """Spawn the broker process passing over the input CLI values."""
+    this_args = parse_args()
+    new_args = [sys.executable, sys.argv[0]]
+    if path is not None:
+        new_args += ["--level_path", path]
+    new_args += ["--logging_level", str(this_args.logging_level), "--logging_format", this_args.logging_format]
+    subprocess.Popen(new_args, start_new_session=True, stdin=subprocess.DEVNULL, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)

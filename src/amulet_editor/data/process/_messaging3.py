@@ -42,6 +42,7 @@ from PySide6.QtNetwork import QLocalSocket, QLocalServer
 
 from amulet_editor.data.project import get_level
 from amulet_editor.models.widgets import DisplayException, AmuletTracebackDialog
+from amulet_editor.application._cli import spawn_process, BROKER
 
 log = logging.getLogger(__name__)
 
@@ -353,7 +354,7 @@ def init_rpc(broker=False):
             # If it could not connect, try booting the broker process and try again.
             # TODO: pass in logging arguments.
             # TODO: Make this work for PyInstaller builds.
-            subprocess.Popen([sys.executable, sys.argv[0], "--broker", "--logging_level", "1", "--logging_format", "%(levelname)s - %(name)s %(thread)d - %(message)s"], start_new_session=True, stdin=subprocess.DEVNULL, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+            spawn_process(BROKER)
             # Give the broker a chance to load
             time.sleep(1)
             _broker_connection.socket.connectToServer(BrokerAddress)
