@@ -2,7 +2,6 @@ from __future__ import annotations
 from typing import Optional
 import sys
 import os
-import argparse
 import logging
 from datetime import datetime
 
@@ -23,6 +22,7 @@ import amulet_editor.data.process._messaging3 as messaging
 from amulet_editor.data.paths import logging_directory
 
 from . import appearance
+from ._cli import parse_args, BROKER
 
 log = logging.getLogger(__name__)
 
@@ -69,43 +69,7 @@ class AmuletApp(QApplication):
 
 
 def app_main():
-    parser = argparse.ArgumentParser()
-
-    parser.add_argument(
-        "--level_path",
-        type=str,
-        help="The Minecraft world or structure to open. Default opens no level",
-        action="store",
-        dest="level_path",
-        default=None
-    )
-
-    parser.add_argument(
-        "--logging_level",
-        type=int,
-        help="The logging level to set. CRITICAL=50, ERROR=40, WARNING=30, INFO=20, DEBUG=10. Default is WARNING",
-        action="store",
-        dest="logging_level",
-        default=logging.WARNING
-    )
-
-    parser.add_argument(
-        "--logging_format",
-        type=str,
-        help="The logging format to use. Default is \"%(levelname)s - %(message)s\"",
-        action="store",
-        dest="logging_format",
-        default="%(levelname)s - %(message)s"
-    )
-
-    parser.add_argument(
-        "--broker",
-        help=argparse.SUPPRESS,
-        action="store_true",
-        dest="broker",
-    )
-
-    args, _ = parser.parse_known_args()
+    args = parse_args()
 
     logging.basicConfig(level=args.logging_level, format=args.logging_format, force=True)
 
@@ -114,9 +78,10 @@ def app_main():
     file_handler.setFormatter(logging.Formatter(args.logging_format))
     logging.getLogger().addHandler(file_handler)
 
-    messaging.init_rpc(args.broker)
+    is_broker = args.level_path == BROKER
+    messaging.init_rpc(is_broker)
 
-    if args.broker:
+    if is_broker:
         # Dummy application to get a main loop.
         app = QApplication()
     else:
