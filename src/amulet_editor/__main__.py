@@ -29,7 +29,6 @@ try:
 
     if sys.version_info[:2] < (3, 9):
         raise Exception("Must be using Python 3.9+")
-    import traceback
 except Exception as e_:
     _on_error(e_)
 
@@ -37,41 +36,40 @@ except Exception as e_:
 def main() -> None:
     try:
         from multiprocessing import freeze_support
-    except Exception as e:
-        _on_error(e)
-        raise
-    else:
         freeze_support()
-
-    try:
         import logging
-        import argparse
-        from amulet_editor.application._app import main
-        from amulet_editor.data.process._process import bootstrap, ProcessType
 
-        parser = argparse.ArgumentParser()
-        parser.add_argument(
-            "--debug",
-            help="Log debug information.",
-            action="store_const",
-            dest="loglevel",
-            const=logging.DEBUG,
-            default=logging.WARNING,
-        )
-        args, _ = parser.parse_known_args()
+        from amulet_editor.application._app import app_main
+        from amulet_editor.models.widgets import AmuletTracebackDialog
 
-        logging.basicConfig(level=args.loglevel, format="%(levelname)s - %(message)s")
-        logging.getLogger().setLevel(args.loglevel)
+        # Initialise logging at the highest level until configured otherwise.
+        logging.basicConfig(level=logging.WARNING, format="%(levelname)s - %(message)s")
+        logging.getLogger().setLevel(logging.WARNING)
+
     except Exception as e:
         _on_error(e)
     else:
         try:
-            bootstrap(ProcessType.Main, main)
+            app_main()
         except Exception as e:
             logging.exception(e)
             logging.error(
                 f"Amulet Crashed. Sorry about that. Please report it to a developer if you think this is an issue."
             )
+            try:
+                import traceback
+                from PySide6.QtWidgets import QApplication
+                if QApplication.instance() is None:
+                    # QDialog needs an app otherwise it crashes
+                    app = QApplication()
+                dialog = AmuletTracebackDialog(
+                    title="Error Initialising Application",
+                    error=str(e),
+                    traceback="".join(traceback.format_exc()),
+                )
+                dialog.exec()
+            except:
+                pass
             input("Press ENTER to continue...")
             raise e
 
