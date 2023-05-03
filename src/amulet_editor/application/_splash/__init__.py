@@ -9,7 +9,7 @@ from ._splash import Ui_Splash
 class Splash(Ui_Splash):
     def __init__(self):
         super().__init__()
-        self.setWindowFlag(Qt.FramelessWindowHint)
+        self.setWindowFlag(Qt.WindowType.FramelessWindowHint)
         self._logo.setPixmap(QPixmap(get_resource("icons/amulet/Icon.ico")))
         self.setWindowTitle("Amulet Editor")
 

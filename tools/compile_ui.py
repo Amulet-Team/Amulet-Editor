@@ -62,7 +62,7 @@ def _compile_ui_file(ui_path: str):
     # Replace retranslateUi with localise
     py = py.replace(
         "def retranslateUi(self, self):",
-        "def changeEvent(self, event: QEvent):\n        super().changeEvent(event)\n        if event.type() == QEvent.LanguageChange:\n            self.localise()\n    def localise(self):",
+        "def changeEvent(self, event: QEvent):\n        super().changeEvent(event)\n        if event.type() == QEvent.Type.LanguageChange:\n            self.localise()\n    def localise(self):",
     )
     py = re.sub(
         r"from PySide6\.QtCore import \(.*?\)",

@@ -19,13 +19,13 @@ class AToolBar(QFrame):
         self,
         parent: Optional[QWidget] = None,
         f: Qt.WindowType = 0,
-        orientation=Qt.Vertical,
+        orientation=Qt.Orientation.Vertical,
     ):
         super().__init__(parent, f)
 
         layout_cls = {
-            Qt.Vertical: QVBoxLayout,
-            Qt.Horizontal: QHBoxLayout,
+            Qt.Orientation.Vertical: QVBoxLayout,
+            Qt.Orientation.Horizontal: QHBoxLayout,
         }[orientation]
 
         self._lyt_main = layout_cls(self)

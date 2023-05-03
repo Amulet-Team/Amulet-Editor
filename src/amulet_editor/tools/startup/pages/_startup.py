@@ -14,8 +14,8 @@ class StartupPage(QWidget):
 
         # self.frm_nav_header = QFrame(self)
         # self.frm_nav_header.setFixedHeight(25)
-        # self.frm_nav_header.setFrameShape(QFrame.NoFrame)
-        # self.frm_nav_header.setFrameShadow(QFrame.Raised)
+        # self.frm_nav_header.setFrameShape(QFrame.Shape.NoFrame)
+        # self.frm_nav_header.setFrameShadow(QFrame.Shadow.Raised)
         # self.frm_nav_header.setProperty("backgroundColor", "primary")
         # self.frm_nav_header.setProperty("borderBottom", "surface")
         # self.frm_nav_header.setProperty("color", "on_surface")
@@ -26,16 +26,16 @@ class StartupPage(QWidget):
 
         self.lbl_app_icon = QLabel()
         self.lbl_app_icon.setFixedHeight(128)
-        self.lbl_app_icon.setAlignment(Qt.AlignCenter)
+        self.lbl_app_icon.setAlignment(Qt.AlignmentFlag.AlignCenter)
         self.lbl_app_icon.setPixmap(amulet_logo)
 
         self.lbl_app_name = QLabel("Amulet Editor")
-        self.lbl_app_name.setAlignment(Qt.AlignCenter)
+        self.lbl_app_name.setAlignment(Qt.AlignmentFlag.AlignCenter)
         self.lbl_app_name.setProperty("heading", "h1")
         self.lbl_app_name.setProperty("subfamily", "semi_light")
 
         self.lbl_app_version = QLabel(f"Version {__version__}")
-        self.lbl_app_version.setAlignment(Qt.AlignCenter)
+        self.lbl_app_version.setAlignment(Qt.AlignmentFlag.AlignCenter)
         self.lbl_app_version.setProperty("color", "secondary")
         self.lbl_app_version.setProperty("heading", "h5")
         self.lbl_app_version.setProperty("subfamily", "semi_light")
@@ -70,10 +70,10 @@ class StartupPage(QWidget):
         layout.addWidget(self.crd_open_project)
         layout.addWidget(self.crd_new_project)
 
-        layout.setAlignment(Qt.AlignCenter)
-        layout.setAlignment(self.crd_open_level, Qt.AlignCenter)
-        layout.setAlignment(self.crd_open_project, Qt.AlignCenter)
-        layout.setAlignment(self.crd_new_project, Qt.AlignCenter)
+        layout.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        layout.setAlignment(self.crd_open_level, Qt.AlignmentFlag.AlignCenter)
+        layout.setAlignment(self.crd_open_project, Qt.AlignmentFlag.AlignCenter)
+        layout.setAlignment(self.crd_new_project, Qt.AlignmentFlag.AlignCenter)
         layout.setSpacing(5)
 
         self.setLayout(layout)

@@ -47,8 +47,8 @@ class QMenuWidget(QWidget):
     def setupUi(self):
         # Create 'Menu' frame
         frm_menu = QFrame(self)
-        frm_menu.setFrameShape(QFrame.NoFrame)
-        frm_menu.setFrameShadow(QFrame.Raised)
+        frm_menu.setFrameShape(QFrame.Shape.NoFrame)
+        frm_menu.setFrameShadow(QFrame.Shadow.Raised)
         frm_menu.setMaximumWidth(750)
 
         # Create 'Header' frame
@@ -60,12 +60,12 @@ class QMenuWidget(QWidget):
 
         lyt_menu_header = QHBoxLayout(frm_menu_header)
         lyt_menu_header.addWidget(lbl_menu_header)
-        lyt_menu_header.setAlignment(Qt.AlignLeft)
+        lyt_menu_header.setAlignment(Qt.AlignmentFlag.AlignLeft)
         lyt_menu_header.setContentsMargins(0, 0, 0, 5)
         lyt_menu_header.setSpacing(5)
 
-        frm_menu_header.setFrameShape(QFrame.NoFrame)
-        frm_menu_header.setFrameShadow(QFrame.Raised)
+        frm_menu_header.setFrameShape(QFrame.Shape.NoFrame)
+        frm_menu_header.setFrameShadow(QFrame.Shadow.Raised)
         frm_menu_header.setLayout(lyt_menu_header)
 
         # Create swappable 'Menu Container' widget
@@ -74,13 +74,13 @@ class QMenuWidget(QWidget):
 
         # Create 'Menu Container' widget
         scr_menu = QScrollArea(frm_menu)
-        scr_menu.setFrameShape(QFrame.NoFrame)
-        scr_menu.setFrameShadow(QFrame.Raised)
-        scr_menu.setHorizontalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
+        scr_menu.setFrameShape(QFrame.Shape.NoFrame)
+        scr_menu.setFrameShadow(QFrame.Shadow.Raised)
+        scr_menu.setHorizontalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
         scr_menu.setProperty("borderBottom", "surface")
         scr_menu.setProperty("borderTop", "surface")
         scr_menu.setProperty("backgroundColor", "background")
-        scr_menu.setVerticalScrollBarPolicy(Qt.ScrollBarAsNeeded)
+        scr_menu.setVerticalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAsNeeded)
         scr_menu.setWidgetResizable(True)
         scr_menu.setWidget(swgt_menu)
 
@@ -108,8 +108,8 @@ class QMenuWidget(QWidget):
         lyt_menu_options.setSpacing(5)
 
         # Configure 'Menu Options' frame
-        frm_menu_options.setFrameShape(QFrame.NoFrame)
-        frm_menu_options.setFrameShadow(QFrame.Raised)
+        frm_menu_options.setFrameShape(QFrame.Shape.NoFrame)
+        frm_menu_options.setFrameShadow(QFrame.Shadow.Raised)
         frm_menu_options.setLayout(lyt_menu_options)
 
         # Create 'Menu' layout
@@ -117,12 +117,12 @@ class QMenuWidget(QWidget):
         lyt_menu.addWidget(frm_menu_header)
         lyt_menu.addWidget(scr_menu)
         lyt_menu.addWidget(frm_menu_options)
-        lyt_menu.setAlignment(Qt.AlignCenter)
+        lyt_menu.setAlignment(Qt.AlignmentFlag.AlignCenter)
         lyt_menu.setSpacing(5)
 
         layout = QVBoxLayout(self)
         layout.addWidget(frm_menu)
-        layout.setAlignment(Qt.AlignHCenter)
+        layout.setAlignment(Qt.AlignmentFlag.AlignHCenter)
 
         self.setLayout(layout)
 

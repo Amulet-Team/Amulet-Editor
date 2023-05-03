@@ -21,11 +21,11 @@ class QElidedLabel(QLabel):
             super().__init__(parent=parent)
 
         self._text = text
-        self._text_elide_mode = Qt.ElideRight
+        self._text_elide_mode = Qt.TextElideMode.ElideRight
         self._text_width = 0
         self._width_hint = None
 
-        self.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Preferred)
+        self.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Preferred)
 
         self._format_text()
 
@@ -46,9 +46,7 @@ class QElidedLabel(QLabel):
 
     def setElideMode(self, mode: Qt.TextElideMode) -> None:
         self._text_elide_mode = (
-            Qt.ElideNone
-            if mode not in [Qt.ElideNone, Qt.ElideLeft, Qt.ElideRight, Qt.ElideMiddle]
-            else mode
+            mode if mode in {Qt.TextElideMode.ElideNone, Qt.TextElideMode.ElideLeft, Qt.TextElideMode.ElideRight, Qt.TextElideMode.ElideMiddle} else Qt.TextElideMode.ElideNone
         )
         self._format_text()
 
@@ -82,21 +80,21 @@ class QElidedLabel(QLabel):
 
             # Determine ellipses and cursor position
             cursor = QTextCursor(doc)
-            if self._text_elide_mode == Qt.ElideNone:
+            if self._text_elide_mode == Qt.TextElideMode.ElideNone:
                 ellipses = ""
                 character_count = doc.characterCount()
                 cursor.setPosition(character_count - 1)
                 delete_previous = True
-            elif self._text_elide_mode == Qt.ElideLeft:
+            elif self._text_elide_mode == Qt.TextElideMode.ElideLeft:
                 ellipses = "\u2026"
                 cursor.setPosition(0)
                 delete_previous = False
-            elif self._text_elide_mode == Qt.ElideRight:
+            elif self._text_elide_mode == Qt.TextElideMode.ElideRight:
                 ellipses = "\u2026"
                 character_count = doc.characterCount()
                 cursor.setPosition(character_count - 1)
                 delete_previous = True
-            elif self._text_elide_mode == Qt.ElideMiddle:
+            elif self._text_elide_mode == Qt.TextElideMode.ElideMiddle:
                 ellipses = "\u2026"
                 character_count = doc.characterCount()
                 cursor.setPosition(math.ceil(character_count / 2))
@@ -110,13 +108,13 @@ class QElidedLabel(QLabel):
                 else:
                     cursor.deleteChar()
 
-                if self._text_elide_mode == Qt.ElideMiddle:
+                if self._text_elide_mode == Qt.TextElideMode.ElideMiddle:
                     delete_previous = not delete_previous
 
             # Add ellipses after removing characters so they match trailing html formatting
-            if self._text_elide_mode == Qt.ElideLeft:
+            if self._text_elide_mode == Qt.TextElideMode.ElideLeft:
                 cursor.setPosition(0)
-            elif self._text_elide_mode == Qt.ElideRight:
+            elif self._text_elide_mode == Qt.TextElideMode.ElideRight:
                 character_count = doc.characterCount()
                 cursor.setPosition(character_count - 1)
             cursor.insertText(ellipses)
@@ -139,7 +137,7 @@ class QHoverLabel(QLabel):
         self.shadow.setYOffset(1)
         self.shadow.setColor(QColor(0, 0, 0))
 
-        self.setAlignment(Qt.AlignCenter)
+        self.setAlignment(Qt.AlignmentFlag.AlignCenter)
         self.setGraphicsEffect(self.shadow)
         self.setObjectName("hover_label")
         self.setParent(self.window())

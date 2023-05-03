@@ -59,7 +59,7 @@ class ProjectPage(QWidget):
                 self.txe_file.setPlainText(f"Error Decoding File:\n{file_path}\n")
 
     def setupUi(self) -> None:
-        font = QFontDatabase.systemFont(QFontDatabase.FixedFont)
+        font = QFontDatabase.systemFont(QFontDatabase.SystemFont.FixedFont)
 
         self.txe_file = QCodeEditor()
         self.txe_file.setFont(font)

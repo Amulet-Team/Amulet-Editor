@@ -33,19 +33,19 @@ class AIconCard(QPushButton):
         self.setProperty("hover", "false")
         layout = QHBoxLayout(self)
         layout.setContentsMargins(5, 5, 5, 5)
-        layout.setAlignment(Qt.AlignCenter)
+        layout.setAlignment(Qt.AlignmentFlag.AlignCenter)
         layout.setSpacing(5)
         self.setLayout(layout)
 
         self._svg_icon = AStylableSvgWidget(build.get_resource(icon))
-        self._svg_icon.setAttribute(Qt.WA_TransparentForMouseEvents)
-        self._svg_icon.setSizePolicy(QSizePolicy.Maximum, QSizePolicy.Maximum)
+        self._svg_icon.setAttribute(Qt.WidgetAttribute.WA_TransparentForMouseEvents)
+        self._svg_icon.setSizePolicy(QSizePolicy.Policy.Maximum, QSizePolicy.Policy.Maximum)
         self._svg_icon.setFixedSize(icon_size)
         layout.addWidget(self._svg_icon)
 
         self._lbl_description = QElidedLabel()
-        self._lbl_description.setAttribute(Qt.WA_TransparentForMouseEvents)
-        self._lbl_description.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Maximum)
+        self._lbl_description.setAttribute(Qt.WidgetAttribute.WA_TransparentForMouseEvents)
+        self._lbl_description.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Maximum)
         self._lbl_description.setProperty("subfamily", "semi_light")
         self._lbl_description.setText(text)
         self._lbl_description.setProperty("heading", heading)
@@ -113,10 +113,10 @@ class QLevelSelectionCard(QPushButton):
             lbl_pixmap.setProperty("backgroundColor", "background")
             lbl_pixmap.setProperty("border", "surface")
             lbl_pixmap.setProperty("borderRadiusVisible", True)
-            lbl_pixmap.setSizePolicy(QSizePolicy.Maximum, QSizePolicy.Maximum)
+            lbl_pixmap.setSizePolicy(QSizePolicy.Policy.Maximum, QSizePolicy.Policy.Maximum)
 
             lbl_level_name = QElidedLabel(level_name, widget)
-            lbl_level_name.setAttribute(Qt.WA_TransparentForMouseEvents)
+            lbl_level_name.setAttribute(Qt.WidgetAttribute.WA_TransparentForMouseEvents)
 
             lbl_file_name = QElidedLabel(file_name, widget)
 
@@ -145,10 +145,10 @@ class QLevelSelectionCard(QPushButton):
 
     def setupUi(self) -> None:
         self.swgt_container = QStackedWidget(self)
-        self.swgt_container.setAttribute(Qt.WA_TransparentForMouseEvents)
+        self.swgt_container.setAttribute(Qt.WidgetAttribute.WA_TransparentForMouseEvents)
 
         self.wgt_info = QWidget(self.swgt_container)
-        self.wgt_info.setAttribute(Qt.WA_TransparentForMouseEvents)
+        self.wgt_info.setAttribute(Qt.WidgetAttribute.WA_TransparentForMouseEvents)
 
         self.lbl_info = QLabel(self.wgt_info)
         self.lbl_info.setProperty("color", "on_surface")
@@ -157,7 +157,7 @@ class QLevelSelectionCard(QPushButton):
 
         self.lyt_info = QHBoxLayout(self.wgt_info)
         self.lyt_info.addWidget(self.lbl_info)
-        self.lyt_info.setAlignment(self.lbl_info, Qt.AlignCenter)
+        self.lyt_info.setAlignment(self.lbl_info, Qt.AlignmentFlag.AlignCenter)
         self.lyt_info.setContentsMargins(0, 0, 0, 0)
 
         self.wgt_info.setLayout(self.lyt_info)

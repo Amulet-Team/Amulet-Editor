@@ -20,8 +20,8 @@ class SelectPackagesPage(QWidget):
     def setupUi(self):
         # Create 'Inner Container' frame
         self.frm_inner_container = QFrame(self)
-        self.frm_inner_container.setFrameShape(QFrame.NoFrame)
-        self.frm_inner_container.setFrameShadow(QFrame.Raised)
+        self.frm_inner_container.setFrameShape(QFrame.Shape.NoFrame)
+        self.frm_inner_container.setFrameShadow(QFrame.Shadow.Raised)
         self.frm_inner_container.setMaximumWidth(750)
         self.frm_inner_container.setProperty("borderLeft", "surface")
         self.frm_inner_container.setProperty("borderRight", "surface")
@@ -35,12 +35,12 @@ class SelectPackagesPage(QWidget):
 
         lyt_header = QHBoxLayout(self.frm_header)
         lyt_header.addWidget(self.lbl_header)
-        lyt_header.setAlignment(Qt.AlignLeft)
+        lyt_header.setAlignment(Qt.AlignmentFlag.AlignLeft)
         lyt_header.setContentsMargins(0, 0, 0, 10)
         lyt_header.setSpacing(5)
 
-        self.frm_header.setFrameShape(QFrame.NoFrame)
-        self.frm_header.setFrameShadow(QFrame.Raised)
+        self.frm_header.setFrameShape(QFrame.Shape.NoFrame)
+        self.frm_header.setFrameShadow(QFrame.Shadow.Raised)
         self.frm_header.setLayout(lyt_header)
         self.frm_header.setProperty("borderBottom", "surface")
         self.frm_header.setProperty("borderTop", "background")
@@ -49,8 +49,8 @@ class SelectPackagesPage(QWidget):
         lyt_project = QGridLayout(self.frm_inner_container)
 
         self.frm_project = QFrame(self.frm_inner_container)
-        self.frm_project.setFrameShape(QFrame.NoFrame)
-        self.frm_project.setFrameShadow(QFrame.Raised)
+        self.frm_project.setFrameShape(QFrame.Shape.NoFrame)
+        self.frm_project.setFrameShadow(QFrame.Shadow.Raised)
         self.frm_project.setLayout(lyt_project)
         self.frm_project.setProperty("backgroundColor", "primary")
         self.frm_project.setProperty("border", "surface")
@@ -94,8 +94,8 @@ class SelectPackagesPage(QWidget):
         lyt_page_options.setSpacing(5)
 
         # Configure 'Page Options' frame
-        self.frm_page_options.setFrameShape(QFrame.NoFrame)
-        self.frm_page_options.setFrameShadow(QFrame.Raised)
+        self.frm_page_options.setFrameShape(QFrame.Shape.NoFrame)
+        self.frm_page_options.setFrameShadow(QFrame.Shadow.Raised)
         self.frm_page_options.setLayout(lyt_page_options)
         self.frm_page_options.setProperty("borderTop", "surface")
 
@@ -106,13 +106,13 @@ class SelectPackagesPage(QWidget):
         lyt_inner_frame.addWidget(self.frm_project)
         lyt_inner_frame.addStretch()
         lyt_inner_frame.addWidget(self.frm_page_options)
-        lyt_inner_frame.setAlignment(Qt.AlignLeft | Qt.AlignTop)
+        lyt_inner_frame.setAlignment(Qt.AlignmentFlag.AlignLeft | Qt.AlignmentFlag.AlignTop)
         lyt_inner_frame.setSpacing(5)
 
         # Configure 'Page' layout
         layout = QVBoxLayout(self)
         layout.addWidget(self.frm_inner_container)
-        layout.setAlignment(Qt.AlignHCenter)
+        layout.setAlignment(Qt.AlignmentFlag.AlignHCenter)
 
         self.setLayout(layout)
 

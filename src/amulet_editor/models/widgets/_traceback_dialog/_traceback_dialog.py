@@ -81,7 +81,7 @@ class Ui_AmuletTracebackDialog(QDialog):
 
     def changeEvent(self, event: QEvent):
         super().changeEvent(event)
-        if event.type() == QEvent.LanguageChange:
+        if event.type() == QEvent.Type.LanguageChange:
             self.localise()
 
     def localise(self):

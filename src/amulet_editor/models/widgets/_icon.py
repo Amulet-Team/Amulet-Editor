@@ -18,7 +18,7 @@ class AStylableSvgWidget(QSvgWidget):
         buffer_width = max(self.width(), 50)
         buffer_height = max(self.height(), 50)
 
-        buffer = QImage(buffer_width, buffer_height, QImage.Format_ARGB32)
+        buffer = QImage(buffer_width, buffer_height, QImage.Format.Format_ARGB32)
         buffer.fill(QColor(0, 0, 0, 0))  # Fill with transparency
 
         # Init the painter
@@ -30,11 +30,11 @@ class AStylableSvgWidget(QSvgWidget):
         painter.scale(buffer_width / self.width(), buffer_height / self.height())
 
         # Use the alpha current alpha with the future colour
-        painter.setCompositionMode(QPainter.CompositionMode_SourceIn)
+        painter.setCompositionMode(QPainter.CompositionMode.CompositionMode_SourceIn)
         # Draw the normal background
         opt = QStyleOption()
         opt.initFrom(self)
-        self.style().drawPrimitive(QStyle.PE_Widget, opt, painter, self)
+        self.style().drawPrimitive(QStyle.PrimitiveElement.PE_Widget, opt, painter, self)
 
         # Finish painting
         painter.end()
@@ -53,7 +53,7 @@ class AIconButton(QPushButton):
         self.setProperty("hover", "false")
         self._layout = QVBoxLayout(self)
         self._layout.setContentsMargins(0, 0, 0, 0)
-        self._layout.setAlignment(Qt.AlignCenter)
+        self._layout.setAlignment(Qt.AlignmentFlag.AlignCenter)
         self._icon = AStylableSvgWidget(build.get_resource(f"icons/tabler/{icon_name}"))
         self._layout.addWidget(self._icon)
 

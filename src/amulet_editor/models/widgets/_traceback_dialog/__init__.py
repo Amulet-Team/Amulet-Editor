@@ -1,6 +1,6 @@
 import traceback
 
-from PySide6.QtCore import Slot, Qt, QSize
+from PySide6.QtCore import Slot, QSize
 from PySide6.QtGui import QGuiApplication, QIcon
 
 from ._traceback_dialog import Ui_AmuletTracebackDialog

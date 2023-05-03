@@ -123,7 +123,7 @@ class WorldSelectionPanel(QWidget):
         world_card.addLabel(parsed_level.version)
         world_card.addLabel(parsed_level.last_played)
         world_card.setCheckable(True)
-        world_card.setFocusPolicy(Qt.NoFocus)
+        world_card.setFocusPolicy(Qt.FocusPolicy.NoFocus)
         world_card.clicked.connect(partial(self.card_clicked, world_card))
         world_card.level_data = level_data
 
@@ -234,8 +234,8 @@ class WorldSelectionPanel(QWidget):
         self.lyt_search_level = QHBoxLayout(self)
 
         self.frm_search_level = QFrame(self)
-        self.frm_search_level.setFrameShape(QFrame.NoFrame)
-        self.frm_search_level.setFrameShadow(QFrame.Raised)
+        self.frm_search_level.setFrameShape(QFrame.Shape.NoFrame)
+        self.frm_search_level.setFrameShadow(QFrame.Shadow.Raised)
         self.frm_search_level.setLayout(self.lyt_search_level)
 
         self.lne_search_level = QLineEdit(self.frm_search_level)
@@ -263,13 +263,13 @@ class WorldSelectionPanel(QWidget):
         self.scr_search_options = QScrollArea(self)
         self.wgt_search_options = QWidget(self.scr_search_options)
 
-        self.scr_search_options.setFrameShape(QFrame.NoFrame)
-        self.scr_search_options.setFrameShadow(QFrame.Raised)
-        self.scr_search_options.setHorizontalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
+        self.scr_search_options.setFrameShape(QFrame.Shape.NoFrame)
+        self.scr_search_options.setFrameShadow(QFrame.Shadow.Raised)
+        self.scr_search_options.setHorizontalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
         self.scr_search_options.setProperty("backgroundColor", "background")
         self.scr_search_options.setProperty("border", "surface")
         self.scr_search_options.setProperty("borderRadiusVisible", True)
-        self.scr_search_options.setVerticalScrollBarPolicy(Qt.ScrollBarAsNeeded)
+        self.scr_search_options.setVerticalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAsNeeded)
         self.scr_search_options.setVisible(False)
         self.scr_search_options.setWidgetResizable(True)
         self.scr_search_options.setWidget(self.wgt_search_options)
@@ -292,8 +292,8 @@ class WorldSelectionPanel(QWidget):
         self.lyt_sort = QHBoxLayout(self)
 
         self.frm_sort = QFrame(self)
-        self.frm_sort.setFrameShape(QFrame.NoFrame)
-        self.frm_sort.setFrameShadow(QFrame.Raised)
+        self.frm_sort.setFrameShape(QFrame.Shape.NoFrame)
+        self.frm_sort.setFrameShadow(QFrame.Shadow.Raised)
         self.frm_sort.setLayout(self.lyt_sort)
 
         self.cbx_sort = QComboBox(self.wgt_search_options)
@@ -318,7 +318,7 @@ class WorldSelectionPanel(QWidget):
         self.lyt_search_options.addSpacing(5)
         self.lyt_search_options.addWidget(self.lbl_sort)
         self.lyt_search_options.addWidget(self.frm_sort)
-        self.lyt_search_options.setAlignment(Qt.AlignTop)
+        self.lyt_search_options.setAlignment(Qt.AlignmentFlag.AlignTop)
         self.lyt_search_options.setContentsMargins(7, 7, 7, 7)
 
         self.wgt_search_options.setLayout(self.lyt_search_options)
@@ -332,18 +332,18 @@ class WorldSelectionPanel(QWidget):
         self.scr_search_results = QScrollArea(self)
         self.wgt_search_results = QWidget(self.scr_search_results)
 
-        self.scr_search_results.setFrameShape(QFrame.NoFrame)
-        self.scr_search_results.setFrameShadow(QFrame.Raised)
-        self.scr_search_results.setHorizontalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
+        self.scr_search_results.setFrameShape(QFrame.Shape.NoFrame)
+        self.scr_search_results.setFrameShadow(QFrame.Shadow.Raised)
+        self.scr_search_results.setHorizontalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
         self.scr_search_results.setProperty("backgroundColor", "background")
         self.scr_search_results.setProperty("border", "surface")
         self.scr_search_results.setProperty("borderRadiusVisible", True)
-        self.scr_search_results.setVerticalScrollBarPolicy(Qt.ScrollBarAsNeeded)
+        self.scr_search_results.setVerticalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAsNeeded)
         self.scr_search_results.setWidgetResizable(True)
         self.scr_search_results.setWidget(self.wgt_search_results)
 
         self.lyt_search_results = QVBoxLayout(self.scr_search_results)
-        self.lyt_search_results.setAlignment(Qt.AlignTop)
+        self.lyt_search_results.setAlignment(Qt.AlignmentFlag.AlignTop)
         self.lyt_search_results.setContentsMargins(5, 5, 5, 5)
 
         self.wgt_search_results.setLayout(self.lyt_search_results)
@@ -355,7 +355,7 @@ class WorldSelectionPanel(QWidget):
         layout.addWidget(self.frm_search_level)
         layout.addWidget(self.scr_search_options)
         layout.addWidget(self.scr_search_results)
-        layout.setAlignment(Qt.AlignTop)
+        layout.setAlignment(Qt.AlignmentFlag.AlignTop)
 
         self.setLayout(layout)
 

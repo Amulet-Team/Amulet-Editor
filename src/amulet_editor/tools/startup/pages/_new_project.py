@@ -62,7 +62,7 @@ class NewProjectMenu(QObject):
             None,
             "Select Folder",
             os.path.realpath(self.project_data.directory),
-            QFileDialog.ShowDirsOnly,
+            QFileDialog.Option.ShowDirsOnly,
         )
 
         if os.path.isdir(folder):
@@ -115,8 +115,8 @@ class NewProjectWidget(QWidget):
         lyt_project_directory.setContentsMargins(0, 0, 0, 0)
         lyt_project_directory.setSpacing(5)
 
-        self.frm_project_directory.setFrameShape(QFrame.NoFrame)
-        self.frm_project_directory.setFrameShadow(QFrame.Raised)
+        self.frm_project_directory.setFrameShape(QFrame.Shape.NoFrame)
+        self.frm_project_directory.setFrameShadow(QFrame.Shadow.Raised)
         self.frm_project_directory.setLayout(lyt_project_directory)
 
         # Create 'Page Content' layout
