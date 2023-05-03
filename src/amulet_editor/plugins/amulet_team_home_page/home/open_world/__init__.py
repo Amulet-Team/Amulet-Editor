@@ -1,7 +1,9 @@
 from PySide6.QtGui import QIcon
-from PySide6.QtWidgets import QFileDialog
+from PySide6.QtWidgets import QFileDialog, QApplication
 from amulet_editor.data.build import get_resource
 from ._open_world import Ui_OpenWorldPage
+from amulet_editor.application._cli import spawn_process
+from amulet_editor.data.project import get_level
 
 
 class OpenWorldPage(Ui_OpenWorldPage):
@@ -18,11 +20,15 @@ class OpenWorldPage(Ui_OpenWorldPage):
         dialog.setViewMode(QFileDialog.ViewMode.Detail)
         if dialog.exec():
             file, *_ = dialog.selectedFiles()
-            # TODO: open the file in a new process
+            spawn_process(file)
+            if get_level() is None:
+                QApplication.quit()
 
     def open_dir(self):
         dialog = QFileDialog(self)
         dialog.setFileMode(QFileDialog.FileMode.Directory)
         if dialog.exec():
             file, *_ = dialog.selectedFiles()
-            # TODO: open the directory in a new process
+            spawn_process(file)
+            if get_level() is None:
+                QApplication.quit()

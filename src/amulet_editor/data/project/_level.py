@@ -7,5 +7,6 @@ level_data: Optional[LevelData] = None
 
 level: Optional[BaseLevel] = None
 
+
 def get_level() -> Optional[BaseLevel]:
     return level
