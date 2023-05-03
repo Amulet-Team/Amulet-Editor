@@ -18,7 +18,7 @@ from amulet_editor.data import build
 from amulet_editor.data._localisation import locale_changed
 import amulet_editor.data.plugin._manager as plugin_manager
 from amulet_editor.data.project import _level
-import amulet_editor.data.process._messaging3 as messaging
+import amulet_editor.data._rpc as rpc
 from amulet_editor.data.paths import logging_directory
 
 from . import appearance
@@ -79,7 +79,7 @@ def app_main():
     logging.getLogger().addHandler(file_handler)
 
     is_broker = args.level_path == BROKER
-    messaging.init_rpc(is_broker)
+    rpc.init_rpc(is_broker)
 
     if is_broker:
         # Dummy application to get a main loop.

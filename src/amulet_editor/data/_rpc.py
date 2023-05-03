@@ -214,7 +214,6 @@ class RemoteProcedureCallingConnection:
         log.debug(f"Calling remote function {address}(*{args}, **{kwargs}) {identifier.decode()}")
         self._calls[identifier] = ((address, args, kwargs), (success_callback, error_callback))
         payload = self.encode_request(identifier, address, args, kwargs)
-        print("send request", payload)
         self.socket.write(payload)
 
     def _process_msg(self):
@@ -230,7 +229,6 @@ class RemoteProcedureCallingConnection:
                     payload = self.socket.read(payload_length).data()
                     if len(payload) != payload_length:
                         raise RuntimeError("Error in data sent over socket.")
-                    print("receive", payload)
                     identifier, is_response, payload = payload[:36], payload[36], payload[37:]
                     if is_response:
                         log.debug(f"New response from {self.socket} {identifier}")
@@ -257,13 +255,11 @@ class RemoteProcedureCallingConnection:
                             response = func(*args, **kwargs)
                             log.debug(f"Sending response back to caller. {response}")
                             payload = self.encode_success_response(identifier, response)
-                            print("send response", payload)
                             self.socket.write(payload)
 
                         except Exception:
                             log.debug(f"Exception processing request {identifier}")
                             payload = self.encode_error_response(identifier, traceback.format_exc())
-                            print("send error response", payload)
                             self.socket.write(payload)
             except Exception as e:
                 log.exception(e)
