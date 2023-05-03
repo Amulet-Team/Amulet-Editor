@@ -10,9 +10,11 @@ def application_data_directory() -> str:
 
     directory = os.path.join(
         os.path.normpath(
-            QStandardPaths.writableLocation(QStandardPaths.StandardLocation.AppDataLocation)
+            QStandardPaths.writableLocation(
+                QStandardPaths.StandardLocation.AppDataLocation
+            )
         ),
-        "Amulet-Editor"
+        "Amulet-Editor",
     )
     os.makedirs(directory, exist_ok=True)
     return directory
@@ -28,7 +30,9 @@ def project_directory(project_name: Optional[str] = None) -> str:
     """Returns a path to the default location for storing Amulet projects."""
 
     documents = os.path.normpath(
-        QStandardPaths.writableLocation(QStandardPaths.StandardLocation.DocumentsLocation)
+        QStandardPaths.writableLocation(
+            QStandardPaths.StandardLocation.DocumentsLocation
+        )
     )
 
     directory = os.path.join(

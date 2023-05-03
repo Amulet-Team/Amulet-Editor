@@ -39,13 +39,19 @@ class AIconCard(QPushButton):
 
         self._svg_icon = AStylableSvgWidget(build.get_resource(icon))
         self._svg_icon.setAttribute(Qt.WidgetAttribute.WA_TransparentForMouseEvents)
-        self._svg_icon.setSizePolicy(QSizePolicy.Policy.Maximum, QSizePolicy.Policy.Maximum)
+        self._svg_icon.setSizePolicy(
+            QSizePolicy.Policy.Maximum, QSizePolicy.Policy.Maximum
+        )
         self._svg_icon.setFixedSize(icon_size)
         layout.addWidget(self._svg_icon)
 
         self._lbl_description = QElidedLabel()
-        self._lbl_description.setAttribute(Qt.WidgetAttribute.WA_TransparentForMouseEvents)
-        self._lbl_description.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Maximum)
+        self._lbl_description.setAttribute(
+            Qt.WidgetAttribute.WA_TransparentForMouseEvents
+        )
+        self._lbl_description.setSizePolicy(
+            QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Maximum
+        )
         self._lbl_description.setProperty("subfamily", "semi_light")
         self._lbl_description.setText(text)
         self._lbl_description.setProperty("heading", heading)
@@ -113,7 +119,9 @@ class QLevelSelectionCard(QPushButton):
             lbl_pixmap.setProperty("backgroundColor", "background")
             lbl_pixmap.setProperty("border", "surface")
             lbl_pixmap.setProperty("borderRadiusVisible", True)
-            lbl_pixmap.setSizePolicy(QSizePolicy.Policy.Maximum, QSizePolicy.Policy.Maximum)
+            lbl_pixmap.setSizePolicy(
+                QSizePolicy.Policy.Maximum, QSizePolicy.Policy.Maximum
+            )
 
             lbl_level_name = QElidedLabel(level_name, widget)
             lbl_level_name.setAttribute(Qt.WidgetAttribute.WA_TransparentForMouseEvents)
@@ -145,7 +153,9 @@ class QLevelSelectionCard(QPushButton):
 
     def setupUi(self) -> None:
         self.swgt_container = QStackedWidget(self)
-        self.swgt_container.setAttribute(Qt.WidgetAttribute.WA_TransparentForMouseEvents)
+        self.swgt_container.setAttribute(
+            Qt.WidgetAttribute.WA_TransparentForMouseEvents
+        )
 
         self.wgt_info = QWidget(self.swgt_container)
         self.wgt_info.setAttribute(Qt.WidgetAttribute.WA_TransparentForMouseEvents)

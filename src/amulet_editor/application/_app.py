@@ -71,9 +71,14 @@ class AmuletApp(QApplication):
 def app_main():
     args = parse_args()
 
-    logging.basicConfig(level=args.logging_level, format=args.logging_format, force=True)
+    logging.basicConfig(
+        level=args.logging_level, format=args.logging_format, force=True
+    )
 
-    file_path = os.path.join(logging_directory(), f"amulet-log-{datetime.now().strftime('%Y-%m-%d-%H-%M-%S')}-{os.getpid()}.txt")
+    file_path = os.path.join(
+        logging_directory(),
+        f"amulet-log-{datetime.now().strftime('%Y-%m-%d-%H-%M-%S')}-{os.getpid()}.txt",
+    )
     file_handler = logging.FileHandler(file_path)
     file_handler.setFormatter(logging.Formatter(args.logging_format))
     logging.getLogger().addHandler(file_handler)

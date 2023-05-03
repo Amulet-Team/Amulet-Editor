@@ -27,7 +27,9 @@ class QPixCard(QPushButton):
         self._pixmap.setProperty("backgroundColor", "background")
         self._pixmap.setProperty("border", "surface")
         self._pixmap.setProperty("borderRadiusVisible", True)
-        self._pixmap.setSizePolicy(QSizePolicy.Policy.Maximum, QSizePolicy.Policy.Maximum)
+        self._pixmap.setSizePolicy(
+            QSizePolicy.Policy.Maximum, QSizePolicy.Policy.Maximum
+        )
 
         layout = QVBoxLayout()
         layout.setContentsMargins(0, 0, 0, 0)
@@ -65,15 +67,21 @@ class ALinkCard(QPushButton):
 
         if icon:
             self.svg_link_icon = AStylableSvgWidget(icon)
-            self.svg_link_icon.setAttribute(Qt.WidgetAttribute.WA_TransparentForMouseEvents)
+            self.svg_link_icon.setAttribute(
+                Qt.WidgetAttribute.WA_TransparentForMouseEvents
+            )
             self.svg_link_icon.setFixedSize(15, 15)
             layout.addWidget(self.svg_link_icon)
         else:
             self.svg_link_icon = None
 
         self.lbl_description = QElidedLabel(text)
-        self.lbl_description.setAttribute(Qt.WidgetAttribute.WA_TransparentForMouseEvents)
-        self.lbl_description.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Maximum)
+        self.lbl_description.setAttribute(
+            Qt.WidgetAttribute.WA_TransparentForMouseEvents
+        )
+        self.lbl_description.setSizePolicy(
+            QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Maximum
+        )
         layout.addWidget(self.lbl_description)
 
         self.svg_ext_icon = AStylableSvgWidget(

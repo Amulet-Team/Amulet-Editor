@@ -103,6 +103,7 @@ class DropArea(IntEnum):
 
 class DragSplitRenderer(QWidget):
     """A class to implement custom drawing while the user is dragging a tab."""
+
     def __init__(self, target: QWidget):
         super().__init__(target)
         self.target = target
@@ -140,10 +141,21 @@ class DragSplitRenderer(QWidget):
 
             self.polygons = [
                 QPolygon([top_left, top_right, middle_top_right, middle_top_left]),
-                QPolygon([top_right, bottom_right, middle_bottom_right, middle_top_right]),
-                QPolygon([bottom_right, bottom_left, middle_bottom_left, middle_bottom_right]),
+                QPolygon(
+                    [top_right, bottom_right, middle_bottom_right, middle_top_right]
+                ),
+                QPolygon(
+                    [bottom_right, bottom_left, middle_bottom_left, middle_bottom_right]
+                ),
                 QPolygon([bottom_left, top_left, middle_top_left, middle_bottom_left]),
-                QPolygon([middle_top_left, middle_top_right, middle_bottom_right, middle_bottom_left]),
+                QPolygon(
+                    [
+                        middle_top_left,
+                        middle_top_right,
+                        middle_bottom_right,
+                        middle_bottom_left,
+                    ]
+                ),
             ]
 
             self.shape = shape
@@ -162,7 +174,9 @@ class DragSplitRenderer(QWidget):
         self.drop_area = None
 
         for drop, poly in zip(DropArea, self.polygons):
-            if self.drop_area is None and poly.containsPoint(cursor_point, Qt.FillRule.OddEvenFill):
+            if self.drop_area is None and poly.containsPoint(
+                cursor_point, Qt.FillRule.OddEvenFill
+            ):
                 painter.setBrush(QColor(115, 215, 255, 190))
                 painter.drawPolygon(poly)
                 painter.setBrush(normal_colour)
@@ -176,6 +190,7 @@ class DragSplitRenderer(QWidget):
 
 class DragTabRenderer(QWidget):
     """A class to implement custom drawing while the user is dragging a tab."""
+
     def __init__(self, target: QWidget):
         super().__init__(target)
         self.target = target
@@ -212,7 +227,11 @@ class TabEngineTabContainerWidget(QWidget):
     # The widget being dragged or None
     dragged_widget: Optional[Intersection[QWidget, TabPage]]
     # The widget that was previously highlighted
-    highlight_widget: Union[None, tuple[TabEngineStackedTabWidget, DragSplitRenderer], tuple[TabEngineTabContainerWidget, DragTabRenderer]]
+    highlight_widget: Union[
+        None,
+        tuple[TabEngineStackedTabWidget, DragSplitRenderer],
+        tuple[TabEngineTabContainerWidget, DragTabRenderer],
+    ]
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -348,17 +367,23 @@ class TabEngineTabContainerWidget(QWidget):
 
             # Remove the tab
             tab_index = self.layout.indexOf(self.active_button)
-            self.dragged_widget = self.container.tab_bar.tab_widget.remove_page(tab_index)
+            self.dragged_widget = self.container.tab_bar.tab_widget.remove_page(
+                tab_index
+            )
             # Start drag. This widget will get all mouse events.
             self.grabMouse(target_pixmap)
         else:
             super().mouseMoveEvent(event)
 
-    def _get_drop_widget(self, point: QPoint) -> Union[None, TabEngineTabContainerWidget, TabEngineStackedTabWidget]:
+    def _get_drop_widget(
+        self, point: QPoint
+    ) -> Union[None, TabEngineTabContainerWidget, TabEngineStackedTabWidget]:
         """Get the widget that the dragged widget will be dropped into."""
         widget = QApplication.widgetAt(point)
         while widget is not None:
-            if isinstance(widget, (TabEngineTabContainerWidget, TabEngineStackedTabWidget)):
+            if isinstance(
+                widget, (TabEngineTabContainerWidget, TabEngineStackedTabWidget)
+            ):
                 return widget
             widget = widget.parent()
         return None
@@ -373,10 +398,14 @@ class TabEngineTabContainerWidget(QWidget):
             self.releaseMouse()
 
             widget, render_widget = self.highlight_widget or (None, None)
-            if isinstance(widget, TabEngineTabContainerWidget) and isinstance(render_widget, DragTabRenderer):
+            if isinstance(widget, TabEngineTabContainerWidget) and isinstance(
+                render_widget, DragTabRenderer
+            ):
                 # Dropped into a tab bar
                 widget.container.tab_bar.tab_widget.add_page(self.dragged_widget)
-            elif isinstance(widget, TabEngineStackedTabWidget) and isinstance(render_widget, DragSplitRenderer):
+            elif isinstance(widget, TabEngineStackedTabWidget) and isinstance(
+                render_widget, DragSplitRenderer
+            ):
                 drop_area = render_widget.drop_area
                 if drop_area is DropArea.Middle:
                     widget.add_page(self.dragged_widget)

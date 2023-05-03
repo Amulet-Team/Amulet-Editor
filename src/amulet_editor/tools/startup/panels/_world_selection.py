@@ -265,11 +265,15 @@ class WorldSelectionPanel(QWidget):
 
         self.scr_search_options.setFrameShape(QFrame.Shape.NoFrame)
         self.scr_search_options.setFrameShadow(QFrame.Shadow.Raised)
-        self.scr_search_options.setHorizontalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
+        self.scr_search_options.setHorizontalScrollBarPolicy(
+            Qt.ScrollBarPolicy.ScrollBarAlwaysOff
+        )
         self.scr_search_options.setProperty("backgroundColor", "background")
         self.scr_search_options.setProperty("border", "surface")
         self.scr_search_options.setProperty("borderRadiusVisible", True)
-        self.scr_search_options.setVerticalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAsNeeded)
+        self.scr_search_options.setVerticalScrollBarPolicy(
+            Qt.ScrollBarPolicy.ScrollBarAsNeeded
+        )
         self.scr_search_options.setVisible(False)
         self.scr_search_options.setWidgetResizable(True)
         self.scr_search_options.setWidget(self.wgt_search_options)
@@ -334,11 +338,15 @@ class WorldSelectionPanel(QWidget):
 
         self.scr_search_results.setFrameShape(QFrame.Shape.NoFrame)
         self.scr_search_results.setFrameShadow(QFrame.Shadow.Raised)
-        self.scr_search_results.setHorizontalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
+        self.scr_search_results.setHorizontalScrollBarPolicy(
+            Qt.ScrollBarPolicy.ScrollBarAlwaysOff
+        )
         self.scr_search_results.setProperty("backgroundColor", "background")
         self.scr_search_results.setProperty("border", "surface")
         self.scr_search_results.setProperty("borderRadiusVisible", True)
-        self.scr_search_results.setVerticalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAsNeeded)
+        self.scr_search_results.setVerticalScrollBarPolicy(
+            Qt.ScrollBarPolicy.ScrollBarAsNeeded
+        )
         self.scr_search_results.setWidgetResizable(True)
         self.scr_search_results.setWidget(self.wgt_search_results)
 

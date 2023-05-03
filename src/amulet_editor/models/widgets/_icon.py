@@ -34,7 +34,9 @@ class AStylableSvgWidget(QSvgWidget):
         # Draw the normal background
         opt = QStyleOption()
         opt.initFrom(self)
-        self.style().drawPrimitive(QStyle.PrimitiveElement.PE_Widget, opt, painter, self)
+        self.style().drawPrimitive(
+            QStyle.PrimitiveElement.PE_Widget, opt, painter, self
+        )
 
         # Finish painting
         painter.end()

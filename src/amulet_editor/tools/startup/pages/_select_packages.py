@@ -106,7 +106,9 @@ class SelectPackagesPage(QWidget):
         lyt_inner_frame.addWidget(self.frm_project)
         lyt_inner_frame.addStretch()
         lyt_inner_frame.addWidget(self.frm_page_options)
-        lyt_inner_frame.setAlignment(Qt.AlignmentFlag.AlignLeft | Qt.AlignmentFlag.AlignTop)
+        lyt_inner_frame.setAlignment(
+            Qt.AlignmentFlag.AlignLeft | Qt.AlignmentFlag.AlignTop
+        )
         lyt_inner_frame.setSpacing(5)
 
         # Configure 'Page' layout

@@ -46,7 +46,15 @@ class QElidedLabel(QLabel):
 
     def setElideMode(self, mode: Qt.TextElideMode) -> None:
         self._text_elide_mode = (
-            mode if mode in {Qt.TextElideMode.ElideNone, Qt.TextElideMode.ElideLeft, Qt.TextElideMode.ElideRight, Qt.TextElideMode.ElideMiddle} else Qt.TextElideMode.ElideNone
+            mode
+            if mode
+            in {
+                Qt.TextElideMode.ElideNone,
+                Qt.TextElideMode.ElideLeft,
+                Qt.TextElideMode.ElideRight,
+                Qt.TextElideMode.ElideMiddle,
+            }
+            else Qt.TextElideMode.ElideNone
         )
         self._format_text()
 

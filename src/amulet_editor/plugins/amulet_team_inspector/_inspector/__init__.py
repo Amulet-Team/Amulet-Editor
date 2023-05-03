@@ -38,7 +38,10 @@ class CustomDraw(QObject):
         if obj == self.target and event.type() == QEvent.Type.Paint:
             painter = QPainter(self.target)
             painter.drawPixmap(QPoint(0, 0), self.background)
-            painter.fillRect(QRect(0, 0, painter.device().width(), painter.device().height()), QColor(115, 215, 255, 128))
+            painter.fillRect(
+                QRect(0, 0, painter.device().width(), painter.device().height()),
+                QColor(115, 215, 255, 128),
+            )
             painter.end()
             return True
         return super().eventFilter(obj, event)

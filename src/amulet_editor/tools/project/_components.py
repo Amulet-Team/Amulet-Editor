@@ -85,7 +85,12 @@ class QCodeEditor(QPlainTextEdit):
                 number = str(blockNumber + 1) + " "
                 painter.setPen(appearance.theme().on_surface.get_qcolor())
                 painter.drawText(
-                    0, top, self.lineNumberArea.width(), height, Qt.AlignmentFlag.AlignRight, number
+                    0,
+                    top,
+                    self.lineNumberArea.width(),
+                    height,
+                    Qt.AlignmentFlag.AlignRight,
+                    number,
                 )
 
             block = block.next()

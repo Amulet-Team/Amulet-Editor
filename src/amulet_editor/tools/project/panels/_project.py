@@ -36,7 +36,10 @@ class ProjectPanel(QWidget):
         self.model = QFileSystemModel()
         self.model.setRootPath(QDir.rootPath())
         self.model.setFilter(
-            QDir.Filter.AllDirs | QDir.Filter.Files | QDir.Filter.NoDotAndDotDot | QDir.Filter.Hidden
+            QDir.Filter.AllDirs
+            | QDir.Filter.Files
+            | QDir.Filter.NoDotAndDotDot
+            | QDir.Filter.Hidden
         )
 
         self.trv_directory.setContextMenuPolicy(Qt.ContextMenuPolicy.CustomContextMenu)

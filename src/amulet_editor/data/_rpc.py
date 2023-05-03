@@ -66,7 +66,9 @@ def _get_func_address(func: CallableT) -> str:
         modname = getattr(func, "__module__")
         qualname = getattr(func, "__qualname__")
     except AttributeError:
-        raise ValueError("func must be a static function with __module__ and __qualname__ attributes")
+        raise ValueError(
+            "func must be a static function with __module__ and __qualname__ attributes"
+        )
     else:
         return f"{modname}.{qualname}"
 
@@ -139,6 +141,7 @@ def _on_listener_connect():
     log.debug(f"New listener connection {socket}")
 
     if _is_broker:
+
         def is_landing_success(response: bool):
             log.debug(f"New connection is_landing {response}")
             _listener_connections[connection] = response
@@ -155,7 +158,9 @@ def _on_listener_connect():
     def on_disconnect():
         is_landing = _listener_connections.pop(connection, None)
         log.debug(f"Listener connection disconnected {socket}. {is_landing}")
-        if _is_broker and not any(map(lambda x: x is not None, _listener_connections.copy().values())):
+        if _is_broker and not any(
+            map(lambda x: x is not None, _listener_connections.copy().values())
+        ):
             # If this is the broker
             # There are no more boolean connections
             if is_landing is None:
@@ -166,7 +171,13 @@ def _on_listener_connect():
                 QApplication.quit()
             else:
                 # The last process closed was not a landing process so open a landing process
-                subprocess.Popen([sys.executable, sys.argv[0]], start_new_session=True, stdin=subprocess.DEVNULL, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+                subprocess.Popen(
+                    [sys.executable, sys.argv[0]],
+                    start_new_session=True,
+                    stdin=subprocess.DEVNULL,
+                    stdout=subprocess.DEVNULL,
+                    stderr=subprocess.DEVNULL,
+                )
 
     socket.disconnected.connect(on_disconnect)
 
@@ -211,8 +222,13 @@ class RemoteProcedureCallingConnection:
         """
         identifier = str(uuid4()).encode()
         address = _get_func_address(func)
-        log.debug(f"Calling remote function {address}(*{args}, **{kwargs}) {identifier.decode()}")
-        self._calls[identifier] = ((address, args, kwargs), (success_callback, error_callback))
+        log.debug(
+            f"Calling remote function {address}(*{args}, **{kwargs}) {identifier.decode()}"
+        )
+        self._calls[identifier] = (
+            (address, args, kwargs),
+            (success_callback, error_callback),
+        )
         payload = self.encode_request(identifier, address, args, kwargs)
         self.socket.write(payload)
 
@@ -229,15 +245,23 @@ class RemoteProcedureCallingConnection:
                     payload = self.socket.read(payload_length).data()
                     if len(payload) != payload_length:
                         raise RuntimeError("Error in data sent over socket.")
-                    identifier, is_response, payload = payload[:36], payload[36], payload[37:]
+                    identifier, is_response, payload = (
+                        payload[:36],
+                        payload[36],
+                        payload[37:],
+                    )
                     if is_response:
                         log.debug(f"New response from {self.socket} {identifier}")
-                        _, (success_callback, error_callback) = self._calls.pop(identifier)
+                        _, (success_callback, error_callback) = self._calls.pop(
+                            identifier
+                        )
 
                         is_success, response = pickle.loads(payload)
 
                         if is_success:
-                            log.debug("Response was a success. Calling success callback.")
+                            log.debug(
+                                "Response was a success. Calling success callback."
+                            )
                             success_callback(response)
                         else:
                             log.debug("Response was an error. Calling error callback.")
@@ -251,7 +275,9 @@ class RemoteProcedureCallingConnection:
                             if func is None:
                                 raise Exception(f"Could not find function {address}")
 
-                            log.debug(f"Calling function {address}(*{args}, **{kwargs}) as requested by {self.socket} {identifier.decode()}")
+                            log.debug(
+                                f"Calling function {address}(*{args}, **{kwargs}) as requested by {self.socket} {identifier.decode()}"
+                            )
                             response = func(*args, **kwargs)
                             log.debug(f"Sending response back to caller. {response}")
                             payload = self.encode_success_response(identifier, response)
@@ -259,7 +285,9 @@ class RemoteProcedureCallingConnection:
 
                         except Exception:
                             log.debug(f"Exception processing request {identifier}")
-                            payload = self.encode_error_response(identifier, traceback.format_exc())
+                            payload = self.encode_error_response(
+                                identifier, traceback.format_exc()
+                            )
                             self.socket.write(payload)
             except Exception as e:
                 log.exception(e)
@@ -281,7 +309,9 @@ class RemoteProcedureCallingConnection:
         :return: The encoded bytes object
         """
 
-        return cls._add_size(identifier + b"\x00" + pickle.dumps((address, args, kwargs)))
+        return cls._add_size(
+            identifier + b"\x00" + pickle.dumps((address, args, kwargs))
+        )
 
     @classmethod
     def encode_success_response(cls, identifier: bytes, response: Any) -> bytes:
@@ -312,6 +342,7 @@ def init_rpc(broker=False):
         log.debug("Connected to broker process.")
 
         if _is_broker:
+
             def on_success_response(result):
                 if result == server_uuid:
                     log.debug("I am the broker")
@@ -330,9 +361,7 @@ def init_rpc(broker=False):
                 dialog.exec()
 
             _broker_connection.call(
-                on_success_response,
-                on_error_response,
-                get_server_uuid
+                on_success_response, on_error_response, get_server_uuid
             )
 
     def on_error():
@@ -346,7 +375,9 @@ def init_rpc(broker=False):
             )
             dialog.exec()
         else:
-            log.debug("Error connecting to broker process. Initialising broker process.")
+            log.debug(
+                "Error connecting to broker process. Initialising broker process."
+            )
             # If it could not connect, try booting the broker process and try again.
             # TODO: pass in logging arguments.
             # TODO: Make this work for PyInstaller builds.
