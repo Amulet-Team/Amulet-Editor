@@ -14,7 +14,7 @@ from amulet_team_locale import set_locale
 
 class HomeView(QWidget, View):
     def __init__(
-        self, parent: Optional[QWidget] = None, f: Qt.WindowFlags = Qt.WindowFlags()
+        self, parent: Optional[QWidget] = None, f: Qt.WindowType = 0
     ):
         super().__init__(parent, f)
         self._layout = QVBoxLayout(self)

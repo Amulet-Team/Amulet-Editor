@@ -18,7 +18,7 @@ class AToolBar(QFrame):
     def __init__(
         self,
         parent: Optional[QWidget] = None,
-        f: Qt.WindowFlags = Qt.WindowFlags(),
+        f: Qt.WindowType = 0,
         orientation=Qt.Vertical,
     ):
         super().__init__(parent, f)

@@ -11,7 +11,7 @@ class AmuletTracebackDialog(Ui_AmuletTracebackDialog):
     def __init__(
         self,
         parent=None,
-        f=Qt.WindowFlags(),
+        f=0,
         title: str = "",
         error: str = "",
         traceback: str = "",
