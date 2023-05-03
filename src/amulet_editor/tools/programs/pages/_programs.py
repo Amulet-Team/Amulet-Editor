@@ -17,7 +17,7 @@ class ProgramsPage(QWidget):
         self.setupUi()
 
     def setupUi(self) -> None:
-        font = QFontDatabase.systemFont(QFontDatabase.FixedFont)
+        font = QFontDatabase.systemFont(QFontDatabase.SystemFont.FixedFont)
 
         self.txe_file = QCodeEditor()
         self.txe_file.setFont(font)

@@ -36,10 +36,13 @@ class ProjectPanel(QWidget):
         self.model = QFileSystemModel()
         self.model.setRootPath(QDir.rootPath())
         self.model.setFilter(
-            QDir.AllDirs | QDir.Files | QDir.NoDotAndDotDot | QDir.Hidden
+            QDir.Filter.AllDirs
+            | QDir.Filter.Files
+            | QDir.Filter.NoDotAndDotDot
+            | QDir.Filter.Hidden
         )
 
-        self.trv_directory.setContextMenuPolicy(Qt.CustomContextMenu)
+        self.trv_directory.setContextMenuPolicy(Qt.ContextMenuPolicy.CustomContextMenu)
         self.trv_directory.setModel(self.model)
         self.trv_directory.hideColumn(1)
         self.trv_directory.hideColumn(2)
@@ -76,8 +79,8 @@ class ProjectPanel(QWidget):
         self.frm_directory = QFrame(self)
         self.frm_directory.setObjectName("frm_directory")
         self.frm_directory.setMinimumSize(QSize(0, 24))
-        self.frm_directory.setFrameShape(QFrame.NoFrame)
-        self.frm_directory.setFrameShadow(QFrame.Raised)
+        self.frm_directory.setFrameShape(QFrame.Shape.NoFrame)
+        self.frm_directory.setFrameShadow(QFrame.Shadow.Raised)
         self.horizontalLayout = QHBoxLayout(self.frm_directory)
         self.horizontalLayout.setSpacing(0)
         self.horizontalLayout.setObjectName("horizontalLayout")
@@ -87,7 +90,7 @@ class ProjectPanel(QWidget):
 
         self.trv_directory = QTreeView(self)
         self.trv_directory.setObjectName("trv_directory")
-        self.trv_directory.setFrameShape(QFrame.NoFrame)
+        self.trv_directory.setFrameShape(QFrame.Shape.NoFrame)
         self.trv_directory.setIndentation(8)
         self.trv_directory.setUniformRowHeights(True)
         self.trv_directory.setHeaderHidden(True)

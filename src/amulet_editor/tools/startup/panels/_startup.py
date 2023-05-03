@@ -28,11 +28,11 @@ class StartupPanel(QWidget):
         self.lbl_links.setProperty("color", "on_primary")
 
         self.lyt_links = QVBoxLayout(self.wgt_links)
-        self.lyt_links.setAlignment(Qt.AlignTop)
+        self.lyt_links.setAlignment(Qt.AlignmentFlag.AlignTop)
         self.lyt_links.setSpacing(5)
 
         self.setLayout(QVBoxLayout(self))
-        self.layout().setAlignment(Qt.AlignTop)
+        self.layout().setAlignment(Qt.AlignmentFlag.AlignTop)
         self.layout().setSpacing(0)
         self.layout().addWidget(self.wgt_links)
 

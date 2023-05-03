@@ -2,7 +2,7 @@ from typing import Optional
 from weakref import ref
 
 from PySide6.QtWidgets import QTreeWidgetItem, QApplication, QWidget
-from PySide6.QtCore import QObject, Qt, QRect, QEvent, QPoint
+from PySide6.QtCore import QObject, QRect, QEvent, QPoint
 from PySide6.QtGui import QMouseEvent, QPainter, QColor, QIcon
 
 from amulet_editor.models.widgets import DisplayException
@@ -38,7 +38,10 @@ class CustomDraw(QObject):
         if obj == self.target and event.type() == QEvent.Type.Paint:
             painter = QPainter(self.target)
             painter.drawPixmap(QPoint(0, 0), self.background)
-            painter.fillRect(QRect(0, 0, painter.device().width(), painter.device().height()), QColor(115, 215, 255, 128))
+            painter.fillRect(
+                QRect(0, 0, painter.device().width(), painter.device().height()),
+                QColor(115, 215, 255, 128),
+            )
             painter.end()
             return True
         return super().eventFilter(obj, event)

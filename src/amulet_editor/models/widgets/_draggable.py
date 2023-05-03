@@ -27,7 +27,7 @@ class ADragContainer(QWidget):
         self._drag = None
 
     def mouseMoveEvent(self, event: QMouseEvent) -> None:
-        if event.buttons() == Qt.LeftButton:
+        if event.buttons() == Qt.MouseButton.LeftButton:
             if self._drag is None:
                 for i in range(self._layout.count()):
                     child = self._layout.itemAt(i).widget()

@@ -31,6 +31,7 @@ from amulet_editor.data.paths._plugin import (
     first_party_plugin_directory,
     third_party_plugin_directory,
 )
+
 # from amulet_editor.data.process._messaging import (
 #     register_global_function,
 #     call_in_parent,

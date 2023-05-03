@@ -66,7 +66,7 @@ class ImportLevelMenu(QObject):
             None,
             "Select Minecraft World",
             os.path.realpath(minecraft.save_directories()[0]),
-            QFileDialog.ShowDirsOnly,
+            QFileDialog.Option.ShowDirsOnly,
         )
         self._widget.btn_import_level.setChecked(False)
 
@@ -118,8 +118,8 @@ class ImportLevelWidget(QWidget):
         lyt_import_level = QHBoxLayout(self)
 
         self.frm_import_level = QFrame(self)
-        self.frm_import_level.setFrameShape(QFrame.NoFrame)
-        self.frm_import_level.setFrameShadow(QFrame.Raised)
+        self.frm_import_level.setFrameShape(QFrame.Shape.NoFrame)
+        self.frm_import_level.setFrameShadow(QFrame.Shadow.Raised)
         self.frm_import_level.setLayout(lyt_import_level)
 
         self.lne_import_level = QLineEdit(self.frm_import_level)

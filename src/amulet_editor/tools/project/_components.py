@@ -63,7 +63,7 @@ class QCodeEditor(QPlainTextEdit):
             selection = QTextEdit.ExtraSelection()
             lineColor = appearance.theme().primary_variant.get_qcolor()
             selection.format.setBackground(lineColor)
-            selection.format.setProperty(QTextFormat.FullWidthSelection, True)
+            selection.format.setProperty(QTextFormat.Property.FullWidthSelection, True)
             selection.cursor = self.textCursor()
             selection.cursor.clearSelection()
             extraSelections.append(selection)
@@ -85,7 +85,12 @@ class QCodeEditor(QPlainTextEdit):
                 number = str(blockNumber + 1) + " "
                 painter.setPen(appearance.theme().on_surface.get_qcolor())
                 painter.drawText(
-                    0, top, self.lineNumberArea.width(), height, Qt.AlignRight, number
+                    0,
+                    top,
+                    self.lineNumberArea.width(),
+                    height,
+                    Qt.AlignmentFlag.AlignRight,
+                    number,
                 )
 
             block = block.next()
@@ -94,7 +99,7 @@ class QCodeEditor(QPlainTextEdit):
             blockNumber += 1
 
     def keyPressEvent(self, event: QKeyEvent):
-        if event.key() == Qt.Key_Tab:
+        if event.key() == Qt.Key.Key_Tab:
             tc = self.textCursor()
             tc.insertText("    ")
         else:

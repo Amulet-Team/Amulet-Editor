@@ -76,7 +76,7 @@ class OpenWorldMenu(QObject):
             None,
             "Select Minecraft World",
             os.path.realpath(path),
-            QFileDialog.ShowDirsOnly,
+            QFileDialog.Option.ShowDirsOnly,
         )
         self._widget.btn_level_directory.setChecked(False)
         self.set_level(path)
@@ -149,8 +149,8 @@ class OpenWorldWidget(QWidget):
         lyt_level_directory = QHBoxLayout(self)
 
         self.frm_level_directory = QFrame(self)
-        self.frm_level_directory.setFrameShape(QFrame.NoFrame)
-        self.frm_level_directory.setFrameShadow(QFrame.Raised)
+        self.frm_level_directory.setFrameShape(QFrame.Shape.NoFrame)
+        self.frm_level_directory.setFrameShadow(QFrame.Shadow.Raised)
         self.frm_level_directory.setLayout(lyt_level_directory)
 
         self.lne_level_directory = QLineEdit(self.frm_level_directory)

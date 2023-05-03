@@ -29,7 +29,7 @@ def parse_args() -> Args:
             help="The Minecraft world or structure to open. Default opens no level",
             action="store",
             dest="level_path",
-            default=None
+            default=None,
         )
 
         parser.add_argument(
@@ -38,16 +38,16 @@ def parse_args() -> Args:
             help="The logging level to set. CRITICAL=50, ERROR=40, WARNING=30, INFO=20, DEBUG=10. Default is WARNING",
             action="store",
             dest="logging_level",
-            default=logging.WARNING
+            default=logging.WARNING,
         )
 
         parser.add_argument(
             "--logging_format",
             type=str,
-            help="The logging format to use. Default is \"%(levelname)s - %(message)s\"",
+            help='The logging format to use. Default is "%(levelname)s - %(message)s"',
             action="store",
             dest="logging_format",
-            default="%(levelname)s - %(message)s"
+            default="%(levelname)s - %(message)s",
         )
 
         _args, _ = parser.parse_known_args()
@@ -61,5 +61,16 @@ def spawn_process(path: str = None):
     new_args = [sys.executable, sys.argv[0]]
     if path is not None:
         new_args += ["--level_path", path]
-    new_args += ["--logging_level", str(this_args.logging_level), "--logging_format", this_args.logging_format]
-    subprocess.Popen(new_args, start_new_session=True, stdin=subprocess.DEVNULL, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+    new_args += [
+        "--logging_level",
+        str(this_args.logging_level),
+        "--logging_format",
+        this_args.logging_format,
+    ]
+    subprocess.Popen(
+        new_args,
+        start_new_session=True,
+        stdin=subprocess.DEVNULL,
+        stdout=subprocess.DEVNULL,
+        stderr=subprocess.DEVNULL,
+    )

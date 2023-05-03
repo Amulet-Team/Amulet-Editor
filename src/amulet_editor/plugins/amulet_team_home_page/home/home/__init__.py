@@ -13,7 +13,7 @@ class HomePage(Ui_HomePage):
         amulet_logo = amulet_logo.scaledToHeight(128)
         self._lbl_app_icon.setPixmap(amulet_logo)
         self._lbl_app_version.setText(f"Version {__version__}")
-        self._central_layout.setAlignment(Qt.AlignCenter)
+        self._central_layout.setAlignment(Qt.AlignmentFlag.AlignCenter)
 
         # TODO: work out why some character sets cannot be displayed
 

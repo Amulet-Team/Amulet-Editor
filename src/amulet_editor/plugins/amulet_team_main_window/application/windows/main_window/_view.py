@@ -20,7 +20,7 @@ class ViewContainer(QWidget):
     def __init__(
         self,
         parent: Optional[QWidget] = None,
-        f: Qt.WindowFlags = Qt.WindowFlags(),
+        f: Qt.WindowType = Qt.WindowType.Widget,
     ):
         super().__init__(parent, f)
         self._uid = None

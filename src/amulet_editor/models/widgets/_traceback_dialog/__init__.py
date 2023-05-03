@@ -1,6 +1,6 @@
 import traceback
 
-from PySide6.QtCore import Slot, Qt, QSize
+from PySide6.QtCore import Slot, QSize, Qt
 from PySide6.QtGui import QGuiApplication, QIcon
 
 from ._traceback_dialog import Ui_AmuletTracebackDialog
@@ -11,7 +11,7 @@ class AmuletTracebackDialog(Ui_AmuletTracebackDialog):
     def __init__(
         self,
         parent=None,
-        f=Qt.WindowFlags(),
+        f=Qt.WindowType.Widget,
         title: str = "",
         error: str = "",
         traceback: str = "",

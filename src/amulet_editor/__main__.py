@@ -36,6 +36,7 @@ except Exception as e_:
 def main() -> None:
     try:
         from multiprocessing import freeze_support
+
         freeze_support()
         import logging
 
@@ -59,6 +60,7 @@ def main() -> None:
             try:
                 import traceback
                 from PySide6.QtWidgets import QApplication
+
                 if QApplication.instance() is None:
                     # QDialog needs an app otherwise it crashes
                     app = QApplication()

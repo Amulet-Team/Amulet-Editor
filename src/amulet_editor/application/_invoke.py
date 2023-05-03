@@ -36,9 +36,9 @@ class InvokeMethod(QObject):
         app = QGuiApplication.instance()
         self.start_signal.connect(
             self.execute,
-            Qt.DirectConnection
+            Qt.ConnectionType.DirectConnection
             if app.thread() is self.thread()
-            else Qt.BlockingQueuedConnection,
+            else Qt.ConnectionType.BlockingQueuedConnection,
         )
         # Move to the application thread
         self.moveToThread(app.thread())
