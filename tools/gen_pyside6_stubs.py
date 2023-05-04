@@ -44,6 +44,43 @@ Void1 = object()
 Void2 = object()
 
 
+ReservedNames = {
+    "False",
+    "def",
+    "if",
+    "raise",
+    "None",
+    "del",
+    "import",
+    "return",
+    "True",
+    "elif",
+    "in",
+    "try",
+    "and",
+    "else",
+    "is",
+    "while",
+    "as",
+    "except",
+    "lambda",
+    "with",
+    "assert",
+    "finally",
+    "nonlocal",
+    "yield",
+    "break",
+    "for",
+    "not",
+    "class",
+    "form",
+    "or",
+    "continue",
+    "global",
+    "pass",
+}
+
+
 BuiltInClassAttrs = {
     "__abstractmethods__",
     "__annotations__",
@@ -410,7 +447,7 @@ class Stub:
             for attr_name in attrs:
                 if attr_name in BuiltInClassAttrs:
                     continue
-                elif attr_name in {"from"}:
+                elif attr_name in ReservedNames:
                     # Uncallable from python
                     self._contents.write(f"{Indent * self._indentation}# {attr_name} = Any\n")
                     continue
