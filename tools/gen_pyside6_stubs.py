@@ -40,8 +40,7 @@ Patches: dict[str, tuple[tuple[str, str], ...]] = {
 
 Indent = "    "
 
-Void1 = object()
-Void2 = object()
+Void = object()
 
 
 ReservedNames = {
@@ -470,10 +469,10 @@ class Stub:
         defmod_name, qualname = get_module_qualname(attr)
         defmod_name = defmod_name or self._module.__name__
         defmod = get_module(attr)
-        super_attr = Void1
+        super_attr = Void
         for base in getattr(container, "__bases__", []):
-            super_attr = getattr(base, attr_name, Void1)
-            if super_attr is not Void1:
+            super_attr = getattr(base, attr_name, Void)
+            if super_attr is not Void:
                 break
 
         if super_attr is attr or get_module_qualname(super_attr) == get_module_qualname(attr):
