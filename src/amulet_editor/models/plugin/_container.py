@@ -44,7 +44,7 @@ class PluginContainer(ABC):
     @classmethod
     @property
     @abstractmethod
-    def FormatVersion(cls) -> int:
+    def FormatVersion(cls) -> int:  # noqa
         raise NotImplementedError
 
     def __init__(self, data: PluginData):
