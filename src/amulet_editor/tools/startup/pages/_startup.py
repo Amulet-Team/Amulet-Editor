@@ -7,7 +7,7 @@ from PySide6.QtWidgets import QLabel, QVBoxLayout, QWidget
 
 
 class StartupPage(QWidget):
-    def __init__(self) -> None:
+    def __init__(self):
         super().__init__()
 
         self.setupUi()

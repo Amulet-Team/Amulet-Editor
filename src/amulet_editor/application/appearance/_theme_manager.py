@@ -8,7 +8,7 @@ from PySide6.QtCore import QObject, Signal
 class ThemeManager(QObject):
     changed = Signal(object)
 
-    def __init__(self) -> None:
+    def __init__(self):
         super().__init__(parent=None)
 
         self._themes: list[Theme] = []
@@ -22,7 +22,7 @@ class ThemeManager(QObject):
     def list_themes(self) -> list[str]:
         return [theme.name for theme in self._themes]
 
-    def set_theme(self, theme_name: str) -> None:
+    def set_theme(self, theme_name: str):
         for theme in self._themes:
             if theme.name == theme_name:
                 self.theme = theme
@@ -39,7 +39,7 @@ def list_themes() -> list[str]:
     return theme_manager.list_themes()
 
 
-def set_theme(theme_name: str) -> None:
+def set_theme(theme_name: str):
     return theme_manager.set_theme(theme_name)
 
 

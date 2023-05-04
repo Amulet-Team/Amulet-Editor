@@ -3,14 +3,14 @@ from typing import Any, Callable, Optional
 
 
 class Observer:
-    def __init__(self, datatype: Optional[type] = Any) -> None:
+    def __init__(self, datatype: Optional[type] = Any):
         self._callbacks: set[Callable[..., None]] = set()
         self._datatype = datatype
 
-    def connect(self, callback: Callable[..., None]) -> None:
+    def connect(self, callback: Callable[..., None]):
         self._callbacks.add(callback)
 
-    def disconnect(self, callback: Callable[..., None]) -> None:
+    def disconnect(self, callback: Callable[..., None]):
         try:
             self._callbacks.remove(callback)
         except KeyError:

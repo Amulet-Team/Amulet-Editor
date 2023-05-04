@@ -59,7 +59,7 @@ class ALinkCard(QPushButton):
         text: str,
         icon: Optional[str] = None,
         parent: Optional[QWidget] = None,
-    ) -> None:
+    ):
         super().__init__(parent=parent)
         self.setProperty("hover", "false")  # X:hover > Y style is broken.
 

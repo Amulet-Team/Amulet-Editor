@@ -24,7 +24,7 @@ from PySide6.QtWidgets import (
 
 
 class ImportLevelMenu(QObject):
-    def __init__(self, set_panel: Callable[[Optional[QWidget]], None]) -> None:
+    def __init__(self, set_panel: Callable[[Optional[QWidget]], None]):
         super().__init__()
 
         self.project_directory = paths.project_directory()
@@ -52,7 +52,7 @@ class ImportLevelMenu(QObject):
     def enable_next(self) -> Observer:
         return self._enable_next
 
-    def navigated(self, destination) -> None:
+    def navigated(self, destination):
         pass
 
     def widget(self) -> QWidget:
@@ -61,7 +61,7 @@ class ImportLevelMenu(QObject):
     def next_menu(self) -> Optional[Menu]:
         return None
 
-    def import_level(self) -> None:
+    def import_level(self):
         path = QFileDialog.getExistingDirectory(
             None,
             "Select Minecraft World",
@@ -82,7 +82,7 @@ class ImportLevelMenu(QObject):
         else:
             self.set_panel(None)
 
-    def set_level(self, level_data: LevelData) -> None:
+    def set_level(self, level_data: LevelData):
         self.project_data.level_directory = level_data.path
 
         self._widget.lne_import_level.setText(level_data.path)
@@ -99,13 +99,13 @@ class ImportLevelMenu(QObject):
         if new in alternate_focus:
             self.uncheck_level_card()
 
-    def uncheck_level_card(self) -> None:
+    def uncheck_level_card(self):
         self._widget.crd_select_level.setChecked(False)
         self._widget.crd_select_level.clicked.emit()
 
 
 class ImportLevelWidget(QWidget):
-    def __init__(self) -> None:
+    def __init__(self):
         super().__init__()
 
         self.setupUi()

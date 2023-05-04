@@ -69,7 +69,7 @@ class QCodeEditor(QPlainTextEdit):
             extraSelections.append(selection)
         self.setExtraSelections(extraSelections)
 
-    def lineNumberAreaPaintEvent(self, event: QPaintEvent) -> None:
+    def lineNumberAreaPaintEvent(self, event: QPaintEvent):
         painter = QPainter(self.lineNumberArea)
 
         painter.fillRect(event.rect(), appearance.theme().background.get_qcolor())
@@ -111,10 +111,10 @@ class QLineNumberArea(QWidget):
         super().__init__(editor)
         self.editor = editor
 
-    def sizeHint(self) -> None:
+    def sizeHint(self):
         return QSize(self.editor.lineNumberAreaWidth(), 0)
 
-    def paintEvent(self, event: QPaintEvent) -> None:
+    def paintEvent(self, event: QPaintEvent):
         self.editor.lineNumberAreaPaintEvent(event)
 
 

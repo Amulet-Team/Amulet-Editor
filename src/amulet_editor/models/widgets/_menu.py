@@ -14,7 +14,7 @@ from PySide6.QtWidgets import (
 
 
 class QMenuWidget(QWidget):
-    def __init__(self, parent: Optional[QWidget] = None) -> None:
+    def __init__(self, parent: Optional[QWidget] = None):
         super().__init__(parent)
         self.setupUi()
 
@@ -30,18 +30,18 @@ class QMenuWidget(QWidget):
     def clicked_next(self) -> Signal:
         return self.btn_next.clicked
 
-    def setMenuTitle(self, text: str) -> None:
+    def setMenuTitle(self, text: str):
         self._lbl_menu_title.setText(text)
 
     def menuTitle(self) -> str:
         return self._lbl_menu_title.text()
 
-    def setWidget(self, widget: QWidget) -> None:
+    def setWidget(self, widget: QWidget):
         if widget not in self._swgt_menu.children():
             self._swgt_menu.addWidget(widget)
         self._swgt_menu.setCurrentWidget(widget)
 
-    def removeWidget(self, widget: QWidget) -> None:
+    def removeWidget(self, widget: QWidget):
         self._swgt_menu.removeWidget(widget)
 
     def setupUi(self):
@@ -134,7 +134,7 @@ class QMenuWidget(QWidget):
 
         self.retranslateUi()
 
-    def retranslateUi(self) -> None:
+    def retranslateUi(self):
         # Disable formatting to condense tranlate functions
         # fmt: off
         self.btn_cancel.setText(QCoreApplication.translate("QMenuWidget", "Cancel", None))

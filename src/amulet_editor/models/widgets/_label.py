@@ -44,7 +44,7 @@ class QElidedLabel(QLabel):
     def elideMode(self) -> Qt.TextElideMode:
         return self._text_elide_mode
 
-    def setElideMode(self, mode: Qt.TextElideMode) -> None:
+    def setElideMode(self, mode: Qt.TextElideMode):
         self._text_elide_mode = (
             mode
             if mode
@@ -61,14 +61,14 @@ class QElidedLabel(QLabel):
     def text(self) -> str:
         return self._text
 
-    def setText(self, text: str) -> None:
+    def setText(self, text: str):
         self._text = text
         self._format_text()
 
-    def resizeEvent(self, event: QResizeEvent) -> None:
+    def resizeEvent(self, event: QResizeEvent):
         self._format_text()
 
-    def _format_text(self) -> None:
+    def _format_text(self):
         super().setText(self._elide_text(self._text))
 
     def _elide_text(self, text: str):
@@ -151,11 +151,11 @@ class QHoverLabel(QLabel):
         self.setParent(self.window())
         self.setText(text)
 
-    def setText(self, text: str) -> None:
+    def setText(self, text: str):
         super().setText(text)
         self.setFixedSize(self.minimumSizeHint() + QSize(30, 6))
 
-    def showEvent(self, event: QShowEvent) -> None:
+    def showEvent(self, event: QShowEvent):
         pos_gbl = self._ref_widget.parent().mapToGlobal(self._ref_widget.pos())
         pos_rel = self.parent().mapFromGlobal(pos_gbl)
         pos_mov = QPoint(
@@ -167,6 +167,6 @@ class QHoverLabel(QLabel):
         self.parent().update()  # Fix rendering artifacts
         return super().showEvent(event)
 
-    def hideEvent(self, event: QHideEvent) -> None:
+    def hideEvent(self, event: QHideEvent):
         self.parent().update()  # Fix rendering artifacts
         return super().hideEvent(event)

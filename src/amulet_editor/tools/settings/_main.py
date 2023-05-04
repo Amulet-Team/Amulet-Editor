@@ -4,7 +4,7 @@ from amulet_editor.tools.settings._panels import SettingsPanel
 
 
 class Settings(AmuletTool):
-    def __init__(self) -> None:
+    def __init__(self):
         self._page = AmuletView(SettingsPage())
         self._primary_panel = AmuletView(SettingsPanel())
         self._secondary_panel = AmuletView(None)

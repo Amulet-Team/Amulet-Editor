@@ -12,7 +12,7 @@ from PySide6.QtWidgets import QApplication
 
 
 class Color:
-    def __init__(self, hex: str) -> None:
+    def __init__(self, hex: str):
         self._qcolor = QColor(hex)
 
     def get_qcolor(self) -> QColor:
@@ -39,7 +39,7 @@ class Color:
 
 
 class Theme:
-    def __init__(self, theme_dir: str) -> None:
+    def __init__(self, theme_dir: str):
         with open(os.path.join(theme_dir, "theme.json"), "r") as fh:
             self._theme: dict[str, Any] = json.load(fh)
 
@@ -60,7 +60,7 @@ class Theme:
                     os.path.join(path_style_sheets, style_name)
                 )
 
-    def apply(self, application: QApplication) -> None:
+    def apply(self, application: QApplication):
         """Apply theme to a `QtWidgets.QApplication`."""
         application.setStyle(self._theme["style"])
         application.setStyleSheet(self._style_sheets["application.qss"])

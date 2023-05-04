@@ -28,7 +28,7 @@ class AIconCard(QPushButton):
         text: str = "",
         *,
         parent: Optional[QWidget] = None,
-    ) -> None:
+    ):
         super().__init__(parent=parent)
         self.setProperty("hover", "false")
         layout = QHBoxLayout(self)
@@ -65,7 +65,7 @@ class AIconCard(QPushButton):
     def setHeading(self, heading: str):
         self._lbl_description.setProperty("heading", heading)
 
-    def setIcon(self, icon_path: str) -> None:
+    def setIcon(self, icon_path: str):
         self._svg_icon.load(build.get_resource(icon_path))
 
     def enterEvent(self, event: QEnterEvent):
@@ -89,7 +89,7 @@ class QLevelSelectionCard(QPushButton):
 
         self.setupUi()
 
-    def setLayout(self, arg__1: QLayout) -> None:
+    def setLayout(self, arg__1: QLayout):
         return None
 
     def setLevel(self, level_data: Optional[LevelData]):
@@ -151,7 +151,7 @@ class QLevelSelectionCard(QPushButton):
     def layout(self) -> QHBoxLayout:
         return super().layout()
 
-    def setupUi(self) -> None:
+    def setupUi(self):
         self.swgt_container = QStackedWidget(self)
         self.swgt_container.setAttribute(
             Qt.WidgetAttribute.WA_TransparentForMouseEvents
@@ -182,7 +182,7 @@ class QLevelSelectionCard(QPushButton):
 
         self.retranslateUi()
 
-    def retranslateUi(self) -> None:
+    def retranslateUi(self):
         # Disable formatting to condense tranlate functions
         # fmt: off
         self.lbl_info.setText(QCoreApplication.translate("QLevelSelectionCard", "Click to Select World", None))

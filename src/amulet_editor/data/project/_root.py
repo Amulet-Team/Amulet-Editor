@@ -16,7 +16,7 @@ _projects_json = os.path.join(paths.user_directory(), "projects.json")
 changed = Observer(str)
 
 
-def remember_project(path: str) -> None:
+def remember_project(path: str):
     """Adds path to list of projects. If already in list, update last accessed timestamp."""
 
     if os.path.exists(_projects_json):
@@ -51,7 +51,7 @@ def root() -> str:
     return _root
 
 
-def set_root(path: str) -> None:
+def set_root(path: str):
     """Changes the root directory of the current project."""
     global _root
 

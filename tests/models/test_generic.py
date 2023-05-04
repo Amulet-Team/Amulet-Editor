@@ -7,7 +7,7 @@ class TestObserver(unittest.TestCase):
     def test_connect_none(self):
         """Connect one callback to observer and ensure it exists"""
 
-        def test_callback() -> None:
+        def test_callback():
             pass
 
         observer = Observer(None)
@@ -20,7 +20,7 @@ class TestObserver(unittest.TestCase):
         """Emit observer twice and ensure both events occur"""
         self.emit_count = 0
 
-        def test_callback() -> None:
+        def test_callback():
             self.emit_count += 1
 
         observer = Observer(None)
@@ -35,7 +35,7 @@ class TestObserver(unittest.TestCase):
         """Attempt to pass invalid emit types"""
 
         class TestClass:
-            def __init__(self) -> None:
+            def __init__(self):
                 pass
 
         observer = Observer(str)
@@ -50,14 +50,14 @@ class TestObserver(unittest.TestCase):
         self.emit_count = 0
 
         class TestClass:
-            def __init__(self) -> None:
+            def __init__(self):
                 pass
 
         class TestSubclass(TestClass):
-            def __init__(self) -> None:
+            def __init__(self):
                 pass
 
-        def test_callback(cls: TestClass) -> None:
+        def test_callback(cls: TestClass):
             self.assertIsInstance(cls, TestClass)
             self.emit_count += 1
 

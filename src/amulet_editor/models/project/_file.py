@@ -4,7 +4,7 @@ from typing import Any
 
 
 class AmuletProject:
-    def __init__(self, path: str) -> None:
+    def __init__(self, path: str):
         ext = pathlib.Path(path).suffix
         if ext == ".amulet-project":
             with open(path) as _amulet_project:
@@ -26,7 +26,7 @@ class AmuletProject:
     def read(self) -> str:
         return jsonlib.dumps(self.__json, indent=4)
 
-    def write(self, json: str) -> None:
+    def write(self, json: str):
         self.__json = jsonlib.loads(json)
         with open(self.__path) as _amulet_project:
             jsonlib.dump(self.__path, _amulet_project, indent=4)

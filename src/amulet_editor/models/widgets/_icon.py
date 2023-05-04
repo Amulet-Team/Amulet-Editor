@@ -95,7 +95,7 @@ class ATooltipIconButton(AIconButton):
     def toolTip(self) -> str:
         return "" if self._hlbl_tooltip is None else self._hlbl_tooltip.text()
 
-    def setToolTip(self, label: str) -> None:
+    def setToolTip(self, label: str):
         if self._hlbl_tooltip is None:
             self._hlbl_tooltip = QHoverLabel(label, self)
             self._hlbl_tooltip.hide()

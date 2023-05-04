@@ -8,10 +8,10 @@ from amulet_editor.models.text import Motd
 
 
 class LevelData:
-    def __init__(self, level_format: Union[AnvilFormat, LevelDBFormat]) -> None:
+    def __init__(self, level_format: Union[AnvilFormat, LevelDBFormat]):
         self.load_format(level_format)
 
-    def load_format(self, level_format: Union[AnvilFormat, LevelDBFormat]) -> None:
+    def load_format(self, level_format: Union[AnvilFormat, LevelDBFormat]):
         if isinstance(level_format, AnvilFormat):
             last_played = datetime.utcfromtimestamp(level_format.last_played / 1000)
         elif isinstance(level_format, LevelDBFormat):
