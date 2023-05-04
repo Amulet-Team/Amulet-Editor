@@ -1,0 +1,18 @@
+{
+	"identifier": "amulet_team_3d_viewer",
+	"version": "1.0.0",
+	"name": "Amulet 3D Viewer",
+	"depends": {
+		"python": "~=3.9",
+		"library": [
+			"PySide6~=6.2",
+			"amulet_editor~=1.0a0"
+		],
+		"plugin": [
+			"amulet_team_locale~=1.0",
+			"amulet_team_main_window~=1.0",
+			"amulet_team_home_page"
+		]
+	},
+	"locked": "true"
+}
