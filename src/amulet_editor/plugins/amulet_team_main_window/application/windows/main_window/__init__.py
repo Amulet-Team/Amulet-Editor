@@ -88,7 +88,8 @@ class AmuletMainWindow(Ui_AmuletLandingWindow):
         :param view_cls: The view class to unregister.
         :return:
         """
-        raise NotImplementedError
+        # TODO: raise NotImplementedError
+        pass
 
     def add_toolbar_button(
         self, uid: UID, icon: str, name: str, callback: Callable[[], None] = None
