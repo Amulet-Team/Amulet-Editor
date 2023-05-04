@@ -12,6 +12,7 @@ class Args(Protocol):
     level_path: Optional[str]
     logging_level: int
     logging_format: str
+    trace: bool
 
 
 _args = None
@@ -50,6 +51,13 @@ def parse_args() -> Args:
             default="%(levelname)s - %(message)s",
         )
 
+        parser.add_argument(
+            "--trace",
+            help="If defined, print the qualified name of each function as it is called. Useful if the program crashes due to an access violation and you don't know where it came from.",
+            action="store_true",
+            dest="trace"
+        )
+
         _args, _ = parser.parse_known_args()
 
     return _args  # noqa
@@ -67,6 +75,8 @@ def spawn_process(path: str = None):
         "--logging_format",
         this_args.logging_format,
     ]
+    if this_args.trace:
+        new_args.append("--trace")
     subprocess.Popen(
         new_args,
         start_new_session=True,
