@@ -27,13 +27,14 @@ from PySide6.support.signature.mapping import ArrayLikeVariable, Default, Instan
 StubPath = "stubs"
 
 Patches: dict[str, tuple[tuple[str, str], ...]] = {
-    "QtWidgets.pyi": (
+    os.path.join("PySide6", "QtWidgets.pyi"): (
         ("def setParent(self, parent: PySide6.QtWidgets.QWidget", "def setParent(self, parent: Optional[PySide6.QtWidgets.QWidget]"),
     ),
-    "QtCore.pyi": (
+    os.path.join("PySide6", "QtCore.pyi"): (
         ("def setParent(self, parent: PySide6.QtCore.QObject", "def setParent(self, parent: Optional[PySide6.QtCore.QObject]"),
+        ("def translate(context: bytes, key: bytes, disambiguation: Optional[bytes] = None", "def translate(context: str, key: str, disambiguation: Optional[str] = None"),
     ),
-    "QtGui.pyi": (
+    os.path.join("PySide6", "QtGui.pyi"): (
         ("def setParent(self, parent: PySide6.QtGui.QWindow", "def setParent(self, parent: Optional[PySide6.QtGui.QWindow]"),
     )
 }
@@ -406,12 +407,16 @@ class Stub:
 
         self._generate_module()
 
+        contents = self._contents.getvalue()
+        for find, replace in Patches.get(os.path.relpath(stub_path, StubPath), ()):
+            contents = contents.replace(find, replace)
+
         with open(stub_path, "w") as f:
             if self._module.__doc__:
                 f.write(f'"""{self._module.__doc__}"""\n')
             f.write("from __future__ import annotations\n")
             f.write(self._imports.pack())
-            f.write(self._contents.getvalue())
+            f.write(contents)
 
     def _generate_module(self):
         for attr_name in dir(self._module):
