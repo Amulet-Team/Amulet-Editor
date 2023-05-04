@@ -32,7 +32,9 @@ class CustomTabPage(QLabel, TabPage):
 
 
 class AmuletMainWindow(QMainWindow):
-    _main_window: Callable[[], Optional[AmuletMainWindow]] = lambda: None
+    @staticmethod
+    def _main_window() -> Optional[AmuletMainWindow]:
+        return None
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
