@@ -1,10 +1,9 @@
 import os
-from typing import Optional
 
 from amulet_editor.data import system
 
 
-def save_directories() -> Optional[str]:
+def save_directories() -> list[str]:
     """
     Returns a list of paths to all default Minecraft save
     directories on the current device.
@@ -54,4 +53,4 @@ def save_directories() -> Optional[str]:
             )
         )
 
-    return [path for path in directories if os.path.isdir(path)]
+    return list(filter(os.path.isdir, directories))

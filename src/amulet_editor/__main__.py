@@ -33,7 +33,7 @@ except Exception as e_:
     _on_error(e_)
 
 
-def main() -> None:
+def main():
     try:
         from multiprocessing import freeze_support
 

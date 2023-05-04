@@ -19,7 +19,7 @@ from PySide6.QtWidgets import (
 class ProgramsPanel(QWidget):
     file_selected = Signal(str)
 
-    def __init__(self, parent: Optional[QWidget] = None) -> None:
+    def __init__(self, parent: Optional[QWidget] = None):
         if parent is None:
             super().__init__()
         else:
@@ -27,12 +27,12 @@ class ProgramsPanel(QWidget):
 
         self.setupUi()
 
-    def print_directory(self) -> None:
+    def print_directory(self):
         file = self.model.filePath(self.trv_directory.selectedIndexes()[0])
 
         self.file_selected.emit(file)
 
-    def set_folder(self, folder: str) -> None:
+    def set_folder(self, folder: str):
         self.level_data = LevelData(amulet.load_format(folder))
 
         self.trv_directory.setRootIndex(self.model.index(folder))

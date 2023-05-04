@@ -6,7 +6,7 @@ from PySide6.QtWidgets import QWidget
 
 
 class Programs(AmuletTool):
-    def __init__(self) -> None:
+    def __init__(self):
         self._page = AmuletView()
         self._primary_panel = AmuletView()
         self._secondary_panel = AmuletView()
@@ -44,7 +44,7 @@ class Programs(AmuletTool):
 
 
 class ProgramsManager(QObject):
-    def __init__(self, plugin: Programs) -> None:
+    def __init__(self, plugin: Programs):
         super().__init__()
 
         self.plugin = plugin
@@ -56,12 +56,12 @@ class ProgramsManager(QObject):
         self.set_programs_page()
         self.set_programs_panel()
 
-    def set_programs_page(self) -> None:
+    def set_programs_page(self):
         page = self.programs_page
 
         self.plugin.set_page(page)
 
-    def set_programs_panel(self) -> None:
+    def set_programs_panel(self):
         panel = self.programs_panel
 
         self.plugin.set_primary_panel(panel)

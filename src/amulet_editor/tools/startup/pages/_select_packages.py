@@ -12,7 +12,7 @@ from PySide6.QtWidgets import (
 
 
 class SelectPackagesPage(QWidget):
-    def __init__(self) -> None:
+    def __init__(self):
         super().__init__()
 
         self.setupUi()

@@ -4,7 +4,7 @@ from amulet_editor.tools.packages._panels import PackagesPanel
 
 
 class Packages(AmuletTool):
-    def __init__(self) -> None:
+    def __init__(self):
         self._page = AmuletView(PackagesPage())
         self._primary_panel = AmuletView(PackagesPanel())
         self._secondary_panel = AmuletView(None)

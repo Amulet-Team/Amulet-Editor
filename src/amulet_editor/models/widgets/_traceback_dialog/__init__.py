@@ -1,4 +1,4 @@
-import traceback
+import traceback as tb
 
 from PySide6.QtCore import Slot, QSize, Qt
 from PySide6.QtGui import QGuiApplication, QIcon
@@ -47,7 +47,7 @@ class DisplayException:
             dialog = AmuletTracebackDialog(
                 title=self._msg,
                 error=str(exc_val),
-                traceback="".join(traceback.format_tb(exc_tb)),
+                traceback="".join(tb.format_tb(exc_tb)),
             )
             dialog.exec()
         return False

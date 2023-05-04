@@ -52,7 +52,7 @@ def parse_args() -> Args:
 
         _args, _ = parser.parse_known_args()
 
-    return _args
+    return _args  # noqa
 
 
 def spawn_process(path: str = None):

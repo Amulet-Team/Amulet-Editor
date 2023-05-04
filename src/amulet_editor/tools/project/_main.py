@@ -6,7 +6,7 @@ from PySide6.QtWidgets import QWidget
 
 
 class Project(AmuletTool):
-    def __init__(self) -> None:
+    def __init__(self):
         self._page = AmuletView()
         self._primary_panel = AmuletView()
         self._secondary_panel = AmuletView()
@@ -44,7 +44,7 @@ class Project(AmuletTool):
 
 
 class ProjectManager(QObject):
-    def __init__(self, plugin: Project) -> None:
+    def __init__(self, plugin: Project):
         super().__init__()
 
         self.plugin = plugin
@@ -56,12 +56,12 @@ class ProjectManager(QObject):
         self.set_project_page()
         self.set_project_panel()
 
-    def set_project_page(self) -> None:
+    def set_project_page(self):
         page = self.project_page
 
         self.plugin.set_page(page)
 
-    def set_project_panel(self) -> None:
+    def set_project_panel(self):
         panel = self.project_panel
 
         panel.file_selected.connect(self.project_page.show_file)

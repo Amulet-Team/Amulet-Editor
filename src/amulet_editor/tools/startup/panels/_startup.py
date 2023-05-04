@@ -16,7 +16,7 @@ class LinkData:
 
 
 class StartupPanel(QWidget):
-    def __init__(self) -> None:
+    def __init__(self):
         super().__init__()
 
         self.wgt_links = QWidget(self)
@@ -73,7 +73,7 @@ class StartupPanel(QWidget):
 
         self.retranslateUi()
 
-    def retranslateUi(self) -> None:
+    def retranslateUi(self):
         # Disable formatting to condense tranlate functions
         # fmt: off
         self.lbl_links.setText(QCoreApplication.translate("StartupPanel", "External Links", None))

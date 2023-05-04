@@ -61,7 +61,7 @@ class WorldSelectionPanel(QWidget):
     level_data = Signal(LevelData)
     parse = Signal(str)
 
-    def __init__(self) -> None:
+    def __init__(self):
         super().__init__()
 
         self.setupUi()
@@ -105,7 +105,7 @@ class WorldSelectionPanel(QWidget):
         clicked_card.setChecked(True)
         self.level_data.emit(clicked_card.level_data)
 
-    def load_world_cards(self) -> None:
+    def load_world_cards(self):
         level_paths = minecraft.locate_levels(minecraft.save_directories())
 
         for path in level_paths:
@@ -143,13 +143,13 @@ class WorldSelectionPanel(QWidget):
 
         self.filter_cards()
 
-    def show_search_options(self) -> None:
+    def show_search_options(self):
         if self.btn_search_level.isChecked():
             self.scr_search_options.setVisible(True)
         else:
             self.scr_search_options.setVisible(False)
 
-    def toggle_sort(self) -> None:
+    def toggle_sort(self):
         self._sort_descending = not self._sort_descending
         if self._sort_descending:
             self.btn_sort.setIcon("sort-descending.svg")
@@ -160,7 +160,7 @@ class WorldSelectionPanel(QWidget):
 
     def update_filters(
         self, version: Optional[str] = None, edition: Optional[str] = None
-    ) -> None:
+    ):
         if version is not None and version not in self._minecraft_versions:
             self._minecraft_versions.append(version)
             if "Unknown" not in self._minecraft_versions:
@@ -182,7 +182,7 @@ class WorldSelectionPanel(QWidget):
 
             self.cbx_edition.insertItem(index, edition)
 
-    def filter_cards(self) -> None:
+    def filter_cards(self):
         search_text = self.lne_search_level.text()
         edition = self.cbx_edition.currentText()
         version = self.cbx_version.currentText()

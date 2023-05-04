@@ -69,7 +69,7 @@ class QCodeEditor(QPlainTextEdit):
             extraSelections.append(selection)
         self.setExtraSelections(extraSelections)
 
-    def lineNumberAreaPaintEvent(self, event: QPaintEvent) -> None:
+    def lineNumberAreaPaintEvent(self, event: QPaintEvent):
         painter = QPainter(self.lineNumberArea)
 
         painter.fillRect(event.rect(), appearance.theme().background.get_qcolor())
@@ -111,10 +111,10 @@ class QLineNumberArea(QWidget):
         super().__init__(editor)
         self.editor = editor
 
-    def sizeHint(self) -> None:
+    def sizeHint(self):
         return QSize(self.editor.lineNumberAreaWidth(), 0)
 
-    def paintEvent(self, event: QPaintEvent) -> None:
+    def paintEvent(self, event: QPaintEvent):
         self.editor.lineNumberAreaPaintEvent(event)
 
 
@@ -213,14 +213,14 @@ class MCFunctionHighlighter(QSyntaxHighlighter):
         pattern = r"^(" + function_re + r")\b|(?<=run )\b(" + function_re + r")\b"
         self.add_mapping(pattern, function_format)
 
-    def add_mapping(self, pattern, format):
-        self._mappings[pattern] = format
+    def add_mapping(self, pattern, fmt):
+        self._mappings[pattern] = fmt
 
     def highlightBlock(self, text):
-        for pattern, format in self._mappings.items():
+        for pattern, fmt in self._mappings.items():
             for match in re.finditer(pattern, text):
                 start, end = match.span()
-                self.setFormat(start, end - start, format)
+                self.setFormat(start, end - start, fmt)
 
 
 class JsonHighlighter(QSyntaxHighlighter):
@@ -254,11 +254,11 @@ class JsonHighlighter(QSyntaxHighlighter):
         pattern = r"(?<=:\s)(-*((\d+[.]\d+)|(\d+)))"
         self.add_mapping(pattern, number_value_format)
 
-    def add_mapping(self, pattern, format):
-        self._mappings[pattern] = format
+    def add_mapping(self, pattern, fmt):
+        self._mappings[pattern] = fmt
 
     def highlightBlock(self, text):
-        for pattern, format in self._mappings.items():
+        for pattern, fmt in self._mappings.items():
             for match in re.finditer(pattern, text):
                 start, end = match.span()
-                self.setFormat(start, end - start, format)
+                self.setFormat(start, end - start, fmt)

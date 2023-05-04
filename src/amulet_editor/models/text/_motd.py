@@ -75,7 +75,7 @@ class Motd:
 
         rtf = ""
         for item in motd_split:
-            if not "\u00A7" in item:
+            if "\u00A7" not in item:
                 style = (
                     ""
                     if not any(value is None for value in style_definitions.values())
@@ -84,7 +84,7 @@ class Motd:
                             [
                                 f"{definition}:{value};"
                                 for definition, value in style_definitions.items()
-                                if not value is None
+                                if value is not None
                             ]
                         )
                     )

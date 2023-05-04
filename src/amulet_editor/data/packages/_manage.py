@@ -13,7 +13,7 @@ def list_tools():
 
 
 def enable_tool(tool: AmuletTool):
-    if not tool in enabled_tools:
+    if tool not in enabled_tools:
         enabled_tools.append(tool)
 
 
@@ -27,7 +27,7 @@ def list_packages():
 
 
 def install_package(package: AmuletPackage):
-    if not package in installed_packages:
+    if package not in installed_packages:
         installed_packages.append(package)
 
 

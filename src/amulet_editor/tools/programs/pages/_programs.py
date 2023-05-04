@@ -6,7 +6,7 @@ from PySide6.QtWidgets import QVBoxLayout, QWidget
 
 
 class ProgramsPage(QWidget):
-    def __init__(self, parent: Optional[QWidget] = None) -> None:
+    def __init__(self, parent: Optional[QWidget] = None):
         if parent is None:
             super().__init__()
         else:
@@ -16,7 +16,7 @@ class ProgramsPage(QWidget):
 
         self.setupUi()
 
-    def setupUi(self) -> None:
+    def setupUi(self):
         font = QFontDatabase.systemFont(QFontDatabase.SystemFont.FixedFont)
 
         self.txe_file = QCodeEditor()

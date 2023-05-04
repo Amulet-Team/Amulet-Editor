@@ -22,7 +22,7 @@ json_like = (".json", ".mcmeta")
 
 
 class ProjectPage(QWidget):
-    def __init__(self, parent: Optional[QWidget] = None) -> None:
+    def __init__(self, parent: Optional[QWidget] = None):
         if parent is None:
             super().__init__()
         else:
@@ -32,7 +32,7 @@ class ProjectPage(QWidget):
 
         self.setupUi()
 
-    def show_file(self, file_path: str) -> None:
+    def show_file(self, file_path: str):
         if os.path.isfile(file_path) and os.access(file_path, R_OK):
             try:
                 with open(file_path, "r") as textio:
@@ -58,7 +58,7 @@ class ProjectPage(QWidget):
                 self.txe_file.clear()
                 self.txe_file.setPlainText(f"Error Decoding File:\n{file_path}\n")
 
-    def setupUi(self) -> None:
+    def setupUi(self):
         font = QFontDatabase.systemFont(QFontDatabase.SystemFont.FixedFont)
 
         self.txe_file = QCodeEditor()

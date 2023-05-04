@@ -11,6 +11,7 @@ SelfMenu = TypeVar("SelfMenu", bound="Menu")
 
 
 class AutoName(Enum):
+    @staticmethod
     def _generate_next_value_(name, start, count, last_values):
         return name
 
@@ -30,7 +31,7 @@ class ProjectData:
 
 class Menu(Protocol):
     @abstractmethod
-    def __init__(self, set_panel: Callable) -> None:
+    def __init__(self, set_panel: Callable):
         raise NotImplementedError
 
     @property
@@ -46,7 +47,7 @@ class Menu(Protocol):
         raise NotImplementedError
 
     @abstractmethod
-    def navigated(self, destination) -> None:
+    def navigated(self, destination):
         """Receives a Navigate enum to convey navigation to and from this menu."""
         raise NotImplementedError
 
