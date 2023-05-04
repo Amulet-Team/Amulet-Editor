@@ -26,7 +26,7 @@ class LevelData:
         self._edition = level_format.platform.title()
         self._icon_path = (
             level_format.world_image_path
-            if not amulet.IMG_DIRECTORY in level_format.world_image_path
+            if amulet.IMG_DIRECTORY not in level_format.world_image_path
             else None
         )
         self._name = Motd(level_format.level_name)

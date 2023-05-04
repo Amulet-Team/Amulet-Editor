@@ -12,8 +12,8 @@ from PySide6.QtWidgets import QApplication
 
 
 class Color:
-    def __init__(self, hex: str):
-        self._qcolor = QColor(hex)
+    def __init__(self, colour_hex: str):
+        self._qcolor = QColor(colour_hex)
 
     def get_qcolor(self) -> QColor:
         return self._qcolor

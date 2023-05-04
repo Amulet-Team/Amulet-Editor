@@ -1,4 +1,5 @@
 import os
+from typing import Optional
 
 from amulet_editor.application.appearance._theme import Theme
 from amulet_editor.data import build, project
@@ -10,22 +11,27 @@ class ThemeManager(QObject):
 
     def __init__(self):
         super().__init__(parent=None)
+        self._theme: Optional[Theme] = None
 
         self._themes: list[Theme] = []
         theme_dir = build.get_resource("themes")
-        for theme in os.listdir(theme_dir):
-            if theme != "_default":
-                self._themes.append(Theme(os.path.join(theme_dir, theme)))
+        for theme_ in os.listdir(theme_dir):
+            if theme_ != "_default":
+                self._themes.append(Theme(os.path.join(theme_dir, theme_)))
 
         self.set_theme(project.settings()["theme"])
 
+    @property
+    def theme(self) -> Theme:
+        return self._theme
+
     def list_themes(self) -> list[str]:
-        return [theme.name for theme in self._themes]
+        return [theme_.name for theme_ in self._themes]
 
     def set_theme(self, theme_name: str):
-        for theme in self._themes:
-            if theme.name == theme_name:
-                self.theme = theme
+        for theme_ in self._themes:
+            if theme_.name == theme_name:
+                self._theme = theme_
                 self.changed.emit(self.theme)
                 return
 

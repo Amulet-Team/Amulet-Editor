@@ -213,14 +213,14 @@ class MCFunctionHighlighter(QSyntaxHighlighter):
         pattern = r"^(" + function_re + r")\b|(?<=run )\b(" + function_re + r")\b"
         self.add_mapping(pattern, function_format)
 
-    def add_mapping(self, pattern, format):
-        self._mappings[pattern] = format
+    def add_mapping(self, pattern, fmt):
+        self._mappings[pattern] = fmt
 
     def highlightBlock(self, text):
-        for pattern, format in self._mappings.items():
+        for pattern, fmt in self._mappings.items():
             for match in re.finditer(pattern, text):
                 start, end = match.span()
-                self.setFormat(start, end - start, format)
+                self.setFormat(start, end - start, fmt)
 
 
 class JsonHighlighter(QSyntaxHighlighter):
@@ -254,11 +254,11 @@ class JsonHighlighter(QSyntaxHighlighter):
         pattern = r"(?<=:\s)(-*((\d+[.]\d+)|(\d+)))"
         self.add_mapping(pattern, number_value_format)
 
-    def add_mapping(self, pattern, format):
-        self._mappings[pattern] = format
+    def add_mapping(self, pattern, fmt):
+        self._mappings[pattern] = fmt
 
     def highlightBlock(self, text):
-        for pattern, format in self._mappings.items():
+        for pattern, fmt in self._mappings.items():
             for match in re.finditer(pattern, text):
                 start, end = match.span()
-                self.setFormat(start, end - start, format)
+                self.setFormat(start, end - start, fmt)

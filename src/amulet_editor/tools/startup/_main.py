@@ -1,3 +1,4 @@
+from typing import Optional
 from functools import partial
 
 from amulet_editor.data import packages, project
@@ -27,7 +28,7 @@ class Startup(AmuletTool):
     def set_primary_panel(self, widget: QWidget):
         self._primary_panel.setWidget(widget)
 
-    def set_secondary_panel(self, widget: QWidget):
+    def set_secondary_panel(self, widget: Optional[QWidget]):
         self._secondary_panel.setWidget(widget)
 
     @property
