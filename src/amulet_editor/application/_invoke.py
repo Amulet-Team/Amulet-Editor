@@ -25,7 +25,6 @@ class InvokeMethod(QObject):
         """
         Invoke a method in the main thread and optionally get the return value in a callback.
 
-        :param app: The instance of the QApplication
         :param method: The method to be called in the main thread.
         :return: The method return value.
         """
