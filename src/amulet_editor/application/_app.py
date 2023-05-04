@@ -1,4 +1,6 @@
 from __future__ import annotations
+
+import threading
 from typing import Optional
 import sys
 import os
@@ -74,6 +76,21 @@ def app_main():
     logging.basicConfig(
         level=args.logging_level, format=args.logging_format, force=True
     )
+
+    if args.trace:
+
+        def trace_calls(frame, event, arg):
+            if event == "call":
+                try:
+                    func_name = frame.f_code.co_name
+                    module_name = frame.f_globals["__name__"]
+                    logging.info(f"Call to {module_name}.{func_name}")
+                except AttributeError:
+                    pass
+            return trace_calls
+
+        sys.settrace(trace_calls)
+        threading.settrace(trace_calls)
 
     file_path = os.path.join(
         logging_directory(),
