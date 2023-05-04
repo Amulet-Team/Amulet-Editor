@@ -41,11 +41,7 @@ class PluginContainer(ABC):
     instance: Optional[Plugin]  # The instance of the plugin.
     state: PluginState
 
-    @classmethod
-    @property
-    @abstractmethod
-    def FormatVersion(cls) -> int:  # noqa
-        raise NotImplementedError
+    FormatVersion: int = None
 
     def __init__(self, data: PluginData):
         self.data = data
@@ -86,6 +82,8 @@ class PluginContainer(ABC):
         raise NotImplementedError
 
     def __init_subclass__(cls, **kwargs):
+        if cls.FormatVersion is None:
+            raise NotImplementedError("FormatVersion has not been set.")
         if cls.FormatVersion in _plugin_classes:
             raise ValueError(
                 f"Two classes have been registered with format version {cls.FormatVersion}"
