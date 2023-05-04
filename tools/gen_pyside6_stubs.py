@@ -33,6 +33,7 @@ Patches: dict[str, tuple[tuple[str, str], ...]] = {
     os.path.join("PySide6", "QtCore.pyi"): (
         ("def setParent(self, parent: PySide6.QtCore.QObject", "def setParent(self, parent: Optional[PySide6.QtCore.QObject]"),
         ("def translate(context: bytes, key: bytes, disambiguation: Optional[bytes] = None", "def translate(context: str, key: str, disambiguation: Optional[str] = None"),
+        ("def connect(self, slot: object, type: Optional[type] = None):...", "def connect(self, slot: object, type: Optional[PySide6.QtCore.Qt.ConnectionType] = None):..."),
     ),
     os.path.join("PySide6", "QtGui.pyi"): (
         ("def setParent(self, parent: PySide6.QtGui.QWindow", "def setParent(self, parent: Optional[PySide6.QtGui.QWindow]"),
