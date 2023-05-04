@@ -403,7 +403,11 @@ class Stub:
         start = self._contents.tell()
 
         with self._indent():
-            for attr_name in dir(cls):
+            if issubclass(cls, Enum):
+                attrs = set(list(cls.__members__.keys()) + dir(cls))
+            else:
+                attrs = dir(cls)
+            for attr_name in attrs:
                 if attr_name in BuiltInClassAttrs:
                     continue
                 elif attr_name in {"from"}:
