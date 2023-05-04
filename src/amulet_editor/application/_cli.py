@@ -55,7 +55,7 @@ def parse_args() -> Args:
             "--trace",
             help="If defined, print the qualified name of each function as it is called. Useful if the program crashes due to an access violation and you don't know where it came from.",
             action="store_true",
-            dest="trace"
+            dest="trace",
         )
 
         _args, _ = parser.parse_known_args()

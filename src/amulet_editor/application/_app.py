@@ -78,11 +78,12 @@ def app_main():
     )
 
     if args.trace:
+
         def trace_calls(frame, event, arg):
-            if event == 'call':
+            if event == "call":
                 try:
                     func_name = frame.f_code.co_name
-                    module_name = frame.f_globals['__name__']
+                    module_name = frame.f_globals["__name__"]
                     logging.info(f"Call to {module_name}.{func_name}")
                 except AttributeError:
                     pass
