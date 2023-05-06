@@ -22,22 +22,42 @@ from contextlib import contextmanager, suppress
 
 import PySide6
 from PySide6.QtCore import Signal
-from PySide6.support.signature.mapping import ArrayLikeVariable, Default, Instance, Invalid
+from PySide6.support.signature.mapping import (
+    ArrayLikeVariable,
+    Default,
+    Instance,
+    Invalid,
+)
 
 StubPath = "stubs"
 
 Patches: dict[str, tuple[tuple[str, str], ...]] = {
     os.path.join("PySide6", "QtWidgets.pyi"): (
-        ("def setParent(self, parent: PySide6.QtWidgets.QWidget", "def setParent(self, parent: Optional[PySide6.QtWidgets.QWidget]"),
+        (
+            "def setParent(self, parent: PySide6.QtWidgets.QWidget",
+            "def setParent(self, parent: Optional[PySide6.QtWidgets.QWidget]",
+        ),
     ),
     os.path.join("PySide6", "QtCore.pyi"): (
-        ("def setParent(self, parent: PySide6.QtCore.QObject", "def setParent(self, parent: Optional[PySide6.QtCore.QObject]"),
-        ("def translate(context: bytes, key: bytes, disambiguation: Optional[bytes] = None", "def translate(context: str, key: str, disambiguation: Optional[str] = None"),
-        ("def connect(self, slot: object, type: Optional[type] = None):...", "def connect(self, slot: object, type: Optional[PySide6.QtCore.Qt.ConnectionType] = None):..."),
+        (
+            "def setParent(self, parent: PySide6.QtCore.QObject",
+            "def setParent(self, parent: Optional[PySide6.QtCore.QObject]",
+        ),
+        (
+            "def translate(context: bytes, key: bytes, disambiguation: Optional[bytes] = None",
+            "def translate(context: str, key: str, disambiguation: Optional[str] = None",
+        ),
+        (
+            "def connect(self, slot: object, type: Optional[type] = None):...",
+            "def connect(self, slot: object, type: Optional[PySide6.QtCore.Qt.ConnectionType] = None):...",
+        ),
     ),
     os.path.join("PySide6", "QtGui.pyi"): (
-        ("def setParent(self, parent: PySide6.QtGui.QWindow", "def setParent(self, parent: Optional[PySide6.QtGui.QWindow]"),
-    )
+        (
+            "def setParent(self, parent: PySide6.QtGui.QWindow",
+            "def setParent(self, parent: Optional[PySide6.QtGui.QWindow]",
+        ),
+    ),
 }
 
 Indent = "    "
@@ -171,7 +191,9 @@ def _generate_pyside6_map(mod):
                 if inspect.isclass(cls):
                     for attr_name in dir(cls):
                         # PySide6NamespaceMap.setdefault(f"{cls.__qualname__}.{attr_name}", []).append((sub_mod.__name__, cls.__qualname__))
-                        PySide6NamespaceMap.setdefault(attr_name, []).append((sub_mod.__name__, f"{cls.__qualname__}.{attr_name}"))
+                        PySide6NamespaceMap.setdefault(attr_name, []).append(
+                            (sub_mod.__name__, f"{cls.__qualname__}.{attr_name}")
+                        )
 
 
 _generate_pyside6_map(PySide6)
@@ -188,7 +210,11 @@ class ImportManager:
             alias = attr
         if not alias.isidentifier():
             raise RuntimeError(alias)
-        if not (isinstance(mod_name, str) and isinstance(attr, str) and isinstance(alias, str)):
+        if not (
+            isinstance(mod_name, str)
+            and isinstance(attr, str)
+            and isinstance(alias, str)
+        ):
             raise ValueError
         self._attrs.setdefault(mod_name, set()).add((attr, alias))
 
@@ -240,9 +266,11 @@ class ImportManager:
 def get_module_qualname(obj: ModuleType) -> tuple[str, Optional[str]]:
     ...
 
+
 @overload
 def get_module_qualname(obj) -> tuple[Optional[str], str]:
     ...
+
 
 def get_module_qualname(obj):
     """Get the module the object was defined in and the qualified name within that module."""
@@ -255,7 +283,9 @@ def get_module_qualname(obj):
     # Find the module name
     module_name = None
 
-    if obj in (int, float, str, list, dict, tuple) or isinstance(obj, (int, float, str, list, dict, tuple)):
+    if obj in (int, float, str, list, dict, tuple) or isinstance(
+        obj, (int, float, str, list, dict, tuple)
+    ):
         module_name = obj.__class__.__module__
     elif obj is None:
         module_name = "builtins"
@@ -265,7 +295,7 @@ def get_module_qualname(obj):
         for func in (
             lambda: obj.__module__,
             lambda: obj.__objclass__.__module__,
-            lambda: obj.__self__.__module__
+            lambda: obj.__self__.__module__,
         ):
             if module_name is not None:
                 break
@@ -395,13 +425,22 @@ class Stub:
                     Stub.generate(sub_mod)
                     processed_submodules.add(sub_module.name)
         for sub_mod_name, sub_mod in sys.modules.items():
-            if sub_mod_name.startswith(mod_prefix) and sub_mod_name not in processed_submodules:
+            if (
+                sub_mod_name.startswith(mod_prefix)
+                and sub_mod_name not in processed_submodules
+            ):
                 Stub.generate(sub_mod)
                 processed_submodules.add(sub_mod_name)
 
     def _generate_stub(self):
         # generate the module stub
-        stub_path = StubPath + "/" + get_module_name(self._module).replace(".", "/") + ("/__init__" * hasattr(self._module, "__path__")) + ".pyi"
+        stub_path = (
+            StubPath
+            + "/"
+            + get_module_name(self._module).replace(".", "/")
+            + ("/__init__" * hasattr(self._module, "__path__"))
+            + ".pyi"
+        )
         stub_path_dir = os.path.dirname(stub_path)
         if stub_path_dir:
             os.makedirs(stub_path_dir, exist_ok=True)
@@ -441,7 +480,9 @@ class Stub:
             self._imports.import_module(mod_name)
 
         sup = f"({', '.join(superclasses)})" if superclasses else ""
-        self._contents.write(f"{Indent * self._indentation}class {cls.__name__}{sup}:\n")
+        self._contents.write(
+            f"{Indent * self._indentation}class {cls.__name__}{sup}:\n"
+        )
         start = self._contents.tell()
 
         with self._indent():
@@ -454,7 +495,9 @@ class Stub:
                     continue
                 elif attr_name in ReservedNames:
                     # Uncallable from python
-                    self._contents.write(f"{Indent * self._indentation}# {attr_name} = Any\n")
+                    self._contents.write(
+                        f"{Indent * self._indentation}# {attr_name} = Any\n"
+                    )
                     continue
 
                 attr = getattr(cls, attr_name)
@@ -481,47 +524,76 @@ class Stub:
             if super_attr is not Void:
                 break
 
-        if super_attr is attr or get_module_qualname(super_attr) == get_module_qualname(attr):
+        if super_attr is attr or get_module_qualname(super_attr) == get_module_qualname(
+            attr
+        ):
             # Defined in parent
             pass
         elif attr is None:
             self._contents.write(f"{Indent * self._indentation}{attr_name} = None\n")
         elif isinstance(attr, Enum):
             if inspect.isclass(container) and isinstance(attr, container):
-                self._contents.write(f"{Indent * self._indentation}{attr_name} = {attr.value}\n")
+                self._contents.write(
+                    f"{Indent * self._indentation}{attr_name} = {attr.value}\n"
+                )
             else:
                 self._imports.import_module(defmod_name)
-                self._contents.write(f"{Indent * self._indentation}{attr_name} = {defmod_name}.{qualname}\n")
+                self._contents.write(
+                    f"{Indent * self._indentation}{attr_name} = {defmod_name}.{qualname}\n"
+                )
         elif isinstance(attr, (bool, float, int)):
             self._contents.write(f"{Indent * self._indentation}{attr_name} = {attr}\n")
         elif isinstance(attr, str):
             escaped_string = attr.replace('"', '\\"')
             if "\n" in escaped_string:
-                self._contents.write(f"{Indent * self._indentation}{attr_name} = \"\"\"{escaped_string}\"\"\"\n")
+                self._contents.write(
+                    f'{Indent * self._indentation}{attr_name} = """{escaped_string}"""\n'
+                )
             else:
-                self._contents.write(f"{Indent * self._indentation}{attr_name} = \"{escaped_string}\"\n")
+                self._contents.write(
+                    f'{Indent * self._indentation}{attr_name} = "{escaped_string}"\n'
+                )
         elif inspect.ismodule(attr):
             self._imports.import_module(attr.__name__, local_qualname)
         elif isinstance(attr, Signal):
-            self._contents.write(f"{Indent * self._indentation}{attr_name} = {self._format_signal(container, attr)}\n")
-        elif inspect.isclass(attr) or inspect.isfunction(attr) or inspect.ismethod(attr) or inspect.ismethoddescriptor(attr) or inspect.isbuiltin(attr):
+            self._contents.write(
+                f"{Indent * self._indentation}{attr_name} = {self._format_signal(container, attr)}\n"
+            )
+        elif (
+            inspect.isclass(attr)
+            or inspect.isfunction(attr)
+            or inspect.ismethod(attr)
+            or inspect.ismethoddescriptor(attr)
+            or inspect.isbuiltin(attr)
+        ):
             if defmod is None or defmod is self._module:
                 if local_qualname == qualname:
                     # This is the definition
                     if inspect.isclass(attr):
                         self._generate_class(attr)
-                    elif inspect.isfunction(attr) or inspect.ismethod(attr) or inspect.ismethoddescriptor(attr) or inspect.isbuiltin(attr):
+                    elif (
+                        inspect.isfunction(attr)
+                        or inspect.ismethod(attr)
+                        or inspect.ismethoddescriptor(attr)
+                        or inspect.isbuiltin(attr)
+                    ):
                         self._generate_callable(attr)
                 else:
                     # Alias from the same module
                     self._imports.import_module(self._module.__name__)
-                    self._contents.write(f"{Indent * self._indentation}{attr_name} = {defmod_name}.{qualname}\n")
+                    self._contents.write(
+                        f"{Indent * self._indentation}{attr_name} = {defmod_name}.{qualname}\n"
+                    )
             else:
                 self._imports.import_attr(defmod_name, attr.__name__, local_qualname)
         else:
             self._imports.import_attr("typing", "Any")
-            self._contents.write(f"{Indent * self._indentation}{attr_name} = Any  # 5\n")
-            print(f"unhandled attribute {self._module.__name__}.{local_qualname} {attr}")
+            self._contents.write(
+                f"{Indent * self._indentation}{attr_name} = Any  # 5\n"
+            )
+            print(
+                f"unhandled attribute {self._module.__name__}.{local_qualname} {attr}"
+            )
 
     def _format_signal(self, container, signal: Signal) -> str:
         if not isinstance(signal, Signal):
@@ -546,14 +618,25 @@ class Stub:
             elif c in ")}]>":
                 bracket_count -= 1
             elif c == "," and bracket_count == 0:
-                args.append(self._import_and_fix_string_type(container, a[start_index:index].strip()))
+                args.append(
+                    self._import_and_fix_string_type(
+                        container, a[start_index:index].strip()
+                    )
+                )
                 start_index = index + 1
         if index:
-            args.append(self._import_and_fix_string_type(container, a[start_index:index + 1].strip()))
+            args.append(
+                self._import_and_fix_string_type(
+                    container, a[start_index : index + 1].strip()
+                )
+            )
         return args
 
     def _import_and_fix_string_type(self, container, t: str) -> str:
-        match = re.fullmatch(r"(const )?(?P<name>[a-zA-Z0-9_]+(::[a-zA-Z0-9_]+)*)(<(?P<template>[a-zA-Z0-9_:*&,<>]*?)>)?[*&]?", t)
+        match = re.fullmatch(
+            r"(const )?(?P<name>[a-zA-Z0-9_]+(::[a-zA-Z0-9_]+)*)(<(?P<template>[a-zA-Z0-9_:*&,<>]*?)>)?[*&]?",
+            t,
+        )
 
         if match is None:
             raise RuntimeError
@@ -590,7 +673,10 @@ class Stub:
             else:
                 raise RuntimeError(f"Unknown type {t}")
 
-        if not (name in {"object", "float", "int", "str", "bool", "list", "dict"} or name.startswith(("list[", "dict["))):
+        if not (
+            name in {"object", "float", "int", "str", "bool", "list", "dict"}
+            or name.startswith(("list[", "dict["))
+        ):
             root_name = name.split(".")[0]
             module_name = PySide6ModuleMap[root_name][0]
             if module_name == get_module_name(self._module):
@@ -605,29 +691,47 @@ class Stub:
         try:
             signature = getattr(func, "__signature__", None) or inspect.signature(func)
         except ValueError:
-            if inspect.ismethod(func) or inspect.ismethoddescriptor(func) or inspect.ismethodwrapper(func):
-                self._contents.write(f"{indent}def {func.__name__}(self, *args, **kwargs):...\n")
+            if (
+                inspect.ismethod(func)
+                or inspect.ismethoddescriptor(func)
+                or inspect.ismethodwrapper(func)
+            ):
+                self._contents.write(
+                    f"{indent}def {func.__name__}(self, *args, **kwargs):...\n"
+                )
             elif inspect.isbuiltin(func):
-                self._contents.write(f"{indent}@staticmethod\n{indent}def {func.__name__}(*args, **kwargs):...\n")
+                self._contents.write(
+                    f"{indent}@staticmethod\n{indent}def {func.__name__}(*args, **kwargs):...\n"
+                )
             else:
-                self._contents.write(f"{indent}def {func.__name__}(*args, **kwargs):...\n")
+                self._contents.write(
+                    f"{indent}def {func.__name__}(*args, **kwargs):...\n"
+                )
         else:
             if isinstance(signature, list) and len(signature) == 1:
                 signature = signature[0]
 
             if isinstance(signature, inspect.Signature):
                 if inspect.isbuiltin(func):
-                    self._contents.write(f"{indent}@staticmethod\n{indent}def {func.__name__}{self._stringify_signature(signature)}:...\n")
+                    self._contents.write(
+                        f"{indent}@staticmethod\n{indent}def {func.__name__}{self._stringify_signature(signature)}:...\n"
+                    )
                 else:
-                    self._contents.write(f"{indent}def {func.__name__}{self._stringify_signature(signature)}:...\n")
+                    self._contents.write(
+                        f"{indent}def {func.__name__}{self._stringify_signature(signature)}:...\n"
+                    )
             elif isinstance(signature, list):
                 for sig in signature:
                     if not isinstance(sig, inspect.Signature):
                         raise RuntimeError
                     if inspect.isbuiltin(func):
-                        self._contents.write(f"{indent}@overload\n{indent}@staticmethod\n{indent}def {func.__name__}{self._stringify_signature(sig)}:...\n")
+                        self._contents.write(
+                            f"{indent}@overload\n{indent}@staticmethod\n{indent}def {func.__name__}{self._stringify_signature(sig)}:...\n"
+                        )
                     else:
-                        self._contents.write(f"{indent}@overload\n{indent}def {func.__name__}{self._stringify_signature(sig)}:...\n")
+                        self._contents.write(
+                            f"{indent}@overload\n{indent}def {func.__name__}{self._stringify_signature(sig)}:...\n"
+                        )
                 self._imports.import_attr("typing", "overload")
             else:
                 raise TypeError
@@ -640,16 +744,39 @@ class Stub:
             param = params[param_name]
             self._streamline_type(param.annotation, replace)
             default = param.default
-            if isinstance(default, (Default, Instance, Invalid)) or default is int or (inspect.isclass(default) and issubclass(default, (Enum, EnumType))) or default is PySide6.support.signature.mapping.ellipsis:
+            if (
+                isinstance(default, (Default, Instance, Invalid))
+                or default is int
+                or (inspect.isclass(default) and issubclass(default, (Enum, EnumType)))
+                or default is PySide6.support.signature.mapping.ellipsis
+            ):
                 params[param_name] = param.replace(default=Ellipsis)
             elif isinstance(default, (Enum,)):
                 params[param_name] = param.replace(default=default.value)
-            elif default is param.empty or default is None or isinstance(default, (int, str, float, dict, list, PySide6.QtCore.QCborTag, PySide6.QtCore.QRect)):
+            elif (
+                default is param.empty
+                or default is None
+                or isinstance(
+                    default,
+                    (
+                        int,
+                        str,
+                        float,
+                        dict,
+                        list,
+                        PySide6.QtCore.QCborTag,
+                        PySide6.QtCore.QRect,
+                    ),
+                )
+            ):
                 self._streamline_type(param.default, replace)
             else:
                 self._streamline_type(param.default, replace)
 
-        signature = inspect.Signature(parameters=list(params.values()), return_annotation=signature.return_annotation)
+        signature = inspect.Signature(
+            parameters=list(params.values()),
+            return_annotation=signature.return_annotation,
+        )
 
         self._streamline_type(signature.return_annotation, replace)
 
@@ -714,7 +841,9 @@ def generate_stubs(*modules: ModuleType):
 
     for stub in os.listdir(StubPath):
         base, ext = os.path.splitext(stub)
-        os.rename(os.path.join(StubPath, stub), os.path.join(StubPath, f"{base}-stubs{ext}"))
+        os.rename(
+            os.path.join(StubPath, stub), os.path.join(StubPath, f"{base}-stubs{ext}")
+        )
 
     subprocess.run([sys.executable, "-m", "black", StubPath])
 
@@ -723,5 +852,5 @@ def main():
     generate_stubs(PySide6)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()
