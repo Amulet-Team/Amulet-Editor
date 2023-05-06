@@ -188,7 +188,11 @@ def _validate_import(imported_name: str, frame: FrameType):
                 # Plugins don't need to specify native python libraries.
                 pass
             else:
-                package_name = packages_distributions()[imported_root_name][0].lower().replace("-", "_")
+                package_name = (
+                    packages_distributions()[imported_root_name][0]
+                    .lower()
+                    .replace("-", "_")
+                )
                 if not any(
                     dependency.identifier == package_name
                     for dependency in plugin_container.data.depends.library
