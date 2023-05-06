@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-from typing import NamedTuple
 import re
 from packaging.specifiers import SpecifierSet
 
@@ -12,9 +11,20 @@ RequirementPattern = re.compile(
 )
 
 
-class Requirement(NamedTuple):
-    identifier: str  # The package name
-    specifier: SpecifierSet  # The version specifier. It is recommended to use the compatible format. Eg. "~=1.0"
+class Requirement:
+    def __init__(self, identifier: str, specifier: SpecifierSet):
+        self._identifier = identifier.lower().replace("-", "_")
+        self._specifier = specifier
+
+    @property
+    def identifier(self) -> str:
+        """The package name"""
+        return self._identifier
+
+    @property
+    def specifier(self) -> SpecifierSet:
+        """The version specifier. It is recommended to use the compatible format. Eg. "~=1.0"""
+        return self._specifier
 
     @classmethod
     def from_string(cls, requirement: str):

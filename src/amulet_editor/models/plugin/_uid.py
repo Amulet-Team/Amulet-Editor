@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-from typing import NamedTuple
 import re
 
 from packaging.version import Version
@@ -8,11 +7,22 @@ from runtime_final import final
 
 
 @final
-class LibraryUID(NamedTuple):
+class LibraryUID:
     """A named tuple containing an identifier for a library/plugin and a version number."""
 
-    identifier: str  # The package name. This is the name used when importing the package. Eg "my_name_my_plugin_v1". This must be a valid python identifier.
-    version: Version  # The version number of the plugin.
+    def __init__(self, identifier: str, version: Version):
+        self._identifier = identifier.lower().replace("-", "_")
+        self._version = version
+
+    @property
+    def identifier(self) -> str:
+        """The package name. This is the name used when importing the package. Eg "my_name_my_plugin_v1". This must be a valid python identifier."""
+        return self._identifier
+
+    @property
+    def version(self) -> Version:
+        """The version number of the plugin."""
+        return self._version
 
     def to_string(self):
         return f"{self.identifier}@{self.version}"
