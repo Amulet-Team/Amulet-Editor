@@ -4,29 +4,37 @@
 import ctypes
 import math
 import numpy
-import sys
 from PySide6.QtCore import Signal, Qt, QSize, QPointF
-from PySide6.QtGui import (QVector3D, QOpenGLFunctions, QMatrix4x4, QOpenGLContext, QSurfaceFormat)
-from PySide6.QtOpenGL import (QOpenGLVertexArrayObject, QOpenGLBuffer, QOpenGLShaderProgram, QOpenGLShader)
-from PySide6.QtWidgets import (QApplication, QWidget, QHBoxLayout)
+from PySide6.QtGui import (
+    QVector3D,
+    QOpenGLFunctions,
+    QMatrix4x4,
+    QOpenGLContext,
+    QSurfaceFormat,
+)
+from PySide6.QtOpenGL import (
+    QOpenGLVertexArrayObject,
+    QOpenGLBuffer,
+    QOpenGLShaderProgram,
+    QOpenGLShader,
+)
 from PySide6.QtOpenGLWidgets import QOpenGLWidget
 
 from shiboken6 import VoidPtr
 
-from OpenGL import GL
-
-
-class Window(QWidget):
-    def __init__(self, parent=None):
-        QWidget.__init__(self, parent)
-
-        self._gl_widget = GLWidget()
-
-        main_layout = QHBoxLayout()
-        main_layout.addWidget(self._gl_widget)
-        self.setLayout(main_layout)
-
-        self.setWindowTitle(self.tr("Hello GL"))
+from OpenGL.GL import (
+    GL_FLOAT,
+    GL_FALSE,
+    GL_COLOR_BUFFER_BIT,
+    GL_DEPTH_BUFFER_BIT,
+    GL_DEPTH_TEST,
+    GL_CULL_FACE,
+    GL_MODELVIEW,
+    GL_TRIANGLES,
+    GL_PROJECTION,
+    glMatrixMode,
+    glLoadMatrixf,
+)
 
 
 class Logo:
@@ -85,7 +93,9 @@ class Logo:
         return self.m_count / 6
 
     def quad(self, x1, y1, x2, y2, x3, y3, x4, y4):
-        n = QVector3D.normal(QVector3D(x4 - x1, y4 - y1, 0), QVector3D(x2 - x1, y2 - y1, 0))
+        n = QVector3D.normal(
+            QVector3D(x4 - x1, y4 - y1, 0), QVector3D(x2 - x1, y2 - y1, 0)
+        )
 
         self.add(QVector3D(x1, y1, -0.05), n)
         self.add(QVector3D(x4, y4, -0.05), n)
@@ -95,7 +105,9 @@ class Logo:
         self.add(QVector3D(x2, y2, -0.05), n)
         self.add(QVector3D(x4, y4, -0.05), n)
 
-        n = QVector3D.normal(QVector3D(x1 - x4, y1 - y4, 0), QVector3D(x2 - x4, y2 - y4, 0))
+        n = QVector3D.normal(
+            QVector3D(x1 - x4, y1 - y4, 0), QVector3D(x2 - x4, y2 - y4, 0)
+        )
 
         self.add(QVector3D(x4, y4, 0.05), n)
         self.add(QVector3D(x1, y1, 0.05), n)
@@ -228,8 +240,12 @@ class GLWidget(QOpenGLWidget, QOpenGLFunctions):
                                 }
                                 """
 
-        self.program.addShaderFromSourceCode(QOpenGLShader.ShaderTypeBit.Vertex, self._vertex_shader)
-        self.program.addShaderFromSourceCode(QOpenGLShader.ShaderTypeBit.Fragment, self._fragment_shader)
+        self.program.addShaderFromSourceCode(
+            QOpenGLShader.ShaderTypeBit.Vertex, self._vertex_shader
+        )
+        self.program.addShaderFromSourceCode(
+            QOpenGLShader.ShaderTypeBit.Fragment, self._fragment_shader
+        )
         self.program.link()
 
         self.program.bind()
@@ -259,14 +275,18 @@ class GLWidget(QOpenGLWidget, QOpenGLFunctions):
 
         null = VoidPtr(0)
         pointer = VoidPtr(3 * float_size)
-        f.glVertexAttribPointer(0, 3, int(GL.GL_FLOAT), int(GL.GL_FALSE), 6 * float_size, null)
-        f.glVertexAttribPointer(1, 3, int(GL.GL_FLOAT), int(GL.GL_FALSE), 6 * float_size, pointer)
+        f.glVertexAttribPointer(
+            0, 3, int(GL_FLOAT), int(GL_FALSE), 6 * float_size, null
+        )
+        f.glVertexAttribPointer(
+            1, 3, int(GL_FLOAT), int(GL_FALSE), 6 * float_size, pointer
+        )
         self._logo_vbo.release()
 
     def paintGL(self):
-        self.glClear(GL.GL_COLOR_BUFFER_BIT | GL.GL_DEPTH_BUFFER_BIT)
-        self.glEnable(GL.GL_DEPTH_TEST)
-        self.glEnable(GL.GL_CULL_FACE)
+        self.glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT)
+        self.glEnable(GL_DEPTH_TEST)
+        self.glEnable(GL_CULL_FACE)
 
         self.world.setToIdentity()
         self.world.rotate(180 - (self._x_rot / 16), 1, 0, 0)
@@ -275,18 +295,18 @@ class GLWidget(QOpenGLWidget, QOpenGLFunctions):
 
         vao_binder = QOpenGLVertexArrayObject.Binder(self.vao)
         self.program.bind()
-        GL.glMatrixMode(GL.GL_MODELVIEW)
-        GL.glLoadMatrixf((self.camera * self.world).data())
+        glMatrixMode(GL_MODELVIEW)
+        glLoadMatrixf((self.camera * self.world).data())
 
-        self.glDrawArrays(GL.GL_TRIANGLES, 0, self.logo.vertex_count())
+        self.glDrawArrays(GL_TRIANGLES, 0, self.logo.vertex_count())
         self.program.release()
         vao_binder = None
 
     def resizeGL(self, width, height):
         self.proj.setToIdentity()
         self.proj.perspective(45, width / height, 0.01, 100)
-        GL.glMatrixMode(GL.GL_PROJECTION)
-        GL.glLoadMatrixf(self.proj.data())
+        glMatrixMode(GL_PROJECTION)
+        glLoadMatrixf(self.proj.data())
 
     def mousePressEvent(self, event):
         self._last_pos = event.position()
@@ -301,19 +321,3 @@ class GLWidget(QOpenGLWidget, QOpenGLFunctions):
             self.set_yrotation(self._y_rot - 8 * dx)
 
         self._last_pos = pos
-
-
-if __name__ == '__main__':
-    app = QApplication(sys.argv)
-
-    # fmt = QSurfaceFormat()
-    # fmt.setDepthBufferSize(24)
-    # fmt.setVersion(2, 0)
-    # QSurfaceFormat.setDefaultFormat(fmt)
-
-    main_window = Window()
-    main_window.resize(main_window.sizeHint())
-    main_window.show()
-
-    res = app.exec()
-    sys.exit(res)
