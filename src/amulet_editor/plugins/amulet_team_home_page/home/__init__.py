@@ -18,6 +18,7 @@ class HomeView(QWidget, View):
     ):
         super().__init__(parent, f)
         self._layout = QVBoxLayout(self)
+        self._layout.setContentsMargins(0, 0, 0, 0)
         self._set_landing_page()
 
     def activate_view(self):

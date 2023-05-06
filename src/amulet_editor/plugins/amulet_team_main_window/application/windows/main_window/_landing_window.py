@@ -23,6 +23,7 @@ class Ui_AmuletLandingWindow(QMainWindow):
         self.central_widget.setObjectName("central_widget")
 
         self.horizontalLayout = QHBoxLayout(self.central_widget)
+        self.horizontalLayout.setSpacing(0)
         self.horizontalLayout.setObjectName("horizontalLayout")
         self.horizontalLayout.setContentsMargins(0, 0, 0, 0)
 

@@ -25,6 +25,7 @@ class ViewContainer(QWidget):
         super().__init__(parent, f)
         self._uid = None
         self._layout = QVBoxLayout(self)
+        self._layout.setContentsMargins(0, 0, 0, 0)
         self._view: Optional[ViewType] = None
 
     @property

@@ -17,3 +17,4 @@ class View3D(QWidget, View):
         super().__init__(parent, f)
         self._layout = QVBoxLayout(self)
         self._layout.addWidget(GLWidget())
+        self._layout.setContentsMargins(0, 0, 0, 0)
