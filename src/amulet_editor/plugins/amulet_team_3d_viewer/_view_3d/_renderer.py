@@ -1,6 +1,4 @@
-"""PySide6 port of the opengl/hellogl2 example from Qt v5.x"""
-# Modified slightly from https://doc.qt.io/qtforpython/examples/example_opengl__hellogl2.html
-
+from typing import Optional
 import ctypes
 import math
 import numpy
@@ -29,12 +27,13 @@ from OpenGL.GL import (
     GL_DEPTH_BUFFER_BIT,
     GL_DEPTH_TEST,
     GL_CULL_FACE,
-    GL_MODELVIEW,
     GL_TRIANGLES,
-    GL_PROJECTION,
-    glMatrixMode,
-    glLoadMatrixf,
 )
+
+
+FloatSize = ctypes.sizeof(ctypes.c_float)
+GL_FLOAT_INT = int(GL_FLOAT)
+GL_FALSE_INT = int(GL_FALSE)
 
 
 class Logo:
@@ -89,8 +88,8 @@ class Logo:
     def count(self):
         return self.m_count
 
-    def vertex_count(self):
-        return self.m_count / 6
+    def vertex_count(self) -> int:
+        return self.m_count // 6
 
     def quad(self, x1, y1, x2, y2, x3, y3, x4, y4):
         n = QVector3D.normal(
@@ -144,6 +143,113 @@ class Logo:
         self.m_count += 6
 
 
+class Drawable:
+    __slots__ = ("__initialised",)
+
+    def __init__(self):
+        self.__initialised = False
+
+    def _initializeGL(self):
+        """Initialise the OpenGL state."""
+        raise NotImplementedError
+
+    def _paintGL(self, projection_matrix: QMatrix4x4, view_matrix: QMatrix4x4):
+        """Paint the OpenGL data."""
+        raise NotImplementedError
+
+    def draw(self, projection_matrix: QMatrix4x4, view_matrix: QMatrix4x4):
+        if not self.__initialised:
+            self._initializeGL()
+            self.__initialised = True
+        self._paintGL(projection_matrix, view_matrix)
+
+
+class DrawableLogo(Drawable):
+    __slots__ = (
+        "_primitive",
+        "_program",
+        "_vao",
+        "_vbo",
+        "_model_matrix",
+        "_matrix_loc",
+    )
+
+    def __init__(self):
+        super().__init__()
+        self._primitive = Logo()
+        self._program: Optional[QOpenGLShaderProgram] = None
+        self._vao: Optional[QOpenGLVertexArrayObject] = None
+        self._vbo: Optional[QOpenGLBuffer] = None
+        self._model_matrix = QMatrix4x4()
+        self._matrix_loc: Optional[int] = None
+
+    def _initializeGL(self):
+        # Initialise the shader
+        self._program = QOpenGLShaderProgram()
+        self._program.addShaderFromSourceCode(
+            QOpenGLShader.ShaderTypeBit.Vertex,
+            """#version 130
+            in vec3 position;
+            
+            uniform mat4 transformation_matrix;
+            
+            void main() {
+               gl_Position = transformation_matrix * vec4(position, 1.0);
+            }""",
+        )
+        self._program.addShaderFromSourceCode(
+            QOpenGLShader.ShaderTypeBit.Fragment,
+            """#version 130
+            out vec4 fragColor;
+            
+            void main() {
+               fragColor = vec4(1.0, 1.0, 1.0, 1.0);
+            }""",
+        )
+        self._program.link()
+
+        self._program.bind()
+        self._matrix_loc = self._program.uniformLocation("transformation_matrix")
+
+        self._vao = QOpenGLVertexArrayObject()
+        self._vao.create()
+        self._vao.bind()
+
+        self._vbo = QOpenGLBuffer()
+        self._vbo.create()
+        self._vbo.bind()
+        self._vbo.allocate(
+            self._primitive.const_data(), self._primitive.count() * FloatSize
+        )
+
+        f = QOpenGLContext.currentContext().functions()
+        f.glEnableVertexAttribArray(0)
+        f.glEnableVertexAttribArray(1)
+        f.glVertexAttribPointer(
+            0, 3, GL_FLOAT_INT, GL_FALSE_INT, 6 * FloatSize, VoidPtr(0)
+        )
+        f.glVertexAttribPointer(
+            1, 3, GL_FLOAT_INT, GL_FALSE_INT, 6 * FloatSize, VoidPtr(3 * FloatSize)
+        )
+        self._vbo.release()
+
+        self._vao.release()
+
+        self._program.release()
+
+    def _paintGL(self, projection_matrix: QMatrix4x4, view_matrix: QMatrix4x4):
+        self._vao.bind()
+        self._program.bind()
+        self._program.setUniformValue(
+            self._matrix_loc, projection_matrix * view_matrix * self._model_matrix
+        )
+        QOpenGLContext.currentContext().functions().glDrawArrays(
+            GL_TRIANGLES, 0, self._primitive.vertex_count()
+        )
+        self._program.release()
+        self._vao.release()
+
+
 class GLWidget(QOpenGLWidget, QOpenGLFunctions):
     x_rotation_changed = Signal(int)
     y_rotation_changed = Signal(int)
@@ -155,20 +261,16 @@ class GLWidget(QOpenGLWidget, QOpenGLFunctions):
 
         fmt = QSurfaceFormat()
         fmt.setDepthBufferSize(24)
-        fmt.setVersion(2, 0)
+        fmt.setVersion(3, 0)
         self.setFormat(fmt)
 
         self._x_rot = 0
         self._y_rot = 0
         self._z_rot = 0
         self._last_pos = QPointF()
-        self.logo = Logo()
-        self.vao = QOpenGLVertexArrayObject()
-        self._logo_vbo = QOpenGLBuffer()
-        self.program = QOpenGLShaderProgram()
-        self.proj = QMatrix4x4()
-        self.camera = QMatrix4x4()
-        self.world = QMatrix4x4()
+        self._logo = DrawableLogo()
+        self._projection_matrix = QMatrix4x4()
+        self._view_matrix = QMatrix4x4()
 
     def x_rotation(self):
         return self._x_rot
@@ -215,9 +317,6 @@ class GLWidget(QOpenGLWidget, QOpenGLFunctions):
 
     def cleanup(self):
         self.makeCurrent()
-        self._logo_vbo.destroy()
-        del self.program
-        self.program = None
         self.doneCurrent()
 
     def initializeGL(self):
@@ -225,88 +324,22 @@ class GLWidget(QOpenGLWidget, QOpenGLFunctions):
         self.initializeOpenGLFunctions()
         self.glClearColor(0, 0, 0, 1)
 
-        self.program = QOpenGLShaderProgram()
-
-        self._vertex_shader = """#version 110
-                                void main()
-                                {
-                                    gl_Position = gl_ModelViewProjectionMatrix * gl_Vertex;
-                                }"""
-
-        self._fragment_shader = """#version 110
-                                void main()
-                                {
-                                    gl_FragColor = vec4(1.0, 0.0, 0.0, 1.0);
-                                }
-                                """
-
-        self.program.addShaderFromSourceCode(
-            QOpenGLShader.ShaderTypeBit.Vertex, self._vertex_shader
-        )
-        self.program.addShaderFromSourceCode(
-            QOpenGLShader.ShaderTypeBit.Fragment, self._fragment_shader
-        )
-        self.program.link()
-
-        self.program.bind()
-
-        self.vao.create()
-        vao_binder = QOpenGLVertexArrayObject.Binder(self.vao)
-
-        self._logo_vbo.create()
-        self._logo_vbo.bind()
-        float_size = ctypes.sizeof(ctypes.c_float)
-        self._logo_vbo.allocate(self.logo.const_data(), self.logo.count() * float_size)
-
-        self.setup_vertex_attribs()
-
-        self.camera.setToIdentity()
-        self.camera.translate(0, 0, -1)
-
-        self.program.release()
-        vao_binder = None
-
-    def setup_vertex_attribs(self):
-        self._logo_vbo.bind()
-        f = QOpenGLContext.currentContext().functions()
-        f.glEnableVertexAttribArray(0)
-        f.glEnableVertexAttribArray(1)
-        float_size = ctypes.sizeof(ctypes.c_float)
-
-        null = VoidPtr(0)
-        pointer = VoidPtr(3 * float_size)
-        f.glVertexAttribPointer(
-            0, 3, int(GL_FLOAT), int(GL_FALSE), 6 * float_size, null
-        )
-        f.glVertexAttribPointer(
-            1, 3, int(GL_FLOAT), int(GL_FALSE), 6 * float_size, pointer
-        )
-        self._logo_vbo.release()
-
     def paintGL(self):
         self.glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT)
         self.glEnable(GL_DEPTH_TEST)
         self.glEnable(GL_CULL_FACE)
 
-        self.world.setToIdentity()
-        self.world.rotate(180 - (self._x_rot / 16), 1, 0, 0)
-        self.world.rotate(self._y_rot / 16, 0, 1, 0)
-        self.world.rotate(self._z_rot / 16, 0, 0, 1)
+        self._view_matrix.setToIdentity()
+        self._view_matrix.translate(0, 0, -1)
+        self._view_matrix.rotate(180 - (self._x_rot / 16), 1, 0, 0)
+        self._view_matrix.rotate(self._y_rot / 16, 0, 1, 0)
+        self._view_matrix.rotate(self._z_rot / 16, 0, 0, 1)
 
-        vao_binder = QOpenGLVertexArrayObject.Binder(self.vao)
-        self.program.bind()
-        glMatrixMode(GL_MODELVIEW)
-        glLoadMatrixf((self.camera * self.world).data())
-
-        self.glDrawArrays(GL_TRIANGLES, 0, self.logo.vertex_count())
-        self.program.release()
-        vao_binder = None
+        self._logo.draw(self._projection_matrix, self._view_matrix)
 
     def resizeGL(self, width, height):
-        self.proj.setToIdentity()
-        self.proj.perspective(45, width / height, 0.01, 100)
-        glMatrixMode(GL_PROJECTION)
-        glLoadMatrixf(self.proj.data())
+        self._projection_matrix.setToIdentity()
+        self._projection_matrix.perspective(45, width / height, 0.01, 100)
 
     def mousePressEvent(self, event):
         self._last_pos = event.position()
