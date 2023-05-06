@@ -6,7 +6,10 @@
 		"python": "~=3.9",
 		"library": [
 			"PySide6~=6.2",
-			"amulet_editor~=1.0a0"
+			"shiboken6~=6.2",
+			"amulet_editor~=1.0a0",
+			"numpy~=1.17",
+			"PyOpenGL~=3.0"
 		],
 		"plugin": [
 			"amulet_team_locale~=1.0",
