@@ -11,7 +11,7 @@ import glob
 import logging
 from importlib import import_module
 from importlib.util import spec_from_file_location, module_from_spec
-from importlib.metadata import version
+from importlib.metadata import version, packages_distributions
 from queue import Queue, Empty
 from enum import Enum
 import sys
@@ -187,13 +187,15 @@ def _validate_import(imported_name: str, frame: FrameType):
             ):
                 # Plugins don't need to specify native python libraries.
                 pass
-            elif not any(
-                dependency.identifier == imported_root_name
-                for dependency in plugin_container.data.depends.library
-            ):
-                raise RuntimeError(
-                    f"Plugin {importer_root_name} imported library {imported_root_name} which it does not have authority for.\nYou must list a dependency in your plugin's metadata to be able to import it."
-                )
+            else:
+                package_name = packages_distributions()[imported_root_name][0].lower().replace("-", "_")
+                if not any(
+                    dependency.identifier == package_name
+                    for dependency in plugin_container.data.depends.library
+                ):
+                    raise RuntimeError(
+                        f"Plugin {importer_root_name} imported library {imported_root_name} which it does not have authority for.\nYou must list a dependency in your plugin's metadata to be able to import it."
+                    )
     elif imported_root_name in _enabled_plugins:
         code = frame.f_code
         raise RuntimeError(
