@@ -1,20 +1,11 @@
-from typing import Optional
-import ctypes
-import math
-import numpy
-from PySide6.QtCore import Signal, Qt, QSize, QPointF
+from math import sin, cos, radians
+
+from PySide6.QtCore import Qt, QSize, QPointF, QObject, QEvent
 from PySide6.QtGui import (
-    QVector3D,
     QOpenGLFunctions,
-    QMatrix4x4,
-    QOpenGLContext,
     QSurfaceFormat,
-)
-from PySide6.QtOpenGL import (
-    QOpenGLVertexArrayObject,
-    QOpenGLBuffer,
-    QOpenGLShaderProgram,
-    QOpenGLShader,
+    QKeyEvent,
+    QMouseEvent,
 )
 from PySide6.QtOpenGLWidgets import QOpenGLWidget
 
@@ -26,71 +17,80 @@ from OpenGL.GL import (
 )
 
 from ._logo import DrawableLogo
+from ._camera import Camera, Location, Rotation
 
-class GLWidget(QOpenGLWidget, QOpenGLFunctions):
-    x_rotation_changed = Signal(int)
-    y_rotation_changed = Signal(int)
-    z_rotation_changed = Signal(int)
 
+class Canvas30(QOpenGLWidget):
+    """A subclass of QOpenGLWidget that initialises the surface format."""
     def __init__(self, parent=None):
-        QOpenGLWidget.__init__(self, parent)
-        QOpenGLFunctions.__init__(self)
+        super().__init__(parent)
 
         fmt = QSurfaceFormat()
         fmt.setDepthBufferSize(24)
         fmt.setVersion(3, 0)
         self.setFormat(fmt)
 
-        self._x_rot = 0
-        self._y_rot = 0
-        self._z_rot = 0
+
+class CameraCanvas(Canvas30):
+    """An OpenGL 3.0 canvas with basic movement controls."""
+
+    def __init__(self, parent=None):
+        super().__init__(parent)
+        self._camera = Camera()
+        self.camera.transform_changed.connect(self.update)
+        self.camera.location = Location(0, 0, -1)
         self._last_pos = QPointF()
+
+    @property
+    def camera(self) -> Camera:
+        return self._camera
+
+    def mousePressEvent(self, event: QMouseEvent):
+        self._last_pos = event.position()
+        self.setFocus()
+
+    def mouseMoveEvent(self, event: QMouseEvent):
+        pos = event.position()
+        dx = pos.x() - self._last_pos.x()
+        dy = pos.y() - self._last_pos.y()
+
+        if event.buttons() & Qt.MouseButton.LeftButton:
+            azimuth, elevation = self.camera.rotation
+            azimuth += dx/8
+            elevation += dy/8
+            self.camera.rotation = Rotation(azimuth, elevation)
+
+        self._last_pos = pos
+
+    def keyPressEvent(self, event: QKeyEvent):
+        Speed = 0.1
+        x, y, z = self.camera.location
+        azimuth = None
+        if event.key() == Qt.Key.Key_W:
+            azimuth = radians(self.camera.rotation.azimuth)
+        elif event.key() == Qt.Key.Key_D:
+            azimuth = radians(self.camera.rotation.azimuth + 90)
+        elif event.key() == Qt.Key.Key_S:
+            azimuth = radians(self.camera.rotation.azimuth + 180)
+        elif event.key() == Qt.Key.Key_A:
+            azimuth = radians(self.camera.rotation.azimuth + 270)
+        elif event.key() == Qt.Key.Key_Space:
+            y -= 0.1
+        elif event.key() == Qt.Key.Key_Shift:
+            y += 0.1
+
+        if azimuth is not None:
+            z += cos(azimuth) * Speed
+            x -= sin(azimuth) * Speed
+        self.camera.location = Location(x, y, z)
+
+
+class GLWidget(CameraCanvas, QOpenGLFunctions):
+    def __init__(self, parent=None):
+        CameraCanvas.__init__(self, parent)
+        QOpenGLFunctions.__init__(self)
+
         self._logo = DrawableLogo()
-        self._projection_matrix = QMatrix4x4()
-        self._view_matrix = QMatrix4x4()
-
-    def x_rotation(self):
-        return self._x_rot
-
-    def y_rotation(self):
-        return self._y_rot
-
-    def z_rotation(self):
-        return self._z_rot
-
-    def minimumSizeHint(self):
-        return QSize(50, 50)
-
-    def sizeHint(self):
-        return QSize(400, 400)
-
-    def normalize_angle(self, angle):
-        while angle < 0:
-            angle += 360 * 16
-        while angle > 360 * 16:
-            angle -= 360 * 16
-        return angle
-
-    def set_xrotation(self, angle):
-        angle = self.normalize_angle(angle)
-        if angle != self._x_rot:
-            self._x_rot = angle
-            self.x_rotation_changed.emit(angle)
-            self.update()
-
-    def set_yrotation(self, angle):
-        angle = self.normalize_angle(angle)
-        if angle != self._y_rot:
-            self._y_rot = angle
-            self.y_rotation_changed.emit(angle)
-            self.update()
-
-    def set_zrotation(self, angle):
-        angle = self.normalize_angle(angle)
-        if angle != self._z_rot:
-            self._z_rot = angle
-            self.z_rotation_changed.emit(angle)
-            self.update()
 
     def cleanup(self):
         self.makeCurrent()
@@ -106,28 +106,7 @@ class GLWidget(QOpenGLWidget, QOpenGLFunctions):
         self.glEnable(GL_DEPTH_TEST)
         self.glEnable(GL_CULL_FACE)
 
-        self._view_matrix.setToIdentity()
-        self._view_matrix.translate(0, 0, -1)
-        self._view_matrix.rotate(180 - (self._x_rot / 16), 1, 0, 0)
-        self._view_matrix.rotate(self._y_rot / 16, 0, 1, 0)
-        self._view_matrix.rotate(self._z_rot / 16, 0, 0, 1)
-
-        self._logo.draw(self._projection_matrix, self._view_matrix)
+        self._logo.draw(self.camera.intrinsic_matrix, self.camera.extrinsic_matrix)
 
     def resizeGL(self, width, height):
-        self._projection_matrix.setToIdentity()
-        self._projection_matrix.perspective(45, width / height, 0.01, 100)
-
-    def mousePressEvent(self, event):
-        self._last_pos = event.position()
-
-    def mouseMoveEvent(self, event):
-        pos = event.position()
-        dx = pos.x() - self._last_pos.x()
-        dy = pos.y() - self._last_pos.y()
-
-        if event.buttons() & Qt.MouseButton.LeftButton:
-            self.set_xrotation(self._x_rot - 8 * dy)
-            self.set_yrotation(self._y_rot - 8 * dx)
-
-        self._last_pos = pos
+        self.camera.set_perspective_projection(45, width / height, 0.01, 100)
