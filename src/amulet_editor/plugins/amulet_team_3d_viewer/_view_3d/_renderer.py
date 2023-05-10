@@ -1,6 +1,6 @@
 from math import sin, cos, radians
 
-from PySide6.QtCore import Qt, QSize, QPointF, QObject, QEvent
+from PySide6.QtCore import Qt, QSize, QPointF, QObject, QEvent, Slot
 from PySide6.QtGui import (
     QOpenGLFunctions,
     QSurfaceFormat,
@@ -18,10 +18,12 @@ from OpenGL.GL import (
 
 from ._logo import DrawableLogo
 from ._camera import Camera, Location, Rotation
+from ._key_catcher import KeySrc, KeyCatcher
 
 
 class Canvas30(QOpenGLWidget):
     """A subclass of QOpenGLWidget that initialises the surface format."""
+
     def __init__(self, parent=None):
         super().__init__(parent)
 
@@ -41,6 +43,29 @@ class CameraCanvas(Canvas30):
         self.camera.location = Location(0, 0, -1)
         self._last_pos = QPointF()
 
+        self._speed = 0.05
+
+        self._key_catcher = KeyCatcher()
+        self.installEventFilter(self._key_catcher)
+        self._key_catcher.connect_repeating(
+            self._forwards, (KeySrc.Keyboard, Qt.Key.Key_W), frozenset(), 10
+        )
+        self._key_catcher.connect_repeating(
+            self._right, (KeySrc.Keyboard, Qt.Key.Key_D), frozenset(), 10
+        )
+        self._key_catcher.connect_repeating(
+            self._backwards, (KeySrc.Keyboard, Qt.Key.Key_S), frozenset(), 10
+        )
+        self._key_catcher.connect_repeating(
+            self._left, (KeySrc.Keyboard, Qt.Key.Key_A), frozenset(), 10
+        )
+        self._key_catcher.connect_repeating(
+            self._up, (KeySrc.Keyboard, Qt.Key.Key_Space), frozenset(), 10
+        )
+        self._key_catcher.connect_repeating(
+            self._down, (KeySrc.Keyboard, Qt.Key.Key_Shift), frozenset(), 10
+        )
+
     @property
     def camera(self) -> Camera:
         return self._camera
@@ -56,33 +81,44 @@ class CameraCanvas(Canvas30):
 
         if event.buttons() & Qt.MouseButton.LeftButton:
             azimuth, elevation = self.camera.rotation
-            azimuth += dx/8
-            elevation += dy/8
+            azimuth += dx / 8
+            elevation += dy / 8
             self.camera.rotation = Rotation(azimuth, elevation)
 
         self._last_pos = pos
 
-    def keyPressEvent(self, event: QKeyEvent):
-        Speed = 0.1
+    def _move_relative(self, angle: int):
         x, y, z = self.camera.location
-        azimuth = None
-        if event.key() == Qt.Key.Key_W:
-            azimuth = radians(self.camera.rotation.azimuth)
-        elif event.key() == Qt.Key.Key_D:
-            azimuth = radians(self.camera.rotation.azimuth + 90)
-        elif event.key() == Qt.Key.Key_S:
-            azimuth = radians(self.camera.rotation.azimuth + 180)
-        elif event.key() == Qt.Key.Key_A:
-            azimuth = radians(self.camera.rotation.azimuth + 270)
-        elif event.key() == Qt.Key.Key_Space:
-            y -= 0.1
-        elif event.key() == Qt.Key.Key_Shift:
-            y += 0.1
+        azimuth = radians(self.camera.rotation.azimuth + angle)
+        self.camera.location = Location(
+            x - sin(azimuth) * self._speed, y, z + cos(azimuth) * self._speed
+        )
 
-        if azimuth is not None:
-            z += cos(azimuth) * Speed
-            x -= sin(azimuth) * Speed
-        self.camera.location = Location(x, y, z)
+    @Slot()
+    def _forwards(self):
+        self._move_relative(0)
+
+    @Slot()
+    def _right(self):
+        self._move_relative(90)
+
+    @Slot()
+    def _backwards(self):
+        self._move_relative(180)
+
+    @Slot()
+    def _left(self):
+        self._move_relative(270)
+
+    @Slot()
+    def _up(self):
+        x, y, z = self.camera.location
+        self.camera.location = Location(x, y + self._speed, z)
+
+    @Slot()
+    def _down(self):
+        x, y, z = self.camera.location
+        self.camera.location = Location(x, y - self._speed, z)
 
 
 class GLWidget(CameraCanvas, QOpenGLFunctions):
