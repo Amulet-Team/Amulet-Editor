@@ -30,8 +30,12 @@ class Camera(QObject):
 
     # Signals
     transform_changed = Signal()  # The intrinsic or extrinsic matrix changed.
-    intrinsics_changed = Signal()  # Camera internal state (FOV/aspect/projection/clipping) changed.
-    extrinsics_changed = Signal(object, object)  # Camera external state (location/rotation) changed.
+    intrinsics_changed = (
+        Signal()
+    )  # Camera internal state (FOV/aspect/projection/clipping) changed.
+    extrinsics_changed = Signal(
+        object, object
+    )  # Camera external state (location/rotation) changed.
     location_changed = Signal(float, float, float)  # The camera moved
     rotation_changed = Signal(float, float)  # The camera rotated
 
@@ -55,8 +59,12 @@ class Camera(QObject):
     def __init__(self, parent: QObject = None):
         super().__init__(parent)
         self._bounds = Bounds(
-            -1_000_000_000, -1_000_000_000, -1_000_000_000,
-            1_000_000_000, 1_000_000_000, 1_000_000_000,
+            -1_000_000_000,
+            -1_000_000_000,
+            -1_000_000_000,
+            1_000_000_000,
+            1_000_000_000,
+            1_000_000_000,
         )
         self._location = Location(0.0, 0.0, 0.0)
         self._rotation = Rotation(0.0, 0.0)
@@ -92,7 +100,9 @@ class Camera(QObject):
 
     def _clamp_rotation(self, rotation: Rotation) -> Rotation:
         return Rotation(
-            rotation.azimuth if -180 <= rotation.azimuth < 180 else ((rotation.azimuth + 180) % 360) - 180,
+            rotation.azimuth
+            if -180 <= rotation.azimuth < 180
+            else ((rotation.azimuth + 180) % 360) - 180,
             min(max(-90.0, rotation.elevation), 90.0),
         )
 
@@ -119,11 +129,7 @@ class Camera(QObject):
             self.extrinsics_changed.emit(self._location, self._rotation)
             self.transform_changed.emit()
 
-    def set_extrinsics(
-        self,
-        location: Location,
-        rotation: Rotation
-    ):
+    def set_extrinsics(self, location: Location, rotation: Rotation):
         """Set the camera location and rotation in one property."""
         location = self._clamp_location(location)
         rotation = self._clamp_rotation(rotation)
@@ -147,14 +153,30 @@ class Camera(QObject):
             self.extrinsics_changed.emit(self._location, self._rotation)
             self.transform_changed.emit()
 
-    def set_perspective_projection(self, vertical_fov: float, aspect_ratio: float, near_plane: float, far_plane: float):
+    def set_perspective_projection(
+        self,
+        vertical_fov: float,
+        aspect_ratio: float,
+        near_plane: float,
+        far_plane: float,
+    ):
         """Set the projection to perspective with the given settings."""
         self._intrinsic_matrix.setToIdentity()
-        self._intrinsic_matrix.perspective(vertical_fov, aspect_ratio, near_plane, far_plane)
+        self._intrinsic_matrix.perspective(
+            vertical_fov, aspect_ratio, near_plane, far_plane
+        )
         self.intrinsics_changed.emit()
         self.transform_changed.emit()
 
-    def set_ortho_projection(self, left: float, right: float, bottom: float, top: float, near_plane: float, far_plane: float):
+    def set_ortho_projection(
+        self,
+        left: float,
+        right: float,
+        bottom: float,
+        top: float,
+        near_plane: float,
+        far_plane: float,
+    ):
         """Set the projection to orthographic with the given settings."""
         self._intrinsic_matrix.setToIdentity()
         self._intrinsic_matrix.ortho(left, right, bottom, top, near_plane, far_plane)
