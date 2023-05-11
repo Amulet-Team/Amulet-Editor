@@ -157,9 +157,8 @@ class KeyCatcher(QObject):
         Connect a receiver (slot, signal or function) to a key press that is called once when pressed.
 
         :param receiver: The slot, signal or callable that is notified when the key combination is pressed.
-        :param key: The
-        :param modifiers:
-        :return:
+        :param key: The trigger key that activates the event.
+        :param modifiers: The modifier keys that must be held when the trigger key is pressed.
         """
         with self._lock:
             storage = self._get_storage(key, modifiers)
@@ -172,6 +171,14 @@ class KeyCatcher(QObject):
         key: KeyT,
         modifiers: frozenset[KeyT],
     ):
+        """
+        Disconnect a single shot receiver.
+        The arguments must be the same as were passed to the :meth:`connect_single_shot` method.
+
+        :param receiver: The slot, signal or callable that is notified when the key combination is pressed.
+        :param key: The trigger key that activates the event.
+        :param modifiers: The modifier keys that must be held when the trigger key is pressed.
+        """
         with self._lock:
             storage = self._get_storage(key, modifiers)
             if receiver in storage.bound_one_shot:
@@ -186,7 +193,14 @@ class KeyCatcher(QObject):
         modifiers: frozenset[KeyT],
         interval: int,
     ):
-        """"""
+        """
+        Connect a receiver (slot, signal or function) to a key press that is called once when pressed and every interval ms after until released.
+
+        :param receiver: The slot, signal or callable that is notified when the key combination is pressed.
+        :param key: The trigger key that activates the event.
+        :param modifiers: The modifier keys that must be held when the trigger key is pressed.
+        :param interval: The interval between receiver calls in milliseconds.
+        """
         with self._lock:
             storage = self._get_storage(key, modifiers)
             if interval not in storage.timers:
@@ -204,6 +218,15 @@ class KeyCatcher(QObject):
         modifiers: frozenset[KeyT],
         interval: int,
     ):
+        """
+        Disconnect a repeating receiver (slot, signal or function).
+        The arguments must be the same as were passed to the :meth:`connect_repeating` method.
+
+        :param receiver: The slot, signal or callable that is notified when the key combination is pressed.
+        :param key: The trigger key that activates the event.
+        :param modifiers: The modifier keys that must be held when the trigger key is pressed.
+        :param interval: The interval between receiver calls in milliseconds.
+        """
         with self._lock:
             storage = self._get_storage(key, modifiers)
             timer_data = storage.timers.get(interval)
