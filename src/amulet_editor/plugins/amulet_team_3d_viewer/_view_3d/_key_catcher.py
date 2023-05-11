@@ -237,10 +237,19 @@ class KeyCatcher(QObject):
 
 
 def _demo():
-    from PySide6.QtWidgets import QApplication, QLabel, QWidget, QGridLayout
+    from PySide6.QtWidgets import (
+        QApplication,
+        QLabel,
+        QWidget,
+        QGridLayout,
+        QPushButton,
+    )
 
     app = QApplication()
     window = QWidget()
+
+    key_catcher = KeyCatcher()
+    window.installEventFilter(key_catcher)
 
     grid = QGridLayout(window)
     grid.addWidget(QLabel("a 100ms"), 0, 0)
@@ -272,18 +281,36 @@ def _demo():
         c += 1
         label_c.setText(str(c))
 
-    key_catcher = KeyCatcher()
-    key_catcher.connect_repeating(
-        update_a, (KeySrc.Keyboard, Qt.Key.Key_A), frozenset(), 100
-    )
-    key_catcher.connect_repeating(
-        update_b, (KeySrc.Keyboard, Qt.Key.Key_B), frozenset(), 1000
-    )
-    key_catcher.connect_single_shot(
-        update_c, (KeySrc.Keyboard, Qt.Key.Key_C), frozenset()
-    )
+    def connect():
+        key_catcher.connect_repeating(
+            update_a, (KeySrc.Keyboard, Qt.Key.Key_A), frozenset(), 100
+        )
+        key_catcher.connect_repeating(
+            update_b, (KeySrc.Keyboard, Qt.Key.Key_B), frozenset(), 1000
+        )
+        key_catcher.connect_single_shot(
+            update_c, (KeySrc.Keyboard, Qt.Key.Key_C), frozenset()
+        )
 
-    window.installEventFilter(key_catcher)
+    connect()
+
+    def disconnect():
+        key_catcher.disconnect_repeating(
+            update_a, (KeySrc.Keyboard, Qt.Key.Key_A), frozenset(), 100
+        )
+        key_catcher.disconnect_repeating(
+            update_b, (KeySrc.Keyboard, Qt.Key.Key_B), frozenset(), 1000
+        )
+        key_catcher.disconnect_single_shot(
+            update_c, (KeySrc.Keyboard, Qt.Key.Key_C), frozenset()
+        )
+
+    connect_button = QPushButton("Connect")
+    connect_button.clicked.connect(connect)
+    grid.addWidget(connect_button, 3, 0)
+    disconnect_button = QPushButton("Disconnect")
+    disconnect_button.clicked.connect(disconnect)
+    grid.addWidget(disconnect_button, 3, 1)
 
     window.show()
     window.setFocus()
