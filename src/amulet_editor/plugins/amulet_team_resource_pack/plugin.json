@@ -1,0 +1,12 @@
+{
+	"identifier": "amulet_team_resource_pack",
+	"version": "1.0.0",
+	"name": "Amulet Resource Pack",
+	"depends": {
+		"python": "~=3.9",
+		"library": [
+			"minecraft-resource-pack~=1.3"
+		]
+	},
+	"locked": "true"
+}
