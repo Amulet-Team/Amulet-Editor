@@ -1,10 +1,8 @@
 from math import sin, cos, radians
 
-from PySide6.QtCore import Qt, QSize, QPointF, QObject, QEvent, Slot
+from PySide6.QtCore import Qt, QPointF, Slot
 from PySide6.QtGui import (
     QOpenGLFunctions,
-    QSurfaceFormat,
-    QKeyEvent,
     QMouseEvent,
 )
 from PySide6.QtOpenGLWidgets import QOpenGLWidget
@@ -21,19 +19,7 @@ from ._camera import Camera, Location, Rotation
 from ._key_catcher import KeySrc, KeyCatcher
 
 
-class Canvas30(QOpenGLWidget):
-    """A subclass of QOpenGLWidget that initialises the surface format."""
-
-    def __init__(self, parent=None):
-        super().__init__(parent)
-
-        fmt = QSurfaceFormat()
-        fmt.setDepthBufferSize(24)
-        fmt.setVersion(3, 0)
-        self.setFormat(fmt)
-
-
-class CameraCanvas(Canvas30):
+class CameraCanvas(QOpenGLWidget):
     """An OpenGL 3.0 canvas with basic movement controls."""
 
     def __init__(self, parent=None):

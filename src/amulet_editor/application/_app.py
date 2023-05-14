@@ -9,7 +9,7 @@ from datetime import datetime
 
 from PySide6.QtCore import Qt, Slot, QLocale, QCoreApplication, QTimer
 from PySide6.QtWidgets import QApplication
-from PySide6.QtGui import QIcon
+from PySide6.QtGui import QIcon, QSurfaceFormat
 
 import amulet
 import amulet_editor
@@ -107,6 +107,13 @@ def app_main():
         # Dummy application to get a main loop.
         app = QApplication()
     else:
+        # # Set the default surface format. Apparently this is required for some platforms.
+        surface_format = QSurfaceFormat()
+        surface_format.setDepthBufferSize(24)
+        surface_format.setVersion(3, 2)
+        surface_format.setProfile(QSurfaceFormat.OpenGLContextProfile.CoreProfile)
+        QSurfaceFormat.setDefaultFormat(surface_format)
+
         app = AmuletApp()
         # The broker cannot have a level
         level_path: Optional[str] = args.level_path
