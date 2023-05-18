@@ -99,12 +99,12 @@ class CameraCanvas(QOpenGLWidget):
     @Slot()
     def _up(self):
         x, y, z = self.camera.location
-        self.camera.location = Location(x, y + self._speed, z)
+        self.camera.location = Location(x, y - self._speed, z)
 
     @Slot()
     def _down(self):
         x, y, z = self.camera.location
-        self.camera.location = Location(x, y - self._speed, z)
+        self.camera.location = Location(x, y + self._speed, z)
 
 
 class GLWidget(CameraCanvas, QOpenGLFunctions):
