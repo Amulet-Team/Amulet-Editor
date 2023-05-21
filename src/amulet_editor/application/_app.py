@@ -107,6 +107,9 @@ def app_main():
         # Dummy application to get a main loop.
         app = QApplication()
     else:
+        # # Allow context sharing between widgets that do not share the same top level window.
+        QCoreApplication.setAttribute(Qt.ApplicationAttribute.AA_ShareOpenGLContexts)
+
         # # Set the default surface format. Apparently this is required for some platforms.
         surface_format = QSurfaceFormat()
         surface_format.setDepthBufferSize(24)
