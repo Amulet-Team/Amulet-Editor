@@ -46,7 +46,7 @@ from amulet_editor.models.widgets import AmuletTracebackDialog
 
 log = logging.getLogger(__name__)
 PythonVersion = Version(".".join(map(str, sys.version_info[:3])))
-
+Packages = packages_distributions()
 
 """
 Notes:
@@ -189,7 +189,7 @@ def _validate_import(imported_name: str, frame: FrameType):
                 pass
             else:
                 package_name = (
-                    packages_distributions()[imported_root_name][0]
+                    Packages[imported_root_name][0]
                     .lower()
                     .replace("-", "_")
                 )
