@@ -5,7 +5,7 @@
 	"depends": {
 		"python": "~=3.9",
 		"library": [
-			"minecraft-resource-pack~=1.3"
+			"minecraft_resource_pack~=1.3"
 		]
 	},
 	"locked": "true"
