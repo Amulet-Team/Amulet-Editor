@@ -4,6 +4,8 @@ from PySide6.QtCore import Qt, QPointF, Slot
 from PySide6.QtGui import (
     QOpenGLFunctions,
     QMouseEvent,
+    QHideEvent,
+    QShowEvent
 )
 from PySide6.QtOpenGLWidgets import QOpenGLWidget
 
@@ -14,9 +16,11 @@ from OpenGL.GL import (
     GL_CULL_FACE,
 )
 
-from ._logo import DrawableLogo
+from amulet_editor.data.project import get_level
+
 from ._camera import Camera, Location, Rotation
 from ._key_catcher import KeySrc, KeyCatcher
+from ._level_geometry2 import LevelGeometry
 
 
 class CameraCanvas(QOpenGLWidget):
@@ -111,24 +115,37 @@ class GLWidget(CameraCanvas, QOpenGLFunctions):
     def __init__(self, parent=None):
         CameraCanvas.__init__(self, parent)
         QOpenGLFunctions.__init__(self)
-
-        self._logo = DrawableLogo()
-
-    def cleanup(self):
-        self.makeCurrent()
-        self.doneCurrent()
+        level = get_level()
+        self._level = LevelGeometry(level)
+        self._level.set_dimension(level.dimensions[0])
+        self.camera.location_changed.connect(lambda x, y, z: self._level.set_location(x//16, z//16))
 
     def initializeGL(self):
-        self.context().aboutToBeDestroyed.connect(self.cleanup)
+        self.context().aboutToBeDestroyed.connect(self.destroyGL)
         self.initializeOpenGLFunctions()
-        self.glClearColor(0, 0, 0, 1)
+        self.glClearColor(1, 0, 0, 1)
+        self._level.initializeGL()
+
+    def destroyGL(self):
+        self.makeCurrent()
+        self._level.destroyGL()
+        self.doneCurrent()
 
     def paintGL(self):
         self.glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT)
         self.glEnable(GL_DEPTH_TEST)
         self.glEnable(GL_CULL_FACE)
 
-        self._logo.draw(self.camera.intrinsic_matrix, self.camera.extrinsic_matrix)
+        self._level.paintGL(self.camera.intrinsic_matrix, self.camera.extrinsic_matrix)
 
     def resizeGL(self, width, height):
         self.camera.set_perspective_projection(45, width / height, 0.01, 100)
+
+    def hideEvent(self, event: QHideEvent):
+        self.destroyGL()
+
+    def showEvent(self, event: QShowEvent):
+        self.destroyGL()
+        self.makeCurrent()
+        self.initializeGL()
+        self.doneCurrent()
