@@ -188,6 +188,8 @@ def _validate_import(imported_name: str, frame: FrameType):
                 # Plugins don't need to specify native python libraries.
                 pass
             else:
+                if imported_root_name not in Packages:
+                    raise RuntimeError(f"Could not find library {importer_root_name}.")
                 package_name = Packages[imported_root_name][0].lower().replace("-", "_")
                 if not any(
                     dependency.identifier == package_name
