@@ -1,39 +1,35 @@
+from __future__ import annotations
+import os
 from typing import Optional
-from minecraft_model_reader import BaseResourcePackManager
-from PySide6.QtCore import QObject, Signal
+
+from PySide6.QtCore import QLocale, QCoreApplication
+
+from amulet_editor.models.localisation import ATranslator
+
+import amulet_team_locale
+
+import amulet_team_resource_pack
 
 
-class RPObj(QObject):
-    resource_pack_changed = Signal()
+# Qt only weekly references this. We must hold a strong reference to stop it getting garbage collected
+_translator: Optional[ATranslator] = None
 
 
-_rpobj = RPObj()
-
-resource_pack_changed = _rpobj.resource_pack_changed
-
-
-_rp: Optional[BaseResourcePackManager] = None
-
-
-def get_resource_pack() -> BaseResourcePackManager:
-    """
-    Get the active resource pack.
-    This will raise a runtime error until the resource pack is first set.
-    """
-    if _rp is None:
-        raise RuntimeError("Resource pack has not been set yet.")
-    return _rp
+def load_plugin():
+    global _translator
+    _translator = ATranslator()
+    _locale_changed()
+    QCoreApplication.installTranslator(_translator)
+    amulet_team_locale.locale_changed.connect(_locale_changed)
 
 
-def set_resource_pack(resource_pack: BaseResourcePackManager):
-    """
-    Set the resource pack.
-    Will emit a signal from resource_pack_changed
+def _locale_changed():
+    _translator.load_lang(
+        QLocale(),
+        "",
+        directory=os.path.join(*amulet_team_resource_pack.__path__, "resources", "lang"),
+    )
 
-    :param resource_pack: The resource pack to set.
-    """
-    global _rp
-    if not isinstance(resource_pack, BaseResourcePackManager):
-        raise TypeError("resource_pack must be an instance of BaseResourcePackManager")
-    _rp = resource_pack
-    resource_pack_changed.emit()
+
+def unload_plugin():
+    QCoreApplication.removeTranslator(_translator)
