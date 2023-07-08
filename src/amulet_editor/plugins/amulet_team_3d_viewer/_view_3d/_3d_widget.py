@@ -11,7 +11,6 @@
 # SPDX-License-Identifier: LicenseRef-Qt-Commercial OR BSD-3-Clause
 
 from typing import overload, Optional
-
 import ctypes
 
 import numpy
@@ -158,7 +157,6 @@ class Qt3DWidget(QOpenGLWidget):
 
         # The renderer
         self._forward_renderer = Qt3DExtras.QForwardRenderer()
-        self._forward_renderer.setParent(self._render_surface_selector)
         self._forward_renderer.setSurface(self._offscreen_surface)
         self._forward_renderer.setCamera(self._camera)
         self.setActiveFrameGraph(self._forward_renderer)
@@ -225,9 +223,6 @@ class Qt3DWidget(QOpenGLWidget):
 
         self._shader_program.link()
 
-    def __del__(self):
-        self._aspect_engine.setRootEntity(Qt3DCore.QEntityPtr())
-
     @overload
     def registerAspect(self, aspect: Qt3DCore.QAbstractAspect):
         ...
@@ -279,10 +274,16 @@ class Qt3DWidget(QOpenGLWidget):
             self._root.addComponent(self._input_settings)
             self._root.addComponent(self._frame_action)
             self._frame_action.triggered.connect(self.update)
-            self._aspect_engine.setRootEntity(Qt3DCore.QEntityPtr(self._root))
+
             self._initialised = True
 
+        self._aspect_engine.setRootEntity(Qt3DCore.QEntityPtr(self._root))
         super().showEvent(e)
+
+    def hideEvent(self, *args, **kwargs) -> None:
+        # Disable the render loop before hiding
+        self._aspect_engine.setRootEntity(Qt3DCore.QEntityPtr())
+        super().hideEvent(*args, **kwargs)
 
     def paintGL(self):
         f = QOpenGLContext.currentContext().functions()
