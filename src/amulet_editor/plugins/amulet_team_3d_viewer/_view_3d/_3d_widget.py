@@ -70,7 +70,6 @@ class Qt3DWidget(QOpenGLWidget):
         self._aspect_engine = Qt3DCore.QAspectEngine()
 
         self._render_aspect = Qt3DRender.QRenderAspect()
-        self._aspect_engine.registerAspect(self._render_aspect)
 
         self._input_aspect = Qt3DInput.QInputAspect()
         self._aspect_engine.registerAspect(self._input_aspect)
@@ -277,12 +276,16 @@ class Qt3DWidget(QOpenGLWidget):
 
             self._initialised = True
 
+        self._aspect_engine.registerAspect(self._render_aspect)
         self._aspect_engine.setRootEntity(Qt3DCore.QEntityPtr(self._root))
         super().showEvent(e)
 
     def hideEvent(self, *args, **kwargs) -> None:
         # Disable the render loop before hiding
         self._aspect_engine.setRootEntity(Qt3DCore.QEntityPtr())
+        # Remove the render aspect. There is a warning if this is not here
+        self._aspect_engine.unregisterAspect(self._render_aspect)
+
         super().hideEvent(*args, **kwargs)
 
     def paintGL(self):
