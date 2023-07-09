@@ -28,7 +28,7 @@ from OpenGL.GL import (
 
 from shiboken6 import VoidPtr
 from PySide6.QtCore import QSize
-from PySide6.QtGui import QShowEvent, QSurfaceFormat, QOffscreenSurface, QOpenGLContext
+from PySide6.QtGui import QShowEvent, QSurfaceFormat, QOffscreenSurface, QOpenGLContext, QMouseEvent
 from PySide6.QtOpenGL import QOpenGLVertexArrayObject, QOpenGLShader, QOpenGLShaderProgram, QOpenGLBuffer
 from PySide6.QtOpenGLWidgets import QOpenGLWidget
 
@@ -313,3 +313,9 @@ class Qt3DWidget(QOpenGLWidget):
         self._colour_texture.setSize(w * 2, h * 2)
         self._depth_texture.setSize(w * 2, h * 2)
         self._render_surface_selector.setExternalRenderTargetSize(QSize(w * 2, h * 2))
+
+    def mousePressEvent(self, event: QMouseEvent) -> None:
+        # The widget does not get focused by clicking so we need to implement that.
+        # Not sure why this is required
+        self.setFocus()
+        super().mousePressEvent(event)
