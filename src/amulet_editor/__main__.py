@@ -39,6 +39,8 @@ def main():
 
         freeze_support()
         import logging
+        import faulthandler
+        faulthandler.enable()
 
         from amulet_editor.application._app import app_main
         from amulet_editor.models.widgets import AmuletTracebackDialog
