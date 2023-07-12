@@ -35,7 +35,6 @@ class AmuletApp(QApplication):
         self.setApplicationName("Amulet Editor")
         self.setApplicationVersion(__version__)
         self.setWindowIcon(QIcon(build.get_resource("icons/amulet/Icon.ico")))
-        self.setAttribute(Qt.ApplicationAttribute.AA_UseHighDpiPixmaps)
 
         self._translator = ATranslator()
         self._locale_changed()
