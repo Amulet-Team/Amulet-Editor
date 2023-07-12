@@ -8,7 +8,7 @@
 			"amulet_team_main_window~=1.0"
 		],
 		"library": [
-			"PySide6~=6.2"
+			"PySide6_Essentials~=6.2"
 		]
 	},
 	"locked": "true"

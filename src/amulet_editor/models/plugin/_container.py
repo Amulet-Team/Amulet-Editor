@@ -141,7 +141,7 @@ class PluginContainerV1(PluginContainer):
             isinstance(d, str) for d in library_depends_raw
         ):
             raise TypeError(
-                'plugin.json[depends][library] must be a list of string identifiers and version specifiers if defined.\nEg. ["PySide6~=6.4"]'
+                'plugin.json[depends][library] must be a list of string identifiers and version specifiers if defined.\nEg. ["PySide6_Essentials~=6.4"]'
             )
         library_depends = tuple(map(Requirement.from_string, library_depends_raw))
 
