@@ -27,7 +27,11 @@ def parse_args() -> Args:
     global _args
 
     if _args is None:
-        parser = argparse.ArgumentParser()
+        parser = argparse.ArgumentParser(
+            prog="Amulet Editor",
+            description="Amulet is a Minecraft world editing application.",
+            epilog="The following arguments are a subset of the full arguments."
+        )
 
         parser.add_argument(
             "--level_path",
