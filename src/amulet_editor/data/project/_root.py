@@ -11,17 +11,20 @@ from amulet_editor.models.generic import Observer
 from amulet_editor.models.minecraft import LevelData
 
 _root: Optional[str] = None
-_projects_json = os.path.join(paths.user_directory(), "projects.json")
 
 changed = Observer(str)
+
+
+def _projects_json():
+    return os.path.join(paths.user_directory(), "projects.json")
 
 
 def remember_project(path: str):
     """Adds path to list of projects. If already in list, update last accessed timestamp."""
 
-    if os.path.exists(_projects_json):
+    if os.path.exists(_projects_json()):
         try:
-            with open(_projects_json) as _file:
+            with open(_projects_json()) as _file:
                 _projects: list[dict[str, Any]] = json.load(_file)
         except JSONDecodeError:
             _projects = []
@@ -42,7 +45,7 @@ def remember_project(path: str):
             }
         )
 
-    with open(_projects_json, "w") as _file:
+    with open(_projects_json(), "w") as _file:
         json.dump(_projects, _file, indent=2)
 
 

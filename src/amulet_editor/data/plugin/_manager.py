@@ -58,7 +58,9 @@ TODO: look into generating stub files for the active plugins to help with develo
 Plugins can import directly from other plugins to access static classes and functions 
 """
 
-PluginDirs = [first_party_plugin_directory(), third_party_plugin_directory()]
+
+def plugin_dirs() -> tuple[str, str]:
+    return first_party_plugin_directory(), third_party_plugin_directory()
 
 
 class PluginJobType(Enum):
@@ -271,7 +273,7 @@ def load():
         # Remove the plugin directories from sys.path so that they are not directly importable
         for i in range(len(sys.path) - 1, -1, -1):
             path = sys.path[i]
-            for plugin_path in PluginDirs:
+            for plugin_path in plugin_dirs():
                 try:
                     is_same = samefile(path, plugin_path)
                 except FileNotFoundError:
@@ -373,7 +375,7 @@ def scan_plugins():
     """
     with _plugin_lock:
         # Find and parse all plugins
-        for plugin_dir in PluginDirs:
+        for plugin_dir in plugin_dirs():
             for manifest_path in glob.glob(
                 os.path.join(plugin_dir, "*", "plugin.json")
             ):
