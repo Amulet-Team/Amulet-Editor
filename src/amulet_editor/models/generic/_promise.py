@@ -53,6 +53,12 @@ class Promise(QObject, Generic[T]):
 
     def _op_wrapper(self):
         try:
+            # This enables debugging in PyCharm
+            from _pydev_bundle.pydev_monkey_qt import set_trace_in_qt
+            set_trace_in_qt()
+        except Exception:
+            pass
+        try:
             value = self._target(Promise.Data(self.progress_change, self.progress_text_change, self.is_cancel_requested))
         except self.OperationCanceled as e:
             self._exception = e
