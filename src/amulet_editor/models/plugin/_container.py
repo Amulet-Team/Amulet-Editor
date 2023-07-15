@@ -94,6 +94,9 @@ class PluginContainer(ABC):
 class PluginContainerV1(PluginContainer):
     FormatVersion = 1
 
+    def __repr__(self):
+        return f"PluginContainerV1({self.data.path})"
+
     @classmethod
     def from_data(
         cls, plugin_path: str, plugin_data: dict, first_party: bool
