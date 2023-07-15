@@ -1,7 +1,7 @@
 import os
 
 import amulet_editor
-from ._application import application_data_directory
+from ._application import data_directory
 
 
 def first_party_plugin_directory():
@@ -10,6 +10,6 @@ def first_party_plugin_directory():
 
 def third_party_plugin_directory():
     """Returns the path within which dynamic plugins are stored."""
-    path = os.path.abspath(os.path.join(application_data_directory(), "plugins"))
+    path = os.path.abspath(os.path.join(data_directory(), "plugins"))
     os.makedirs(path, exist_ok=True)
     return path
