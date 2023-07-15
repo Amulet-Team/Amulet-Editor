@@ -27,6 +27,20 @@ class AmuletTracebackDialog(Ui_AmuletTracebackDialog):
         self._error_text.setText(error)
         self._traceback_text.setText(traceback)
 
+    @classmethod
+    def show_blocking(
+        cls,
+        title: str = "",
+        error: str = "",
+        traceback: str = ""
+    ):
+        dialog = cls(
+            title=title,
+            error=error,
+            traceback=traceback
+        )
+        dialog.exec()
+
     @Slot()
     def _on_copy(self):
         clipboard = QGuiApplication.clipboard()
