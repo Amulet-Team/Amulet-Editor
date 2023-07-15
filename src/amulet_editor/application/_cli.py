@@ -3,6 +3,7 @@ import logging
 import subprocess
 import sys
 from typing import Protocol, Optional
+from amulet_editor.data.paths._application import DefaultDataDir, DefaultConfigDir, DefaultCacheDir, DefaultLogDir
 
 
 BROKER = "BROKER"
@@ -10,12 +11,16 @@ BROKER = "BROKER"
 
 class Args(Protocol):
     level_path: Optional[str]
+    data_dir: Optional[str]
+    config_dir: Optional[str]
+    cache_dir: Optional[str]
+    log_dir: Optional[str]
     logging_level: int
     logging_format: str
     trace: bool
 
 
-_args = None
+_args: Optional[Args] = None
 
 
 def parse_args() -> Args:
@@ -30,6 +35,42 @@ def parse_args() -> Args:
             help="The Minecraft world or structure to open. Default opens no level",
             action="store",
             dest="level_path",
+            default=None,
+        )
+
+        parser.add_argument(
+            "--data_dir",
+            type=str,
+            help=f"The directory to store application data in. Default is {DefaultDataDir}",
+            action="store",
+            dest="data_dir",
+            default=None,
+        )
+
+        parser.add_argument(
+            "--config_dir",
+            type=str,
+            help=f"The directory to store application config files in. Default is {DefaultConfigDir}",
+            action="store",
+            dest="config_dir",
+            default=None,
+        )
+
+        parser.add_argument(
+            "--cache_dir",
+            type=str,
+            help=f"The directory to store cache files in. Default is {DefaultCacheDir}",
+            action="store",
+            dest="cache_dir",
+            default=None,
+        )
+
+        parser.add_argument(
+            "--log_dir",
+            type=str,
+            help=f"The directory to store log files in. Default is {DefaultLogDir}",
+            action="store",
+            dest="log_dir",
             default=None,
         )
 
@@ -63,6 +104,7 @@ def parse_args() -> Args:
     return _args  # noqa
 
 
+# TODO: move this somewhere more sensible
 def spawn_process(path: str = None):
     """Spawn the broker process passing over the input CLI values."""
     this_args = parse_args()
