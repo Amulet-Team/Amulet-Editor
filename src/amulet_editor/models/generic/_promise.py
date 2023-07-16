@@ -4,6 +4,7 @@ from typing import Generic, TypeVar, Callable, Any, Generator, Union
 from threading import Lock
 from enum import IntEnum
 from PySide6.QtCore import QObject, Signal, QThreadPool, SignalInstance
+from amulet_editor.data.dev._debug import enable_trace
 
 
 T = TypeVar("T")
@@ -52,12 +53,7 @@ class Promise(QObject, Generic[T]):
     progress_text_change = Signal(str)
 
     def _op_wrapper(self):
-        try:
-            # This enables debugging in PyCharm
-            from _pydev_bundle.pydev_monkey_qt import set_trace_in_qt
-            set_trace_in_qt()
-        except Exception:
-            pass
+        enable_trace()
         try:
             value = self._target(Promise.Data(self.progress_change, self.progress_text_change, self.is_cancel_requested))
         except self.OperationCanceled as e:
