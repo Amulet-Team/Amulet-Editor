@@ -12,7 +12,7 @@ from PySide6.QtWidgets import QApplication
 from PySide6.QtGui import QSurfaceFormat
 
 import amulet
-from amulet_editor.models.widgets import DisplayException
+from amulet_editor.models.widgets.traceback_dialog import DisplayException
 from amulet_editor.data.project import _level
 import amulet_editor.data._rpc as rpc
 

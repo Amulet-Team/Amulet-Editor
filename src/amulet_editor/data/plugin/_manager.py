@@ -41,7 +41,7 @@ from amulet_editor.models.plugin import LibraryUID
 from amulet_editor.models.plugin._state import PluginState
 from amulet_editor.models.plugin._container import PluginContainer
 from amulet_editor.models.plugin._requirement import Requirement
-from amulet_editor.models.widgets import AmuletTracebackDialog
+from amulet_editor.models.widgets.traceback_dialog import display_exception
 
 
 log = logging.getLogger(__name__)
@@ -501,12 +501,11 @@ def _enable_plugin(plugin_uid: LibraryUID):
                         log.debug(f"enabled plugin {plugin_container.data.uid}")
                     except Exception as e:
                         log.exception(e)
-                        dialog = AmuletTracebackDialog(
+                        display_exception(
                             title=f"Error while loading plugin {plugin_container.data.uid.identifier} {plugin_container.data.uid.version}",
                             error=str(e),
                             traceback=traceback.format_exc(),
                         )
-                        dialog.exec()
 
                         # Since the plugin failed to load we must try and disable it
                         _disable_plugin(plugin_container.data.uid)
@@ -563,12 +562,11 @@ def _unload_plugin(plugin_container: PluginContainer):
             invoke(unload_plugin)
         except Exception as e:
             log.exception(e)
-            dialog = AmuletTracebackDialog(
+            display_exception(
                 title=f"Error while unloading plugin {plugin_container.data.uid.identifier} {plugin_container.data.uid.version}",
                 error=str(e),
                 traceback=traceback.format_exc(),
             )
-            dialog.exec()
     plugin_container.instance = None
 
     # Remove the module from sys.modules

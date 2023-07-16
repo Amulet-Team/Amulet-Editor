@@ -51,7 +51,7 @@ def main():
         logging.getLogger().setLevel(logging.WARNING)
 
         from amulet_editor.application._main import app_main
-        from amulet_editor.models.widgets import AmuletTracebackDialog
+        from amulet_editor.models.widgets.traceback_dialog import display_exception_blocking
 
     except Exception as e:
         _on_error(e)
@@ -70,12 +70,11 @@ def main():
                 if QApplication.instance() is None:
                     # QDialog needs an app otherwise it crashes
                     app = QApplication()
-                dialog = AmuletTracebackDialog(
+                display_exception_blocking(
                     title="Error Initialising Application",
                     error=str(e),
                     traceback="".join(traceback.format_exc()),
                 )
-                dialog.exec()
             except:
                 pass
             input("Press ENTER to continue...")

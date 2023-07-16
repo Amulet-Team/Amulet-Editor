@@ -39,7 +39,7 @@ from PySide6.QtCore import (
 )
 
 from amulet_editor.data.build import get_resource
-from amulet_editor.models.widgets import DisplayException
+from amulet_editor.models.widgets.traceback_dialog import DisplayException
 
 import amulet_team_main_window2.application.windows.sub_window as sub_window
 import amulet_team_main_window2.application.windows.main_window as main_window

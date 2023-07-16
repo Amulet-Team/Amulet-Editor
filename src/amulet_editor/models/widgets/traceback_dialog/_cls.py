@@ -1,5 +1,3 @@
-import traceback as tb
-
 from PySide6.QtCore import Slot, QSize, Qt
 from PySide6.QtGui import QGuiApplication, QIcon
 
@@ -7,7 +5,9 @@ from ._traceback_dialog import Ui_AmuletTracebackDialog
 from amulet_editor.data.build import get_resource
 
 
-class AmuletTracebackDialog(Ui_AmuletTracebackDialog):
+class _AmuletTracebackDialog(Ui_AmuletTracebackDialog):
+    """A dialog to display tracebacks."""
+
     def __init__(
         self,
         parent=None,
@@ -27,41 +27,7 @@ class AmuletTracebackDialog(Ui_AmuletTracebackDialog):
         self._error_text.setText(error)
         self._traceback_text.setText(traceback)
 
-    @classmethod
-    def show_blocking(
-        cls,
-        title: str = "",
-        error: str = "",
-        traceback: str = ""
-    ):
-        dialog = cls(
-            title=title,
-            error=error,
-            traceback=traceback
-        )
-        dialog.exec()
-
     @Slot()
     def _on_copy(self):
         clipboard = QGuiApplication.clipboard()
         clipboard.setText(self._traceback)
-
-
-class DisplayException:
-    """A class to catch exceptions and display the traceback dialog."""
-
-    def __init__(self, msg: str):
-        self._msg = msg
-
-    def __enter__(self):
-        pass
-
-    def __exit__(self, exc_type, exc_val, exc_tb):
-        if exc_type and isinstance(exc_val, Exception):
-            dialog = AmuletTracebackDialog(
-                title=self._msg,
-                error=str(exc_val),
-                traceback="".join(tb.format_tb(exc_tb)),
-            )
-            dialog.exec()
-        return False

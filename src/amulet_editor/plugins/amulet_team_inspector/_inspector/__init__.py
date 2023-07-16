@@ -5,7 +5,7 @@ from PySide6.QtWidgets import QTreeWidgetItem, QApplication, QWidget
 from PySide6.QtCore import QObject, QRect, QEvent, QPoint
 from PySide6.QtGui import QMouseEvent, QPainter, QColor, QIcon
 
-from amulet_editor.models.widgets import DisplayException
+from amulet_editor.models.widgets.traceback_dialog import DisplayException
 from amulet_editor.data.build import get_resource
 
 from ._inspector import Ui_InspectionTool
