@@ -113,6 +113,7 @@ venv.bak/
 
 # Visual studio
 .vs/
+*.user
 *.pyproj
 *.sln
 
