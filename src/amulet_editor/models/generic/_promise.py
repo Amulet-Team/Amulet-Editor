@@ -34,7 +34,7 @@ class Promise(QObject, Generic[T]):
     class OperationCanceled(Exception):
         pass
 
-    def __init__(self, target: Callable[[Promise.Data], Any]):
+    def __init__(self, target: Callable[[Promise.Data], T]):
         """
         Create a new promise
         :param target: The function to execute.
@@ -93,7 +93,7 @@ class Promise(QObject, Generic[T]):
         self._op_wrapper()
         return self.get_return()
 
-    def call_chained(self, parent_promise: Promise.Data, min_progress: float, max_progress: float) -> T:
+    def call_chained(self, parent_promise: Promise.Data, min_progress: float = 0.0, max_progress: float = 1.0) -> T:
         """
         Directly call the operation wrapped by this promise in this thread.
         Relay signals to another promise.
