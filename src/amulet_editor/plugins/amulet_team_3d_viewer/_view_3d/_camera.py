@@ -1,7 +1,7 @@
 from typing import NamedTuple, Optional
 from PySide6.QtCore import QObject, Signal
 from PySide6.QtGui import (
-    QMatrix4x4,
+    QMatrix4x4
 )
 
 
@@ -29,15 +29,16 @@ class Camera(QObject):
     """A class to hold the state information of the camera."""
 
     # Signals
-    transform_changed = Signal()  # The intrinsic or extrinsic matrix changed.
-    intrinsics_changed = (
-        Signal()
-    )  # Camera internal state (FOV/aspect/projection/clipping) changed.
-    extrinsics_changed = Signal(
-        object, object
-    )  # Camera external state (location/rotation) changed.
-    location_changed = Signal(float, float, float)  # The camera moved
-    rotation_changed = Signal(float, float)  # The camera rotated
+    # The intrinsic or extrinsic matrix changed.
+    transform_changed = Signal()
+    # Camera internal state (FOV/aspect/projection/clipping) changed.
+    intrinsics_changed = Signal()
+    # Camera external state (location/rotation) changed.
+    extrinsics_changed = Signal()
+    # The camera moved
+    location_changed = Signal()
+    # The camera rotated
+    rotation_changed = Signal()
 
     # Private variables
     _bounds: Bounds
@@ -94,8 +95,8 @@ class Camera(QObject):
         if location != self._location:
             self._location = location
             self._extrinsic_matrix = None
-            self.location_changed.emit(*self._location)
-            self.extrinsics_changed.emit(self._location, self._rotation)
+            self.location_changed.emit()
+            self.extrinsics_changed.emit()
             self.transform_changed.emit()
 
     def _clamp_rotation(self, rotation: Rotation) -> Rotation:
@@ -125,8 +126,8 @@ class Camera(QObject):
         if rotation != self._rotation:
             self._rotation = rotation
             self._extrinsic_matrix = None
-            self.rotation_changed.emit(*self._rotation)
-            self.extrinsics_changed.emit(self._location, self._rotation)
+            self.rotation_changed.emit()
+            self.extrinsics_changed.emit()
             self.transform_changed.emit()
 
     def set_extrinsics(self, location: Location, rotation: Rotation):
@@ -145,12 +146,12 @@ class Camera(QObject):
             self._extrinsic_matrix = None
 
             if location_changed:
-                self.location_changed.emit(self._location)
+                self.location_changed.emit()
 
             if rotation_changed:
-                self.rotation_changed.emit(self._rotation)
+                self.rotation_changed.emit()
 
-            self.extrinsics_changed.emit(self._location, self._rotation)
+            self.extrinsics_changed.emit()
             self.transform_changed.emit()
 
     def set_perspective_projection(
