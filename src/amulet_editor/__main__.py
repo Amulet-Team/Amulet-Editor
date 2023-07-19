@@ -46,6 +46,8 @@ except Exception as e_:
 
 def main():
     try:
+        from amulet_editor.data.paths._application import _init_paths
+        _init_paths(None, None, None, None)
         # Initialise logging at the highest level until configured otherwise.
         logging.basicConfig(level=logging.WARNING, format="%(levelname)s - %(message)s")
         logging.getLogger().setLevel(logging.WARNING)
