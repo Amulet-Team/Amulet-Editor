@@ -198,5 +198,5 @@ class Camera(QObject):
             rotation = self._rotation
             self._extrinsic_matrix.rotate(rotation.elevation, 1, 0, 0)
             self._extrinsic_matrix.rotate(rotation.azimuth, 0, 1, 0)
-            self._extrinsic_matrix.translate(location.x, location.y, location.z)
+            self._extrinsic_matrix.translate(-location.x, -location.y, -location.z)
         return self._extrinsic_matrix
