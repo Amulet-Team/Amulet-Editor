@@ -1,4 +1,4 @@
-from typing import Tuple, Dict, Optional, Iterable
+from typing import Tuple, Dict, Optional
 import struct
 import hashlib
 import os
@@ -6,7 +6,7 @@ import json
 import glob
 import logging
 from threading import Lock, RLock
-from weakref import WeakKeyDictionary, ref, WeakSet
+from weakref import WeakKeyDictionary, ref
 
 from PIL import Image
 from PIL.ImageQt import ImageQt
@@ -47,14 +47,10 @@ class OpenGLResourcePack:
     # Texture coordinates
     _texture_bounds: Dict[str, Tuple[float, float, float, float]]
 
-    # Image data
-    _atlas: Optional[QImage]
-    # Image on CPU
+    # Image on GPU
     _texture: Optional[QOpenGLTexture]
-    # All the contexts the texture has been bound to.
-    # We need to destroy the GPU data for the texture in each context when this class is destroyed
-    # because the context may exist for a long time after.
-    _contexts: WeakSet[QOpenGLContext]
+    _context: Optional[QOpenGLContext]
+    _surface: Optional[QOffscreenSurface]
 
     def __init__(
         self, resource_pack: BaseResourcePackManager, translator: PyMCTranslate.Version
@@ -65,12 +61,15 @@ class OpenGLResourcePack:
         self._translator = translator
         self._block_models = {}
         self._texture_bounds = {}
-        self._atlas = None
         self._texture = None
-        self._contexts = WeakSet()
+        self._context = None
+        self._surface = None
 
     def __del__(self):
-        self._destroy_gl(*self._contexts)
+        if self._texture is not None:
+            self._context.makeCurrent(self._surface)
+            self._texture.destroy()
+            self._context.doneCurrent()
 
     def initialise(self) -> Promise[None]:
         """
@@ -113,7 +112,7 @@ class OpenGLResourcePack:
                             raise Exception(
                                 "The resource packs have changed since last merging."
                             )
-                        self._atlas = QImage(img_path)
+                        _atlas = QImage(img_path)
                     except Exception:
                         (
                             atlas,
@@ -124,9 +123,33 @@ class OpenGLResourcePack:
                         atlas.save(img_path)
                         with open(bounds_path, "w") as f:
                             json.dump((mod_time, bounds), f)
-                        self._atlas = ImageQt(atlas).mirrored()
+                        _atlas = ImageQt(atlas).mirrored()
 
                     self._texture_bounds = bounds
+
+                    self._context = QOpenGLContext()
+                    self._context.setShareContext(QOpenGLContext.globalShareContext())
+                    self._context.create()
+                    self._surface = QOffscreenSurface()
+                    self._surface.create()
+                    if not self._context.makeCurrent(self._surface):
+                        raise RuntimeError("Could not make context current.")
+
+                    self._texture = QOpenGLTexture(QOpenGLTexture.Target.Target2D)
+                    self._texture.setMinificationFilter(QOpenGLTexture.Filter.Nearest)
+                    self._texture.setMagnificationFilter(QOpenGLTexture.Filter.Nearest)
+                    self._texture.setWrapMode(
+                        QOpenGLTexture.CoordinateDirection.DirectionS,
+                        QOpenGLTexture.WrapMode.ClampToEdge
+                    )
+                    self._texture.setWrapMode(
+                        QOpenGLTexture.CoordinateDirection.DirectionT,
+                        QOpenGLTexture.WrapMode.ClampToEdge
+                    )
+                    self._texture.setData(_atlas)
+                    self._texture.create()
+
+                    self._context.doneCurrent()
 
         return Promise(func)
 
@@ -138,39 +161,9 @@ class OpenGLResourcePack:
         :return: A QOpenGLTexture instance. This must not be stored outside of this class.
         """
         with self._lock:
-            context = QOpenGLContext.currentContext()
-            if context is None:
-                raise RuntimeError("No context has been made current")
             if self._texture is None:
-                if self._atlas is None:
-                    raise RuntimeError("The OpenGLResourcePack has not been initialised.")
-                self._texture = QOpenGLTexture(QOpenGLTexture.Target.Target2D)
-                self._texture.setMinificationFilter(QOpenGLTexture.Filter.Nearest)
-                self._texture.setMagnificationFilter(QOpenGLTexture.Filter.Nearest)
-                self._texture.setWrapMode(QOpenGLTexture.CoordinateDirection.DirectionS,
-                                          QOpenGLTexture.WrapMode.ClampToEdge)
-                self._texture.setWrapMode(QOpenGLTexture.CoordinateDirection.DirectionT,
-                                          QOpenGLTexture.WrapMode.ClampToEdge)
-                self._texture.setData(self._atlas)
-                # The atlas CPU texture is no longer needed.
-                self._atlas = None
-            if not self._texture.isCreated():
-                self._texture.create()
-                context.aboutToBeDestroyed.connect(lambda: self._destroy_gl(context))
-                self._contexts.add(context)
+                raise RuntimeError("The OpenGLResourcePack has not been initialised.")
             return self._texture
-
-    def _destroy_gl(self, *contexts: QOpenGLContext):
-        """Destroy the GPU data in the given contexts."""
-        with self._lock:
-            if self._texture is not None:
-                surface = QOffscreenSurface()
-                for context in contexts:
-                    log.debug(f"Destroying resource pack GPU image for context {context}")
-                    context.makeCurrent(surface)
-                    if self._texture.isCreated():
-                        self._texture.destroy()
-                    context.doneCurrent()
 
     def get_texture_path(self, namespace: Optional[str], relative_path: str):
         """Get the absolute path of the image from the relative components.
