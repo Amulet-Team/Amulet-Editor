@@ -6,13 +6,14 @@ from threading import Lock
 from weakref import WeakKeyDictionary, WeakValueDictionary, WeakSet
 import numpy
 
-from PySide6.QtCore import QThread, Signal, QObject, Slot
+from PySide6.QtCore import QThread, Signal, QObject, Slot, QTimer
 from PySide6.QtGui import QMatrix4x4, QOpenGLContext, QOffscreenSurface
 from PySide6.QtOpenGL import (
     QOpenGLVertexArrayObject,
     QOpenGLBuffer,
     QOpenGLShaderProgram,
-    QOpenGLShader
+    QOpenGLShader,
+    QOpenGLTexture
 )
 from shiboken6 import VoidPtr
 from OpenGL.GL import (
@@ -43,7 +44,7 @@ log = logging.getLogger(__name__)
 ChunkKey = tuple[Dimension, int, int]
 
 
-class SharedChunkVBO(QObject):
+class SharedChunkGeometry(QObject):
     """
     A class holding all the shared chunk data.
     The vbo will be deallocated when this instance is destroyed
@@ -51,11 +52,15 @@ class SharedChunkVBO(QObject):
     """
     vbo: QOpenGLBuffer
     vertex_count: int
+    _resource_pack: OpenGLResourcePack
+    texture: QOpenGLTexture
 
-    def __init__(self, vbo: QOpenGLBuffer, vertex_count: int):
+    def __init__(self, vbo: QOpenGLBuffer, vertex_count: int, resource_pack: OpenGLResourcePack):
         super().__init__()
         self.vbo = vbo
         self.vertex_count = vertex_count
+        self._resource_pack = resource_pack
+        self.texture = self._resource_pack.get_texture()
 
 
 class SharedChunkData(QObject):
@@ -73,31 +78,34 @@ class SharedChunkData(QObject):
     # The shared OpenGL data.
     # This variable can get modified, you must hold a strong reference to this object and access it from there.
     # It will be None initially until geometry_changed is emitted.
-    vbo: Optional[SharedChunkVBO]
+    geometry: Optional[SharedChunkGeometry]
 
     # Signals
     # Emitted when the geometry has been modified.
-    vbo_changed = Signal()
+    geometry_changed = Signal()
 
     def __init__(self, model_transform: QMatrix4x4):
         super().__init__()
         self.model_transform: QMatrix4x4 = model_transform
-        self.vbo = None
+        self.geometry = None
 
 
 class ChunkGenerator(QObject):
     _level: BaseLevel
-    _owned_geometry: WeakSet[SharedChunkVBO]
+    _owned_geometry: WeakSet[SharedChunkGeometry]
 
     _context: QOpenGLContext
     _surface: QOffscreenSurface
 
     _thread: Optional[QThread]
 
+    _resource_pack_container: RenderResourcePackContainer
+    _resource_pack: Optional[OpenGLResourcePack]
+
     def __init__(self, level: BaseLevel):
         super().__init__()
         self._level = level
-        geometries = self._owned_geometry = WeakSet[SharedChunkVBO]()
+        geometries = self._owned_geometry = WeakSet[SharedChunkGeometry]()
 
         self._thread = QThread()
         self._thread.start()
@@ -119,6 +127,10 @@ class ChunkGenerator(QObject):
 
         self._generate_signal.connect(self._generate_chunk)
 
+        self._resource_pack_container = get_gl_resource_pack_container(level)
+        self._resource_pack = self._resource_pack_container.resource_pack if self._resource_pack_container.loaded else None
+        self._resource_pack_container.changed.connect(self._resource_pack_changed)
+
         def destroy():
             # Destroy all the data
             # This function cannot reference self otherwise it can't be garbage collected.
@@ -131,6 +143,9 @@ class ChunkGenerator(QObject):
 
         # Destroy all the generated VBOs when this instance is destroyed.
         self.destroyed.connect(destroy)
+
+    def _resource_pack_changed(self):
+        self._resource_pack = self._resource_pack_container.resource_pack
 
     def __del__(self):
         # Can't destroy OpenGL data here because this will probably be called from the main thread.
@@ -154,6 +169,11 @@ class ChunkGenerator(QObject):
     @Slot(object, object)
     def _generate_chunk(self, chunk_key: ChunkKey, chunk_data: SharedChunkData):
         try:
+            if self._resource_pack is None:
+                # The resource pack does not exist yet so push the job to the back of the queue
+                QTimer.singleShot(100, lambda: self.generate_chunk(chunk_key, chunk_data))
+                return
+
             dimension, cx, cz = chunk_key
 
             buffer = b""
@@ -169,7 +189,7 @@ class ChunkGenerator(QObject):
                 # self._create_error_geometry()
             else:
                 chunk_verts, chunk_verts_translucent = create_lod0_chunk(
-                    self.data.resource_pack,
+                    self._resource_pack,
                     numpy.zeros(3, dtype=numpy.int32),
                     self._sub_chunks(dimension, cx, cz, chunk),
                     chunk.block_palette,
@@ -192,9 +212,8 @@ class ChunkGenerator(QObject):
             vbo.allocate(buffer, buffer_size)
             vbo.release()
 
-            vbo_container = SharedChunkVBO(vbo, vertex_count)
-            chunk_data.vbo = vbo_container
-            chunk_data.vbo_changed.emit()
+            chunk_data.geometry = SharedChunkGeometry(vbo, vertex_count, self._resource_pack)
+            chunk_data.geometry_changed.emit()
 
             self._context.doneCurrent()
 
@@ -301,6 +320,9 @@ class SharedLevelGeometry(QObject):
 
         self._chunk_generator = ChunkGenerator(level)
 
+        self._resource_pack_container = get_gl_resource_pack_container(level)
+        self._resource_pack_container.changed.connect(self._resource_pack_changed)
+
     def get_chunk(self, chunk_key: ChunkKey) -> SharedChunkData:
         """Get the geometry for a chunk."""
         with self._chunks_lock:
@@ -313,20 +335,26 @@ class SharedLevelGeometry(QObject):
                 self._chunk_generator.generate_chunk(chunk_key, chunk)
             return chunk
 
+    def _resource_pack_changed(self):
+        # The geometry of all loaded chunks needs to be rebuilt.
+        with self._chunks_lock:
+            for chunk_key, chunk in self._chunks.items():
+                self._chunk_generator.generate_chunk(chunk_key, chunk)
+
 
 class WidgetChunkData(QObject):
     shared: SharedChunkData
-    vbo: Optional[SharedChunkVBO]
+    geometry: Optional[SharedChunkGeometry]
     vao: Optional[QOpenGLVertexArrayObject]
 
-    vbo_changed = Signal()
+    geometry_changed = Signal()
 
     def __init__(self, shared: SharedChunkData):
         super().__init__()
         self.shared = shared
-        self.vbo = None
+        self.geometry = None
         self.vao = None
-        self.shared.vbo_changed.connect(self.vbo_changed)
+        self.shared.geometry_changed.connect(self.geometry_changed)
 
 
 def empty_iterator():
@@ -473,18 +501,20 @@ class WidgetLevelGeometry(QObject, Drawable):
         self._texture_location = self._program.uniformLocation("image")
 
     def _destroy_gl(self):
-        if self._context is not None:
-            if QOpenGLContext.currentContext() is not self._context:
-                # Enable the context if it isn't.
-                # Use an offscreen surface because the widget surface may no longer exist.
-                if not self._context.makeCurrent(self._surface):
-                    raise RuntimeError("Could not make context current.")
+        if self._context is None:
+            return
 
-            self._clear_chunks_no_context()
-            self._program = None
-            self._matrix_location = None
-            self._texture_location = None
-            self._context = None
+        if QOpenGLContext.currentContext() is not self._context:
+            # Enable the context if it isn't.
+            # Use an offscreen surface because the widget surface may no longer exist.
+            if not self._context.makeCurrent(self._surface):
+                raise RuntimeError("Could not make context current.")
+
+        self._clear_chunks_no_context()
+        self._program = None
+        self._matrix_location = None
+        self._texture_location = None
+        self._context = None
 
     def __del__(self):
         self._destroy_gl()
@@ -508,7 +538,6 @@ class WidgetLevelGeometry(QObject, Drawable):
 
         # Init the texture
         self._program.setUniformValue1i(self._texture_location, 0)
-        self._data.resource_pack.get_texture().bind(0)
 
         transform = projection_matrix * view_matrix
         for chunk_data in self._chunks.values():
@@ -516,9 +545,10 @@ class WidgetLevelGeometry(QObject, Drawable):
                 self._matrix_location,
                 transform * chunk_data.shared.model_transform
             )
+            chunk_data.geometry.texture.bind(0)
             chunk_data.vao.bind()
             f.glDrawArrays(
-                GL_TRIANGLES, 0, chunk_data.vbo.vertex_count
+                GL_TRIANGLES, 0, chunk_data.geometry.vertex_count
             )
             chunk_data.vao.release()
 
@@ -527,7 +557,7 @@ class WidgetLevelGeometry(QObject, Drawable):
     def start(self):
         """Start chunk generation"""
         self._running = True
-        self._queue_next_chunk()
+        self._update_chunk_finder()
 
     def stop(self):
         self._running = False
@@ -542,6 +572,8 @@ class WidgetLevelGeometry(QObject, Drawable):
 
     def _clear_chunks(self):
         """Unload all chunk data. It is the job of the caller to handle the chunk generator."""
+        if self._context is None:
+            return
         if not self._context.makeCurrent(self._surface):
             raise RuntimeError("Could not make context current.")
         self._clear_chunks_no_context()
@@ -560,6 +592,8 @@ class WidgetLevelGeometry(QObject, Drawable):
         Unload all chunk data outside the unload render distance.
         It is the job of the caller to handle the chunk generator.
         """
+        if self._context is None:
+            return
         if self._camera_chunk is None:
             return
 
@@ -643,13 +677,13 @@ class WidgetLevelGeometry(QObject, Drawable):
 
         shared_chunk_data = self._shared.get_chunk(chunk_key)
         widget_chunk_data = WidgetChunkData(shared_chunk_data)
-        shared_vbo_container = shared_chunk_data.vbo
+        shared_geometry = shared_chunk_data.geometry
 
-        if shared_vbo_container is None:
+        if shared_geometry is None:
             self._pending_chunks[chunk_key] = widget_chunk_data
         else:
             # vbo already exists
-            widget_chunk_data.vbo = shared_vbo_container
+            widget_chunk_data.geometry = shared_geometry
             self._chunks[chunk_key] = widget_chunk_data
 
         def on_change():
@@ -667,42 +701,41 @@ class WidgetLevelGeometry(QObject, Drawable):
                     # Create the VAO if one does not exist.
                     chunk.vao = QOpenGLVertexArrayObject()
                     chunk.vao.create()
-                    chunk.vao.bind()
-
-                    # vertex coord
-                    f.glEnableVertexAttribArray(0)
-                    f.glVertexAttribPointer(
-                        0, 3, GL_FLOAT, GL_FALSE, 12 * FloatSize, VoidPtr(0)
-                    )
-                    # texture coord
-                    f.glEnableVertexAttribArray(1)
-                    f.glVertexAttribPointer(
-                        1, 2, GL_FLOAT, GL_FALSE, 12 * FloatSize, VoidPtr(3 * FloatSize)
-                    )
-                    # texture bounds
-                    f.glEnableVertexAttribArray(2)
-                    f.glVertexAttribPointer(
-                        2, 4, GL_FLOAT, GL_FALSE, 12 * FloatSize, VoidPtr(5 * FloatSize)
-                    )
-                    # tint
-                    f.glEnableVertexAttribArray(3)
-                    f.glVertexAttribPointer(
-                        3, 3, GL_FLOAT, GL_FALSE, 12 * FloatSize, VoidPtr(9 * FloatSize)
-                    )
-                else:
-                    chunk.vao.bind()
+                chunk.vao.bind()
 
                 # Associate the vbo with the vao
-                vbo_container = chunk.shared.vbo
+                vbo_container = chunk.shared.geometry
                 vbo_container.vbo.bind()
+
+                # vertex coord
+                f.glEnableVertexAttribArray(0)
+                f.glVertexAttribPointer(
+                    0, 3, GL_FLOAT, GL_FALSE, 12 * FloatSize, VoidPtr(0)
+                )
+                # texture coord
+                f.glEnableVertexAttribArray(1)
+                f.glVertexAttribPointer(
+                    1, 2, GL_FLOAT, GL_FALSE, 12 * FloatSize, VoidPtr(3 * FloatSize)
+                )
+                # texture bounds
+                f.glEnableVertexAttribArray(2)
+                f.glVertexAttribPointer(
+                    2, 4, GL_FLOAT, GL_FALSE, 12 * FloatSize, VoidPtr(5 * FloatSize)
+                )
+                # tint
+                f.glEnableVertexAttribArray(3)
+                f.glVertexAttribPointer(
+                    3, 3, GL_FLOAT, GL_FALSE, 12 * FloatSize, VoidPtr(9 * FloatSize)
+                )
+
                 chunk.vao.release()
                 vbo_container.vbo.release()
 
                 # Update the vbo attribute.
                 # If a VBO was previously stored it will get automatically deleted when the last reference is lost.
-                chunk.vbo = vbo_container
+                chunk.geometry = vbo_container
 
             self._generation_count -= 1
             self._queue_next_chunk()
 
-        widget_chunk_data.vbo_changed.connect(on_change)
+        widget_chunk_data.geometry_changed.connect(on_change)

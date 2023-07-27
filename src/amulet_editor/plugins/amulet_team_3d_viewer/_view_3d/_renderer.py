@@ -22,7 +22,7 @@ from amulet_team_resource_pack._api import get_resource_pack_container
 
 from ._camera import Camera, Location, Rotation
 from ._key_catcher import KeySrc, KeyCatcher
-from ._level_geometry import LevelGeometry
+from ._level_geometry_3 import WidgetLevelGeometry
 from ._resource_pack import get_gl_resource_pack_container
 
 log = logging.getLogger(__name__)
@@ -81,15 +81,23 @@ class FirstPersonCanvas(QOpenGLWidget, QOpenGLFunctions):
         self.camera.location_changed.connect(self._on_move)
 
         level = get_level()
-        self._render_level = LevelGeometry(level)
+        self._render_level = WidgetLevelGeometry(level)
         self._render_level.changed.connect(self.update)
         self._render_level.set_dimension(level.dimensions[0])
+        self._render_level.set_location(0, 0)
 
         self._resource_pack_container = get_resource_pack_container(level)
         self._resource_pack_container.changing.connect(lambda prom: prom.progress_change.connect(lambda prog: print(f"Loading resource pack {prog}")))
         self._gl_resource_pack_container = get_gl_resource_pack_container(level)
         self._gl_resource_pack_container.changing.connect(lambda prom: prom.progress_change.connect(lambda prog: print(f"Loading GL resource pack {prog}")))
         self._resource_pack_container.init()
+
+    def initializeGL(self):
+        """Private initialisation method called by the QOpenGLWidget"""
+        log.debug(f"Initialising GL for {self}")
+        self.initializeOpenGLFunctions()
+        self.glClearColor(1, 0, 0, 1)
+        self._render_level.initializeGL()
 
     @property
     def camera(self) -> Camera:
@@ -100,31 +108,6 @@ class FirstPersonCanvas(QOpenGLWidget, QOpenGLFunctions):
 
     def hideEvent(self, event: QHideEvent) -> None:
         self._render_level.stop()
-
-    def initializeGL(self):
-        """Private initialisation method called by the QOpenGLWidget"""
-        log.debug(f"Initialising GL for {self}")
-
-        # Set up the destruction function
-        context = self.context()
-        destroyed = False
-
-        def destroy_gl():
-            # If this was a method it would not get called.
-            nonlocal destroyed
-            if not destroyed:
-                log.debug(f"Destroying GL for {self}")
-                context.makeCurrent(QOffscreenSurface())
-                self._render_level.destroyGL()
-                context.doneCurrent()
-                destroyed = True
-
-        context.aboutToBeDestroyed.connect(destroy_gl)
-        self.destroyed.connect(destroy_gl)
-
-        self.initializeOpenGLFunctions()
-        self.glClearColor(1, 0, 0, 1)
-        self._render_level.initializeGL()
 
     def paintGL(self):
         """Private paint method called by the QOpenGLWidget"""

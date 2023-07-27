@@ -8,7 +8,3 @@ class Drawable:
     def initializeGL(self):
         """Initialise the OpenGL data."""
         raise NotImplementedError
-
-    def destroyGL(self):
-        """Destroy the OpenGL data."""
-        raise NotImplementedError
