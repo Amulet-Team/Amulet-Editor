@@ -63,22 +63,22 @@ class FirstPersonCanvas(QOpenGLWidget, QOpenGLFunctions):
         self._key_catcher = KeyCatcher()
         self.installEventFilter(self._key_catcher)
         self._key_catcher.connect_repeating(
-            self._forwards, (KeySrc.Keyboard, Qt.Key.Key_W), frozenset(), 10
+            self._forwards, (KeySrc.Keyboard, Qt.Key.Key_I), frozenset(), 10
         )
         self._key_catcher.connect_repeating(
-            self._right, (KeySrc.Keyboard, Qt.Key.Key_D), frozenset(), 10
+            self._right, (KeySrc.Keyboard, Qt.Key.Key_L), frozenset(), 10
         )
         self._key_catcher.connect_repeating(
-            self._backwards, (KeySrc.Keyboard, Qt.Key.Key_S), frozenset(), 10
+            self._backwards, (KeySrc.Keyboard, Qt.Key.Key_K), frozenset(), 10
         )
         self._key_catcher.connect_repeating(
-            self._left, (KeySrc.Keyboard, Qt.Key.Key_A), frozenset(), 10
+            self._left, (KeySrc.Keyboard, Qt.Key.Key_J), frozenset(), 10
         )
         self._key_catcher.connect_repeating(
             self._up, (KeySrc.Keyboard, Qt.Key.Key_Space), frozenset(), 10
         )
         self._key_catcher.connect_repeating(
-            self._down, (KeySrc.Keyboard, Qt.Key.Key_Shift), frozenset(), 10
+            self._down, (KeySrc.Keyboard, Qt.Key.Key_Semicolon), frozenset(), 10
         )
 
         self.camera.location_changed.connect(self._on_move)
