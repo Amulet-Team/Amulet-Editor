@@ -6,7 +6,7 @@ from threading import Lock
 from weakref import WeakKeyDictionary, WeakValueDictionary, WeakSet, ref
 import numpy
 
-from PySide6.QtCore import QThread, Signal, QObject, Slot, QTimer
+from PySide6.QtCore import QThread, Signal, QObject, Slot, QTimer, QCoreApplication
 from PySide6.QtGui import QMatrix4x4, QOpenGLContext, QOffscreenSurface
 from PySide6.QtOpenGL import (
     QOpenGLVertexArrayObject,
@@ -97,8 +97,6 @@ class ChunkGeneratorWorker(QObject):
     _context: QOpenGLContext
     _surface: QOffscreenSurface
 
-    _thread: Optional[QThread]
-
     _resource_pack_container: RenderResourcePackContainer
     _resource_pack: Optional[OpenGLResourcePack]
 
@@ -107,10 +105,6 @@ class ChunkGeneratorWorker(QObject):
         self._level = ref(level)
         geometries = self._owned_geometry = WeakSet[SharedChunkGeometry]()
 
-        self._thread = QThread()
-        self._thread.start()
-        self.moveToThread(self._thread)
-
         # Create the context used by this thread
         context = self._context = QOpenGLContext()
         global_context = QOpenGLContext.globalShareContext()
@@ -118,14 +112,12 @@ class ChunkGeneratorWorker(QObject):
             raise RuntimeError("Global OpenGL context does not exist.")
         self._context.setShareContext(global_context)
         self._context.create()
-        context.moveToThread(self._thread)
 
         # Create the surface
         surface = self._surface = QOffscreenSurface()
         self._surface.create()
-        surface.moveToThread(self._thread)
 
-        self._generate_signal.connect(self._generate_chunk)
+        self.generate_chunk.connect(self._generate_chunk)
 
         self._resource_pack_container = get_gl_resource_pack_container(level)
         self._resource_pack = self._resource_pack_container.resource_pack if self._resource_pack_container.loaded else None
@@ -135,6 +127,7 @@ class ChunkGeneratorWorker(QObject):
             # Destroy all the data
             # This function cannot reference self otherwise it can't be garbage collected.
             # This function cannot be a method because it won't be called.
+
             if not context.makeCurrent(surface):
                 raise RuntimeError("Could not make context current.")
             for geometry in geometries:
@@ -144,34 +137,22 @@ class ChunkGeneratorWorker(QObject):
         # Destroy all the generated VBOs when this instance is destroyed.
         self.destroyed.connect(destroy)
 
+    def thread_init(self):
+        """Initialise variables in the correct thread."""
+        self._surface.moveToThread(self.thread())
+        self._context.moveToThread(self.thread())
+
     def _resource_pack_changed(self):
         self._resource_pack = self._resource_pack_container.resource_pack
 
-    def __del__(self):
-        # Can't destroy OpenGL data here because this will probably be called from the main thread.
-        log.debug("Waiting for chunk generation thread to finish")
-        self._thread.quit()
-        self._thread.wait()
-        log.debug("Chunk generation thread has finished")
-
-    def generate_chunk(self, chunk_key: ChunkKey, chunk: SharedChunkData):
-        """
-        Async function to generate the chunk VBO.
-
-        :param chunk_key: The key of the chunk to get.
-        :param chunk: The SharedChunkData to store the value in and notify through.
-        :return: Returns None immediately.
-        """
-        self._generate_signal.emit(chunk_key, chunk)
-
-    _generate_signal = Signal(object, object)
+    generate_chunk = Signal(object, object)
 
     @Slot(object, object)
     def _generate_chunk(self, chunk_key: ChunkKey, chunk_data: SharedChunkData):
         try:
             if self._resource_pack is None:
                 # The resource pack does not exist yet so push the job to the back of the queue
-                QTimer.singleShot(100, lambda: self.generate_chunk(chunk_key, chunk_data))
+                QTimer.singleShot(100, lambda: self.generate_chunk.emit(chunk_key, chunk_data))
                 return
 
             dimension, cx, cz = chunk_key
@@ -287,6 +268,39 @@ class ChunkGeneratorWorker(QObject):
                 larger_blocks[1:-1, -1, 1:-1] = blocks.get_sub_chunk(cy + 1)[:, 0, :]
             sub_chunks.append((larger_blocks, cy * 16))
         return sub_chunks
+
+
+class ChunkGenerator(QObject):
+    _thread: QThread
+    _worker: ChunkGeneratorWorker
+
+    def __init__(self, level: BaseLevel):
+        super().__init__()
+        thread = self._thread = QThread()
+        self._thread.start()
+        self._worker = ChunkGeneratorWorker(level)
+        self._worker.moveToThread(self._thread)
+        self._worker.thread_init()
+
+        def destroy():
+            self._worker.deleteLater()
+            log.debug("Waiting for chunk generation thread to finish")
+            thread.quit()
+            thread.wait()
+            log.debug("Chunk generation thread has finished")
+
+        self.destroyed.connect(destroy)
+        QCoreApplication.instance().aboutToQuit.connect(self.deleteLater)
+
+    def generate_chunk(self, chunk_key: ChunkKey, chunk: SharedChunkData):
+        """
+        Async function to generate the chunk VBO.
+
+        :param chunk_key: The key of the chunk to get.
+        :param chunk: The SharedChunkData to store the value in and notify through.
+        :return: Returns None immediately.
+        """
+        self._worker.generate_chunk.emit(chunk_key, chunk)
 
 
 class SharedLevelGeometry(QObject):
