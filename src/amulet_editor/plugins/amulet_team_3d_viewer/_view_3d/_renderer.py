@@ -43,6 +43,8 @@ and a method on that instance should be bound to one of the above examples.
 
 
 class FirstPersonCanvas(QOpenGLWidget, QOpenGLFunctions):
+    background_colour = (0.61, 0.70, 0.85)
+
     def __init__(
             self,
             parent=None
@@ -97,7 +99,7 @@ class FirstPersonCanvas(QOpenGLWidget, QOpenGLFunctions):
         """Private initialisation method called by the QOpenGLWidget"""
         log.debug(f"Initialising GL for {self}")
         self.initializeOpenGLFunctions()
-        self.glClearColor(1, 0, 0, 1)
+        self.glClearColor(*self.background_colour, 1)
         self._render_level.initializeGL()
 
     @property
