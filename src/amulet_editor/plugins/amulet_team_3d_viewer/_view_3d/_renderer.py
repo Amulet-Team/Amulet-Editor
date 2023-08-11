@@ -56,7 +56,7 @@ class FirstPersonCanvas(QOpenGLWidget, QOpenGLFunctions):
         self._start_pos = QPoint()
         self._mouse_captured = False
 
-        self._speed = 0.2
+        self._speed = 1
 
         self._key_catcher = KeyCatcher()
         self.installEventFilter(self._key_catcher)
@@ -158,38 +158,38 @@ class FirstPersonCanvas(QOpenGLWidget, QOpenGLFunctions):
         x, _, z = self.camera.location
         self._render_level.set_location(x // 16, z // 16)
 
-    def _move_relative(self, angle: int):
+    def _move_relative(self, angle: int, dt: float):
         x, y, z = self.camera.location
         azimuth = radians(self.camera.rotation.azimuth + angle)
         self.camera.location = Location(
-            x - sin(azimuth) * self._speed, y, z + cos(azimuth) * self._speed
+            x - sin(azimuth) * self._speed * dt, y, z + cos(azimuth) * self._speed * dt
         )
 
     @Slot()
-    def _forwards(self):
-        self._move_relative(180)
+    def _forwards(self, dt: float):
+        self._move_relative(180, dt)
 
     @Slot()
-    def _right(self):
-        self._move_relative(270)
+    def _right(self, dt: float):
+        self._move_relative(270, dt)
 
     @Slot()
-    def _backwards(self):
-        self._move_relative(0)
+    def _backwards(self, dt: float):
+        self._move_relative(0, dt)
 
     @Slot()
-    def _left(self):
-        self._move_relative(90)
+    def _left(self, dt: float):
+        self._move_relative(90, dt)
 
     @Slot()
-    def _up(self):
+    def _up(self, dt: float):
         x, y, z = self.camera.location
-        self.camera.location = Location(x, y + self._speed, z)
+        self.camera.location = Location(x, y + self._speed * dt, z)
 
     @Slot()
-    def _down(self):
+    def _down(self, dt: float):
         x, y, z = self.camera.location
-        self.camera.location = Location(x, y - self._speed, z)
+        self.camera.location = Location(x, y - self._speed * dt, z)
 
     @Slot()
     def _faster(self):
@@ -198,6 +198,3 @@ class FirstPersonCanvas(QOpenGLWidget, QOpenGLFunctions):
     @Slot()
     def _slower(self):
         self._speed /= 1.1
-
-
-# TODO: delta time

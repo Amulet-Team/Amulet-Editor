@@ -1,9 +1,10 @@
 from typing import Union, Callable, Optional, Literal
 from threading import Lock
 from enum import IntEnum
+import time
 
 from PySide6.QtCore import QObject, QEvent, Slot, Signal, QTimer, Qt
-from PySide6.QtGui import QMouseEvent, QKeyEvent
+from PySide6.QtGui import QMouseEvent, QKeyEvent, QScrollEvent, QMoveEvent
 
 
 """
@@ -27,13 +28,34 @@ Number = Union[float, int]
 ReceiverT = Union[Slot, Signal, Callable[[], None]]
 
 
-class TimerData:
+class TimerData(QObject):
     receivers: set[ReceiverT]
-    timer: QTimer
+    interval: float
 
-    def __init__(self, timer: QTimer = None):
+    _timer: QTimer
+    _last_timeout: float
+
+    delta_timeout = Signal(float)
+
+    def __init__(self, msec: int):
+        super().__init__()
         self.receivers = set()
-        self.timer = timer or QTimer()
+        self.interval = msec / 1000
+        self._last_timeout = 0.0
+        self._timer = QTimer()
+        self._timer.setInterval(msec)
+        self._timer.timeout.connect(self._tick)
+
+    def _tick(self):
+        self.delta_timeout.emit(time.time() - self._last_timeout)
+        self._last_timeout = time.time()
+
+    def start(self):
+        self._last_timeout = time.time()
+        self._timer.start()
+
+    def stop(self):
+        self._timer.stop()
 
 
 class EventStorage(QObject):
@@ -68,24 +90,25 @@ class KeyCatcher(QObject):
         self._keys: dict[KeyT, list[EventStorage]] = {}
 
     def eventFilter(self, watched: QObject, event: QEvent) -> bool:
-        if event.type() == QEvent.Type.MouseButtonPress and isinstance(
-            event, QMouseEvent
-        ):
-            self._key_pressed((KeySrc.Mouse, event.button()))
-        elif event.type() == QEvent.Type.MouseButtonRelease and isinstance(
-            event, QMouseEvent
-        ):
-            self._key_released((KeySrc.Mouse, event.button()))
-        elif event.type() == QEvent.Type.KeyPress and isinstance(event, QKeyEvent):
-            if not event.isAutoRepeat():
-                self._key_pressed((KeySrc.Keyboard, event.key()))
-        elif event.type() == QEvent.Type.KeyRelease and isinstance(event, QKeyEvent):
-            if not event.isAutoRepeat():
-                self._key_released((KeySrc.Keyboard, event.key()))
+        if isinstance(event, QMouseEvent):
+            if event.type() == QEvent.Type.MouseButtonPress:
+                self._key_pressed((KeySrc.Mouse, event.button()))
+            elif event.type() == QEvent.Type.MouseButtonRelease:
+                self._key_released((KeySrc.Mouse, event.button()))
+            elif event.type() == QEvent.Type.MouseMove:
+                pass
+        elif isinstance(event, QKeyEvent):
+            if event.type() == QEvent.Type.KeyPress:
+                if not event.isAutoRepeat():
+                    self._key_pressed((KeySrc.Keyboard, event.key()))
+            elif event.type() == QEvent.Type.KeyRelease:
+                if not event.isAutoRepeat():
+                    self._key_released((KeySrc.Keyboard, event.key()))
+        elif isinstance(event, QScrollEvent):
+            pass
         return super().eventFilter(watched, event)
 
     def _key_pressed(self, key: KeyT):
-        print("pressed", key)
         with self._lock:
             if key not in self._pressed_buttons:
                 self._pressed_buttons.add(key)
@@ -105,21 +128,20 @@ class KeyCatcher(QObject):
                         for storage_dict in self._key_combos.values():
                             for storage in storage_dict.values():
                                 for timer_data in storage.timers.values():
-                                    timer_data.timer.stop()
+                                    timer_data.stop()
                     for interval, timer_data in list(best_storage.timers.items()):
                         if timer_data.receivers:
-                            timer_data.timer.timeout.emit()
-                            timer_data.timer.start()
+                            timer_data.delta_timeout.emit(interval // 1000)
+                            timer_data.start()
                         else:
                             del best_storage.timers[interval]
                     best_storage.one_shot.emit()
 
     def _key_released(self, key: KeyT):
-        print("released", key)
         with self._lock:
             for storage in self._keys.get(key, ()):
                 for timer_data in storage.timers.values():
-                    timer_data.timer.stop()
+                    timer_data.stop()
             self._pressed_buttons.remove(key)
 
     def _get_storage(self, key: KeyT, modifiers: frozenset[KeyT]):
@@ -188,7 +210,7 @@ class KeyCatcher(QObject):
 
     def connect_repeating(
         self,
-        receiver: Union[Slot, Signal, Callable[[], None]],
+        receiver: Union[Slot, Signal, Callable[[float], None]],
         key: KeyT,
         modifiers: frozenset[KeyT],
         interval: int,
@@ -204,16 +226,14 @@ class KeyCatcher(QObject):
         with self._lock:
             storage = self._get_storage(key, modifiers)
             if interval not in storage.timers:
-                timer = QTimer()
-                timer.setInterval(interval)
-                storage.timers[interval] = TimerData(timer)
+                storage.timers[interval] = TimerData(interval)
             timer_data = storage.timers[interval]
-            timer_data.timer.timeout.connect(receiver)
+            timer_data.delta_timeout.connect(receiver)
             timer_data.receivers.add(receiver)
 
     def disconnect_repeating(
         self,
-        receiver: Union[Slot, Signal, Callable[[], None]],
+        receiver: Union[Slot, Signal, Callable[[float], None]],
         key: KeyT,
         modifiers: frozenset[KeyT],
         interval: int,
@@ -231,7 +251,7 @@ class KeyCatcher(QObject):
             storage = self._get_storage(key, modifiers)
             timer_data = storage.timers.get(interval)
             if timer_data is not None:
-                timer_data.timer.timeout.disconnect(receiver)
+                timer_data.delta_timeout.disconnect(receiver)
                 timer_data.receivers.remove(receiver)
             self._clean_storage(key, modifiers)
 
