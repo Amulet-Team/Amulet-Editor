@@ -15,7 +15,7 @@ from PySide6.QtOpenGL import (
     QOpenGLShader,
     QOpenGLTexture
 )
-from shiboken6 import VoidPtr
+from shiboken6 import VoidPtr, isValid
 from OpenGL.GL import (
     GL_FLOAT,
     GL_FALSE,
@@ -337,6 +337,8 @@ class SharedLevelGeometry(QObject):
         self._resource_pack_container = get_gl_resource_pack_container(level)
         self._resource_pack_container.changed.connect(self._resource_pack_changed)
 
+        QCoreApplication.instance().aboutToQuit.connect(self.deleteLater)
+
     def get_chunk(self, chunk_key: ChunkKey) -> SharedChunkData:
         """Get the geometry for a chunk."""
         with self._chunks_lock:
@@ -515,16 +517,15 @@ class WidgetLevelGeometry(QObject, Drawable):
         self._texture_location = self._program.uniformLocation("image")
 
     def _destroy_gl(self):
-        if self._context is None:
-            return
+        if self._context is not None and isValid(self._context) and self._context.isValid():
+            if QOpenGLContext.currentContext() is not self._context:
+                # Enable the context if it isn't.
+                # Use an offscreen surface because the widget surface may no longer exist.
+                if not self._context.makeCurrent(self._surface):
+                    raise RuntimeError("Could not make context current.")
 
-        if QOpenGLContext.currentContext() is not self._context:
-            # Enable the context if it isn't.
-            # Use an offscreen surface because the widget surface may no longer exist.
-            if not self._context.makeCurrent(self._surface):
-                raise RuntimeError("Could not make context current.")
+            self._clear_chunks_no_context()
 
-        self._clear_chunks_no_context()
         self._program = None
         self._matrix_location = None
         self._texture_location = None
@@ -532,6 +533,7 @@ class WidgetLevelGeometry(QObject, Drawable):
 
     def __del__(self):
         self._destroy_gl()
+        log.debug("deleted WidgetLevelGeometry")
 
     def paintGL(self, projection_matrix: QMatrix4x4, view_matrix: QMatrix4x4):
         """
@@ -596,7 +598,9 @@ class WidgetLevelGeometry(QObject, Drawable):
     def _clear_chunks_no_context(self):
         """Unload all chunk data. Caller manages the GL context."""
         for chunk in self._chunks.values():
-            chunk.vao.destroy()
+            if isValid(chunk.vao):
+                # I don't understand where this is being destroyed from
+                chunk.vao.destroy()
         self._context.doneCurrent()
         self._chunks.clear()
         self._pending_chunks.clear()
