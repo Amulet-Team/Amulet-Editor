@@ -133,6 +133,7 @@ class ChunkGeneratorWorker(QObject):
             for geometry in geometries:
                 geometry.vbo.destroy()
             context.doneCurrent()
+            log.debug("destroyed ChunkGeneratorWorker")
 
         # Destroy all the generated VBOs when this instance is destroyed.
         self.destroyed.connect(destroy)
@@ -288,6 +289,7 @@ class ChunkGenerator(QObject):
             thread.quit()
             thread.wait()
             log.debug("Chunk generation thread has finished")
+            log.debug("destroyed ChunkGenerator")
 
         self.destroyed.connect(destroy)
         QCoreApplication.instance().aboutToQuit.connect(self.deleteLater)
