@@ -2,10 +2,10 @@ from __future__ import annotations
 import logging
 from math import sin, cos, radians
 
-from PySide6.QtCore import Qt, QPointF, Slot
+from PySide6.QtCore import Qt, QPoint, Slot
 from PySide6.QtGui import (
     QOpenGLFunctions,
-    QMouseEvent, QShowEvent, QHideEvent, QOffscreenSurface
+    QMouseEvent, QShowEvent, QHideEvent, QWheelEvent, QCursor, QGuiApplication
 )
 from PySide6.QtOpenGLWidgets import QOpenGLWidget
 
@@ -53,7 +53,8 @@ class FirstPersonCanvas(QOpenGLWidget, QOpenGLFunctions):
         self._camera = Camera()
         self.camera.transform_changed.connect(self.update)
         self.camera.location = Location(0, 0, 0)
-        self._last_pos = QPointF()
+        self._start_pos = QPoint()
+        self._mouse_captured = False
 
         self._speed = 0.2
 
@@ -82,7 +83,7 @@ class FirstPersonCanvas(QOpenGLWidget, QOpenGLFunctions):
 
         level = get_level()
         self._render_level = WidgetLevelGeometry(level)
-        self._render_level.changed.connect(self.update)
+        self._render_level.geometry_changed.connect(self.update)
         self._render_level.set_dimension(level.dimensions[0])
         self._render_level.set_location(0, 0)
 
@@ -122,21 +123,36 @@ class FirstPersonCanvas(QOpenGLWidget, QOpenGLFunctions):
         self.camera.set_perspective_projection(45, width / height, 0.01, 10_000)
 
     def mousePressEvent(self, event: QMouseEvent):
-        self._last_pos = event.position()
-        self.setFocus()
+        if event.buttons() & Qt.MouseButton.RightButton:
+            self._mouse_captured = True
+            self._start_pos = event.position().toPoint()
+            self.setFocus()
+            QGuiApplication.setOverrideCursor(QCursor(Qt.CursorShape.BlankCursor))
 
     def mouseMoveEvent(self, event: QMouseEvent):
-        pos = event.position()
-        dx = pos.x() - self._last_pos.x()
-        dy = pos.y() - self._last_pos.y()
+        if event.buttons() & Qt.MouseButton.RightButton:
+            pos = event.position()
+            dx = pos.x() - self._start_pos.x()
+            dy = pos.y() - self._start_pos.y()
 
-        if event.buttons() & Qt.MouseButton.LeftButton:
             azimuth, elevation = self.camera.rotation
             azimuth += dx / 8
             elevation += dy / 8
             self.camera.rotation = Rotation(azimuth, elevation)
 
-        self._last_pos = pos
+            self.blockSignals(True)
+            QCursor.setPos(self.mapToGlobal(self._start_pos))
+            self.blockSignals(False)
+
+    def mouseReleaseEvent(self, event: QMouseEvent):
+        if self._mouse_captured:
+            QGuiApplication.restoreOverrideCursor()
+
+    def wheelEvent(self, event: QWheelEvent) -> None:
+        if event.angleDelta().y() > 0:
+            self._faster()
+        else:
+            self._slower()
 
     def _on_move(self):
         x, _, z = self.camera.location
@@ -174,6 +190,14 @@ class FirstPersonCanvas(QOpenGLWidget, QOpenGLFunctions):
     def _down(self):
         x, y, z = self.camera.location
         self.camera.location = Location(x, y - self._speed, z)
+
+    @Slot()
+    def _faster(self):
+        self._speed *= 1.1
+
+    @Slot()
+    def _slower(self):
+        self._speed /= 1.1
 
 
 # TODO: delta time
