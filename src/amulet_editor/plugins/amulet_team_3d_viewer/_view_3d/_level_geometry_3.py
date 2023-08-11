@@ -1,9 +1,9 @@
 from __future__ import annotations
 import logging
-from typing import Optional, Generator
+from typing import Optional, Generator, Callable
 import ctypes
 from threading import Lock
-from weakref import WeakKeyDictionary, WeakValueDictionary, WeakSet
+from weakref import WeakKeyDictionary, WeakValueDictionary, WeakSet, ref
 import numpy
 
 from PySide6.QtCore import QThread, Signal, QObject, Slot, QTimer
@@ -90,8 +90,8 @@ class SharedChunkData(QObject):
         self.geometry = None
 
 
-class ChunkGenerator(QObject):
-    _level: BaseLevel
+class ChunkGeneratorWorker(QObject):
+    _level: Callable[[], Optional[BaseLevel]]
     _owned_geometry: WeakSet[SharedChunkGeometry]
 
     _context: QOpenGLContext
@@ -104,7 +104,7 @@ class ChunkGenerator(QObject):
 
     def __init__(self, level: BaseLevel):
         super().__init__()
-        self._level = level
+        self._level = ref(level)
         geometries = self._owned_geometry = WeakSet[SharedChunkGeometry]()
 
         self._thread = QThread()
@@ -178,7 +178,7 @@ class ChunkGenerator(QObject):
 
             buffer = b""
             try:
-                chunk = self._level.get_chunk(cx, cz, dimension)
+                chunk = self._level().get_chunk(cx, cz, dimension)
             except ChunkDoesNotExist:
                 # TODO: Add void geometry
                 pass
@@ -236,7 +236,7 @@ class ChunkGenerator(QObject):
         neighbour_chunks = {}
         for dx, dz in ((-1, 0), (1, 0), (0, -1), (0, 1)):
             try:
-                neighbour_chunks[(dx, dz)] = self._level.get_chunk(
+                neighbour_chunks[(dx, dz)] = self._level().get_chunk(
                     cx + dx, cz + dz, dimension
                 ).blocks
             except ChunkLoadError:
