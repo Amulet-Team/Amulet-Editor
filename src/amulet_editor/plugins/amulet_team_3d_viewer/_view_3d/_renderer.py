@@ -22,7 +22,7 @@ from amulet_team_resource_pack._api import get_resource_pack_container
 
 from ._camera import Camera, Location, Rotation
 from ._key_catcher import KeySrc, KeyCatcher
-from ._level_geometry_3 import WidgetLevelGeometry
+from ._level_geometry import WidgetLevelGeometry
 from ._resource_pack import get_gl_resource_pack_container
 
 log = logging.getLogger(__name__)
