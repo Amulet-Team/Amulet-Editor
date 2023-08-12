@@ -258,7 +258,7 @@ class TextureAtlasMap(object):
 
 
 def create_atlas(
-    texture_tuple: Collection[str]
+    texture_tuple: Collection[str],
 ) -> Promise[Tuple[Image.Image, Dict[str, Tuple[float, float, float, float]]]]:
     def func(promise_data: Promise.Data):
         log.info("Creating texture atlas")
@@ -266,7 +266,9 @@ def create_atlas(
         textures = []
         for texture_index, texture in enumerate(texture_tuple):
             if not texture_index % 100:
-                promise_data.progress_change.emit(0.5 * texture_index / (len(texture_tuple)))
+                promise_data.progress_change.emit(
+                    0.5 * texture_index / (len(texture_tuple))
+                )
             # Look for a texture name
             name, frames = texture, [texture]
 
@@ -300,7 +302,9 @@ def create_atlas(
 
                 for texture_index, texture in enumerate(textures):
                     if not texture_index % 30:
-                        promise_data.progress_change.emit(0.5 + 0.5 * texture_index / len(textures))
+                        promise_data.progress_change.emit(
+                            0.5 + 0.5 * texture_index / len(textures)
+                        )
                     atlas.pack(texture)
                 atlas_created = True
             except AtlasTooSmall:

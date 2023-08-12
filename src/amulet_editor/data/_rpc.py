@@ -41,7 +41,10 @@ from PySide6.QtWidgets import QApplication
 from PySide6.QtNetwork import QLocalSocket, QLocalServer
 
 from amulet_editor.data.project import get_level
-from amulet_editor.models.widgets.traceback_dialog import DisplayException, display_exception
+from amulet_editor.models.widgets.traceback_dialog import (
+    DisplayException,
+    display_exception,
+)
 from amulet_editor.application._cli import spawn_process, BROKER
 
 log = logging.getLogger(__name__)

@@ -3,11 +3,7 @@ from amulet_editor.application._invoke import invoke
 from ._cls import _AmuletTracebackDialog
 
 
-def display_exception_blocking(
-    title: str = "",
-    error: str = "",
-    traceback: str = ""
-):
+def display_exception_blocking(title: str = "", error: str = "", traceback: str = ""):
     """
     Display an exception window.
     This must be called from the main thread.
@@ -17,19 +13,11 @@ def display_exception_blocking(
     :param error: A user-readable description of the error context.
     :param traceback: The traceback to display in the dialog.
     """
-    dialog = _AmuletTracebackDialog(
-        title=title,
-        error=error,
-        traceback=traceback
-    )
+    dialog = _AmuletTracebackDialog(title=title, error=error, traceback=traceback)
     dialog.exec()
 
 
-def display_exception(
-    title: str = "",
-    error: str = "",
-    traceback: str = ""
-):
+def display_exception(title: str = "", error: str = "", traceback: str = ""):
     """
     Display an exception window.
     This is processed when control returns to the main thread.
@@ -39,11 +27,11 @@ def display_exception(
     :param error: A user-readable description of the error context.
     :param traceback: The traceback to display in the dialog.
     """
-    invoke(lambda: display_exception_blocking(
-        title=title,
-        error=error,
-        traceback=traceback
-    ))
+    invoke(
+        lambda: display_exception_blocking(
+            title=title, error=error, traceback=traceback
+        )
+    )
 
 
 class DisplayException:

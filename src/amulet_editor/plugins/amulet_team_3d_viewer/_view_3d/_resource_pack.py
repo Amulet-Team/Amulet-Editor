@@ -76,6 +76,7 @@ class OpenGLResourcePack:
         Create the atlas texture.
         This is run asynchronously.
         """
+
         def func(promise_data: Promise.Data):
             with self._lock, DisplayException("Error initialising the resource pack."):
                 if self._texture is None:
@@ -96,7 +97,8 @@ class OpenGLResourcePack:
                             os.stat(path).st_mtime
                             for pack in self._resource_pack.pack_paths
                             for path in glob.glob(
-                                os.path.join(glob.escape(pack), "**", "*.*"), recursive=True
+                                os.path.join(glob.escape(pack), "**", "*.*"),
+                                recursive=True,
                             )
                         ),
                         default=0,
@@ -117,7 +119,9 @@ class OpenGLResourcePack:
                         (
                             atlas,
                             bounds,
-                        ) = create_atlas(self._resource_pack.textures).call_chained(promise_data)
+                        ) = create_atlas(
+                            self._resource_pack.textures
+                        ).call_chained(promise_data)
 
                         os.makedirs(cache_dir, exist_ok=True)
                         atlas.save(img_path)
@@ -140,11 +144,11 @@ class OpenGLResourcePack:
                     self._texture.setMagnificationFilter(QOpenGLTexture.Filter.Nearest)
                     self._texture.setWrapMode(
                         QOpenGLTexture.CoordinateDirection.DirectionS,
-                        QOpenGLTexture.WrapMode.ClampToEdge
+                        QOpenGLTexture.WrapMode.ClampToEdge,
                     )
                     self._texture.setWrapMode(
                         QOpenGLTexture.CoordinateDirection.DirectionT,
-                        QOpenGLTexture.WrapMode.ClampToEdge
+                        QOpenGLTexture.WrapMode.ClampToEdge,
                     )
                     self._texture.setData(_atlas)
                     self._texture.create()
@@ -156,9 +160,8 @@ class OpenGLResourcePack:
     def get_texture(self) -> QOpenGLTexture:
         """
         Get the opengl texture for the atlas.
-        The GPU data will be destroyed when the context is about to be destroyed
-        or when the last reference to this instance is released.
-        :return: A QOpenGLTexture instance. This must not be stored outside of this class.
+        The GPU data will be destroyed when the last reference to this instance is released.
+        :return: A QOpenGLTexture instance.
         """
         with self._lock:
             if self._texture is None:
@@ -225,7 +228,9 @@ class RenderResourcePackContainer(QObject):
     def resource_pack(self) -> OpenGLResourcePack:
         rp = self._resource_pack
         if rp is None:
-            raise RuntimeError("The OpenGLResourcePack for this level has not been loaded yet.")
+            raise RuntimeError(
+                "The OpenGLResourcePack for this level has not been loaded yet."
+            )
         return rp
 
     def _reload(self):
@@ -260,7 +265,9 @@ class RenderResourcePackContainer(QObject):
 
 
 _lock = Lock()
-_level_data: WeakKeyDictionary[BaseLevel, RenderResourcePackContainer] = WeakKeyDictionary()
+_level_data: WeakKeyDictionary[
+    BaseLevel, RenderResourcePackContainer
+] = WeakKeyDictionary()
 
 
 def get_gl_resource_pack_container(level: BaseLevel) -> RenderResourcePackContainer:

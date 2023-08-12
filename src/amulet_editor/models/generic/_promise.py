@@ -19,8 +19,14 @@ class Promise(QObject, Generic[T]):
     The return value from the function is accessible from :meth:`get_return` or if an exception occurred it will be re-raised when :meth:`get_return` is called.
     It can also optionally support canceling by periodically checking is_cancel_requested and raising :attr:`OperationCanceled` to signify its acceptance of the cancel.
     """
+
     class Data:
-        def __init__(self, progress_change: SignalInstance, progress_text_change: SignalInstance, is_cancel_requested: Callable[[], bool]):
+        def __init__(
+            self,
+            progress_change: SignalInstance,
+            progress_text_change: SignalInstance,
+            is_cancel_requested: Callable[[], bool],
+        ):
             self.progress_change = progress_change
             self.progress_text_change = progress_text_change
             self.is_cancel_requested = is_cancel_requested
@@ -55,7 +61,13 @@ class Promise(QObject, Generic[T]):
     def _op_wrapper(self):
         enable_trace()
         try:
-            value = self._target(Promise.Data(self.progress_change, self.progress_text_change, self.is_cancel_requested))
+            value = self._target(
+                Promise.Data(
+                    self.progress_change,
+                    self.progress_text_change,
+                    self.is_cancel_requested,
+                )
+            )
         except self.OperationCanceled as e:
             self._exception = e
             self._status = self.Status.Canceled
@@ -93,7 +105,12 @@ class Promise(QObject, Generic[T]):
         self._op_wrapper()
         return self.get_return()
 
-    def call_chained(self, parent_promise: Promise.Data, min_progress: float = 0.0, max_progress: float = 1.0) -> T:
+    def call_chained(
+        self,
+        parent_promise: Promise.Data,
+        min_progress: float = 0.0,
+        max_progress: float = 1.0,
+    ) -> T:
         """
         Directly call the operation wrapped by this promise in this thread.
         Relay signals to another promise.
@@ -110,7 +127,9 @@ class Promise(QObject, Generic[T]):
         progress_multiplier = max_progress - min_progress
 
         def tick(progress: float):
-            parent_promise.progress_change.emit(progress * progress_multiplier + min_progress)
+            parent_promise.progress_change.emit(
+                progress * progress_multiplier + min_progress
+            )
             if parent_promise.is_cancel_requested():
                 self.cancel()
 

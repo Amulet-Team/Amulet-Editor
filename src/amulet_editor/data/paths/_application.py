@@ -23,7 +23,7 @@ DefaultLogDir = os.path.join(
     QStandardPaths.writableLocation(QStandardPaths.StandardLocation.AppDataLocation),
     "AmuletTeam",
     "AmuletEditor",
-    "logs"
+    "logs",
 )
 
 

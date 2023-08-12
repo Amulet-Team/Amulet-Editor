@@ -3,7 +3,12 @@ import logging
 import subprocess
 import sys
 from typing import Protocol, Optional
-from amulet_editor.data.paths._application import DefaultDataDir, DefaultConfigDir, DefaultCacheDir, DefaultLogDir
+from amulet_editor.data.paths._application import (
+    DefaultDataDir,
+    DefaultConfigDir,
+    DefaultCacheDir,
+    DefaultLogDir,
+)
 
 
 BROKER = "BROKER"
@@ -30,7 +35,7 @@ def parse_args() -> Args:
         parser = argparse.ArgumentParser(
             prog="Amulet Editor",
             description="Amulet is a Minecraft world editing application.",
-            epilog="The following arguments are a subset of the full arguments."
+            epilog="The following arguments are a subset of the full arguments.",
         )
 
         parser.add_argument(

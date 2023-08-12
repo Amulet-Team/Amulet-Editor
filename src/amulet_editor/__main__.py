@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 
+
 def _on_error(e):
     """Code to handle errors"""
     try:
@@ -47,13 +48,16 @@ except Exception as e_:
 def main():
     try:
         from amulet_editor.data.paths._application import _init_paths
+
         _init_paths(None, None, None, None)
         # Initialise logging at the highest level until configured otherwise.
         logging.basicConfig(level=logging.WARNING, format="%(levelname)s - %(message)s")
         logging.getLogger().setLevel(logging.WARNING)
 
         from amulet_editor.application._main import app_main
-        from amulet_editor.models.widgets.traceback_dialog import display_exception_blocking
+        from amulet_editor.models.widgets.traceback_dialog import (
+            display_exception_blocking,
+        )
 
     except Exception as e:
         _on_error(e)

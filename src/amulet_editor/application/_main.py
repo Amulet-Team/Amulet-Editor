@@ -43,6 +43,7 @@ def app_main():
     _init_logging(args)
 
     if args.trace:
+
         def trace_calls(frame, event, arg):
             if event == "call":
                 try:

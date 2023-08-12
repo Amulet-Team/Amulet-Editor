@@ -5,7 +5,12 @@ from math import sin, cos, radians
 from PySide6.QtCore import Qt, QPoint, Slot
 from PySide6.QtGui import (
     QOpenGLFunctions,
-    QMouseEvent, QShowEvent, QHideEvent, QWheelEvent, QCursor, QGuiApplication
+    QMouseEvent,
+    QShowEvent,
+    QHideEvent,
+    QWheelEvent,
+    QCursor,
+    QGuiApplication,
 )
 from PySide6.QtOpenGLWidgets import QOpenGLWidget
 
@@ -45,10 +50,7 @@ and a method on that instance should be bound to one of the above examples.
 class FirstPersonCanvas(QOpenGLWidget, QOpenGLFunctions):
     background_colour = (0.61, 0.70, 0.85)
 
-    def __init__(
-            self,
-            parent=None
-    ):
+    def __init__(self, parent=None):
         QOpenGLWidget.__init__(self, parent)
         QOpenGLFunctions.__init__(self)
 
@@ -90,9 +92,17 @@ class FirstPersonCanvas(QOpenGLWidget, QOpenGLFunctions):
         self._render_level.set_location(0, 0)
 
         self._resource_pack_container = get_resource_pack_container(level)
-        self._resource_pack_container.changing.connect(lambda prom: prom.progress_change.connect(lambda prog: print(f"Loading resource pack {prog}")))
+        self._resource_pack_container.changing.connect(
+            lambda prom: prom.progress_change.connect(
+                lambda prog: print(f"Loading resource pack {prog}")
+            )
+        )
         self._gl_resource_pack_container = get_gl_resource_pack_container(level)
-        self._gl_resource_pack_container.changing.connect(lambda prom: prom.progress_change.connect(lambda prog: print(f"Loading GL resource pack {prog}")))
+        self._gl_resource_pack_container.changing.connect(
+            lambda prom: prom.progress_change.connect(
+                lambda prog: print(f"Loading GL resource pack {prog}")
+            )
+        )
         self._resource_pack_container.init()
 
     def initializeGL(self):
@@ -118,7 +128,9 @@ class FirstPersonCanvas(QOpenGLWidget, QOpenGLFunctions):
         self.glEnable(GL_DEPTH_TEST)
         self.glEnable(GL_CULL_FACE)
 
-        self._render_level.paintGL(self.camera.intrinsic_matrix, self.camera.extrinsic_matrix)
+        self._render_level.paintGL(
+            self.camera.intrinsic_matrix, self.camera.extrinsic_matrix
+        )
 
     def resizeGL(self, width, height):
         """Private resize method called by the QOpenGLWidget"""

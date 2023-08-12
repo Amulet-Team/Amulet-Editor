@@ -58,7 +58,9 @@ class ResourcePackContainer(QObject):
         """
         rp = self._resource_pack
         if rp is None:
-            raise RuntimeError("The ResourcePackManager for this level has not been loaded yet.")
+            raise RuntimeError(
+                "The ResourcePackManager for this level has not been loaded yet."
+            )
         return rp
 
     def init(self):
@@ -79,12 +81,16 @@ class ResourcePackContainer(QObject):
         >>>     promise.progress_change.connect(lambda progress: print(progress))
         >>>     promise.start()
         """
+
         def init(promise_data: Promise.Data) -> bool:
             with self._lock:
                 if self._resource_pack is None:
                     # TODO: support other resource pack formats
                     promise_data.progress_text_change.emit(
-                        QCoreApplication.translate("ResourcePack", "downloading_resource_pack", None))
+                        QCoreApplication.translate(
+                            "ResourcePack", "downloading_resource_pack", None
+                        )
+                    )
                     try:
                         it = get_java_vanilla_latest_iter()
                         while True:
@@ -96,14 +102,13 @@ class ResourcePackContainer(QObject):
                         vanilla = e.value
 
                     self._resource_pack = load_resource_pack_manager(
-                        [
-                            vanilla,
-                            get_java_vanilla_fix()
-                        ],
-                        load=False
+                        [vanilla, get_java_vanilla_fix()], load=False
                     )
                     promise_data.progress_text_change.emit(
-                        QCoreApplication.translate("ResourcePack", "loading_resource_pack", None))
+                        QCoreApplication.translate(
+                            "ResourcePack", "loading_resource_pack", None
+                        )
+                    )
                     for progress in self._resource_pack.reload():
                         promise_data.progress_change.emit(0.5 + progress * 0.5)
                     self.changed.emit()

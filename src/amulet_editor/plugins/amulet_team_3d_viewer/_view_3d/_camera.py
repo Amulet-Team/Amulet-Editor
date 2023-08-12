@@ -1,8 +1,6 @@
 from typing import NamedTuple, Optional
 from PySide6.QtCore import QObject, Signal
-from PySide6.QtGui import (
-    QMatrix4x4
-)
+from PySide6.QtGui import QMatrix4x4
 
 
 class Location(NamedTuple):

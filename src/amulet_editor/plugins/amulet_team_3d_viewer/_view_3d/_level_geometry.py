@@ -13,7 +13,7 @@ from PySide6.QtOpenGL import (
     QOpenGLBuffer,
     QOpenGLShaderProgram,
     QOpenGLShader,
-    QOpenGLTexture
+    QOpenGLTexture,
 )
 from shiboken6 import VoidPtr, isValid
 from OpenGL.GL import (
@@ -28,7 +28,11 @@ from amulet.api.errors import ChunkLoadError, ChunkDoesNotExist
 from amulet.api.chunk import Chunk
 
 from ._drawable import Drawable
-from ._resource_pack import OpenGLResourcePack, get_gl_resource_pack_container, RenderResourcePackContainer
+from ._resource_pack import (
+    OpenGLResourcePack,
+    get_gl_resource_pack_container,
+    RenderResourcePackContainer,
+)
 
 try:
     from .chunk_builder_cy import create_lod0_chunk
@@ -50,12 +54,15 @@ class SharedChunkGeometry(QObject):
     The vbo will be deallocated when this instance is destroyed
     or when the :class:`SharedLevelGeometry` that created it is destroyed.
     """
+
     vbo: QOpenGLBuffer
     vertex_count: int
     _resource_pack: OpenGLResourcePack
     texture: QOpenGLTexture
 
-    def __init__(self, vbo: QOpenGLBuffer, vertex_count: int, resource_pack: OpenGLResourcePack):
+    def __init__(
+        self, vbo: QOpenGLBuffer, vertex_count: int, resource_pack: OpenGLResourcePack
+    ):
         super().__init__()
         self.vbo = vbo
         self.vertex_count = vertex_count
@@ -120,7 +127,11 @@ class ChunkGeneratorWorker(QObject):
         self.generate_chunk.connect(self._generate_chunk)
 
         self._resource_pack_container = get_gl_resource_pack_container(level)
-        self._resource_pack = self._resource_pack_container.resource_pack if self._resource_pack_container.loaded else None
+        self._resource_pack = (
+            self._resource_pack_container.resource_pack
+            if self._resource_pack_container.loaded
+            else None
+        )
         self._resource_pack_container.changed.connect(self._resource_pack_changed)
 
         def destroy():
@@ -153,7 +164,9 @@ class ChunkGeneratorWorker(QObject):
         try:
             if self._resource_pack is None:
                 # The resource pack does not exist yet so push the job to the back of the queue
-                QTimer.singleShot(100, lambda: self.generate_chunk.emit(chunk_key, chunk_data))
+                QTimer.singleShot(
+                    100, lambda: self.generate_chunk.emit(chunk_key, chunk_data)
+                )
                 return
 
             dimension, cx, cz = chunk_key
@@ -194,7 +207,9 @@ class ChunkGeneratorWorker(QObject):
             vbo.allocate(buffer, buffer_size)
             vbo.release()
 
-            chunk_data.geometry = SharedChunkGeometry(vbo, vertex_count, self._resource_pack)
+            chunk_data.geometry = SharedChunkGeometry(
+                vbo, vertex_count, self._resource_pack
+            )
             chunk_data.geometry_changed.emit()
 
             self._context.doneCurrent()
@@ -203,7 +218,9 @@ class ChunkGeneratorWorker(QObject):
         except Exception as e:
             log.exception(e)
 
-    def _sub_chunks(self, dimension: Dimension, cx: int, cz: int, chunk: Chunk) -> list[tuple[numpy.ndarray, int]]:
+    def _sub_chunks(
+        self, dimension: Dimension, cx: int, cz: int, chunk: Chunk
+    ) -> list[tuple[numpy.ndarray, int]]:
         """
         Create sub-chunk arrays that extend into the neighbour sub-chunks by one block.
 
@@ -218,9 +235,9 @@ class ChunkGeneratorWorker(QObject):
         neighbour_chunks = {}
         for dx, dz in ((-1, 0), (1, 0), (0, -1), (0, 1)):
             try:
-                neighbour_chunks[(dx, dz)] = self._level().get_chunk(
-                    cx + dx, cz + dz, dimension
-                ).blocks
+                neighbour_chunks[(dx, dz)] = (
+                    self._level().get_chunk(cx + dx, cz + dz, dimension).blocks
+                )
             except ChunkLoadError:
                 continue
 
@@ -379,7 +396,9 @@ def empty_iterator():
     yield from ()
 
 
-def get_grid_spiral(dimension: Dimension, cx: int, cz: int, r: int) -> Generator[ChunkKey, None, None]:
+def get_grid_spiral(
+    dimension: Dimension, cx: int, cz: int, r: int
+) -> Generator[ChunkKey, None, None]:
     """A generator that yields a 2D grid spiraling from the centre."""
     sign = 1
     length = 1
@@ -456,7 +475,9 @@ class WidgetLevelGeometry(QObject, Drawable):
         """
         context = QOpenGLContext.currentContext()
         if not QOpenGLContext.areSharing(context, QOpenGLContext.globalShareContext()):
-            raise RuntimeError("The widget context is not sharing with the global context.")
+            raise RuntimeError(
+                "The widget context is not sharing with the global context."
+            )
 
         # Make sure any old data no longer exists.
         self._destroy_gl()
@@ -510,7 +531,7 @@ class WidgetLevelGeometry(QObject, Drawable):
                     discard;
                 texColor.xyz = texColor.xyz * fTint * 0.85;
                 outColor = texColor;
-            }"""
+            }""",
         )
 
         self._program.link()
@@ -519,7 +540,11 @@ class WidgetLevelGeometry(QObject, Drawable):
         self._texture_location = self._program.uniformLocation("image")
 
     def _destroy_gl(self):
-        if self._context is not None and isValid(self._context) and self._context.isValid():
+        if (
+            self._context is not None
+            and isValid(self._context)
+            and self._context.isValid()
+        ):
             if QOpenGLContext.currentContext() is not self._context:
                 # Enable the context if it isn't.
                 # Use an offscreen surface because the widget surface may no longer exist.
@@ -560,14 +585,11 @@ class WidgetLevelGeometry(QObject, Drawable):
         transform = projection_matrix * view_matrix
         for chunk_data in self._chunks.values():
             self._program.setUniformValue(
-                self._matrix_location,
-                transform * chunk_data.shared.model_transform
+                self._matrix_location, transform * chunk_data.shared.model_transform
             )
             chunk_data.geometry.texture.bind(0)
             chunk_data.vao.bind()
-            f.glDrawArrays(
-                GL_TRIANGLES, 0, chunk_data.geometry.vertex_count
-            )
+            f.glDrawArrays(GL_TRIANGLES, 0, chunk_data.geometry.vertex_count)
             chunk_data.vao.release()
 
         self._program.release()
@@ -585,7 +607,9 @@ class WidgetLevelGeometry(QObject, Drawable):
             empty_iterator()
         else:
             cx, cz = self._camera_chunk
-            self._chunk_finder = get_grid_spiral(self._dimension, cx, cz, self._load_radius)
+            self._chunk_finder = get_grid_spiral(
+                self._dimension, cx, cz, self._load_radius
+            )
             self._queue_next_chunk()
 
     def _clear_chunks(self):
@@ -630,7 +654,12 @@ class WidgetLevelGeometry(QObject, Drawable):
             remove_chunk_keys = []
             for chunk_key, chunk in container.items():
                 _, chunk_cx, chunk_cz = chunk_key
-                if chunk_cx < min_cx or chunk_cx > max_cx or chunk_cz < min_cz or chunk_cz > max_cz:
+                if (
+                    chunk_cx < min_cx
+                    or chunk_cx > max_cx
+                    or chunk_cz < min_cz
+                    or chunk_cz > max_cz
+                ):
                     if chunk.vao is not None:
                         chunk.vao.destroy()
                     remove_chunk_keys.append(chunk_key)

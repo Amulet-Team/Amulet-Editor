@@ -27,7 +27,9 @@ def _locale_changed():
     _translator.load_lang(
         QLocale(),
         "",
-        directory=os.path.join(*amulet_team_resource_pack.__path__, "resources", "lang"),
+        directory=os.path.join(
+            *amulet_team_resource_pack.__path__, "resources", "lang"
+        ),
     )
 
 
