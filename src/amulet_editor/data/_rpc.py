@@ -41,7 +41,10 @@ from PySide6.QtWidgets import QApplication
 from PySide6.QtNetwork import QLocalSocket, QLocalServer
 
 from amulet_editor.data.project import get_level
-from amulet_editor.models.widgets import DisplayException, AmuletTracebackDialog
+from amulet_editor.models.widgets.traceback_dialog import (
+    DisplayException,
+    display_exception,
+)
 from amulet_editor.application._cli import spawn_process, BROKER
 
 log = logging.getLogger(__name__)
@@ -353,12 +356,11 @@ def init_rpc(broker=False):
 
             def on_error_response(tb_str):
                 log.exception(tb_str)
-                dialog = AmuletTracebackDialog(
+                display_exception(
                     title="Broker exception",
                     error="Broker exception",
                     traceback=tb_str,
                 )
-                dialog.exec()
 
             _broker_connection.call(
                 on_success_response, on_error_response, get_server_uuid
@@ -368,12 +370,11 @@ def init_rpc(broker=False):
         if _is_broker:
             err = _broker_connection.socket.errorString()
             log.critical(err)
-            dialog = AmuletTracebackDialog(
+            display_exception(
                 title="Could not connect to broker from broker.",
                 error="Could not connect to broker from broker.",
                 traceback=err,
             )
-            dialog.exec()
         else:
             log.debug(
                 "Error connecting to broker process. Initialising broker process."

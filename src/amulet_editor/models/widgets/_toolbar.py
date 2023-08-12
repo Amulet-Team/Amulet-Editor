@@ -58,7 +58,6 @@ class AToolBar(QFrame):
         button.setIconSize(QSize(30, 30))
 
         def on_click(evt):
-            print("clicked")
             if callback is not None:
                 try:
                     callback()

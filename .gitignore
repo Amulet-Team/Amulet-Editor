@@ -111,14 +111,11 @@ venv.bak/
 # macOS files
 .DS_Store
 
-# Amulet files
-/minecraft_model_reader
-/world_temp
-/resource_packs
-/plugins
-/config
-/cache
-/logs
+# Visual studio
+.vs/
+*.user
+*.pyproj
+*.sln
 
 # Visual Studio Code extensions
 .qt_for_python
@@ -126,3 +123,5 @@ venv.bak/
 # Qt Creator
 *.pyproject.user
 *.ui.autosave
+
+*.ini

@@ -3,29 +3,41 @@
 
 def _on_error(e):
     """Code to handle errors"""
-    err_list = []
     try:
         import traceback
+        import sys
 
-        err_list.append(traceback.format_exc())
-    except ImportError:
-        pass
-    if isinstance(e, ImportError):
-        err_list.append(
-            f"Failed to import requirements. Check that you extracted correctly."
+    except ImportError as e:
+        # Something has gone seriously wrong
+        print(e)
+        print("Failed to import requirements. Check that you extracted correctly.")
+        input("Press ENTER to continue.")
+    else:
+        err = "\n".join(
+            [traceback.format_exc()]
+            + ["Failed to import requirements. Check that you extracted correctly."]
+            * isinstance(e, ImportError)
+            + [str(e)]
         )
-    err_list.append(str(e))
-    err = "\n".join(err_list)
-    print(err)
-    # TODO: fix this path to a writable location
-    with open("crash.log", "w") as f:
-        f.write(err)
-    input("Press ENTER to continue.")
-    sys.exit(1)
+        print(err)
+        try:
+            with open("crash.log", "w") as f:
+                f.write(err)
+        except OSError:
+            pass
+        input("Press ENTER to continue.")
+        sys.exit(1)
 
 
 try:
+    from multiprocessing import freeze_support
+
+    freeze_support()
     import sys
+    import logging
+    import faulthandler
+
+    faulthandler.enable()
 
     if sys.version_info[:2] < (3, 9):
         raise Exception("Must be using Python 3.9+")
@@ -35,17 +47,17 @@ except Exception as e_:
 
 def main():
     try:
-        from multiprocessing import freeze_support
+        from amulet_editor.data.paths._application import _init_paths
 
-        freeze_support()
-        import logging
-
-        from amulet_editor.application._app import app_main
-        from amulet_editor.models.widgets import AmuletTracebackDialog
-
+        _init_paths(None, None, None, None)
         # Initialise logging at the highest level until configured otherwise.
         logging.basicConfig(level=logging.WARNING, format="%(levelname)s - %(message)s")
         logging.getLogger().setLevel(logging.WARNING)
+
+        from amulet_editor.application._main import app_main
+        from amulet_editor.models.widgets.traceback_dialog import (
+            display_exception_blocking,
+        )
 
     except Exception as e:
         _on_error(e)
@@ -64,12 +76,11 @@ def main():
                 if QApplication.instance() is None:
                     # QDialog needs an app otherwise it crashes
                     app = QApplication()
-                dialog = AmuletTracebackDialog(
+                display_exception_blocking(
                     title="Error Initialising Application",
                     error=str(e),
                     traceback="".join(traceback.format_exc()),
                 )
-                dialog.exec()
             except:
                 pass
             input("Press ENTER to continue...")

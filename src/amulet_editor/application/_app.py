@@ -1,32 +1,20 @@
 from __future__ import annotations
 
-import threading
 from typing import Optional
-import sys
 import os
-import logging
-from datetime import datetime
 
-from PySide6.QtCore import Qt, Slot, QLocale, QCoreApplication, QTimer
+from PySide6.QtCore import Slot, QLocale, QCoreApplication, QTimer
 from PySide6.QtWidgets import QApplication
 from PySide6.QtGui import QIcon
 
-import amulet
 import amulet_editor
 from amulet_editor import __version__
 from amulet_editor.models.localisation import ATranslator
-from amulet_editor.models.widgets import DisplayException
 from amulet_editor.data import build
 from amulet_editor.data._localisation import locale_changed
 import amulet_editor.data.plugin._manager as plugin_manager
-from amulet_editor.data.project import _level
-import amulet_editor.data._rpc as rpc
-from amulet_editor.data.paths import logging_directory
 
 from . import appearance
-from ._cli import parse_args, BROKER
-
-log = logging.getLogger(__name__)
 
 
 class AmuletApp(QApplication):
@@ -35,7 +23,6 @@ class AmuletApp(QApplication):
         self.setApplicationName("Amulet Editor")
         self.setApplicationVersion(__version__)
         self.setWindowIcon(QIcon(build.get_resource("icons/amulet/Icon.ico")))
-        self.setAttribute(Qt.ApplicationAttribute.AA_UseHighDpiPixmaps)
 
         self._translator = ATranslator()
         self._locale_changed()
@@ -68,56 +55,3 @@ class AmuletApp(QApplication):
             "",
             directory=os.path.join(*amulet_editor.__path__, "resources", "lang"),
         )
-
-
-def app_main():
-    args = parse_args()
-
-    logging.basicConfig(
-        level=args.logging_level, format=args.logging_format, force=True
-    )
-
-    if args.trace:
-
-        def trace_calls(frame, event, arg):
-            if event == "call":
-                try:
-                    func_name = frame.f_code.co_name
-                    module_name = frame.f_globals["__name__"]
-                    logging.info(f"Call to {module_name}.{func_name}")
-                except AttributeError:
-                    pass
-            return trace_calls
-
-        sys.settrace(trace_calls)
-        threading.settrace(trace_calls)
-
-    file_path = os.path.join(
-        logging_directory(),
-        f"amulet-log-{datetime.now().strftime('%Y-%m-%d-%H-%M-%S')}-{os.getpid()}.txt",
-    )
-    file_handler = logging.FileHandler(file_path)
-    file_handler.setFormatter(logging.Formatter(args.logging_format))
-    logging.getLogger().addHandler(file_handler)
-
-    is_broker = args.level_path == BROKER
-    rpc.init_rpc(is_broker)
-
-    if is_broker:
-        # Dummy application to get a main loop.
-        app = QApplication()
-    else:
-        app = AmuletApp()
-        # The broker cannot have a level
-        level_path: Optional[str] = args.level_path
-        if level_path is None:
-            _level.level = None
-        else:
-            log.debug("Loading level.")
-            with DisplayException(f"Failed loading level at path {level_path}"):
-                _level.level = amulet.load_level(level_path)
-
-    log.debug("Entering main loop.")
-    exit_code = app.exec()
-    log.debug(f"Exiting with code {exit_code}")
-    sys.exit(exit_code)

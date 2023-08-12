@@ -98,11 +98,11 @@ def get_openmp_args() -> Tuple[List[str], List[str], List[str], List[str]]:
 
 
 # build cython extensions
-if next(glob.iglob("amulet_map_editor/**/*.pyx", recursive=True), None):
+if next(glob.iglob("src/**/*.pyx", recursive=True), None):
     # This throws an error if it does not match any files
     omp_ccargs, omp_clargs, omp_cppcargs, omp_cpplargs = get_openmp_args()
     ext = cythonize(
-        "amulet_map_editor/**/*.pyx",
+        "src/**/*.pyx",
         aliases={
             "OPENMP_CCARGS": omp_ccargs,
             "OPENMP_CLARGS": omp_clargs,

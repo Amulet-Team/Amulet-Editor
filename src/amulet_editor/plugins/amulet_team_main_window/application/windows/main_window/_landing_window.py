@@ -2,7 +2,7 @@
 ################################################################################
 ## Form generated from reading UI file '_landing_window.ui'
 ##
-## Created by: Qt User Interface Compiler version 6.4.3
+## Created by: Qt User Interface Compiler version 6.5.1
 ##
 ## WARNING! All changes made in this file will be lost when recompiling UI file!
 ################################################################################
@@ -23,6 +23,7 @@ class Ui_AmuletLandingWindow(QMainWindow):
         self.central_widget.setObjectName("central_widget")
 
         self.horizontalLayout = QHBoxLayout(self.central_widget)
+        self.horizontalLayout.setSpacing(0)
         self.horizontalLayout.setObjectName("horizontalLayout")
         self.horizontalLayout.setContentsMargins(0, 0, 0, 0)
 

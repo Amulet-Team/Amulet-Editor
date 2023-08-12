@@ -1,0 +1,13 @@
+{
+	"identifier": "amulet_team_selection",
+	"version": "1.0.0",
+	"name": "Amulet Selection",
+	"depends": {
+		"python": "~=3.9",
+		"plugin": [],
+		"library": [
+			"amulet_core~=1.9"
+		]
+	},
+	"locked": "true"
+}

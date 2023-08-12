@@ -41,7 +41,7 @@ from amulet_editor.models.plugin import LibraryUID
 from amulet_editor.models.plugin._state import PluginState
 from amulet_editor.models.plugin._container import PluginContainer
 from amulet_editor.models.plugin._requirement import Requirement
-from amulet_editor.models.widgets import AmuletTracebackDialog
+from amulet_editor.models.widgets.traceback_dialog import display_exception
 
 
 log = logging.getLogger(__name__)
@@ -58,7 +58,9 @@ TODO: look into generating stub files for the active plugins to help with develo
 Plugins can import directly from other plugins to access static classes and functions 
 """
 
-PluginDirs = [first_party_plugin_directory(), third_party_plugin_directory()]
+
+def plugin_dirs() -> tuple[str, str]:
+    return first_party_plugin_directory(), third_party_plugin_directory()
 
 
 class PluginJobType(Enum):
@@ -188,6 +190,8 @@ def _validate_import(imported_name: str, frame: FrameType):
                 # Plugins don't need to specify native python libraries.
                 pass
             else:
+                if imported_root_name not in Packages:
+                    raise RuntimeError(f"Could not find library {importer_root_name}.")
                 package_name = Packages[imported_root_name][0].lower().replace("-", "_")
                 if not any(
                     dependency.identifier == package_name
@@ -269,7 +273,7 @@ def load():
         # Remove the plugin directories from sys.path so that they are not directly importable
         for i in range(len(sys.path) - 1, -1, -1):
             path = sys.path[i]
-            for plugin_path in PluginDirs:
+            for plugin_path in plugin_dirs():
                 try:
                     is_same = samefile(path, plugin_path)
                 except FileNotFoundError:
@@ -371,7 +375,7 @@ def scan_plugins():
     """
     with _plugin_lock:
         # Find and parse all plugins
-        for plugin_dir in PluginDirs:
+        for plugin_dir in plugin_dirs():
             for manifest_path in glob.glob(
                 os.path.join(plugin_dir, "*", "plugin.json")
             ):
@@ -497,12 +501,11 @@ def _enable_plugin(plugin_uid: LibraryUID):
                         log.debug(f"enabled plugin {plugin_container.data.uid}")
                     except Exception as e:
                         log.exception(e)
-                        dialog = AmuletTracebackDialog(
+                        display_exception(
                             title=f"Error while loading plugin {plugin_container.data.uid.identifier} {plugin_container.data.uid.version}",
                             error=str(e),
                             traceback=traceback.format_exc(),
                         )
-                        dialog.exec()
 
                         # Since the plugin failed to load we must try and disable it
                         _disable_plugin(plugin_container.data.uid)
@@ -559,12 +562,11 @@ def _unload_plugin(plugin_container: PluginContainer):
             invoke(unload_plugin)
         except Exception as e:
             log.exception(e)
-            dialog = AmuletTracebackDialog(
+            display_exception(
                 title=f"Error while unloading plugin {plugin_container.data.uid.identifier} {plugin_container.data.uid.version}",
                 error=str(e),
                 traceback=traceback.format_exc(),
             )
-            dialog.exec()
     plugin_container.instance = None
 
     # Remove the module from sys.modules

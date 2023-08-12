@@ -14,6 +14,12 @@ class LibraryUID:
         self._identifier = identifier.lower().replace("-", "_")
         self._version = version
 
+    def __repr__(self) -> str:
+        return f"LibraryUID({self._identifier!r}, {self._version!r})"
+
+    def __str__(self):
+        return f"{self._identifier} {self._version}"
+
     @property
     def identifier(self) -> str:
         """The package name. This is the name used when importing the package. Eg "my_name_my_plugin_v1". This must be a valid python identifier."""
