@@ -25,7 +25,12 @@ log = logging.getLogger(__name__)
 
 def _init_logging(args: Args):
     logging.basicConfig(
-        level=args.logging_level, format=args.logging_format, force=True
+        level=args.logging_level,
+        format=args.logging_format,
+        force=True,
+        handlers=[
+            logging.StreamHandler(sys.__stderr__)
+        ]
     )
     file_path = os.path.join(
         logging_directory(),
