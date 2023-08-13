@@ -125,3 +125,5 @@ venv.bak/
 *.ui.autosave
 
 *.ini
+
+working/
