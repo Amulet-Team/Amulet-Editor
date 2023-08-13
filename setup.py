@@ -12,10 +12,10 @@ import versioneer
 
 
 first_party = {
-    "amulet-core",
-    "amulet-nbt",
+    "amulet_core",
+    "amulet_nbt",
     "pymctranslate",
-    "minecraft-resource-pack",
+    "minecraft_resource_pack",
 }
 
 
@@ -23,7 +23,7 @@ def freeze_requirements(packages: List[str]) -> List[str]:
     # Pip install the requirements to find the newest compatible versions
     # This makes sure that the source versions are using the same dependencies as the compiled version.
     # This also makes sure that the source version is using the newest version of the dependency.
-    if any("~=" in r and r.split("~=", 1)[0].lower() in first_party for r in packages):
+    if any("~=" in r and r.split("~=", 1)[0].lower().replace("-", "_") in first_party for r in packages):
         print("pip-install")
         try:
             # make sure pip is up to date
@@ -40,12 +40,12 @@ def freeze_requirements(packages: List[str]) -> List[str]:
                 .strip()
                 .split("\n")
             )
-            requirements_map = {r.split("==")[0].lower(): r for r in installed}
+            requirements_map = {r.split("==")[0].lower().replace("-", "_"): r for r in installed}
 
             print(installed, requirements_map)
             for index, requirement in enumerate(packages):
                 if "~=" in requirement:
-                    lib = requirement.split("~=")[0].strip().lower()
+                    lib = requirement.split("~=")[0].strip().lower().replace("-", "_")
                     if lib in first_party and lib in requirements_map:
                         packages[index] = requirements_map[lib]
             print(f"Modified packages to {packages}")
@@ -122,29 +122,29 @@ cmdclass = versioneer.get_cmdclass()
 # so that it doesn't error. It doesn't actually use it.
 class SDist(cmdclass["sdist"]):
     user_options = cmdclass["sdist"].user_options + [
-        ("find-libs=", None, ""),
+        ("freeze-first=", None, ""),
     ]
 
     def initialize_options(self):
         super().initialize_options()
-        self.find_libs = None
+        self.freeze_first = None
 
 
 class BDistWheel(bdist_wheel):
     user_options = bdist_wheel.user_options + [
         (
-            "find-libs=",
+            "freeze-first=",
             None,
-            "Find and fix the newest version of first party libraries. Only used internally.",
+            "Find and freeze the newest version of first party libraries. Only used internally.",
         ),
     ]
 
     def initialize_options(self):
         super().initialize_options()
-        self.find_libs = None
+        self.freeze_first = None
 
     def finalize_options(self):
-        if self.find_libs:
+        if self.freeze_first:
             self.distribution.install_requires = freeze_requirements(
                 list(self.distribution.install_requires)
             )
