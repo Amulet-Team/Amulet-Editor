@@ -24,21 +24,19 @@ log = logging.getLogger(__name__)
 
 
 def _init_logging(args: Args):
+    file_handler = logging.FileHandler(
+        os.path.join(
+            logging_directory(),
+            f"amulet-log-{datetime.now().strftime('%Y-%m-%d-%H-%M-%S')}-{os.getpid()}.txt",
+        )
+    )
+
     logging.basicConfig(
         level=args.logging_level,
         format=args.logging_format,
         force=True,
-        handlers=[
-            logging.StreamHandler(sys.__stderr__)
-        ]
+        handlers=[logging.StreamHandler(sys.__stderr__), file_handler],
     )
-    file_path = os.path.join(
-        logging_directory(),
-        f"amulet-log-{datetime.now().strftime('%Y-%m-%d-%H-%M-%S')}-{os.getpid()}.txt",
-    )
-    file_handler = logging.FileHandler(file_path)
-    file_handler.setFormatter(logging.Formatter(args.logging_format))
-    logging.getLogger().addHandler(file_handler)
     # TODO: remove old log files
 
 
