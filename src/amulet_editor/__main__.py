@@ -136,12 +136,7 @@ def main():
         except Exception:
             pass
 
-        try:
-            import sys
-
-            sys.exit(1)
-        except Exception:
-            pass
+        raise e
 
 
 if __name__ == "__main__":
