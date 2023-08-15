@@ -14,9 +14,7 @@ def init_console():
         level=logging.WARNING,
         format="%(levelname)s - %(message)s",
         force=True,
-        handlers=[
-            logging.StreamHandler(stderr)
-        ]
+        handlers=[logging.StreamHandler(stderr)],
     )
     logging.getLogger().setLevel(logging.WARNING)
 
