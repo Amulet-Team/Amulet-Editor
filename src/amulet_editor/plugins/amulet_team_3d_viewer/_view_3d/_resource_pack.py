@@ -1,4 +1,4 @@
-from typing import Tuple, Dict, Optional
+from typing import Tuple, Dict, Optional, Callable
 import struct
 import hashlib
 import os
@@ -78,7 +78,7 @@ class OpenGLResourcePack:
         """
 
         def func(promise_data: Promise.Data):
-            with self._lock, DisplayException("Error initialising the resource pack."):
+            with self._lock:
                 if self._texture is None:
                     cache_id = struct.unpack(
                         "H",
@@ -235,8 +235,9 @@ class RenderResourcePackContainer(QObject):
 
     def _reload(self):
         def func(promise_data: Promise.Data):
-            level = self._level()
-            with self._lock:
+            with self._lock, DisplayException("Error initialising the OpenGL resource pack."):
+                level: BaseLevel = self._level()
+                log.debug(f"Loading OpenGL resource pack for level {level.level_path}")
                 resource_pack = self._resource_pack_container.resource_pack
                 # TODO: modify the resource pack library to expose the desired translator
                 translator = level.translation_manager.get_version("java", (999, 0, 0))
@@ -254,6 +255,7 @@ class RenderResourcePackContainer(QObject):
 
                 self._resource_pack = rp
                 self.changed.emit()
+                log.debug(f"Loaded OpenGL resource pack for level {level}")
 
         promise_ = Promise(func)
         old_loader = self._loader

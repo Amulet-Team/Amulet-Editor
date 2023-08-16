@@ -59,7 +59,6 @@ class Promise(QObject, Generic[T]):
     progress_text_change = Signal(str)
 
     def _op_wrapper(self):
-        enable_trace()
         try:
             value = self._target(
                 Promise.Data(
@@ -81,6 +80,10 @@ class Promise(QObject, Generic[T]):
             self._status = self.Status.Finished
             self.ready.emit()
 
+    def _thread_op_wrapper(self):
+        enable_trace()
+        self._op_wrapper()
+
     def _set_start(self):
         with self._lock:
             if self._status is not self.Status.NotStarted:
@@ -90,15 +93,17 @@ class Promise(QObject, Generic[T]):
     def start(self):
         """
         Run the operation wrapped by the promise in a new thread.
+        This will return immediately.
         This can only be called once.
         """
         self._set_start()
-        QThreadPool.globalInstance().start(self._op_wrapper)
+        QThreadPool.globalInstance().start(self._thread_op_wrapper)
 
     def call(self) -> T:
         """
         Directly call the operation wrapped by the promise in this thread.
         Block until complete.
+        Exceptions will be raised to the caller.
         This can only be called once.
         """
         self._set_start()
