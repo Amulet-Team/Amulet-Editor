@@ -8,16 +8,19 @@ DefaultDataDir = os.path.join(
     QStandardPaths.writableLocation(QStandardPaths.StandardLocation.AppDataLocation),
     "AmuletTeam",
     "AmuletEditor",
+    "data"
 )
 DefaultConfigDir = os.path.join(
-    QStandardPaths.writableLocation(QStandardPaths.StandardLocation.AppConfigLocation),
+    QStandardPaths.writableLocation(QStandardPaths.StandardLocation.AppDataLocation),
     "AmuletTeam",
     "AmuletEditor",
+    "config"
 )
 DefaultCacheDir = os.path.join(
-    QStandardPaths.writableLocation(QStandardPaths.StandardLocation.CacheLocation),
+    QStandardPaths.writableLocation(QStandardPaths.StandardLocation.AppDataLocation),
     "AmuletTeam",
     "AmuletEditor",
+    "cache"
 )
 DefaultLogDir = os.path.join(
     QStandardPaths.writableLocation(QStandardPaths.StandardLocation.AppDataLocation),
