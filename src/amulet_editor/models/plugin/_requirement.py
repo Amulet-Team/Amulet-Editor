@@ -40,3 +40,9 @@ class Requirement:
         if not isinstance(item, LibraryUID):
             raise TypeError
         return item.identifier == self.identifier and item.version in self.specifier
+
+    def __str__(self):
+        return f"{self.identifier}{self.specifier}"
+
+    def __repr__(self):
+        return f"{self.__class__.__name__}({self.identifier!r}, {self.specifier!r})"
