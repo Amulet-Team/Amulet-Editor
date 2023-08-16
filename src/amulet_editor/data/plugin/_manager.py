@@ -119,9 +119,6 @@ class Event(QObject):
     plugin_state_change = Signal(LibraryUID, PluginState)
 
 
-# The thread to process plugin jobs.
-_job_thread: Optional[PluginJobThread] = PluginJobThread()
-
 _event = Event()
 
 
@@ -260,8 +257,6 @@ def load():
     """
     global _splash_load_screen
     log.debug("Loading plugin manager")
-    if _job_thread.isRunning():
-        raise RuntimeError("Plugin manager has already been initialised.")
     log.debug("Waiting for plugin lock")
     with _plugin_lock:
         log.debug("Acquired the plugin lock")
@@ -290,7 +285,6 @@ def load():
         for plugin_uid, plugin_container in _plugins.items():
             if plugin_state.get(plugin_uid) or plugin_container.data.locked:
                 _enable_plugin(plugin_uid)
-        _job_thread.start()
 
         _splash_load_screen.close()
         _splash_load_screen = None
@@ -306,12 +300,6 @@ def unload():
     global _splash_unload_screen
 
     log.debug("Unloading plugin manager")
-
-    # Shut down the job thread so that it cannot process anything
-    log.debug("Waiting for the plugin job thread to finish")
-    _job_thread.requestInterruption()
-    _job_thread.wait()
-    log.debug("Plugin job thread finished")
 
     log.debug("Waiting for plugin lock")
     with _plugin_lock:
