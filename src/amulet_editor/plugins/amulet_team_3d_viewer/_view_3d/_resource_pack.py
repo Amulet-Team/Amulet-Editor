@@ -127,7 +127,7 @@ class OpenGLResourcePack:
                         atlas.save(img_path)
                         with open(bounds_path, "w") as f:
                             json.dump((mod_time, bounds), f)
-                        _atlas = ImageQt(atlas).mirrored()
+                        _atlas = ImageQt(atlas)
 
                     self._texture_bounds = bounds
 
