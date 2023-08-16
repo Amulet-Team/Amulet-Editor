@@ -6,8 +6,10 @@ import sys
 import os
 import logging
 from datetime import datetime
+import faulthandler
+from io import TextIOWrapper
 
-from PySide6.QtCore import Qt, QCoreApplication
+from PySide6.QtCore import Qt, QCoreApplication, qInstallMessageHandler, QtMsgType
 from PySide6.QtWidgets import QApplication
 from PySide6.QtGui import QSurfaceFormat
 
@@ -16,34 +18,69 @@ from amulet_editor.models.widgets.traceback_dialog import DisplayException
 from amulet_editor.data.project import _level
 import amulet_editor.data._rpc as rpc
 
-from ._cli import parse_args, Args, BROKER
+from ._cli import parse_args, BROKER
 from ._app import AmuletApp
 from amulet_editor.data.paths._application import _init_paths, logging_directory
 
 log = logging.getLogger(__name__)
+qt_log = logging.getLogger("Qt")
 
 
-def _init_logging(args: Args):
-    file_handler = logging.FileHandler(
+def _qt_log(msg_type, context, msg):
+    if msg_type == QtMsgType.QtDebugMsg:
+        qt_log.debug(msg)
+    if msg_type == QtMsgType.QtInfoMsg:
+        qt_log.info(msg)
+    if msg_type == QtMsgType.QtWarningMsg:
+        qt_log.warning(msg)
+    if msg_type == QtMsgType.QtCriticalMsg:
+        qt_log.critical(msg)
+    if msg_type == QtMsgType.QtFatalMsg:
+        qt_log.fatal(msg)
+
+
+def app_main():
+    args = parse_args()
+    _init_paths(args.data_dir, args.config_dir, args.cache_dir, args.log_dir)
+
+    log_file = open(
         os.path.join(
             logging_directory(),
             f"amulet-log-{datetime.now().strftime('%Y-%m-%d-%H-%M-%S')}-{os.getpid()}.txt",
-        )
+        ),
+        "w",
     )
 
     logging.basicConfig(
         level=args.logging_level,
         format=args.logging_format,
         force=True,
-        handlers=[logging.StreamHandler(sys.__stderr__), file_handler],
+        handlers=[
+            logging.StreamHandler(sys.__stderr__),
+            logging.StreamHandler(log_file),
+        ],
     )
     # TODO: remove old log files
 
+    class StdCapture(TextIOWrapper):
+        def __init__(self, logger):
+            super().__init__(log_file)
+            self._logger = logger
 
-def app_main():
-    args = parse_args()
-    _init_paths(args.data_dir, args.config_dir, args.cache_dir, args.log_dir)
-    _init_logging(args)
+        def write(self, msg):
+            if msg != "\n":
+                self._logger(msg)
+
+    # Convert all direct stdout calls (eg print) to info log calls
+    sys.stdout = StdCapture(logging.getLogger("Python stdout").info)
+    # Convert all direct stderr calls (eg warnings and errors) to error log calls
+    sys.stderr = StdCapture(logging.getLogger("Python stderr").error)
+
+    # Handle the qt output in a more useful way
+    qInstallMessageHandler(_qt_log)
+
+    # When running via pythonw the stderr is None so log directly to the log file
+    faulthandler.enable(sys.__stderr__ or log_file)
 
     if args.trace:
 

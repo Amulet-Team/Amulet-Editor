@@ -19,15 +19,6 @@ def main():
 
         _init_paths(None, None, None, None)
 
-        from amulet_editor.application._console import init_console
-
-        init_console()
-
-        # Enable useful tracebacks for access violations and other hard crashes
-        import faulthandler
-
-        faulthandler.enable()
-
         # Import and boot the app.
         from amulet_editor.application._main import app_main
 
