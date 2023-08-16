@@ -285,6 +285,7 @@ def load():
         for plugin_uid, plugin_container in _plugins.items():
             if plugin_state.get(plugin_uid) or plugin_container.data.locked:
                 _enable_plugin(plugin_uid)
+        _plugin_diagnostic()
 
         _splash_load_screen.close()
         _splash_load_screen = None
@@ -499,6 +500,23 @@ def _enable_plugin(plugin_uid: LibraryUID):
                         _disable_plugin(plugin_container.data.uid)
                     else:
                         enabled_count += 1
+
+
+def _plugin_diagnostic():
+    """Useful plugin diagnostic data."""
+    log.debug(f"Found {len(_plugins)} plugins.")
+    for plugin_container in list(_plugins.values()):
+        if plugin_container.state is PluginState.Enabled:
+            log.debug(f"Plugin {plugin_container.data.uid} has been enabled.")
+        elif plugin_container.state is PluginState.Disabled:
+            log.debug(f"Plugin {plugin_container.data.uid} is not enabled.")
+        elif plugin_container.state is PluginState.Inactive:
+            log.debug(
+                f"Plugin {plugin_container.data.uid} could not be enabled. "
+                f"PyCompatible={PythonVersion in plugin_container.data.depends.python}, "
+                f"MissingLibraries={[str(l) for l in plugin_container.data.depends.library if not _has_library(l)]}, "
+                f"MissingPlugins={[str(p) for p in plugin_container.data.depends.plugin if not _has_plugin(p)]}"
+            )
 
 
 # @register_global_function
