@@ -9,13 +9,15 @@ from datetime import datetime
 import faulthandler
 from io import TextIOWrapper
 
-from PySide6.QtCore import Qt, QCoreApplication, qInstallMessageHandler, QtMsgType
+from PySide6.QtCore import Qt, QCoreApplication, qInstallMessageHandler, QtMsgType, QLocale
 from PySide6.QtWidgets import QApplication
 from PySide6.QtGui import QSurfaceFormat
 
 import amulet
+import amulet_editor
 from amulet_editor.models.widgets.traceback_dialog import DisplayException
 from amulet_editor.data.project import _level
+from amulet_editor.models.localisation import ATranslator
 import amulet_editor.data._rpc as rpc
 
 from ._cli import parse_args, BROKER
@@ -102,6 +104,13 @@ def app_main():
     if is_broker:
         # Dummy application to get a main loop.
         app = QApplication()
+        translator = ATranslator()
+        translator.load_lang(
+            QLocale(),
+            "",
+            directory=os.path.join(*amulet_editor.__path__, "resources", "lang"),
+        )
+        QCoreApplication.installTranslator(translator)
     else:
         # # Allow context sharing between widgets that do not share the same top level window.
         QCoreApplication.setAttribute(Qt.ApplicationAttribute.AA_ShareOpenGLContexts)
