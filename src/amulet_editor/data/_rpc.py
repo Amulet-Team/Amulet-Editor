@@ -46,6 +46,7 @@ from amulet_editor.models.widgets.traceback_dialog import (
     display_exception,
 )
 from amulet_editor.application._cli import spawn_process, BROKER
+from amulet_editor.data.paths._application import logging_directory
 
 log = logging.getLogger(__name__)
 
@@ -138,51 +139,53 @@ _listener_connections: dict[RemoteProcedureCallingConnection, Optional[bool]] = 
 
 
 def _on_listener_connect():
-    socket = _remote_call_listener.nextPendingConnection()
-    connection = RemoteProcedureCallingConnection(socket)
-    _listener_connections[connection] = None
-    log.debug(f"New listener connection {socket}")
+    with DisplayException("Error initialising socket", suppress=True, log=log):
+        socket = _remote_call_listener.nextPendingConnection()
+        connection = RemoteProcedureCallingConnection(socket)
+        _listener_connections[connection] = None
+        log.debug(f"New listener connection {socket}")
 
-    if _is_broker:
+        if _is_broker:
 
-        def is_landing_success(response: bool):
-            log.debug(f"New connection is_landing {response}")
-            _listener_connections[connection] = response
+            def is_landing_success(response: bool):
+                log.debug(f"New connection is_landing {response}")
+                _listener_connections[connection] = response
 
-        def is_landing_err(tb_str):
-            logging.exception(tb_str)
+            def is_landing_err(tb_str):
+                logging.exception(tb_str)
 
-        connection.call(
-            is_landing_success,
-            is_landing_err,
-            is_landing_process,
-        )
+            connection.call(
+                is_landing_success,
+                is_landing_err,
+                is_landing_process,
+            )
 
-    def on_disconnect():
-        is_landing = _listener_connections.pop(connection, None)
-        log.debug(f"Listener connection disconnected {socket}. {is_landing}")
-        if _is_broker and not any(
-            map(lambda x: x is not None, _listener_connections.copy().values())
-        ):
-            # If this is the broker
-            # There are no more boolean connections
-            if is_landing is None:
-                # If the closed process is the broker process or some other error
-                pass
-            elif is_landing:
-                # If the closed process was a landing page. Exit
-                QApplication.quit()
-            else:
-                # The last process closed was not a landing process so open a landing process
-                subprocess.Popen(
-                    [sys.executable, sys.argv[0]],
-                    start_new_session=True,
-                    stdin=subprocess.DEVNULL,
-                    stdout=subprocess.DEVNULL,
-                    stderr=subprocess.DEVNULL,
-                )
+        def on_disconnect():
+            with DisplayException("Error on socket disconnect", suppress=True, log=log):
+                is_landing = _listener_connections.pop(connection, None)
+                log.debug(f"Listener connection disconnected {socket}. {is_landing}")
+                if _is_broker and not any(
+                    map(lambda x: x is not None, _listener_connections.copy().values())
+                ):
+                    # If this is the broker
+                    # There are no more boolean connections
+                    if is_landing is None:
+                        # If the closed process is the broker process or some other error
+                        pass
+                    elif is_landing:
+                        # If the closed process was a landing page. Exit
+                        QApplication.quit()
+                    else:
+                        # The last process closed was not a landing process so open a landing process
+                        subprocess.Popen(
+                            [sys.executable, sys.argv[0]],
+                            start_new_session=True,
+                            stdin=subprocess.DEVNULL,
+                            stdout=subprocess.DEVNULL,
+                            stderr=subprocess.DEVNULL,
+                        )
 
-    socket.disconnected.connect(on_disconnect)
+        socket.disconnected.connect(on_disconnect)
 
 
 _remote_call_listener.newConnection.connect(_on_listener_connect)
@@ -223,6 +226,8 @@ class RemoteProcedureCallingConnection:
         :param error_callback: A function to call if the remote function raises an exception.
         :return:
         """
+        if self.socket.state() != QLocalSocket.LocalSocketState.ConnectedState:
+            raise RuntimeError("Socket is not connected")
         identifier = str(uuid4()).encode()
         address = _get_func_address(func)
         log.debug(
@@ -236,11 +241,17 @@ class RemoteProcedureCallingConnection:
         self.socket.write(payload)
 
     def _process_msg(self):
-        while self.socket.bytesAvailable():
-            # It is possible for there to be more than one payload here.
-            # readyRead will only be re-emitted when the buffer is empty.
-            try:
-                with DisplayException("Exception processing remote procedure call."):
+        with DisplayException(
+            "Exception processing remote procedure call.", suppress=True, log=log
+        ):
+            while self.socket.bytesAvailable():
+                # It is possible for there to be more than one payload here.
+                # readyRead will only be re-emitted when the buffer is empty.
+                with DisplayException(
+                    "Exception processing remote procedure call.",
+                    suppress=True,
+                    log=log,
+                ):
                     payload_length_data = self.socket.read(4).data()
                     if len(payload_length_data) != 4:
                         raise RuntimeError("Error in data sent over socket.")
@@ -292,8 +303,6 @@ class RemoteProcedureCallingConnection:
                                 identifier, traceback.format_exc()
                             )
                             self.socket.write(payload)
-            except Exception as e:
-                log.exception(e)
 
     @staticmethod
     def _add_size(payload: bytes) -> bytes:
@@ -333,6 +342,7 @@ def init_rpc(broker=False):
     global _is_broker
     log.debug("Initialising RPC.")
     _is_broker = bool(broker)
+    failed_connections = 0
 
     address = BrokerAddress if _is_broker else server_uuid
     log.debug(f"Connecting listener to address {address}")
@@ -342,49 +352,68 @@ def init_rpc(broker=False):
         raise Exception(msg)
 
     def on_connect():
-        log.debug("Connected to broker process.")
+        with DisplayException("Error on socket connect", suppress=True, log=log):
+            nonlocal failed_connections
+            failed_connections = 0
+            log.debug("Connected to broker process.")
 
-        if _is_broker:
+            if _is_broker:
 
-            def on_success_response(result):
-                if result == server_uuid:
-                    log.debug("I am the broker")
-                    _broker_connection.socket.close()
-                else:
-                    log.debug("Exiting because a broker already exists.")
-                    QApplication.quit()
+                def on_success_response(result):
+                    if result == server_uuid:
+                        log.debug("I am the broker")
+                        _broker_connection.socket.close()
+                    else:
+                        log.debug("Exiting because a broker already exists.")
+                        QApplication.quit()
 
-            def on_error_response(tb_str):
-                log.exception(tb_str)
-                display_exception(
-                    title="Broker exception",
-                    error="Broker exception",
-                    traceback=tb_str,
+                def on_error_response(tb_str):
+                    log.exception(tb_str)
+                    display_exception(
+                        title="Broker exception",
+                        error="Broker exception",
+                        traceback=tb_str,
+                    )
+
+                _broker_connection.call(
+                    on_success_response, on_error_response, get_server_uuid
                 )
 
-            _broker_connection.call(
-                on_success_response, on_error_response, get_server_uuid
-            )
-
     def on_error():
-        if _is_broker:
-            err = _broker_connection.socket.errorString()
-            log.critical(err)
-            display_exception(
-                title="Could not connect to broker from broker.",
-                error="Could not connect to broker from broker.",
-                traceback=err,
-            )
-        else:
-            log.debug(
-                "Error connecting to broker process. Initialising broker process."
-            )
-            # If it could not connect, try booting the broker process and try again.
-            # TODO: pass in logging arguments.
-            # TODO: Make this work for PyInstaller builds.
-            spawn_process(BROKER)
-            # Give the broker a chance to load
-            QTimer.singleShot(1000, lambda: _broker_connection.socket.connectToServer(BrokerAddress))
+        with DisplayException(
+            "Error on socket connection error", suppress=True, log=log
+        ):
+            nonlocal failed_connections
+            if _is_broker:
+                err = _broker_connection.socket.errorString()
+                log.critical(err)
+                display_exception(
+                    title="Could not connect to broker from broker.",
+                    error="Could not connect to broker from broker.",
+                    traceback=err,
+                )
+            else:
+                failed_connections += 1
+                if failed_connections > 20:
+                    display_exception(
+                        title="Failed to connect to the broker process.",
+                        error="Failed to connect to the broker process.",
+                        traceback=f"Please report this to a developer with the log files found in {logging_directory()}",
+                    )
+                    log.error("Gave up connecting to the broker")
+                    return
+                log.debug(
+                    "Error connecting to broker process. Initialising broker process."
+                )
+                # If it could not connect, try booting the broker process and try again.
+                # TODO: pass in logging arguments.
+                # TODO: Make this work for PyInstaller builds.
+                spawn_process(BROKER)
+                # Give the broker a chance to load
+                QTimer.singleShot(
+                    1000,
+                    lambda: _broker_connection.socket.connectToServer(BrokerAddress),
+                )
 
     log.debug("Connecting to broker.")
     _broker_connection.socket.connected.connect(on_connect)

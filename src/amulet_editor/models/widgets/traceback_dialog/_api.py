@@ -1,3 +1,4 @@
+import logging
 import traceback as tb
 from amulet_editor.application._invoke import invoke
 from ._cls import _AmuletTracebackDialog
@@ -35,20 +36,26 @@ def display_exception(title: str = "", error: str = "", traceback: str = ""):
 
 
 class DisplayException:
-    """A context manager class to display the traceback dialog when an error occurs."""
+    """
+    A context manager class to display the traceback dialog when an error occurs.
+    It will also log the exception to the logging module and optionally suppress the exception.
+    """
 
-    def __init__(self, msg: str, *, suppress=False):
+    def __init__(self, msg: str, *, suppress=False, log=logging.getLogger()):
         self._msg = msg
         self._suppress = suppress
+        self._log = log
 
     def __enter__(self):
         pass
 
     def __exit__(self, exc_type, exc_val, exc_tb):
         if exc_type and isinstance(exc_val, Exception):
+            self._log.exception(exc_val)
             display_exception(
                 title=self._msg,
                 error=str(exc_val),
                 traceback="".join(tb.format_tb(exc_tb)),
             )
-        return self._suppress
+            return self._suppress
+        return False
