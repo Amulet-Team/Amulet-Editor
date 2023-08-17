@@ -45,4 +45,4 @@ jobs:
     - name: Upload Release Asset
       uses: softprops/action-gh-release@v1
       with:
-        files: '*.*'
+        files: 'target/*.*'
