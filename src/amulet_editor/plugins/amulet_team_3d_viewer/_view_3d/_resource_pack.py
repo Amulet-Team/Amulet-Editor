@@ -235,7 +235,9 @@ class RenderResourcePackContainer(QObject):
 
     def _reload(self):
         def func(promise_data: Promise.Data):
-            with self._lock, DisplayException("Error initialising the OpenGL resource pack."):
+            with self._lock, DisplayException(
+                "Error initialising the OpenGL resource pack."
+            ):
                 level: BaseLevel = self._level()
                 log.debug(f"Loading OpenGL resource pack for level {level.level_path}")
                 resource_pack = self._resource_pack_container.resource_pack
