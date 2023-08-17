@@ -35,6 +35,12 @@ jobs:
         pip install --upgrade pip
         pip install setuptools wheel twine pyinstaller~=5.6 build
 
+    - name: Install Ubuntu dependencies
+      if: matrix.cfg.os == 'ubuntu-latest'
+      run: |
+        sudo apt-get install ruby-dev build-essential
+        sudo gem i fpm -f
+
     - name: Create Installer
       run: |
         pip install git+https://github.com/Amulet-Team/python-build-tool.git
