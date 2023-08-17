@@ -5,6 +5,7 @@ from math import sin, cos, radians
 from PySide6.QtCore import Qt, QPoint, Slot
 from PySide6.QtGui import (
     QOpenGLFunctions,
+    QOpenGLContext,
     QMouseEvent,
     QShowEvent,
     QHideEvent,
@@ -124,6 +125,9 @@ class FirstPersonCanvas(QOpenGLWidget, QOpenGLFunctions):
 
     def paintGL(self):
         """Private paint method called by the QOpenGLWidget"""
+        if QOpenGLContext.currentContext() is not self.context():
+            log.error("Tried to paint from a different context.")
+            return
         self.glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT)
         self.glEnable(GL_DEPTH_TEST)
         self.glEnable(GL_CULL_FACE)
