@@ -37,8 +37,9 @@ def display_exception(title: str = "", error: str = "", traceback: str = ""):
 class DisplayException:
     """A context manager class to display the traceback dialog when an error occurs."""
 
-    def __init__(self, msg: str):
+    def __init__(self, msg: str, *, suppress=False):
         self._msg = msg
+        self._suppress = suppress
 
     def __enter__(self):
         pass
@@ -50,4 +51,4 @@ class DisplayException:
                 error=str(exc_val),
                 traceback="".join(tb.format_tb(exc_tb)),
             )
-        return False
+        return self._suppress
