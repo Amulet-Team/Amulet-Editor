@@ -28,7 +28,6 @@ from __future__ import annotations
 
 import logging
 import sys
-import time
 from typing import Any, Callable, Sequence, Mapping, TypeVar, Optional
 from uuid import uuid4
 import pickle
@@ -37,6 +36,7 @@ import traceback
 import subprocess
 import struct
 
+from PySide6.QtCore import QTimer
 from PySide6.QtWidgets import QApplication
 from PySide6.QtNetwork import QLocalSocket, QLocalServer
 
@@ -384,8 +384,7 @@ def init_rpc(broker=False):
             # TODO: Make this work for PyInstaller builds.
             spawn_process(BROKER)
             # Give the broker a chance to load
-            time.sleep(1)
-            _broker_connection.socket.connectToServer(BrokerAddress)
+            QTimer.singleShot(1000, lambda: _broker_connection.socket.connectToServer(BrokerAddress))
 
     log.debug("Connecting to broker.")
     _broker_connection.socket.connected.connect(on_connect)

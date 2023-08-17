@@ -98,7 +98,6 @@ def app_main():
         threading.settrace(trace_calls)
 
     is_broker = args.level_path == BROKER
-    rpc.init_rpc(is_broker)
 
     if is_broker:
         # Dummy application to get a main loop.
@@ -123,6 +122,8 @@ def app_main():
             log.debug("Loading level.")
             with DisplayException(f"Failed loading level at path {level_path}"):
                 _level.level = amulet.load_level(level_path)
+
+    rpc.init_rpc(is_broker)
 
     log.debug("Entering main loop.")
     exit_code = app.exec()
