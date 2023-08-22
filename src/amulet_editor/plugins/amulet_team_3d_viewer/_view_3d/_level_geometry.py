@@ -185,7 +185,7 @@ class ChunkGeneratorWorker(QObject):
             else:
                 chunk_verts, chunk_verts_translucent = create_lod0_chunk(
                     self._resource_pack,
-                    numpy.zeros(3, dtype=numpy.int32),
+                    numpy.zeros(3, dtype=numpy.int64),
                     self._sub_chunks(dimension, cx, cz, chunk),
                     chunk.block_palette,
                 )

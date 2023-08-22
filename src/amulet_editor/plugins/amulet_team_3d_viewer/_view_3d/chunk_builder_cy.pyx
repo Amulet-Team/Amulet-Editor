@@ -478,5 +478,5 @@ def create_lod0_chunk(
     return _create_lod0_chunk(
         resource_pack.block_model_manager[id(block_palette)],
         blocks,
-        chunk_offset
+        chunk_offset.astype(numpy.int64)
     )
