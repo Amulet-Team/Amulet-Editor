@@ -280,5 +280,5 @@ _level_data: WeakKeyDictionary[
 def get_gl_resource_pack_container(level: BaseLevel) -> RenderResourcePackContainer:
     with _lock:
         if level not in _level_data:
-            _level_data[level] = RenderResourcePackContainer(level)
+            _level_data[level] = invoke(lambda: RenderResourcePackContainer(level))
         return _level_data[level]
