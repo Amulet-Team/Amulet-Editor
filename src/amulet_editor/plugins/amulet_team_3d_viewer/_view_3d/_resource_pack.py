@@ -1,4 +1,4 @@
-from typing import Tuple, Dict, Optional, Callable
+from typing import Tuple, Dict, Optional
 import struct
 import hashlib
 import os
@@ -23,6 +23,7 @@ from amulet.api.level import BaseLevel
 
 from ._textureatlas import create_atlas
 
+from amulet_editor.application._invoke import invoke
 from amulet_editor.models.widgets.traceback_dialog import DisplayException
 from amulet_editor.models.generic._promise import Promise
 from amulet_editor.data.paths._application import cache_directory
@@ -35,7 +36,8 @@ log = logging.getLogger(__name__)
 class OpenGLResourcePack:
     """
     This class will take a minecraft_model_reader resource pack and load the textures into a texture atlas.
-    After creating an instance initialise must be called. This may be done in a thread.
+    After creating an instance, initialise must be called.
+
     """
 
     _lock = Lock()
@@ -55,7 +57,6 @@ class OpenGLResourcePack:
     def __init__(
         self, resource_pack: BaseResourcePackManager, translator: PyMCTranslate.Version
     ):
-        super().__init__()
         self._lock = Lock()
         self._resource_pack = resource_pack
         self._translator = translator
@@ -74,7 +75,6 @@ class OpenGLResourcePack:
     def initialise(self) -> Promise[None]:
         """
         Create the atlas texture.
-        This is run asynchronously.
         """
 
         def func(promise_data: Promise.Data):
@@ -131,29 +131,32 @@ class OpenGLResourcePack:
 
                     self._texture_bounds = bounds
 
-                    self._context = QOpenGLContext()
-                    self._context.setShareContext(QOpenGLContext.globalShareContext())
-                    self._context.create()
-                    self._surface = QOffscreenSurface()
-                    self._surface.create()
-                    if not self._context.makeCurrent(self._surface):
-                        raise RuntimeError("Could not make context current.")
+                    def init_gl():
+                        self._context = QOpenGLContext()
+                        self._context.setShareContext(QOpenGLContext.globalShareContext())
+                        self._context.create()
+                        self._surface = QOffscreenSurface()
+                        self._surface.create()
+                        if not self._context.makeCurrent(self._surface):
+                            raise RuntimeError("Could not make context current.")
 
-                    self._texture = QOpenGLTexture(QOpenGLTexture.Target.Target2D)
-                    self._texture.setMinificationFilter(QOpenGLTexture.Filter.Nearest)
-                    self._texture.setMagnificationFilter(QOpenGLTexture.Filter.Nearest)
-                    self._texture.setWrapMode(
-                        QOpenGLTexture.CoordinateDirection.DirectionS,
-                        QOpenGLTexture.WrapMode.ClampToEdge,
-                    )
-                    self._texture.setWrapMode(
-                        QOpenGLTexture.CoordinateDirection.DirectionT,
-                        QOpenGLTexture.WrapMode.ClampToEdge,
-                    )
-                    self._texture.setData(_atlas)
-                    self._texture.create()
+                        self._texture = QOpenGLTexture(QOpenGLTexture.Target.Target2D)
+                        self._texture.setMinificationFilter(QOpenGLTexture.Filter.Nearest)
+                        self._texture.setMagnificationFilter(QOpenGLTexture.Filter.Nearest)
+                        self._texture.setWrapMode(
+                            QOpenGLTexture.CoordinateDirection.DirectionS,
+                            QOpenGLTexture.WrapMode.ClampToEdge,
+                        )
+                        self._texture.setWrapMode(
+                            QOpenGLTexture.CoordinateDirection.DirectionT,
+                            QOpenGLTexture.WrapMode.ClampToEdge,
+                        )
+                        self._texture.setData(_atlas)
+                        self._texture.create()
 
-                    self._context.doneCurrent()
+                        self._context.doneCurrent()
+
+                    invoke(init_gl)
 
         return Promise(func)
 
