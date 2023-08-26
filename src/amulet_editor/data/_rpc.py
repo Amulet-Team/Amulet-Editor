@@ -349,7 +349,10 @@ def init_rpc(broker=False):
     if not _remote_call_listener.listen(address):
         msg = _remote_call_listener.errorString()
         log.exception(msg)
-        raise Exception(msg)
+        if _is_broker:
+            sys.exit()
+        else:
+            raise Exception(msg)
 
     def on_connect():
         with DisplayException("Error on socket connect", suppress=True, log=log):
