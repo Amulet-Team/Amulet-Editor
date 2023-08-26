@@ -130,7 +130,6 @@ class FirstPersonCanvas(QOpenGLWidget, QOpenGLFunctions):
             return
         self.glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT)
         self.glEnable(GL_DEPTH_TEST)
-        self.glEnable(GL_CULL_FACE)
 
         self._render_level.paintGL(
             self.camera.intrinsic_matrix, self.camera.extrinsic_matrix

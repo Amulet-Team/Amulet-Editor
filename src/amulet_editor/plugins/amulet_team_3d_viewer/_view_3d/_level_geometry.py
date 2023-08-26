@@ -20,6 +20,13 @@ from OpenGL.GL import (
     GL_FLOAT,
     GL_FALSE,
     GL_TRIANGLES,
+    GL_CULL_FACE,
+    GL_BACK,
+    GL_DEPTH_TEST,
+    GL_LEQUAL,
+    GL_BLEND,
+    GL_SRC_ALPHA,
+    GL_ONE_MINUS_SRC_ALPHA
 )
 
 from amulet.api.data_types import Dimension
@@ -632,6 +639,12 @@ class WidgetLevelGeometry(QObject, Drawable):
             raise RuntimeError("Context is not valid")
 
         f = QOpenGLContext.currentContext().functions()
+        f.glEnable(GL_DEPTH_TEST)
+        f.glDepthFunc(GL_LEQUAL)
+        f.glEnable(GL_BLEND)
+        f.glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA)
+        f.glEnable(GL_CULL_FACE)
+        f.glCullFace(GL_BACK)
 
         # Draw the geometry
         self._program.bind()
