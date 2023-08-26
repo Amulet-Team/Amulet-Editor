@@ -95,18 +95,28 @@ class SharedVBOManager(QObject):
     def create_vbo(self, buffer: bytes) -> QOpenGLBuffer:
         def create_vbo():
             with self._lock:
-                if not self._context.makeCurrent(self._surface):
-                    raise RuntimeError("Could not make context current.")
+                start_context = QOpenGLContext.currentContext()
+                start_surface = None
+                if start_context is not None:
+                    start_surface = start_context.surface()
+                    start_context.doneCurrent()
 
-                vbo = QOpenGLBuffer()
-                vbo.create()
-                vbo.bind()
-                vbo.allocate(buffer, len(buffer))
-                vbo.release()
+                try:
+                    if not self._context.makeCurrent(self._surface):
+                        raise RuntimeError("Could not make context current.")
 
-                self._context.doneCurrent()
+                    vbo = QOpenGLBuffer()
+                    vbo.create()
+                    vbo.bind()
+                    vbo.allocate(buffer, len(buffer))
+                    vbo.release()
+                    self._vbos.add(vbo)
+                    self._context.doneCurrent()
 
-                self._vbos.add(vbo)
+                finally:
+                    if start_context is not None and not start_context.makeCurrent(start_surface):
+                        raise RuntimeError("Could not make original context current.")
+
                 return vbo
 
         return invoke(create_vbo)
@@ -114,14 +124,25 @@ class SharedVBOManager(QObject):
     def destroy_vbo(self, vbo: QOpenGLBuffer):
         def destroy_vbo():
             with self._lock:
-                if vbo not in self._vbos:
-                    raise RuntimeError("vbo was not created by this class or has already been destroyed.")
+                start_context = QOpenGLContext.currentContext()
+                start_surface = None
+                if start_context is not None:
+                    start_surface = start_context.surface()
+                    start_context.doneCurrent()
 
-                if not self._context.makeCurrent(self._surface):
-                    raise RuntimeError("Could not make context current.")
-                vbo.destroy()
-                self._context.doneCurrent()
-                log.debug("Destroyed vbo")
+                try:
+                    if vbo not in self._vbos:
+                        raise RuntimeError("vbo was not created by this class or has already been destroyed.")
+
+                    if not self._context.makeCurrent(self._surface):
+                        raise RuntimeError("Could not make context current.")
+                    vbo.destroy()
+                    self._context.doneCurrent()
+                    log.debug("Destroyed vbo")
+
+                finally:
+                    if start_context is not None and not start_context.makeCurrent(start_surface):
+                        raise RuntimeError("Could not make original context current.")
 
         invoke(destroy_vbo)
 
