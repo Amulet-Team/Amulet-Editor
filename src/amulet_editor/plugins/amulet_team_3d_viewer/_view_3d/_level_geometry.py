@@ -1,9 +1,11 @@
 from __future__ import annotations
 import logging
-from typing import Optional, Generator, Callable
+from typing import Optional, Generator, Callable, Iterator
 import ctypes
 from threading import Lock
 from weakref import WeakKeyDictionary, WeakValueDictionary, ref
+from collections.abc import MutableMapping
+import bisect
 import numpy
 
 from PySide6.QtCore import QThread, Signal, QObject, Slot, QTimer, QCoreApplication
@@ -472,6 +474,54 @@ def get_grid_spiral(
         length += 1
 
 
+class ChunkContainer(MutableMapping):
+
+    def __init__(self):
+        self._chunks: dict[ChunkKey, WidgetChunkData] = {}
+        self._order: list[ChunkKey] = []
+        self._x = 0
+        self._z = 0
+
+    def set_position(self, cx, cz):
+        self._x = cx
+        self._z = cz
+        self._order = sorted(
+            self._order,
+            key=self._dist
+        )
+
+    def __contains__(self, k: ChunkKey):
+        return k in self._chunks
+
+    def _dist(self, k: ChunkKey):
+        return - abs(k[1] - self._x) - abs(k[2] - self._z)
+
+    def __setitem__(self, k: ChunkKey, v: WidgetChunkData):
+        if k not in self._chunks:
+            self._order.insert(
+                bisect.bisect_left(
+                    self._order,
+                    self._dist(k),
+                    key=self._dist
+                ),
+                k
+            )
+        self._chunks[k] = v
+
+    def __delitem__(self, v: ChunkKey) -> None:
+        del self._chunks[v]
+        self._order.remove(v)
+
+    def __getitem__(self, k: ChunkKey) -> WidgetChunkData:
+        return self._chunks[k]
+
+    def __len__(self) -> int:
+        return len(self._chunks)
+
+    def __iter__(self) -> Iterator[ChunkKey]:
+        yield from self._order
+
+
 class WidgetLevelGeometry(QObject, Drawable):
     """
     A class holding the level geometry data relating to one widget.
@@ -497,7 +547,7 @@ class WidgetLevelGeometry(QObject, Drawable):
     _program: Optional[QOpenGLShaderProgram]
     _matrix_location: Optional[int]
     _texture_location: Optional[int]
-    _chunks: dict[ChunkKey, WidgetChunkData]
+    _chunks: ChunkContainer
     _pending_chunks: dict[ChunkKey, WidgetChunkData]
 
     # The geometry has changed and needs repainting.
@@ -521,7 +571,7 @@ class WidgetLevelGeometry(QObject, Drawable):
         self._program = None
         self._matrix_location = None
         self._texture_location = None
-        self._chunks = {}
+        self._chunks = ChunkContainer()
         self._pending_chunks = {}
 
         self._queue_chunk.connect(self._process_chunk)
@@ -746,11 +796,14 @@ class WidgetLevelGeometry(QObject, Drawable):
 
     def set_location(self, cx: int, cz: int):
         """Set the chunk the camera is in."""
-        location = (int(cx), int(cz))
+        cx = int(cx)
+        cz = int(cz)
+        location = (cx, cz)
         if location != self._camera_chunk:
             self._camera_chunk = location
             self._clear_far_chunks()
             self._update_chunk_finder()
+            self._chunks.set_position(cx, cz)
 
     def set_render_distance(self, load_distance: int, unload_distance: int):
         """
