@@ -540,7 +540,7 @@ class WidgetLevelGeometry(QObject, Drawable):
         self._program = QOpenGLShaderProgram()
         self._program.addShaderFromSourceCode(
             QOpenGLShader.ShaderTypeBit.Vertex,
-            """#version 130
+            """#version 150
             in vec3 position;
             in vec2 vTexCoord;
             in vec4 vTexOffset;
@@ -562,7 +562,7 @@ class WidgetLevelGeometry(QObject, Drawable):
 
         self._program.addShaderFromSourceCode(
             QOpenGLShader.ShaderTypeBit.Fragment,
-            """#version 130
+            """#version 150
             in vec2 fTexCoord;
             in vec4 fTexOffset;
             in vec3 fTint;
@@ -586,10 +586,15 @@ class WidgetLevelGeometry(QObject, Drawable):
             }""",
         )
 
+        self._program.bindAttributeLocation("position", 0)
+        self._program.bindAttributeLocation("vTexCoord", 1)
+        self._program.bindAttributeLocation("vTexOffset", 2)
+        self._program.bindAttributeLocation("vTint", 3)
         self._program.link()
         self._program.bind()
         self._matrix_location = self._program.uniformLocation("transformation_matrix")
         self._texture_location = self._program.uniformLocation("image")
+        self._program.release()
 
     def _destroy_gl(self):
         if (
