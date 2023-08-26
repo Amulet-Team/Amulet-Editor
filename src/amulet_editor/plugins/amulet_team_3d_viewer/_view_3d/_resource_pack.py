@@ -133,7 +133,9 @@ class OpenGLResourcePack:
 
                     def init_gl():
                         self._context = QOpenGLContext()
-                        self._context.setShareContext(QOpenGLContext.globalShareContext())
+                        self._context.setShareContext(
+                            QOpenGLContext.globalShareContext()
+                        )
                         self._context.create()
                         self._surface = QOffscreenSurface()
                         self._surface.create()
@@ -141,8 +143,12 @@ class OpenGLResourcePack:
                             raise RuntimeError("Could not make context current.")
 
                         self._texture = QOpenGLTexture(QOpenGLTexture.Target.Target2D)
-                        self._texture.setMinificationFilter(QOpenGLTexture.Filter.Nearest)
-                        self._texture.setMagnificationFilter(QOpenGLTexture.Filter.Nearest)
+                        self._texture.setMinificationFilter(
+                            QOpenGLTexture.Filter.Nearest
+                        )
+                        self._texture.setMagnificationFilter(
+                            QOpenGLTexture.Filter.Nearest
+                        )
                         self._texture.setWrapMode(
                             QOpenGLTexture.CoordinateDirection.DirectionS,
                             QOpenGLTexture.WrapMode.ClampToEdge,

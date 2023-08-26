@@ -9,7 +9,13 @@ from datetime import datetime
 import faulthandler
 from io import TextIOWrapper
 
-from PySide6.QtCore import Qt, QCoreApplication, qInstallMessageHandler, QtMsgType, QLocale
+from PySide6.QtCore import (
+    Qt,
+    QCoreApplication,
+    qInstallMessageHandler,
+    QtMsgType,
+    QLocale,
+)
 from PySide6.QtWidgets import QApplication
 from PySide6.QtGui import QSurfaceFormat
 

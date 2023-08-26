@@ -28,7 +28,7 @@ from OpenGL.GL import (
     GL_LEQUAL,
     GL_BLEND,
     GL_SRC_ALPHA,
-    GL_ONE_MINUS_SRC_ALPHA
+    GL_ONE_MINUS_SRC_ALPHA,
 )
 
 from amulet.api.data_types import Dimension
@@ -71,7 +71,9 @@ class SharedVBOManager(QObject):
     def __init__(self):
         """Use new class method"""
         if QThread.currentThread() is not QCoreApplication.instance().thread():
-            raise RuntimeError("SharedVBOManager must be constructed on the main thread.")
+            raise RuntimeError(
+                "SharedVBOManager must be constructed on the main thread."
+            )
 
         super().__init__()
         context = self._context = QOpenGLContext()
@@ -123,7 +125,9 @@ class SharedVBOManager(QObject):
                     self._context.doneCurrent()
 
                 finally:
-                    if start_context is not None and not start_context.makeCurrent(start_surface):
+                    if start_context is not None and not start_context.makeCurrent(
+                        start_surface
+                    ):
                         raise RuntimeError("Could not make original context current.")
 
                 return vbo
@@ -141,7 +145,9 @@ class SharedVBOManager(QObject):
 
                 try:
                     if vbo not in self._vbos:
-                        raise RuntimeError("vbo was not created by this class or has already been destroyed.")
+                        raise RuntimeError(
+                            "vbo was not created by this class or has already been destroyed."
+                        )
 
                     if not self._context.makeCurrent(self._surface):
                         raise RuntimeError("Could not make context current.")
@@ -150,7 +156,9 @@ class SharedVBOManager(QObject):
                     log.debug("Destroyed vbo")
 
                 finally:
-                    if start_context is not None and not start_context.makeCurrent(start_surface):
+                    if start_context is not None and not start_context.makeCurrent(
+                        start_surface
+                    ):
                         raise RuntimeError("Could not make original context current.")
 
         invoke(destroy_vbo)
@@ -208,6 +216,7 @@ class ChunkGeneratorWorker(QObject):
     This object exists in a secondary thread so that chunk generation does not block the main thread.
     The OpenGL calls need to be done on the main thread.
     """
+
     def __init__(self):
         super().__init__()
         self.generate_chunk.connect(self._generate_chunk)
@@ -215,13 +224,22 @@ class ChunkGeneratorWorker(QObject):
     generate_chunk = Signal(object, object, object, object)
 
     @Slot(object, object, object, object)
-    def _generate_chunk(self, level: BaseLevel, vbo_manager: SharedVBOManager, chunk_key: ChunkKey, chunk_data: SharedChunkData):
+    def _generate_chunk(
+        self,
+        level: BaseLevel,
+        vbo_manager: SharedVBOManager,
+        chunk_key: ChunkKey,
+        chunk_data: SharedChunkData,
+    ):
         try:
             resource_pack_container = get_gl_resource_pack_container(level)
             if not resource_pack_container.loaded:
                 # The resource pack does not exist yet so push the job to the back of the queue
                 QTimer.singleShot(
-                    100, lambda: self.generate_chunk.emit(level, vbo_manager, chunk_key, chunk_data)
+                    100,
+                    lambda: self.generate_chunk.emit(
+                        level, vbo_manager, chunk_key, chunk_data
+                    ),
                 )
                 return
 
@@ -257,9 +275,7 @@ class ChunkGeneratorWorker(QObject):
 
             vertex_count = len(buffer) // (12 * FloatSize)
 
-            chunk_data.geometry = SharedChunkGeometry(
-                vbo, vertex_count, resource_pack
-            )
+            chunk_data.geometry = SharedChunkGeometry(vbo, vertex_count, resource_pack)
             # When the container gets garbage collected, destroy the vbo
             chunk_data.geometry.destroyed.connect(lambda: vbo_manager.destroy_vbo(vbo))
             chunk_data.geometry_changed.emit()
@@ -269,12 +285,7 @@ class ChunkGeneratorWorker(QObject):
             log.exception(e)
 
     def _sub_chunks(
-        self,
-        level: BaseLevel,
-        dimension: Dimension,
-        cx: int,
-        cz: int,
-        chunk: Chunk
+        self, level: BaseLevel, dimension: Dimension, cx: int, cz: int, chunk: Chunk
     ) -> list[tuple[numpy.ndarray, int]]:
         """
         Create sub-chunk arrays that extend into the neighbour sub-chunks by one block.
@@ -290,9 +301,9 @@ class ChunkGeneratorWorker(QObject):
         neighbour_chunks = {}
         for dx, dz in ((-1, 0), (1, 0), (0, -1), (0, 1)):
             try:
-                neighbour_chunks[(dx, dz)] = (
-                    level.get_chunk(cx + dx, cz + dz, dimension).blocks
-                )
+                neighbour_chunks[(dx, dz)] = level.get_chunk(
+                    cx + dx, cz + dz, dimension
+                ).blocks
             except ChunkLoadError:
                 continue
 
@@ -365,7 +376,13 @@ class ChunkGenerator(QObject):
         self.destroyed.connect(destroy)
         QCoreApplication.instance().aboutToQuit.connect(self.deleteLater)
 
-    def generate_chunk(self, level: BaseLevel, vbo_manager: SharedVBOManager, chunk_key: ChunkKey, chunk: SharedChunkData):
+    def generate_chunk(
+        self,
+        level: BaseLevel,
+        vbo_manager: SharedVBOManager,
+        chunk_key: ChunkKey,
+        chunk: SharedChunkData,
+    ):
         """
         Async function to generate the chunk VBO.
 
@@ -428,14 +445,18 @@ class SharedLevelGeometry(QObject):
                 transform = QMatrix4x4()
                 transform.translate(cx * 16, 0, cz * 16)
                 chunk = self._chunks[chunk_key] = SharedChunkData(transform)
-                self._chunk_generator.generate_chunk(self._level(), self._vbo_manager, chunk_key, chunk)
+                self._chunk_generator.generate_chunk(
+                    self._level(), self._vbo_manager, chunk_key, chunk
+                )
             return chunk
 
     def _resource_pack_changed(self):
         # The geometry of all loaded chunks needs to be rebuilt.
         with self._chunks_lock:
             for chunk_key, chunk in self._chunks.items():
-                self._chunk_generator.generate_chunk(self._level(), self._vbo_manager, chunk_key, chunk)
+                self._chunk_generator.generate_chunk(
+                    self._level(), self._vbo_manager, chunk_key, chunk
+                )
 
 
 class WidgetChunkData(QObject):
@@ -475,7 +496,6 @@ def get_grid_spiral(
 
 
 class ChunkContainer(MutableMapping):
-
     def __init__(self):
         self._chunks: dict[ChunkKey, WidgetChunkData] = {}
         self._order: list[ChunkKey] = []
@@ -485,26 +505,18 @@ class ChunkContainer(MutableMapping):
     def set_position(self, cx, cz):
         self._x = cx
         self._z = cz
-        self._order = sorted(
-            self._order,
-            key=self._dist
-        )
+        self._order = sorted(self._order, key=self._dist)
 
     def __contains__(self, k: ChunkKey):
         return k in self._chunks
 
     def _dist(self, k: ChunkKey):
-        return - abs(k[1] - self._x) - abs(k[2] - self._z)
+        return -abs(k[1] - self._x) - abs(k[2] - self._z)
 
     def __setitem__(self, k: ChunkKey, v: WidgetChunkData):
         if k not in self._chunks:
             self._order.insert(
-                bisect.bisect_left(
-                    self._order,
-                    self._dist(k),
-                    key=self._dist
-                ),
-                k
+                bisect.bisect_left(self._order, self._dist(k), key=self._dist), k
             )
         self._chunks[k] = v
 
