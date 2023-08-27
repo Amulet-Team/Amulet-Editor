@@ -23,4 +23,5 @@ datas = [
 hiddenimports = [
     *collect_submodules("amulet_editor", lambda name: name != "amulet_editor.plugins"),
     *collect_submodules("PySide6"),
+    *collect_submodules("OpenGL"),  # On my linux install not everything was included.
 ]
