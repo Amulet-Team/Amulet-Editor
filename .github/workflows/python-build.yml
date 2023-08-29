@@ -51,4 +51,7 @@ jobs:
     - name: Upload Release Asset
       uses: softprops/action-gh-release@v1
       with:
-        files: 'target/*.*'
+        files: |
+          'target/*.exe'
+          'target/*.deb'
+          'target/*.dmg'
