@@ -1,4 +1,5 @@
 {
-    "mac_bundle_identifier": "",
-    "show_console_window": false
+    "installer": "${app_name}-${version}-macos-x64.dmg",
+    "show_console_window": false,
+    "mac_bundle_identifier": "com.amuletmc.amulet-editor"
 }
