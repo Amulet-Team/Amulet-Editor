@@ -41,8 +41,8 @@ jobs:
         TWINE_USERNAME: ${{ secrets.PYPI_USERNAME }}
         TWINE_PASSWORD: ${{ secrets.AMULET_EDITOR_PYPI_PASSWORD }}
       run: |
-        build -C--build-option=--freeze-first=True
-        twine upload dist/amulet[_-]editor* --skip-existing
+        python -m build -C--build-option=--freeze-first=True
+        python -m twine upload dist/amulet[_-]editor* --skip-existing
 
     - name: Install Ubuntu dependencies
       if: matrix.cfg.os == 'ubuntu-latest'
