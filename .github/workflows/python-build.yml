@@ -35,6 +35,15 @@ jobs:
         pip install --upgrade pip
         pip install setuptools wheel twine pyinstaller~=5.6 build
 
+    - name: Build and publish to PyPi
+      if: matrix.cfg.os != 'ubuntu-latest'
+      env:
+        TWINE_USERNAME: ${{ secrets.PYPI_USERNAME }}
+        TWINE_PASSWORD: ${{ secrets.AMULET_EDITOR_PYPI_PASSWORD }}
+      run: |
+        build -C--build-option=--freeze-first=True
+        twine upload dist/amulet[_-]editor* --skip-existing
+
     - name: Install Ubuntu dependencies
       if: matrix.cfg.os == 'ubuntu-latest'
       run: |
