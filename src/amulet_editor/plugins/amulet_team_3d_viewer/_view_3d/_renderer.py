@@ -142,13 +142,13 @@ class FirstPersonCanvas(QOpenGLWidget, QOpenGLFunctions):
     def mousePressEvent(self, event: QMouseEvent):
         if event.buttons() & Qt.MouseButton.RightButton:
             self._mouse_captured = True
-            self._start_pos = event.position().toPoint()
+            self._start_pos = event.globalPos()
             self.setFocus()
             QGuiApplication.setOverrideCursor(QCursor(Qt.CursorShape.BlankCursor))
 
     def mouseMoveEvent(self, event: QMouseEvent):
         if event.buttons() & Qt.MouseButton.RightButton:
-            pos = event.position()
+            pos = event.globalPos()
             dx = pos.x() - self._start_pos.x()
             dy = pos.y() - self._start_pos.y()
 
@@ -157,12 +157,13 @@ class FirstPersonCanvas(QOpenGLWidget, QOpenGLFunctions):
             elevation += dy / 8
             self.camera.rotation = Rotation(azimuth, elevation)
 
-            self.blockSignals(True)
-            QCursor.setPos(self.mapToGlobal(self._start_pos))
-            self.blockSignals(False)
+            QCursor.setPos(self._start_pos)
+            # On some systems setPos does not work. We must reset _start_pos to the new pos
+            self._start_pos = QCursor.pos()
 
     def mouseReleaseEvent(self, event: QMouseEvent):
         if self._mouse_captured:
+            self._mouse_captured = False
             QGuiApplication.restoreOverrideCursor()
 
     def wheelEvent(self, event: QWheelEvent) -> None:
