@@ -52,6 +52,6 @@ jobs:
       uses: softprops/action-gh-release@v1
       with:
         files: |
-          'target/*.exe'
-          'target/*.deb'
-          'target/*.dmg'
+          target/*.exe
+          target/*.deb
+          target/*.dmg
