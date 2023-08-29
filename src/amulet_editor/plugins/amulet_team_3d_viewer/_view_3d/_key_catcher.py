@@ -142,7 +142,8 @@ class KeyCatcher(QObject):
             for storage in self._keys.get(key, ()):
                 for timer_data in storage.timers.values():
                     timer_data.stop()
-            self._pressed_buttons.remove(key)
+            if key in self._pressed_buttons:
+                self._pressed_buttons.remove(key)
 
     def _get_storage(self, key: KeyT, modifiers: frozenset[KeyT]):
         """Lock must be acquired when calling this"""

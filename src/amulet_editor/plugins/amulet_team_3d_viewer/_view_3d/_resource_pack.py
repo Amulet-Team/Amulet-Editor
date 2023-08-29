@@ -23,6 +23,7 @@ from amulet.api.level import BaseLevel
 
 from ._textureatlas import create_atlas
 
+from amulet_editor.application._invoke import invoke
 from amulet_editor.models.widgets.traceback_dialog import DisplayException
 from amulet_editor.models.generic._promise import Promise
 from amulet_editor.data.paths._application import cache_directory
@@ -35,7 +36,8 @@ log = logging.getLogger(__name__)
 class OpenGLResourcePack:
     """
     This class will take a minecraft_model_reader resource pack and load the textures into a texture atlas.
-    After creating an instance initialise must be called. This may be done in a thread.
+    After creating an instance, initialise must be called.
+
     """
 
     _lock = Lock()
@@ -55,7 +57,6 @@ class OpenGLResourcePack:
     def __init__(
         self, resource_pack: BaseResourcePackManager, translator: PyMCTranslate.Version
     ):
-        super().__init__()
         self._lock = Lock()
         self._resource_pack = resource_pack
         self._translator = translator
@@ -74,11 +75,10 @@ class OpenGLResourcePack:
     def initialise(self) -> Promise[None]:
         """
         Create the atlas texture.
-        This is run asynchronously.
         """
 
         def func(promise_data: Promise.Data):
-            with self._lock, DisplayException("Error initialising the resource pack."):
+            with self._lock:
                 if self._texture is None:
                     cache_id = struct.unpack(
                         "H",
@@ -127,33 +127,42 @@ class OpenGLResourcePack:
                         atlas.save(img_path)
                         with open(bounds_path, "w") as f:
                             json.dump((mod_time, bounds), f)
-                        _atlas = ImageQt(atlas).mirrored()
+                        _atlas = ImageQt(atlas)
 
                     self._texture_bounds = bounds
 
-                    self._context = QOpenGLContext()
-                    self._context.setShareContext(QOpenGLContext.globalShareContext())
-                    self._context.create()
-                    self._surface = QOffscreenSurface()
-                    self._surface.create()
-                    if not self._context.makeCurrent(self._surface):
-                        raise RuntimeError("Could not make context current.")
+                    def init_gl():
+                        self._context = QOpenGLContext()
+                        self._context.setShareContext(
+                            QOpenGLContext.globalShareContext()
+                        )
+                        self._context.create()
+                        self._surface = QOffscreenSurface()
+                        self._surface.create()
+                        if not self._context.makeCurrent(self._surface):
+                            raise RuntimeError("Could not make context current.")
 
-                    self._texture = QOpenGLTexture(QOpenGLTexture.Target.Target2D)
-                    self._texture.setMinificationFilter(QOpenGLTexture.Filter.Nearest)
-                    self._texture.setMagnificationFilter(QOpenGLTexture.Filter.Nearest)
-                    self._texture.setWrapMode(
-                        QOpenGLTexture.CoordinateDirection.DirectionS,
-                        QOpenGLTexture.WrapMode.ClampToEdge,
-                    )
-                    self._texture.setWrapMode(
-                        QOpenGLTexture.CoordinateDirection.DirectionT,
-                        QOpenGLTexture.WrapMode.ClampToEdge,
-                    )
-                    self._texture.setData(_atlas)
-                    self._texture.create()
+                        self._texture = QOpenGLTexture(QOpenGLTexture.Target.Target2D)
+                        self._texture.setMinificationFilter(
+                            QOpenGLTexture.Filter.Nearest
+                        )
+                        self._texture.setMagnificationFilter(
+                            QOpenGLTexture.Filter.Nearest
+                        )
+                        self._texture.setWrapMode(
+                            QOpenGLTexture.CoordinateDirection.DirectionS,
+                            QOpenGLTexture.WrapMode.ClampToEdge,
+                        )
+                        self._texture.setWrapMode(
+                            QOpenGLTexture.CoordinateDirection.DirectionT,
+                            QOpenGLTexture.WrapMode.ClampToEdge,
+                        )
+                        self._texture.setData(_atlas)
+                        self._texture.create()
 
-                    self._context.doneCurrent()
+                        self._context.doneCurrent()
+
+                    invoke(init_gl)
 
         return Promise(func)
 
@@ -235,8 +244,11 @@ class RenderResourcePackContainer(QObject):
 
     def _reload(self):
         def func(promise_data: Promise.Data):
-            level = self._level()
-            with self._lock:
+            with self._lock, DisplayException(
+                "Error initialising the OpenGL resource pack."
+            ):
+                level: BaseLevel = self._level()
+                log.debug(f"Loading OpenGL resource pack for level {level.level_path}")
                 resource_pack = self._resource_pack_container.resource_pack
                 # TODO: modify the resource pack library to expose the desired translator
                 translator = level.translation_manager.get_version("java", (999, 0, 0))
@@ -254,6 +266,7 @@ class RenderResourcePackContainer(QObject):
 
                 self._resource_pack = rp
                 self.changed.emit()
+                log.debug(f"Loaded OpenGL resource pack for level {level}")
 
         promise_ = Promise(func)
         old_loader = self._loader
@@ -273,5 +286,5 @@ _level_data: WeakKeyDictionary[
 def get_gl_resource_pack_container(level: BaseLevel) -> RenderResourcePackContainer:
     with _lock:
         if level not in _level_data:
-            _level_data[level] = RenderResourcePackContainer(level)
+            _level_data[level] = invoke(lambda: RenderResourcePackContainer(level))
         return _level_data[level]

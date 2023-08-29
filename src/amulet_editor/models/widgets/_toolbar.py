@@ -28,15 +28,16 @@ class AToolBar(QFrame):
             Qt.Orientation.Horizontal: QHBoxLayout,
         }[orientation]
 
-        self._lyt_main = layout_cls(self)
+        self._lyt_main = layout_cls()
         self._lyt_main.setSpacing(5)
         self._lyt_main.setContentsMargins(0, 0, 0, 0)
+        self.setLayout(self._lyt_main)
 
         self._wgt_dynamic_tools = ADragContainer(self, orientation)
         self._wgt_dynamic_tools.setObjectName("_wgt_dynamic_tools")
         self._lyt_main.addWidget(self._wgt_dynamic_tools)
 
-        self._lyt_fixed_tools = layout_cls(self)
+        self._lyt_fixed_tools = layout_cls()
         self._lyt_fixed_tools.setObjectName("_lyt_fixed_tools")
         self._lyt_fixed_tools.addStretch()
         self._lyt_main.addLayout(self._lyt_fixed_tools)

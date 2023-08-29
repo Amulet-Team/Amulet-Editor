@@ -5,11 +5,13 @@ This module manages resource pack objects for each level
 from weakref import WeakKeyDictionary
 from threading import Lock, RLock
 from typing import Optional
+import logging
 
 from PySide6.QtCore import QObject, QCoreApplication, Signal
 
 from amulet.api.level import BaseLevel
 from amulet_editor.models.generic._promise import Promise
+from amulet_editor.models.widgets.traceback_dialog import DisplayException
 
 from minecraft_model_reader import BaseResourcePackManager
 from minecraft_model_reader.api.resource_pack import (
@@ -19,6 +21,8 @@ from minecraft_model_reader.api.resource_pack.java.download_resources import (
     get_java_vanilla_latest_iter,
     get_java_vanilla_fix,
 )
+
+log = logging.getLogger(__name__)
 
 
 class ResourcePackContainer(QObject):
@@ -83,7 +87,7 @@ class ResourcePackContainer(QObject):
         """
 
         def init(promise_data: Promise.Data) -> bool:
-            with self._lock:
+            with self._lock, DisplayException("Error initialising the resource pack."):
                 if self._resource_pack is None:
                     # TODO: support other resource pack formats
                     promise_data.progress_text_change.emit(
@@ -112,6 +116,7 @@ class ResourcePackContainer(QObject):
                     for progress in self._resource_pack.reload():
                         promise_data.progress_change.emit(0.5 + progress * 0.5)
                     self.changed.emit()
+                    log.debug("Loaded resource pack.")
                     return False
                 return True
 

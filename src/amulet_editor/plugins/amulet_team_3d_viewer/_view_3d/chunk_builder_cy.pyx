@@ -7,6 +7,11 @@ cimport numpy
 numpy.import_array()
 
 from libc.stdlib cimport malloc, calloc, free
+from libc.stdint cimport (
+    int8_t,
+    int32_t,
+    uint32_t,
+)
 
 cdef extern from "stdlib.h":
     void *memcpy(void *dest, void *src, size_t n) nogil
@@ -45,7 +50,7 @@ CULL_STR_INDEX = {
     "west": 6,
 }
 
-cdef int CULL_MAP[7][3]
+cdef int32_t CULL_MAP[7][3]
 CULL_MAP[0][:] = (0, 0, 0)
 CULL_MAP[1][:] = (0, 1, 0)
 CULL_MAP[2][:] = (0, -1, 0)
@@ -59,17 +64,17 @@ DEF ATTR_COUNT = 12  # The number of float attributes per vertex
 DEF ARRAY_SIZE = ARRAY_VERT_COUNT * ATTR_COUNT
 
 cdef struct BlockArray:
-    unsigned int* arr  # pointer to the array
-    int sx  # the shape of the array in the x axis
-    int sy  # the shape of the array in the y axis
-    int sz  # the shape of the array in the z axis
-    long dx # the displacement in the x axis
-    long dy # the displacement in the y axis
-    long dz # the displacement in the z axis
+    uint32_t* arr  # pointer to the array
+    int32_t sx  # the shape of the array in the x axis
+    int32_t sy  # the shape of the array in the y axis
+    int32_t sz  # the shape of the array in the z axis
+    int32_t dx # the displacement in the x axis
+    int32_t dy # the displacement in the y axis
+    int32_t dz # the displacement in the z axis
 
-cdef BlockArray* BlockArray_new(int sx, int sy, int sz) nogil:
+cdef BlockArray* BlockArray_new(int32_t sx, int32_t sy, int32_t sz) nogil:
     self = <BlockArray*>calloc(1, sizeof(BlockArray))
-    self.arr = <unsigned int*>malloc(sx * sy * sz * sizeof(unsigned int))
+    self.arr = <uint32_t*>malloc(sx * sy * sz * sizeof(uint32_t))
     self.sx = sx
     self.sy = sy
     self.sz = sz
@@ -79,16 +84,16 @@ cdef BlockArray* BlockArray_new(int sx, int sy, int sz) nogil:
     return self
 
 cdef BlockArray* BlockArray_init(
-        unsigned int* arr,
-        int sx,
-        int sy,
-        int sz,
-        long dx,
-        long dy,
-        long dz,
+        uint32_t* arr,
+        int32_t sx,
+        int32_t sy,
+        int32_t sz,
+        int32_t dx,
+        int32_t dy,
+        int32_t dz,
 ) nogil:
     self = BlockArray_new(sx, sy, sz)
-    memcpy(self.arr, arr, sx * sy * sz * sizeof(unsigned int))
+    memcpy(self.arr, arr, sx * sy * sz * sizeof(uint32_t))
     self.dx = dx
     self.dy = dy
     self.dz = dz
@@ -101,16 +106,16 @@ cdef void BlockArray_free(BlockArray* self) nogil:
 
 cdef struct VertArray:
     float* arr  # pointer to the array
-    int size  # the number of floats in the array
+    int32_t size  # the number of floats in the array
 
-cdef VertArray* VertArray_new(unsigned long size) nogil:
+cdef VertArray* VertArray_new(uint32_t size) nogil:
     # assert size and size % (ATTR_COUNT*3) == 0, "arr must have a multiple of 36 values"
     vert_array = <VertArray*>calloc(1, sizeof(VertArray))
     vert_array.arr = <float*>malloc(size * sizeof(float))
     vert_array.size = size
     return vert_array
 
-cdef VertArray* VertArray_init(float* arr, unsigned long size) nogil:
+cdef VertArray* VertArray_init(float* arr, uint32_t size) nogil:
     vert_array = VertArray_new(size)
     memcpy(vert_array.arr, arr, size * sizeof(float))
     return vert_array
@@ -126,9 +131,9 @@ cdef VertArray* VertArray_from_py(array.array arr):
 
 cdef struct BlockModel:
     VertArray* faces[7]
-    char is_transparent
+    int8_t is_transparent
 
-cdef BlockModel* BlockModel_init(dict face_data, char is_transparent):
+cdef BlockModel* BlockModel_init(dict face_data, int8_t is_transparent):
     block_model = <BlockModel*>calloc(1, sizeof(BlockModel))
     block_model.is_transparent = is_transparent
     cdef Py_ssize_t index
@@ -153,8 +158,8 @@ cdef void BlockModel_free(BlockModel* block_model) nogil:
 
 cdef class BlockModelManager:
     cdef BlockModel** blocks  # A pointer to an array of pointers to BlockModel structs
-    cdef unsigned long block_size  # The size of the blocks array
-    cdef unsigned long block_count  # The amount of the blocks array that is used
+    cdef uint32_t block_size  # The size of the blocks array
+    cdef uint32_t block_count  # The amount of the blocks array that is used
 
     def __cinit__(self):
         self.blocks = NULL
@@ -178,7 +183,7 @@ cdef class BlockModelManager:
             self.blocks = blocks_temp
             self.block_size += 100
 
-    cpdef add_block(self, dict face_data, int is_transparent):
+    cpdef add_block(self, dict face_data, int8_t is_transparent):
         self._extend()
         self.blocks[self.block_count] = BlockModel_init(face_data, is_transparent)
         self.block_count += 1
@@ -189,8 +194,8 @@ cdef class BlockModelManager:
 
 cdef struct VertArrayContainer:
     VertArray** arrays  # A pointer to an array of pointers to VertArrays
-    int size  # The current size of the array
-    int used  # The number of elements of the array that are used
+    int32_t size  # The current size of the array
+    int32_t used  # The number of elements of the array that are used
 
 cdef VertArrayContainer* VertArrayContainer_init() nogil:
     self = <VertArrayContainer*>calloc(1, sizeof(VertArrayContainer))
@@ -200,7 +205,7 @@ cdef VertArrayContainer* VertArrayContainer_init() nogil:
     return self
 
 cdef void VertArrayContainer_free(VertArrayContainer* self) nogil:
-    cdef int i
+    cdef int32_t i
     for i in range(self.used):
         VertArray_free(self.arrays[i])
     free(self.arrays)
@@ -235,11 +240,11 @@ cdef void VertArrayContainerTuple_free(VertArrayContainerTuple* self) nogil:
     VertArrayContainer_free(self.verts_translucent)
     free(self)
 
-cdef unsigned int get_block(
+cdef uint32_t get_block(
     BlockArray* block_array,
-    int x,
-    int y,
-    int z
+    int32_t x,
+    int32_t y,
+    int32_t z
 ) nogil:
     return block_array.arr[x * block_array.sz * block_array.sy + y * block_array.sz + z]
 
@@ -247,13 +252,13 @@ cdef VertArrayContainerTuple* create_lod0_sub_chunk(
     BlockArray* block_array,
     BlockModelManager block_model_manager,
 ) nogil:
-    cdef int x, y, z, x_, y_, z_, dx, dy, dz  # location variables
+    cdef int32_t x, y, z, x_, y_, z_, dx, dy, dz  # location variables
 
     # float counters
-    cdef unsigned int vert_count, vert_end, vertex, vertex_attr
+    cdef uint32_t vert_count, vert_end, vertex, vertex_attr
 
     cdef float shade
-    cdef unsigned int block_id, cull_id
+    cdef uint32_t block_id, cull_id
     cdef BlockModel* block_model
     cdef VertArray* vert_array
 
@@ -262,9 +267,9 @@ cdef VertArrayContainerTuple* create_lod0_sub_chunk(
     cdef VertArray* trans_vert_table = VertArray_new(ARRAY_SIZE)
     trans_vert_table.size = 0
 
-    cdef int size_x = block_array.sx - 2
-    cdef int size_y = block_array.sy - 2
-    cdef int size_z = block_array.sz - 2
+    cdef int32_t size_x = block_array.sx - 2
+    cdef int32_t size_y = block_array.sy - 2
+    cdef int32_t size_z = block_array.sz - 2
 
     cdef VertArrayContainerTuple* verts = VertArrayContainerTuple_init()
 
@@ -345,12 +350,12 @@ cdef VertArrayContainerTuple* create_lod0_sub_chunk(
 cdef tuple _create_lod0_chunk(
     BlockModelManager block_model_manager,
     list blocks,
-    long[:] chunk_offset
+    int32_t[:] chunk_offset
 ):
-    cdef int i, j
-    cdef long sub_chunk_y
-    cdef unsigned int[:, :, ::1] block_array
-    cdef int sub_chunk_count = len(blocks)
+    cdef int32_t i, j
+    cdef int32_t sub_chunk_y
+    cdef uint32_t[:, :, ::1] block_array
+    cdef int32_t sub_chunk_count = len(blocks)
     block_array_list = <BlockArray**>calloc(sub_chunk_count, sizeof(BlockArray*))
     sub_chunk_verts = <VertArrayContainerTuple**>calloc(sub_chunk_count, sizeof(VertArrayContainerTuple*))
 
@@ -377,8 +382,8 @@ cdef tuple _create_lod0_chunk(
         BlockArray_free(block_array_list[i])
     free(block_array_list)
 
-    cdef unsigned long vert_size = 0
-    cdef unsigned long vert_size_translucent = 0
+    cdef uint32_t vert_size = 0
+    cdef uint32_t vert_size_translucent = 0
     cdef VertArrayContainerTuple* vert_array_container_tuple
     cdef VertArrayContainer* vert_array_container
     cdef VertArray* vert_array
@@ -478,5 +483,5 @@ def create_lod0_chunk(
     return _create_lod0_chunk(
         resource_pack.block_model_manager[id(block_palette)],
         blocks,
-        chunk_offset
+        chunk_offset.astype(numpy.int32)
     )

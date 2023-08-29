@@ -1,4 +1,4 @@
 {
-    "installer": "${app_name}-${version}-Installer.exe",
-    "show_console_window": false
+    "installer": "${app_name}-${version}-windows-x64.exe",
+    "show_console_window": true
 }
