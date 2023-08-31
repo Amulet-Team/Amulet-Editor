@@ -14,9 +14,6 @@ datas = [
     *copy_metadata("amulet_editor", recursive=True),
 ]
 
-print("hidden")
-print(collect_submodules("amulet_editor", lambda name: name != "amulet_editor.plugins"))
-
 hiddenimports = [
     *collect_submodules("amulet_editor", lambda name: name != "amulet_editor.plugins"),
     "PySide6",
