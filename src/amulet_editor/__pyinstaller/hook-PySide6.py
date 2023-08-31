@@ -8,7 +8,5 @@ from PyInstaller.utils.hooks import (
 import PySide6
 
 hiddenimports = collect_submodules("PySide6")
-print("added qt libraries")
 binaries = [(path, ".") for path in glob.glob(os.path.join(glob.escape(PySide6.__path__[0]), "Qt", "lib", "*.so*"))]
-print(binaries)
 datas = collect_data_files("PySide6", includes=["*.pyi", "py.typed"])
