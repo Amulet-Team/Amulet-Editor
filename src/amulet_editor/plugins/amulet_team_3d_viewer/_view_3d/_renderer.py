@@ -142,13 +142,13 @@ class FirstPersonCanvas(QOpenGLWidget, QOpenGLFunctions):
     def mousePressEvent(self, event: QMouseEvent):
         if event.buttons() & Qt.MouseButton.RightButton:
             self._mouse_captured = True
-            self._start_pos = event.globalPos()
+            self._start_pos = event.globalPosition()
             self.setFocus()
             QGuiApplication.setOverrideCursor(QCursor(Qt.CursorShape.BlankCursor))
 
     def mouseMoveEvent(self, event: QMouseEvent):
         if event.buttons() & Qt.MouseButton.RightButton:
-            pos = event.globalPos()
+            pos = event.globalPosition()
             dx = pos.x() - self._start_pos.x()
             dy = pos.y() - self._start_pos.y()
 
