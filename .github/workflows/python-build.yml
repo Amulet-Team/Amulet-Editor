@@ -47,7 +47,7 @@ jobs:
     - name: Install Ubuntu dependencies
       if: matrix.cfg.os == 'ubuntu-latest'
       run: |
-        sudo apt-get install ruby-dev build-essential
+        sudo apt-get install ruby-dev build-essential libegl1-mesa libegl1-mesa-dev
         sudo gem i fpm -f
 
     - name: Create Installer
