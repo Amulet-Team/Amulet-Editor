@@ -51,6 +51,8 @@ and a method on that instance should be bound to one of the above examples.
 class FirstPersonCanvas(QOpenGLWidget, QOpenGLFunctions):
     background_colour = (0.61, 0.70, 0.85)
 
+    _start_pos: QPoint
+
     def __init__(self, parent=None):
         QOpenGLWidget.__init__(self, parent)
         QOpenGLFunctions.__init__(self)
@@ -142,13 +144,13 @@ class FirstPersonCanvas(QOpenGLWidget, QOpenGLFunctions):
     def mousePressEvent(self, event: QMouseEvent):
         if event.buttons() & Qt.MouseButton.RightButton:
             self._mouse_captured = True
-            self._start_pos = event.globalPosition()
+            self._start_pos = event.globalPosition().toPoint()
             self.setFocus()
             QGuiApplication.setOverrideCursor(QCursor(Qt.CursorShape.BlankCursor))
 
     def mouseMoveEvent(self, event: QMouseEvent):
         if event.buttons() & Qt.MouseButton.RightButton:
-            pos = event.globalPosition()
+            pos = event.globalPosition().toPoint()
             dx = pos.x() - self._start_pos.x()
             dy = pos.y() - self._start_pos.y()
 
