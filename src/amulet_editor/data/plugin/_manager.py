@@ -38,6 +38,7 @@ from amulet_editor.data.paths._plugin import (
 #     call_in_children,
 # )
 from amulet_editor.models.plugin import LibraryUID
+from amulet_editor.models.plugin._plugin import PluginV1
 from amulet_editor.models.plugin._state import PluginState
 from amulet_editor.models.plugin._container import PluginContainer
 from amulet_editor.models.plugin._requirement import Requirement
@@ -479,13 +480,18 @@ def _enable_plugin(plugin_uid: LibraryUID):
                         plugin_container.instance = mod
 
                         try:
-                            load_plugin = plugin_container.instance.load_plugin
+                            plugin = plugin_container.instance.plugin
                         except AttributeError:
-                            # The plugin does not have a load_plugin method
-                            pass
-                        else:
-                            # User code must be run from the main thread to avoid issues.
-                            invoke(load_plugin)
+                            # The plugin does not have a plugin attribute
+                            plugin = PluginV1()
+
+                        if not isinstance(plugin, PluginV1):
+                            raise ValueError(
+                                "Plugin attribute must be an instance of amulet_editor.models.plugin.PluginV1"
+                            )
+                        plugin_container.plugin = plugin
+                        # User code must be run from the main thread to avoid issues.
+                        invoke(plugin_container.plugin.load)
 
                         log.debug(f"enabled plugin {plugin_container.data.uid}")
                     except Exception as e:
@@ -557,23 +563,19 @@ def _unload_plugin(plugin_container: PluginContainer):
         _splash_unload_screen.showMessage(
             f"Disabling plugin {plugin_container.data.uid.identifier}"
         )
+
     try:
-        unload_plugin = plugin_container.instance.unload_plugin
-    except AttributeError:
-        # The plugin does not have an unload_plugin method
-        pass
-    else:
         # User code must be run from the main thread to avoid issues.
-        try:
-            invoke(unload_plugin)
-        except Exception as e:
-            log.exception(e)
-            display_exception(
-                title=f"Error while unloading plugin {plugin_container.data.uid.identifier} {plugin_container.data.uid.version}",
-                error=str(e),
-                traceback=traceback.format_exc(),
-            )
+        invoke(plugin_container.plugin.unload)
+    except Exception as e:
+        log.exception(e)
+        display_exception(
+            title=f"Error while unloading plugin {plugin_container.data.uid.identifier} {plugin_container.data.uid.version}",
+            error=str(e),
+            traceback=traceback.format_exc(),
+        )
     plugin_container.instance = None
+    plugin_container.plugin = None
 
     # Remove the module from sys.modules
     modules = sys.modules
