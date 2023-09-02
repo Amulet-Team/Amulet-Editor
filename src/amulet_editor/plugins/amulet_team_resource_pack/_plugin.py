@@ -5,6 +5,7 @@ from typing import Optional
 from PySide6.QtCore import QLocale, QCoreApplication
 
 from amulet_editor.models.localisation import ATranslator
+from amulet_editor.models.plugin import PluginV1
 
 import amulet_team_locale
 
@@ -35,3 +36,6 @@ def _locale_changed():
 
 def unload_plugin():
     QCoreApplication.removeTranslator(_translator)
+
+
+plugin = PluginV1(load_plugin, unload_plugin)

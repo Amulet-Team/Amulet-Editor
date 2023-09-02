@@ -8,6 +8,7 @@ from packaging.version import Version
 from packaging.specifiers import SpecifierSet
 
 from amulet_editor.data.paths._plugin import first_party_plugin_directory
+from ._plugin import PluginV1
 from ._data import PluginData, PluginDataDepends
 from ._state import PluginState
 from ._requirement import Requirement
@@ -39,6 +40,7 @@ class Plugin(Protocol):
 class PluginContainer(ABC):
     data: PluginData
     instance: Optional[Plugin]  # The instance of the plugin.
+    plugin: Optional[PluginV1]
     state: PluginState
 
     FormatVersion: int = None
@@ -46,6 +48,7 @@ class PluginContainer(ABC):
     def __init__(self, data: PluginData):
         self.data = data
         self.instance = None
+        self.plugin = None
         self.state = PluginState.Disabled
 
     @classmethod

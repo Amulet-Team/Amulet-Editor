@@ -2,6 +2,8 @@ from __future__ import annotations
 
 from PySide6.QtCore import Qt
 
+from amulet_editor.models.plugin import PluginV1
+
 from .settings import SettingsPage
 
 from amulet_team_main_window.api import add_static_toolbar_button
@@ -21,3 +23,6 @@ def _on_click(self):
     settings.setWindowModality(Qt.WindowModality.ApplicationModal)
     settings.showNormal()
     self._windows.append(settings)
+
+
+plugin = PluginV1(load_plugin)

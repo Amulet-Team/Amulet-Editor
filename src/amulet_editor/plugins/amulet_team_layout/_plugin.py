@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from amulet_editor.data.project import get_level
+from amulet_editor.models.plugin import PluginV1
 
 
 from amulet_team_main_window.api import (
@@ -20,3 +21,6 @@ def load_plugin():
 
 def unload_plugin():
     unregister_view(View3D)
+
+
+plugin = PluginV1(load_plugin, unload_plugin)
