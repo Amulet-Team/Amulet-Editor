@@ -4,7 +4,7 @@ from typing import Optional
 
 import amulet
 from amulet_editor.models.widgets import ALinkCard
-from amulet_editor.data import build, project
+from amulet_editor.data import project
 from amulet_editor.models.minecraft import LevelData
 from PySide6.QtCore import QDir, QSize, Qt, Signal
 from PySide6.QtWidgets import (
@@ -15,6 +15,7 @@ from PySide6.QtWidgets import (
     QVBoxLayout,
     QWidget,
 )
+import tablericons
 
 
 class ProjectPanel(QWidget):
@@ -29,7 +30,7 @@ class ProjectPanel(QWidget):
         self.setupUi()
 
         self.crd_directory = ALinkCard(
-            "", build.get_resource(f"icons/tabler/folder.svg"), self
+            "", tablericons.folder, self
         )
         self.frm_directory.layout().addWidget(self.crd_directory)
 
