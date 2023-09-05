@@ -9,7 +9,8 @@
 		],
 		"plugin": [
 			"amulet_team_main_window~=1.0",
-			"amulet_team_3d_viewer~=1.0"
+			"amulet_team_3d_viewer~=1.0",
+			"tablericons~=1.0"
 		]
 	},
 	"locked": "true"

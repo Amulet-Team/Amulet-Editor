@@ -50,17 +50,21 @@ class AStylableSvgWidget(QSvgWidget):
 class AIconButton(QPushButton):
     """A QPushButton containing a stylable icon."""
 
-    def __init__(self, icon_name: str = "question-mark.svg", parent: QWidget = None):
+    def __init__(
+        self,
+        icon_path: str = build.get_resource("icons/tabler/question-mark.svg"),
+        parent: QWidget = None,
+    ):
         super().__init__(parent)
         self.setProperty("hover", "false")
         self._layout = QVBoxLayout(self)
         self._layout.setContentsMargins(0, 0, 0, 0)
         self._layout.setAlignment(Qt.AlignmentFlag.AlignCenter)
-        self._icon = AStylableSvgWidget(build.get_resource(f"icons/tabler/{icon_name}"))
+        self._icon = AStylableSvgWidget(icon_path)
         self._layout.addWidget(self._icon)
 
-    def setIcon(self, icon_name: Optional[str] = None):
-        self._icon.load(build.get_resource(f"icons/tabler/{icon_name}"))
+    def setIcon(self, icon_path: Optional[str] = None):
+        self._icon.load(icon_path)
 
     def setIconSize(self, size: QSize):
         self._icon.setFixedSize(size)

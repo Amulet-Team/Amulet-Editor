@@ -3,6 +3,7 @@ from __future__ import annotations
 from PySide6.QtCore import Qt
 
 from amulet_editor.models.plugin import PluginV1
+import tablericons
 
 from .settings import SettingsPage
 
@@ -14,7 +15,7 @@ _windows: list = []
 
 def load_plugin():
     add_static_toolbar_button(
-        "amulet_team:settings", "settings.svg", "Settings", _on_click
+        "amulet_team:settings", tablericons.settings, "Settings", _on_click
     )
 
 

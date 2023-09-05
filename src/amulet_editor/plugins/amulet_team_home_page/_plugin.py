@@ -9,6 +9,7 @@ from amulet_editor.models.plugin import PluginV1
 
 import amulet_team_locale
 import amulet_team_main_window2
+import tablericons
 
 import amulet_team_home_page
 from .home import HomeWidget
@@ -31,7 +32,7 @@ def load_plugin():
 
     amulet_team_main_window2.register_widget(HomeWidget)
     amulet_team_main_window2.add_toolbar_button(
-        "amulet_team:home", "home.svg", "Home", _set_home_layout
+        "amulet_team:home", tablericons.home, "Home", _set_home_layout
     )
     amulet_team_main_window2.get_main_window().set_layout(HomeWidget)
 

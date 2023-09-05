@@ -48,14 +48,14 @@ class ToolBar(QFrame):
         self._lock = RLock()
 
     def _make_button(
-        self, uid: str, icon: str, name: str, callback: Callable[[], None] = None
+        self, uid: str, icon_path: str, name: str, callback: Callable[[], None] = None
     ) -> ATooltipIconButton:
         if uid in self._buttons:
             raise ValueError(
                 f"A button with unique identifier {uid} has already been registered"
             )
 
-        button = ATooltipIconButton(icon, self)
+        button = ATooltipIconButton(icon_path, self)
         button.setToolTip(name)
         button.setFixedSize(QSize(40, 40))
         button.setIconSize(QSize(30, 30))
@@ -76,35 +76,35 @@ class ToolBar(QFrame):
         return button
 
     def add_static_button(
-        self, uid: str, icon: str, name: str, callback: Callable[[], None] = None
+        self, uid: str, icon_path: str, name: str, callback: Callable[[], None] = None
     ):
         """
         Add a static button.
         This is reserved for internal use only.
 
         :param uid: A unique identifier. Used to remove this button.
-        :param icon: The icon the button should use.
+        :param icon_path: The path to an SVG image the button should use.
         :param name: The name of the button in the tool tip.
         :param callback: The function to call when the button is clicked.
         """
         with self._lock:
-            button = self._make_button(uid, icon, name, callback)
+            button = self._make_button(uid, icon_path, name, callback)
             self._lyt_fixed_tools.insertWidget(1, button)
 
     def add_dynamic_button(
-        self, uid: str, icon: str, name: str, callback: Callable[[], None] = None
+        self, uid: str, icon_path: str, name: str, callback: Callable[[], None] = None
     ):
         """
         Add a dynamic button.
         Plugins can add their own dynamic buttons.
 
         :param uid: A unique identifier. Used to remove this button.
-        :param icon: The icon the button should use.
+        :param icon_path: The path to an SVG image the button should use.
         :param name: The name of the button in the tool tip.
         :param callback: The function to call when the button is clicked.
         """
         with self._lock:
-            button = self._make_button(uid, icon, name, callback)
+            button = self._make_button(uid, icon_path, name, callback)
             self._wgt_dynamic_tools.add_item(button)
 
     def remove_button(self, uid: str):

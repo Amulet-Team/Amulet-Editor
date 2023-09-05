@@ -92,21 +92,21 @@ class AmuletMainWindow(Ui_AmuletLandingWindow):
         pass
 
     def add_toolbar_button(
-        self, uid: UID, icon: str, name: str, callback: Callable[[], None] = None
+        self, uid: UID, icon_path: str, name: str, callback: Callable[[], None] = None
     ):
         """
         Add an icon to the toolbar for this window only.
 
         :param uid: The unique identifier of the button.
-        :param icon: The icon path to use in the toolbar.
+        :param icon_path: The path to an SVG image the button should use.
         :param name: The name of the view to use in the icon tooltip.
         :param callback: The function to call when the button is clicked.
         :return:
         """
-        self._toolbar.add_dynamic_button(uid, icon, name, callback)
+        self._toolbar.add_dynamic_button(uid, icon_path, name, callback)
 
     def add_static_toolbar_button(
-        self, uid: UID, icon: str, name: str, callback: Callable[[], None] = None
+        self, uid: UID, icon_path: str, name: str, callback: Callable[[], None] = None
     ):
         """
         Add a static icon to the toolbar for this window only.
@@ -114,12 +114,12 @@ class AmuletMainWindow(Ui_AmuletLandingWindow):
         Third party plugins should use :meth:`add_button`.
 
         :param uid: The unique identifier of the button.
-        :param icon: The icon path to use in the toolbar.
+        :param icon_path: The path to an SVG image the button should use.
         :param name: The name of the view to use in the icon tooltip.
         :param callback: The function to call when the button is clicked.
         :return:
         """
-        self._toolbar.add_static_button(uid, icon, name, callback)
+        self._toolbar.add_static_button(uid, icon_path, name, callback)
 
     def remove_toolbar_button(self, uid: UID):
         """
