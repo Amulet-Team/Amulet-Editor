@@ -1,10 +1,12 @@
 from typing import Optional, Callable
 from threading import RLock
+import traceback
 
 from PySide6.QtCore import QSize, Qt
 from PySide6.QtWidgets import QFrame, QWidget, QVBoxLayout, QHBoxLayout
 
 from amulet_editor.models.widgets import ADragContainer
+from amulet_editor.models.widgets.traceback_dialog import display_exception
 
 from ._icon import ATooltipIconButton
 
@@ -62,8 +64,12 @@ class AToolBar(QFrame):
             if callback is not None:
                 try:
                     callback()
-                except Exception:
-                    pass
+                except Exception as e:
+                    display_exception(
+                        title=f"Error running {callback}",
+                        error=str(e),
+                        traceback=traceback.format_exc(),
+                    )
 
         button.clicked.connect(on_click)
         self._buttons[uid] = button
