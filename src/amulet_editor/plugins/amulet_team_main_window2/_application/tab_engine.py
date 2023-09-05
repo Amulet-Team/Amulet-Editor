@@ -457,7 +457,9 @@ class AbstractTabContainerWidget(QWidget):
     def _new_stacked_tab_widget(self) -> AbstractStackedTabWidget:
         raise NotImplementedError
 
-    def _on_drop_in_space(self, dragged_widget: Union[QWidget, TabPage], drop_event: QMouseEvent):
+    def _on_drop_in_space(
+        self, dragged_widget: Union[QWidget, TabPage], drop_event: QMouseEvent
+    ):
         raise NotImplementedError
 
 
@@ -556,7 +558,9 @@ class AbstractTabBar(QWidget):
     def tab_widget(self) -> AbstractStackedTabWidget:
         parent = self.parent()
         if not isinstance(parent, AbstractStackedTabWidget):
-            raise RuntimeError("Parent of AbstractTabBar must be AbstractStackedTabWidget")
+            raise RuntimeError(
+                "Parent of AbstractTabBar must be AbstractStackedTabWidget"
+            )
         return parent
 
     def _check_size(self):

@@ -1,7 +1,9 @@
 from typing import Iterable, Union, Type
 
 from amulet_team_main_window2._application.widget import Widget
-from amulet_team_main_window2._application.windows.window_proxy import AbstractWindowProxy
+from amulet_team_main_window2._application.windows.window_proxy import (
+    AbstractWindowProxy,
+)
 from .sub_window import Ui_AmuletSubWindow
 from ..layout import Layout
 

@@ -30,7 +30,9 @@ def load_plugin():
     amulet_team_locale.locale_changed.connect(_locale_changed)
 
     amulet_team_main_window2.register_widget(HomeWidget)
-    amulet_team_main_window2.add_toolbar_button("amulet_team:home", "home.svg", "Home", _set_home_layout)
+    amulet_team_main_window2.add_toolbar_button(
+        "amulet_team:home", "home.svg", "Home", _set_home_layout
+    )
     amulet_team_main_window2.get_main_window().set_layout(HomeWidget)
 
 

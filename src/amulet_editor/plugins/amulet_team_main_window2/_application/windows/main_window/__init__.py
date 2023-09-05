@@ -22,7 +22,9 @@ from amulet_team_main_window2._application.windows.window_proxy import (
     AbstractWindowProxy,
 )
 from amulet_team_main_window2._application.windows.layout import Layout
-from amulet_team_main_window2._application.windows.tab_engine_imp import StackedTabWidget
+from amulet_team_main_window2._application.windows.tab_engine_imp import (
+    StackedTabWidget,
+)
 
 
 # Terminology
@@ -114,7 +116,7 @@ class AmuletMainWindowProxy(AbstractWindowProxy):
         elif isclass(layout) and issubclass(layout, Widget):
             if not is_registered_widget(layout):
                 raise RuntimeError(f"Widget {layout} has not been registered.")
-            for index in range(window.view_container.count()-1, -1, -1):
+            for index in range(window.view_container.count() - 1, -1, -1):
                 widget = window.view_container.widget(index)
                 widget.hide()
                 widget.deleteLater()
@@ -122,9 +124,9 @@ class AmuletMainWindowProxy(AbstractWindowProxy):
                 widget = layout()
             except Exception as e:
                 display_exception(
-                    title = f"Error initialising Widget {layout}",
-                    error = str(e),
-                    traceback = traceback.format_exc(),
+                    title=f"Error initialising Widget {layout}",
+                    error=str(e),
+                    traceback=traceback.format_exc(),
                 )
             else:
                 tab_widget = StackedTabWidget()

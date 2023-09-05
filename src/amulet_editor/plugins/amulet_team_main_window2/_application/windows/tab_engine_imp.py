@@ -18,10 +18,10 @@ class TabContainerWidget(AbstractTabContainerWidget):
     def _new_stacked_tab_widget(self) -> AbstractStackedTabWidget:
         return StackedTabWidget()
 
-    def _on_drop_in_space(self, dragged_widget: Union[QWidget, TabPage], drop_event: QMouseEvent):
-        new_window = sub_window.AmuletSubWindow(
-            main_window.AmuletMainWindow.instance()
-        )
+    def _on_drop_in_space(
+        self, dragged_widget: Union[QWidget, TabPage], drop_event: QMouseEvent
+    ):
+        new_window = sub_window.AmuletSubWindow(main_window.AmuletMainWindow.instance())
         tab_widget = StackedTabWidget()
         new_window.view_container.addWidget(tab_widget)
         tab_widget.add_page(dragged_widget)
