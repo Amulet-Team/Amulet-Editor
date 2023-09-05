@@ -1,8 +1,11 @@
 import os
 
 _package_path = os.path.dirname(__file__)
+
+
 def _get_path(name):
     return os.path.join(_package_path, "_resources", name)
+
 
 two_fa = _get_path("2fa.svg")
 three_d_cube_sphere = _get_path("3d-cube-sphere.svg")

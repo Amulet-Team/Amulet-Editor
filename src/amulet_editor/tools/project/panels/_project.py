@@ -29,9 +29,7 @@ class ProjectPanel(QWidget):
 
         self.setupUi()
 
-        self.crd_directory = ALinkCard(
-            "", tablericons.folder, self
-        )
+        self.crd_directory = ALinkCard("", tablericons.folder, self)
         self.frm_directory.layout().addWidget(self.crd_directory)
 
         self.model = QFileSystemModel()
