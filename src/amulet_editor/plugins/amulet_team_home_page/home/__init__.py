@@ -21,6 +21,10 @@ class HomeWidget(QWidget, Widget):
         self._layout.setContentsMargins(0, 0, 0, 0)
         self._set_landing_page()
 
+    @property
+    def name(self) -> str:
+        return "Home"
+
     def activate_view(self):
         self._set_landing_page()
 
