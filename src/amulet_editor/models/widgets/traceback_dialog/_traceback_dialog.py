@@ -74,7 +74,7 @@ class Ui_AmuletTracebackDialog(QDialog):
         self._button_layout.addWidget(self._ok_button_box)
         self._main_layout.addLayout(self._button_layout)
 
-        self.localise()
+        self._localise()
         self._ok_button_box.rejected.connect(self.reject)
         self._ok_button_box.accepted.connect(self.accept)
         QMetaObject.connectSlotsByName(self)
@@ -82,9 +82,9 @@ class Ui_AmuletTracebackDialog(QDialog):
     def changeEvent(self, event: QEvent):
         super().changeEvent(event)
         if event.type() == QEvent.Type.LanguageChange:
-            self.localise()
+            self._localise()
 
-    def localise(self):
+    def _localise(self):
         self.setWindowTitle(
             QCoreApplication.translate("AmuletTracebackDialog", "window_title", None)
         )

@@ -55,14 +55,14 @@ class Ui_SettingsPage(QWidget):
         self.horizontalLayout.setStretch(0, 1)
         self.horizontalLayout.setStretch(2, 1)
 
-        self.localise()
+        self._localise()
         QMetaObject.connectSlotsByName(self)
 
     def changeEvent(self, event: QEvent):
         super().changeEvent(event)
         if event.type() == QEvent.Type.LanguageChange:
-            self.localise()
+            self._localise()
 
-    def localise(self):
+    def _localise(self):
         self.setWindowTitle(QCoreApplication.translate("SettingsPage", "Form", None))
         self.label.setText(QCoreApplication.translate("SettingsPage", "Settings", None))

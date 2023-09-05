@@ -33,13 +33,13 @@ class Ui_Splash(QDialog):
         self._layout.addWidget(self._msg)
         self._layout.setStretch(0, 1)
 
-        self.localise()
+        self._localise()
         QMetaObject.connectSlotsByName(self)
 
     def changeEvent(self, event: QEvent):
         super().changeEvent(event)
         if event.type() == QEvent.Type.LanguageChange:
-            self.localise()
+            self._localise()
 
-    def localise(self):
+    def _localise(self):
         self.setWindowTitle(QCoreApplication.translate("Splash", "Form", None))

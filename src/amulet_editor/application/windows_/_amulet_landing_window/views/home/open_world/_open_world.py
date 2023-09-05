@@ -97,15 +97,15 @@ class Ui_OpenWorldPage(QWidget):
         )
         self._vertical_layout.addItem(self._vertical_spacer)
 
-        self.localise()
+        self._localise()
         QMetaObject.connectSlotsByName(self)
 
     def changeEvent(self, event: QEvent):
         super().changeEvent(event)
         if event.type() == QEvent.Type.LanguageChange:
-            self.localise()
+            self._localise()
 
-    def localise(self):
+    def _localise(self):
         self.setWindowTitle(QCoreApplication.translate("OpenWorldPage", "Form", None))
         self.btn_back.setText("")
         self._lbl_title.setText(
