@@ -11,7 +11,7 @@
    </rect>
   </property>
   <property name="windowTitle">
-   <string>MainWindow</string>
+   <string>Amulet Editor</string>
   </property>
   <widget class="QWidget" name="central_widget">
    <layout class="QHBoxLayout" name="horizontalLayout" stretch="0,1">
