@@ -11,6 +11,7 @@
 		"plugin": [
 			"amulet_team_locale~=1.0",
 			"amulet_team_main_window2~=1.0"
+			"tablericons~=1.0"
 		]
 	},
 	"locked": "true"

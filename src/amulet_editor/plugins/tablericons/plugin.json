@@ -1,0 +1,10 @@
+{
+	"identifier": "tablericons",
+	"version": "1.0.0",
+	"name": "Tabler Icons",
+	"depends": {
+		"python": "~=3.9",
+		"plugin": []
+	},
+	"locked": "true"
+}
