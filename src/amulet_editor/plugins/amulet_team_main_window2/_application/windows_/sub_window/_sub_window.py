@@ -3,7 +3,7 @@ from __future__ import annotations
 from PySide6.QtCore import QCoreApplication, QMetaObject, QEvent
 from PySide6.QtWidgets import QMainWindow
 
-import amulet_team_main_window2.application.widgets.tab_engine._tab_engine as tab_engine
+import amulet_team_main_window2._application.tab_engine as tab_engine
 
 
 class AmuletSubWindow(QMainWindow):
