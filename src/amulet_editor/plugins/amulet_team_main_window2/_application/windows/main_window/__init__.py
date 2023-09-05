@@ -1,6 +1,5 @@
 from __future__ import annotations
-from typing import Type, Callable, Optional, Union
-from uuid import uuid4
+from typing import Type, Optional, Union
 from threading import Lock
 from weakref import ref
 from inspect import isclass
@@ -10,10 +9,6 @@ from PySide6.QtGui import QShortcut
 from PySide6.QtCore import Qt
 
 from amulet_editor.models.widgets.traceback_dialog import display_exception
-
-from .main_window import Ui_AmuletMainWindow
-
-# from ._view import ViewContainer, View
 
 from amulet_team_inspector import show_inspector
 
@@ -25,6 +20,9 @@ from amulet_team_main_window2._application.windows.layout import Layout
 from amulet_team_main_window2._application.windows.tab_engine_imp import (
     StackedTabWidget,
 )
+
+from .main_window import Ui_AmuletMainWindow
+from .toolbar import ButtonProxy
 
 
 # Terminology
@@ -101,23 +99,15 @@ class AmuletMainWindow(Ui_AmuletMainWindow):
     #
     #     self._toolbar.activate(self._view_classes[view_cls])
 
-
-class AmuletMainWindowProxy(AbstractWindowProxy):
-    def __init__(self, window: AmuletMainWindow):
-        self.__window = ref(window)
-
     def set_layout(self, layout: Union[Type[Widget], Layout]):
         """Configure the layout as requested"""
-        window: AmuletMainWindow = self.__window()
-        if window is None:
-            raise RuntimeError
         if isinstance(layout, Layout):
             raise NotImplementedError
         elif isclass(layout) and issubclass(layout, Widget):
             if not is_registered_widget(layout):
                 raise RuntimeError(f"Widget {layout} has not been registered.")
-            for index in range(window.view_container.count() - 1, -1, -1):
-                widget = window.view_container.widget(index)
+            for index in range(self.view_container.count() - 1, -1, -1):
+                widget = self.view_container.widget(index)
                 widget.hide()
                 widget.deleteLater()
             try:
@@ -131,71 +121,37 @@ class AmuletMainWindowProxy(AbstractWindowProxy):
             else:
                 tab_widget = StackedTabWidget()
                 tab_widget.add_page(widget)
-                window.view_container.insertWidget(0, tab_widget)
+                self.view_container.insertWidget(0, tab_widget)
         else:
             raise RuntimeError
+
+
+class AmuletMainWindowProxy(AbstractWindowProxy):
+    def __init__(self, window: AmuletMainWindow):
+        self.__window = ref(window)
+
+    def set_layout(self, layout: Union[Type[Widget], Layout]):
+        """Configure the layout as requested"""
+        window: AmuletMainWindow = self.__window()
+        if window is None:
+            raise RuntimeError
+        window.set_layout(layout)
 
 
 def get_main_window() -> AmuletMainWindowProxy:
     return AmuletMainWindow.instance().proxy
 
 
-def _bind_callback_to_window(
-    callback: Callable[[AmuletMainWindowProxy], None], window: AmuletMainWindow
-) -> Callable[[], None]:
-    return lambda: callback(window.proxy)
-
-
 def add_toolbar_button(
-    uid: UID,
-    icon_path: str,
-    name: str,
-    callback: Callable[[AmuletMainWindowProxy], None] = None,
-):
+    *,
+    sticky=False,
+    static=False
+) -> ButtonProxy:
     """
     Add an icon to the toolbar for all windows.
 
-    :param uid: The unique identifier of the button. Eg: author_name:button_name
-    :param icon_path: The path to an SVG image the button should use.
-    :param name: The name of the view to use in the icon tooltip.
-    :param callback: The function to call when the button is clicked.
-    :return:
+    :param sticky: If True, the button will stick down when pressed.
+    :param static: Should the position of the button be fixed. This must only be used for special cases.
+    :return: A ButtonProxy instance through which the button attributes can be set. You must store this somewhere in your plugin.
     """
-    window = AmuletMainWindow.instance()
-    window.toolbar.add_dynamic_button(
-        uid, icon_path, name, _bind_callback_to_window(callback, window)
-    )
-
-
-def add_static_toolbar_button(
-    uid: UID,
-    icon_path: str,
-    name: str,
-    callback: Callable[[AmuletMainWindowProxy], None] = None,
-):
-    """
-    Add a static icon to the toolbar for all windows.
-    These should be reserved for special cases.
-    Third party plugins should use :func:`add_toolbar_button`.
-
-    :param uid: The unique identifier of the button. Eg: author_name:button_name
-    :param icon_path: The path to an SVG image the button should use.
-    :param name: The name of the view to use in the icon tooltip.
-    :param callback: The function to call when the button is clicked.
-    :return:
-    """
-    window = AmuletMainWindow.instance()
-    window.toolbar.add_static_button(
-        uid, icon_path, name, _bind_callback_to_window(callback, window)
-    )
-
-
-def remove_toolbar_button(uid: UID):
-    """
-    Remove a toolbar button from all windows.
-
-    :param uid: The unique identifier for the toolbar button to remove.
-    :return:
-    """
-    window = AmuletMainWindow.instance()
-    window.toolbar.remove_toolbar_button(uid)
+    return AmuletMainWindow.instance().toolbar.add_button(sticky, static)

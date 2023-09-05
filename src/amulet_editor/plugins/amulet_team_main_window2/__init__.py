@@ -7,6 +7,5 @@ from ._application.windows.main_window import (
     AmuletMainWindowProxy,
     get_main_window,
     add_toolbar_button,
-    add_static_toolbar_button,
-    remove_toolbar_button,
 )
+from ._application.windows.main_window.toolbar import ButtonProxy

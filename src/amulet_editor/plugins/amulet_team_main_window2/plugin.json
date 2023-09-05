@@ -5,6 +5,7 @@
 	"depends": {
 		"python": "~=3.9",
 		"library": [
+			"shiboken6~=6.2",
 			"PySide6_Essentials~=6.2",
 			"amulet_editor~=1.0a0"
 		],
