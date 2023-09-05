@@ -127,15 +127,15 @@ class Ui_HomePage(QWidget):
         self._layout.setStretch(0, 1)
         self._layout.setStretch(2, 1)
 
-        self.localise()
+        self._localise()
         QMetaObject.connectSlotsByName(self)
 
     def changeEvent(self, event: QEvent):
         super().changeEvent(event)
         if event.type() == QEvent.Type.LanguageChange:
-            self.localise()
+            self._localise()
 
-    def localise(self):
+    def _localise(self):
         self.setWindowTitle(QCoreApplication.translate("HomePage", "Form", None))
         self._lbl_app_name.setText(
             QCoreApplication.translate("HomePage", "amulet_editor", None)

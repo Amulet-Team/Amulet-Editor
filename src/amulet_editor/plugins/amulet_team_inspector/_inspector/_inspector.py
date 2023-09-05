@@ -70,15 +70,15 @@ class Ui_InspectionTool(QWidget):
         self.horizontalLayout.addWidget(self.run_button)
         self.verticalLayout.addLayout(self.horizontalLayout)
 
-        self.localise()
+        self._localise()
         QMetaObject.connectSlotsByName(self)
 
     def changeEvent(self, event: QEvent):
         super().changeEvent(event)
         if event.type() == QEvent.Type.LanguageChange:
-            self.localise()
+            self._localise()
 
-    def localise(self):
+    def _localise(self):
         self.setWindowTitle(QCoreApplication.translate("InspectionTool", "Form", None))
         self.inspect_button.setText("")
         self.reload_button.setText("")

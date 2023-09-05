@@ -39,15 +39,15 @@ class Ui_AmuletLandingWindow(QMainWindow):
         self.horizontalLayout.setStretch(1, 1)
         self.setCentralWidget(self.central_widget)
 
-        self.localise()
+        self._localise()
         QMetaObject.connectSlotsByName(self)
 
     def changeEvent(self, event: QEvent):
         super().changeEvent(event)
         if event.type() == QEvent.Type.LanguageChange:
-            self.localise()
+            self._localise()
 
-    def localise(self):
+    def _localise(self):
         self.setWindowTitle(
             QCoreApplication.translate("AmuletLandingWindow", "MainWindow", None)
         )

@@ -53,16 +53,16 @@ def _compile_ui_file(ui_path: str):
         py,
     )
 
-    py = py.replace(f"self.retranslateUi({class_name})", "self.localise()")
+    py = py.replace(f"self.retranslateUi({class_name})", "self._localise()")
     # Replace class name with self
     py = re.sub(f'(?<!")\\b{class_name}\\b(?!")', "self", py)
     # Add in line breaks before assignments
     py = re.sub(r"\r?\n(?=\s*self\..*? = )", "\n\n", py)
-    py = re.sub(r"\r?\n(?=\s*self\.localise\(\))", "\n\n", py)
-    # Replace retranslateUi with localise
+    py = re.sub(r"\r?\n(?=\s*self\._localise\(\))", "\n\n", py)
+    # Replace retranslateUi with _localise
     py = py.replace(
         "def retranslateUi(self, self):",
-        "def changeEvent(self, event: QEvent):\n        super().changeEvent(event)\n        if event.type() == QEvent.Type.LanguageChange:\n            self.localise()\n    def localise(self):",
+        "def changeEvent(self, event: QEvent):\n        super().changeEvent(event)\n        if event.type() == QEvent.Type.LanguageChange:\n            self._localise()\n    def _localise(self):",
     )
     py = re.sub(
         r"from PySide6\.QtCore import \(.*?\)",
