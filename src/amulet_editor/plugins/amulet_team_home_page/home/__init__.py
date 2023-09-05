@@ -8,11 +8,11 @@ from PySide6.QtWidgets import QWidget, QVBoxLayout
 from .home import HomePage
 from .open_world import OpenWorldPage
 
-from amulet_team_main_window.application.windows.main_window import View
+from amulet_team_main_window2 import Widget
 from amulet_team_locale import set_locale
 
 
-class HomeView(QWidget, View):
+class HomeWidget(QWidget, Widget):
     def __init__(
         self, parent: Optional[QWidget] = None, f: Qt.WindowType = Qt.WindowType.Widget
     ):
