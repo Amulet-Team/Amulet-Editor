@@ -17,7 +17,7 @@ from PySide6.QtWidgets import (
     QVBoxLayout,
     QWidget,
 )
-from amulet_editor.models.widgets._toolbar import AToolBar
+from .toolbar import ToolBar
 from amulet_team_main_window2._application.tab_engine import RecursiveSplitter
 
 
@@ -53,7 +53,7 @@ class Ui_AmuletMainWindow(QMainWindow):
         self._main_layout = QHBoxLayout()
         self._main_layout.setObjectName("_main_layout")
 
-        self.toolbar = AToolBar(self._widget)
+        self.toolbar = ToolBar(self._widget)
         self.toolbar.setObjectName("toolbar")
         self.toolbar.setFrameShape(QFrame.NoFrame)
         self.toolbar.setFrameShadow(QFrame.Raised)

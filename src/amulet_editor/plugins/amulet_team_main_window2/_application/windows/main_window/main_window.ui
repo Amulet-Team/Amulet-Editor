@@ -56,7 +56,7 @@
     <item>
      <layout class="QHBoxLayout" name="_main_layout" stretch="0,1">
       <item>
-       <widget class="AToolBar" name="toolbar">
+       <widget class="ToolBar" name="toolbar">
         <property name="frameShape">
          <enum>QFrame::NoFrame</enum>
         </property>
@@ -85,9 +85,9 @@
  </widget>
  <customwidgets>
   <customwidget>
-   <class>AToolBar</class>
+   <class>ToolBar</class>
    <extends>QFrame</extends>
-   <header>amulet_editor.models.widgets._toolbar</header>
+   <header>.toolbar</header>
    <container>1</container>
   </customwidget>
   <customwidget>

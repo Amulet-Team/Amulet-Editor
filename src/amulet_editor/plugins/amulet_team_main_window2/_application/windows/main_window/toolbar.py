@@ -8,10 +8,10 @@ from PySide6.QtWidgets import QFrame, QWidget, QVBoxLayout, QHBoxLayout
 from amulet_editor.models.widgets import ADragContainer
 from amulet_editor.models.widgets.traceback_dialog import display_exception
 
-from ._icon import ATooltipIconButton
+from amulet_editor.models.widgets._icon import ATooltipIconButton
 
 
-class AToolBar(QFrame):
+class ToolBar(QFrame):
     """
     A toolbar is a strip of buttons.
     The first half can be rearranged and the second half are fixed.
