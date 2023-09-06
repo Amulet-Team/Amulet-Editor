@@ -36,6 +36,8 @@ from amulet.api.level import BaseLevel
 from amulet.api.errors import ChunkLoadError, ChunkDoesNotExist
 from amulet.api.chunk import Chunk
 
+import thread_manager
+
 from ._drawable import Drawable
 from ._resource_pack import (
     OpenGLResourcePack,
@@ -368,7 +370,7 @@ class ChunkGenerator(QObject):
 
     def __init__(self):
         super().__init__()
-        thread = self._thread = QThread()
+        thread = self._thread = thread_manager.new_thread("ChunkGeneratorThread")
         self._thread.start()
         worker = self._worker = ChunkGeneratorWorker()
         self._worker.moveToThread(self._thread)
@@ -376,11 +378,8 @@ class ChunkGenerator(QObject):
         def destroy():
             with CatchException():
                 worker.deleteLater()
-                log.debug("Waiting for chunk generation thread to finish")
+                log.debug("Quitting chunk generation thread.")
                 thread.quit()
-                thread.wait()
-                log.debug("Chunk generation thread has finished")
-                log.debug("destroyed ChunkGenerator")
 
         self.destroyed.connect(destroy)
         QCoreApplication.instance().aboutToQuit.connect(self.deleteLater)
