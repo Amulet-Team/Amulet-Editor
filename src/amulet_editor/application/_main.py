@@ -76,7 +76,8 @@ def app_main():
             self._logger = logger
 
         def write(self, msg):
-            if msg != "\n":
+            msg = msg.rstrip()
+            if msg:
                 self._logger(msg)
 
     # Convert all direct stdout calls (eg print) to info log calls
