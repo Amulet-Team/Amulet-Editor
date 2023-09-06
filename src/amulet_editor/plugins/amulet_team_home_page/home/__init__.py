@@ -13,6 +13,8 @@ from amulet_team_locale import set_locale
 
 
 class HomeWidget(QWidget, Widget):
+    name = "Home"
+
     def __init__(
         self, parent: Optional[QWidget] = None, f: Qt.WindowType = Qt.WindowType.Widget
     ):
@@ -20,10 +22,6 @@ class HomeWidget(QWidget, Widget):
         self._layout = QVBoxLayout(self)
         self._layout.setContentsMargins(0, 0, 0, 0)
         self._set_landing_page()
-
-    @property
-    def name(self) -> str:
-        return "Home"
 
     def activate_view(self):
         self._set_landing_page()

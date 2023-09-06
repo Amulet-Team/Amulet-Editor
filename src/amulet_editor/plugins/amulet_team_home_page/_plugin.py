@@ -34,10 +34,13 @@ def load_plugin():
 
     amulet_team_main_window2.register_widget(HomeWidget)
 
+    # Set up the button
     home_button = amulet_team_main_window2.add_toolbar_button(sticky=True)
     home_button.set_icon(tablericons.home)
     home_button.set_name("Home")
     home_button.set_callback(_set_home_layout)
+
+    # Make the home layout active by clicking the button
     home_button.click()
 
 
