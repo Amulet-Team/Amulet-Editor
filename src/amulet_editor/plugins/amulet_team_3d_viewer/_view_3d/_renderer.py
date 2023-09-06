@@ -23,7 +23,7 @@ from OpenGL.GL import (
 )
 
 from amulet_editor.data.project import get_level
-
+from amulet_editor.models.widgets.traceback_dialog import CatchException
 from amulet_team_resource_pack._api import get_resource_pack_container
 
 from ._camera import Camera, Location, Rotation
@@ -127,15 +127,16 @@ class FirstPersonCanvas(QOpenGLWidget, QOpenGLFunctions):
 
     def paintGL(self):
         """Private paint method called by the QOpenGLWidget"""
-        if QOpenGLContext.currentContext() is not self.context():
-            log.error("Tried to paint from a different context.")
-            return
-        self.glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT)
-        self.glEnable(GL_DEPTH_TEST)
+        with CatchException():
+            if QOpenGLContext.currentContext() is not self.context():
+                log.error("Tried to paint from a different context.")
+                return
+            self.glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT)
+            self.glEnable(GL_DEPTH_TEST)
 
-        self._render_level.paintGL(
-            self.camera.intrinsic_matrix, self.camera.extrinsic_matrix
-        )
+            self._render_level.paintGL(
+                self.camera.intrinsic_matrix, self.camera.extrinsic_matrix
+            )
 
     def resizeGL(self, width, height):
         """Private resize method called by the QOpenGLWidget"""
