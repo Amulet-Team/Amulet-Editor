@@ -3,7 +3,7 @@ import logging
 from typing import Optional, Generator, Callable, Iterator
 import ctypes
 from threading import Lock
-from weakref import WeakKeyDictionary, WeakValueDictionary, ref
+from weakref import WeakKeyDictionary, WeakValueDictionary, ref, proxy
 from collections.abc import MutableMapping
 import bisect
 import numpy
@@ -679,7 +679,7 @@ class WidgetLevelGeometry(QObject, Drawable):
 
     def __del__(self):
         self._destroy_gl()
-        log.debug("deleted WidgetLevelGeometry")
+        log.debug("__del__ WidgetLevelGeometry")
 
     def paintGL(self, projection_matrix: QMatrix4x4, view_matrix: QMatrix4x4):
         """
@@ -838,6 +838,55 @@ class WidgetLevelGeometry(QObject, Drawable):
 
     _queue_chunk = Signal()
 
+    def _create_vao(self, chunk: WidgetChunkData):
+        if self._context is None or not self._context.makeCurrent(
+                self._surface
+        ):
+            raise ContextException("Could not make context current.")
+
+        f = QOpenGLContext.currentContext().functions()
+
+        if chunk.vao is None:
+            # Create the VAO if one does not exist.
+            chunk.vao = QOpenGLVertexArrayObject()
+            chunk.vao.create()
+        chunk.vao.bind()
+
+        # Associate the vbo with the vao
+        vbo_container = chunk.shared.geometry
+        vbo_container.vbo.bind()
+
+        # vertex coord
+        f.glEnableVertexAttribArray(0)
+        f.glVertexAttribPointer(
+            0, 3, GL_FLOAT, GL_FALSE, 12 * FloatSize, VoidPtr(0)
+        )
+        # texture coord
+        f.glEnableVertexAttribArray(1)
+        f.glVertexAttribPointer(
+            1, 2, GL_FLOAT, GL_FALSE, 12 * FloatSize, VoidPtr(3 * FloatSize)
+        )
+        # texture bounds
+        f.glEnableVertexAttribArray(2)
+        f.glVertexAttribPointer(
+            2, 4, GL_FLOAT, GL_FALSE, 12 * FloatSize, VoidPtr(5 * FloatSize)
+        )
+        # tint
+        f.glEnableVertexAttribArray(3)
+        f.glVertexAttribPointer(
+            3, 3, GL_FLOAT, GL_FALSE, 12 * FloatSize, VoidPtr(9 * FloatSize)
+        )
+
+        chunk.vao.release()
+        vbo_container.vbo.release()
+        self._context.doneCurrent()
+
+        # Update the vbo attribute.
+        # If a VBO was previously stored it will get automatically deleted when the last reference is lost.
+        chunk.geometry = vbo_container
+
+        self.geometry_changed.emit()
+
     def _process_chunk(self):
         """Generate a chunk. This must not be called directly."""
         with CatchException():
@@ -858,55 +907,6 @@ class WidgetLevelGeometry(QObject, Drawable):
             widget_chunk_data = WidgetChunkData(shared_chunk_data)
             shared_geometry = shared_chunk_data.geometry
 
-            def create_vao(chunk: WidgetChunkData):
-                if self._context is None or not self._context.makeCurrent(
-                    self._surface
-                ):
-                    raise ContextException("Could not make context current.")
-
-                f = QOpenGLContext.currentContext().functions()
-
-                if chunk.vao is None:
-                    # Create the VAO if one does not exist.
-                    chunk.vao = QOpenGLVertexArrayObject()
-                    chunk.vao.create()
-                chunk.vao.bind()
-
-                # Associate the vbo with the vao
-                vbo_container = chunk.shared.geometry
-                vbo_container.vbo.bind()
-
-                # vertex coord
-                f.glEnableVertexAttribArray(0)
-                f.glVertexAttribPointer(
-                    0, 3, GL_FLOAT, GL_FALSE, 12 * FloatSize, VoidPtr(0)
-                )
-                # texture coord
-                f.glEnableVertexAttribArray(1)
-                f.glVertexAttribPointer(
-                    1, 2, GL_FLOAT, GL_FALSE, 12 * FloatSize, VoidPtr(3 * FloatSize)
-                )
-                # texture bounds
-                f.glEnableVertexAttribArray(2)
-                f.glVertexAttribPointer(
-                    2, 4, GL_FLOAT, GL_FALSE, 12 * FloatSize, VoidPtr(5 * FloatSize)
-                )
-                # tint
-                f.glEnableVertexAttribArray(3)
-                f.glVertexAttribPointer(
-                    3, 3, GL_FLOAT, GL_FALSE, 12 * FloatSize, VoidPtr(9 * FloatSize)
-                )
-
-                chunk.vao.release()
-                vbo_container.vbo.release()
-                self._context.doneCurrent()
-
-                # Update the vbo attribute.
-                # If a VBO was previously stored it will get automatically deleted when the last reference is lost.
-                chunk.geometry = vbo_container
-
-                self.geometry_changed.emit()
-
             if shared_geometry is None:
                 # The VBO does not exist yet. on_change will be run when it is loaded
                 self._pending_chunks[chunk_key] = widget_chunk_data
@@ -915,21 +915,24 @@ class WidgetLevelGeometry(QObject, Drawable):
                 # vbo already exists
                 widget_chunk_data.geometry = shared_geometry
                 self._chunks[chunk_key] = widget_chunk_data
-                create_vao(widget_chunk_data)
+                self._create_vao(widget_chunk_data)
                 self._generation_count -= 1
                 self._queue_next_chunk()
 
+            # on_change cannot strongly reference self otherwise there is a circular reference
+            weak_self: WidgetLevelGeometry = proxy(self)
+
             def on_change():
                 with CatchException():
-                    if not self._running:
+                    if not weak_self._running:
                         return
-                    self._generation_count += 1
-                    if chunk_key in self._pending_chunks:
-                        self._chunks[chunk_key] = self._pending_chunks.pop(chunk_key)
-                    if chunk_key in self._chunks:
-                        create_vao(self._chunks[chunk_key])
+                    weak_self._generation_count += 1
+                    if chunk_key in weak_self._pending_chunks:
+                        weak_self._chunks[chunk_key] = weak_self._pending_chunks.pop(chunk_key)
+                    if chunk_key in weak_self._chunks:
+                        weak_self._create_vao(weak_self._chunks[chunk_key])
 
-                    self._generation_count -= 1
-                    self._queue_next_chunk()
+                    weak_self._generation_count -= 1
+                    weak_self._queue_next_chunk()
 
             widget_chunk_data.geometry_changed.connect(on_change)
