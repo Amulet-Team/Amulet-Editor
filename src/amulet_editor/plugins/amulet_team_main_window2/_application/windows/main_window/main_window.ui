@@ -57,26 +57,13 @@
      <layout class="QHBoxLayout" name="_main_layout" stretch="0,1">
       <item>
        <widget class="ToolBar" name="toolbar">
-        <property name="frameShape">
-         <enum>QFrame::NoFrame</enum>
-        </property>
-        <property name="frameShadow">
-         <enum>QFrame::Raised</enum>
-        </property>
         <property name="backgroundColor" stdset="0">
          <string notr="true">surface</string>
         </property>
        </widget>
       </item>
       <item>
-       <widget class="RecursiveSplitter" name="view_container">
-        <property name="frameShape">
-         <enum>QFrame::StyledPanel</enum>
-        </property>
-        <property name="frameShadow">
-         <enum>QFrame::Raised</enum>
-        </property>
-       </widget>
+       <widget class="RecursiveSplitter" name="view_container"/>
       </item>
      </layout>
     </item>

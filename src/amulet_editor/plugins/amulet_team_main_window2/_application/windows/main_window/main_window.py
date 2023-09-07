@@ -9,7 +9,6 @@
 from PySide6.QtCore import QCoreApplication, QMetaObject, QEvent
 from PySide6.QtWidgets import (
     QComboBox,
-    QFrame,
     QHBoxLayout,
     QMainWindow,
     QSizePolicy,
@@ -55,15 +54,11 @@ class Ui_AmuletMainWindow(QMainWindow):
 
         self.toolbar = ToolBar(self._widget)
         self.toolbar.setObjectName("toolbar")
-        self.toolbar.setFrameShape(QFrame.NoFrame)
-        self.toolbar.setFrameShadow(QFrame.Raised)
         self.toolbar.setProperty("backgroundColor", "surface")
         self._main_layout.addWidget(self.toolbar)
 
         self.view_container = RecursiveSplitter(self._widget)
         self.view_container.setObjectName("view_container")
-        self.view_container.setFrameShape(QFrame.StyledPanel)
-        self.view_container.setFrameShadow(QFrame.Raised)
         self._main_layout.addWidget(self.view_container)
         self._main_layout.setStretch(1, 1)
         self._widget_layout.addLayout(self._main_layout)
