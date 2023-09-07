@@ -68,6 +68,7 @@ class CatchException:
     A context manager class to suppress an exception and display the traceback dialog.
     It will also log the exception to the logging module.
     """
+
     def __enter__(self):
         pass
 

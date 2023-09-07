@@ -142,11 +142,7 @@ def get_main_window() -> AmuletMainWindowProxy:
     return AmuletMainWindow.instance().proxy
 
 
-def add_toolbar_button(
-    *,
-    sticky=False,
-    static=False
-) -> ButtonProxy:
+def add_toolbar_button(*, sticky=False, static=False) -> ButtonProxy:
     """
     Add an icon to the toolbar for all windows.
 

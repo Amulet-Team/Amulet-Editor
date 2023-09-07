@@ -19,6 +19,7 @@ class ButtonProxy:
     You must store a reference to this in your plugin otherwise the button will be deleted.
     This is also used to access and remove the button.
     """
+
     def __init__(self, button: ATooltipIconButton):
         self.__button = button
         self.__callback = None

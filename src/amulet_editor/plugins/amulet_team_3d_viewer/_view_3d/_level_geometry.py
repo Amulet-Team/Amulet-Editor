@@ -115,6 +115,7 @@ class SharedVBOManager(QObject):
         Create a shared VBO.
         There will be no active OpenGL context in the main thread when this is finished.
         """
+
         def create_vbo():
             with self._lock:
                 if not self._context.makeCurrent(self._surface):
@@ -137,6 +138,7 @@ class SharedVBOManager(QObject):
         Destroy a shared VBO.
         There will be no active OpenGL context in the main thread when this is finished.
         """
+
         def destroy_vbo():
             with self._lock:
                 if vbo not in self._vbos:
@@ -857,7 +859,9 @@ class WidgetLevelGeometry(QObject, Drawable):
             shared_geometry = shared_chunk_data.geometry
 
             def create_vao(chunk: WidgetChunkData):
-                if self._context is None or not self._context.makeCurrent(self._surface):
+                if self._context is None or not self._context.makeCurrent(
+                    self._surface
+                ):
                     raise ContextException("Could not make context current.")
 
                 f = QOpenGLContext.currentContext().functions()
