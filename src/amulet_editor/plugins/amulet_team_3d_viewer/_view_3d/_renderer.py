@@ -57,9 +57,11 @@ class FirstPersonCanvas(QOpenGLWidget, QOpenGLFunctions):
         QOpenGLWidget.__init__(self, parent)
         QOpenGLFunctions.__init__(self)
 
+        self._level = get_level()
+
         self._camera = Camera()
         self.camera.transform_changed.connect(self.update)
-        self.camera.location = Location(0, 0, 0)
+        self.camera.location_changed.connect(self._on_move)
         self._start_pos = QPoint()
         self._mouse_captured = False
 
@@ -86,21 +88,16 @@ class FirstPersonCanvas(QOpenGLWidget, QOpenGLFunctions):
             self._down, (KeySrc.Keyboard, Qt.Key.Key_Semicolon), frozenset(), 10
         )
 
-        self.camera.location_changed.connect(self._on_move)
-
-        level = get_level()
-        self._render_level = WidgetLevelGeometry(level)
+        self._render_level = WidgetLevelGeometry(self._level)
         self._render_level.geometry_changed.connect(self.update)
-        self._render_level.set_dimension(level.dimensions[0])
-        self._render_level.set_location(0, 0)
 
-        self._resource_pack_container = get_resource_pack_container(level)
+        self._resource_pack_container = get_resource_pack_container(self._level)
         self._resource_pack_container.changing.connect(
             lambda prom: prom.progress_change.connect(
                 lambda prog: print(f"Loading resource pack {prog}")
             )
         )
-        self._gl_resource_pack_container = get_gl_resource_pack_container(level)
+        self._gl_resource_pack_container = get_gl_resource_pack_container(self._level)
         self._gl_resource_pack_container.changing.connect(
             lambda prom: prom.progress_change.connect(
                 lambda prog: print(f"Loading GL resource pack {prog}")
@@ -114,6 +111,10 @@ class FirstPersonCanvas(QOpenGLWidget, QOpenGLFunctions):
         self.initializeOpenGLFunctions()
         self.glClearColor(*self.background_colour, 1)
         self._render_level.initializeGL()
+
+        # Set the start position after OpenGL has been initialised
+        self._render_level.set_dimension(self._level.dimensions[0])
+        self.camera.location = Location(0, 0, 0)
 
     @property
     def camera(self) -> Camera:

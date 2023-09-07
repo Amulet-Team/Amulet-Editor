@@ -911,10 +911,7 @@ class WidgetLevelGeometry(QObject, Drawable):
                 # vbo already exists
                 widget_chunk_data.geometry = shared_geometry
                 self._chunks[chunk_key] = widget_chunk_data
-                try:
-                    create_vao(widget_chunk_data)
-                except ContextException:
-                    self._chunks.pop(chunk_key, None)
+                create_vao(widget_chunk_data)
                 self._generation_count -= 1
                 self._queue_next_chunk()
 
@@ -926,10 +923,7 @@ class WidgetLevelGeometry(QObject, Drawable):
                     if chunk_key in self._pending_chunks:
                         self._chunks[chunk_key] = self._pending_chunks.pop(chunk_key)
                     if chunk_key in self._chunks:
-                        try:
-                            create_vao(self._chunks[chunk_key])
-                        except ContextException:
-                            self._chunks.pop(chunk_key, None)
+                        create_vao(self._chunks[chunk_key])
 
                     self._generation_count -= 1
                     self._queue_next_chunk()
