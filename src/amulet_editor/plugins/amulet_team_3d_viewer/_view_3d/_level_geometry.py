@@ -111,62 +111,44 @@ class SharedVBOManager(QObject):
         self.destroyed.connect(destroy)
 
     def create_vbo(self, buffer: bytes) -> QOpenGLBuffer:
+        """
+        Create a shared VBO.
+        There will be no active OpenGL context in the main thread when this is finished.
+        """
         def create_vbo():
             with self._lock:
-                start_context = QOpenGLContext.currentContext()
-                start_surface = None
-                if start_context is not None:
-                    start_surface = start_context.surface()
-                    start_context.doneCurrent()
+                if not self._context.makeCurrent(self._surface):
+                    raise ContextException("Could not make context current.")
 
-                try:
-                    if not self._context.makeCurrent(self._surface):
-                        raise ContextException("Could not make context current.")
-
-                    vbo = QOpenGLBuffer()
-                    vbo.create()
-                    vbo.bind()
-                    vbo.allocate(buffer, len(buffer))
-                    vbo.release()
-                    self._vbos.add(vbo)
-                    self._context.doneCurrent()
-
-                finally:
-                    if start_context is not None and not start_context.makeCurrent(
-                        start_surface
-                    ):
-                        raise ContextException("Could not make original context current.")
+                vbo = QOpenGLBuffer()
+                vbo.create()
+                vbo.bind()
+                vbo.allocate(buffer, len(buffer))
+                vbo.release()
+                self._vbos.add(vbo)
+                self._context.doneCurrent()
 
                 return vbo
 
         return invoke(create_vbo)
 
     def destroy_vbo(self, vbo: QOpenGLBuffer):
+        """
+        Destroy a shared VBO.
+        There will be no active OpenGL context in the main thread when this is finished.
+        """
         def destroy_vbo():
             with self._lock:
-                start_context = QOpenGLContext.currentContext()
-                start_surface = None
-                if start_context is not None:
-                    start_surface = start_context.surface()
-                    start_context.doneCurrent()
+                if vbo not in self._vbos:
+                    raise RuntimeError(
+                        "vbo was not created by this class or has already been destroyed."
+                    )
 
-                try:
-                    if vbo not in self._vbos:
-                        raise RuntimeError(
-                            "vbo was not created by this class or has already been destroyed."
-                        )
-
-                    if not self._context.makeCurrent(self._surface):
-                        raise ContextException("Could not make context current.")
-                    vbo.destroy()
-                    self._context.doneCurrent()
-                    log.debug("Destroyed vbo")
-
-                finally:
-                    if start_context is not None and not start_context.makeCurrent(
-                        start_surface
-                    ):
-                        raise ContextException("Could not make original context current.")
+                if not self._context.makeCurrent(self._surface):
+                    raise ContextException("Could not make context current.")
+                vbo.destroy()
+                self._context.doneCurrent()
+                log.debug("Destroyed vbo")
 
         invoke(destroy_vbo)
 
