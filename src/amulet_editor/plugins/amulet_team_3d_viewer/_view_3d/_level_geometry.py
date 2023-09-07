@@ -895,6 +895,7 @@ class WidgetLevelGeometry(QObject, Drawable):
 
                 chunk.vao.release()
                 vbo_container.vbo.release()
+                self._context.doneCurrent()
 
                 # Update the vbo attribute.
                 # If a VBO was previously stored it will get automatically deleted when the last reference is lost.
