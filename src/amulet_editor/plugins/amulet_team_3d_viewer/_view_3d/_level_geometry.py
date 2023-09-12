@@ -6,9 +6,10 @@ from threading import Lock
 from weakref import WeakKeyDictionary, WeakValueDictionary, ref, proxy
 from collections.abc import MutableMapping
 import bisect
+from contextlib import contextmanager
 import numpy
 
-from PySide6.QtCore import QThread, Signal, QObject, Slot, QTimer, QCoreApplication
+from PySide6.QtCore import QThread, Signal, QObject, Slot, QTimer, QCoreApplication, Qt
 from PySide6.QtGui import QMatrix4x4, QOpenGLContext, QOffscreenSurface
 from PySide6.QtOpenGL import (
     QOpenGLVertexArrayObject,
@@ -138,7 +139,7 @@ class SharedVBOManager(QObject):
         Destroy a shared VBO.
         There will be no active OpenGL context in the main thread when this is finished.
         """
-
+        log.debug("destroy_vbo")
         def destroy_vbo():
             with self._lock:
                 if vbo not in self._vbos:
@@ -465,6 +466,10 @@ class WidgetChunkData(QObject):
         self.vao = None
         self.shared.geometry_changed.connect(self.geometry_changed)
 
+    def __del__(self):
+        if self.vao is not None:
+            log.warning("VAO has not been destroyed.")
+
 
 def empty_iterator():
     yield from ()
@@ -487,7 +492,7 @@ def get_grid_spiral(
         length += 1
 
 
-class ChunkContainer(MutableMapping):
+class ChunkContainer(MutableMapping[ChunkKey, WidgetChunkData]):
     def __init__(self):
         self._chunks: dict[ChunkKey, WidgetChunkData] = {}
         self._order: list[ChunkKey] = []
@@ -542,11 +547,10 @@ class WidgetLevelGeometry(QObject, Drawable):
     _dimension: Optional[Dimension]
     _camera_chunk: Optional[tuple[int, int]]
     _chunk_finder: Generator[ChunkKey, None, None]
-    _running: bool
     _generation_count: int
 
     # OpenGL attributes
-    _context: Optional[QOpenGLContext]
+    _context: Optional[QOpenGLContext]  # The presence of a context dictates that the state is active
     _surface: QOffscreenSurface
     _program: Optional[QOpenGLShaderProgram]
     _matrix_location: Optional[int]
@@ -566,7 +570,6 @@ class WidgetLevelGeometry(QObject, Drawable):
         self._dimension = None
         self._camera_chunk = None
         self._chunk_finder = empty_iterator()
-        self._running = False
         self._generation_count = 0
 
         self._context = None
@@ -592,10 +595,8 @@ class WidgetLevelGeometry(QObject, Drawable):
                 "The widget context is not sharing with the global context."
             )
 
-        # Make sure any old data no longer exists.
-        self._destroy_gl()
-        self._context = context
-        self._context.aboutToBeDestroyed.connect(self._destroy_gl)
+        if self._context is not None:
+            raise RuntimeError("This has been initialised before without being destroyed.")
 
         # Initialise the shader
         self._program = QOpenGLShaderProgram()
@@ -657,28 +658,27 @@ class WidgetLevelGeometry(QObject, Drawable):
         self._texture_location = self._program.uniformLocation("image")
         self._program.release()
 
-    def _destroy_gl(self):
+        self._context = context
+        self._init_geometry_no_context()
+        self._update_chunk_finder()
+
+    def destroyGL(self):
+        """
+        Destroy all the data associated with this context.
+        Once finished the context may be destroyed.
+        initializeGL may be called again to continue using the data.
+        The caller must activate the context.
+        """
         with CatchException():
-            if (
-                self._context is not None
-                and isValid(self._context)
-                and self._context.isValid()
-            ):
-                if QOpenGLContext.currentContext() is not self._context:
-                    # Enable the context if it isn't.
-                    # Use an offscreen surface because the widget surface may no longer exist.
-                    if not self._context.makeCurrent(self._surface):
-                        raise ContextException("Could not make context current.")
-
-                self._clear_chunks_no_context()
-
+            if QOpenGLContext.currentContext() is not self._context:
+                raise ContextException("Context is not valid")
+            self._context = None
             self._program = None
             self._matrix_location = None
             self._texture_location = None
-            self._context = None
+            self._destroy_geometry_no_context()
 
     def __del__(self):
-        self._destroy_gl()
         log.debug("__del__ WidgetLevelGeometry")
 
     def paintGL(self, projection_matrix: QMatrix4x4, view_matrix: QMatrix4x4):
@@ -689,8 +689,9 @@ class WidgetLevelGeometry(QObject, Drawable):
         :param projection_matrix: The camera internal projection matrix.
         :param view_matrix: The camera external matrix.
         """
-        context = QOpenGLContext.currentContext()
-        if context is None or not QOpenGLContext.areSharing(context, self._context):
+        if self._context is None:
+            return
+        if QOpenGLContext.currentContext() is not self._context:
             raise ContextException("Context is not valid")
 
         f = QOpenGLContext.currentContext().functions()
@@ -719,14 +720,6 @@ class WidgetLevelGeometry(QObject, Drawable):
 
         self._program.release()
 
-    def start(self):
-        """Start chunk generation"""
-        self._running = True
-        self._update_chunk_finder()
-
-    def stop(self):
-        self._running = False
-
     def _update_chunk_finder(self):
         if self._dimension is None or self._camera_chunk is None:
             empty_iterator()
@@ -737,6 +730,47 @@ class WidgetLevelGeometry(QObject, Drawable):
             )
             self._queue_next_chunk()
 
+    def _init_geometry_no_context(self):
+        """
+        Initialise the OpenGL data for all existing chunk objects.
+        This is the opposite of _destroy_vao_no_context
+        The caller manages the context.
+        """
+        for chunk in self._chunks.values():
+            # Don't signal that the geometry has changed.
+            # Most of the chunks are not valid yet and errors will occur if we try and draw them.
+            self._create_vao(chunk, False)
+
+    def _destroy_geometry_no_context(self):
+        """
+        Destroy all Vertex Array Objects.
+        The VBOs are defined in the shared context so do not need to be destroyed here.
+        This leaves the state such that the VAOs can be created again.
+        """
+        log.debug(f"Clearing {len(self._chunks)} VAOs from chunks")
+        for chunk in self._chunks.values():
+            if chunk.vao is not None:  # and isValid(chunk.vao):
+                # I don't understand where this is being destroyed from
+                chunk.vao.destroy()
+                chunk.vao = None
+
+        log.debug(f"Clearing {len(self._pending_chunks)} VAOs from pending_chunks")
+        for chunk in self._pending_chunks.values():
+            if chunk.vao is not None:  # and isValid(chunk.vao):
+                # I don't understand where this is being destroyed from
+                chunk.vao.destroy()
+                chunk.vao = None
+        log.debug("cleared VAOs")
+
+    def _clear_chunks_no_context(self):
+        """
+        Clears all geometry data.
+        The context must be current before calling this.
+        """
+        self._destroy_geometry_no_context()
+        self._chunks.clear()
+        self._pending_chunks.clear()
+
     def _clear_chunks(self):
         """Unload all chunk data. It is the job of the caller to handle the chunk generator."""
         if self._context is None:
@@ -746,24 +780,12 @@ class WidgetLevelGeometry(QObject, Drawable):
         self._clear_chunks_no_context()
         self._context.doneCurrent()
 
-    def _clear_chunks_no_context(self):
-        """Unload all chunk data. Caller manages the GL context."""
-        for chunk in self._chunks.values():
-            if isValid(chunk.vao):
-                # I don't understand where this is being destroyed from
-                chunk.vao.destroy()
-        self._context.doneCurrent()
-        self._chunks.clear()
-        self._pending_chunks.clear()
-
     def _clear_far_chunks(self):
         """
         Unload all chunk data outside the unload render distance.
         It is the job of the caller to handle the chunk generator.
         """
-        if self._context is None:
-            return
-        if self._camera_chunk is None:
+        if self._context is None or self._camera_chunk is None:
             return
 
         if not self._context.makeCurrent(self._surface):
@@ -787,6 +809,7 @@ class WidgetLevelGeometry(QObject, Drawable):
                 ):
                     if chunk.vao is not None:
                         chunk.vao.destroy()
+                        chunk.vao = None
                     remove_chunk_keys.append(chunk_key)
             for chunk_key in remove_chunk_keys:
                 del container[chunk_key]
@@ -831,14 +854,14 @@ class WidgetLevelGeometry(QObject, Drawable):
         self._update_chunk_finder()
 
     def _queue_next_chunk(self):
-        if self._running and self._generation_count == 0:
+        if self._context and self._generation_count == 0:
             # The instance is running and there are no existing generation calls running.
             self._generation_count += 1
             self._queue_chunk.emit()
 
     _queue_chunk = Signal()
 
-    def _create_vao(self, chunk: WidgetChunkData):
+    def _create_vao(self, chunk: WidgetChunkData, signal=True):
         if self._context is None or not self._context.makeCurrent(
                 self._surface
         ):
@@ -885,12 +908,13 @@ class WidgetLevelGeometry(QObject, Drawable):
         # If a VBO was previously stored it will get automatically deleted when the last reference is lost.
         chunk.geometry = vbo_container
 
-        self.geometry_changed.emit()
+        if signal:
+            self.geometry_changed.emit()
 
     def _process_chunk(self):
         """Generate a chunk. This must not be called directly."""
         with CatchException():
-            if not self._running:
+            if self._context is None:
                 return
             while True:
                 # Find a chunk key to process
@@ -909,30 +933,37 @@ class WidgetLevelGeometry(QObject, Drawable):
 
             if shared_geometry is None:
                 # The VBO does not exist yet. on_change will be run when it is loaded
+                if chunk_key in self._chunks:
+                    log.warning("existing data")
                 self._pending_chunks[chunk_key] = widget_chunk_data
                 self._generation_count -= 1
             else:
                 # vbo already exists
                 widget_chunk_data.geometry = shared_geometry
+                if chunk_key in self._chunks:
+                    log.warning("existing data")
                 self._chunks[chunk_key] = widget_chunk_data
                 self._create_vao(widget_chunk_data)
                 self._generation_count -= 1
                 self._queue_next_chunk()
 
             # on_change cannot strongly reference self otherwise there is a circular reference
-            weak_self: WidgetLevelGeometry = proxy(self)
+            weak_self = ref(self)
 
             def on_change():
                 with CatchException():
-                    if not weak_self._running:
+                    self_: Optional[WidgetLevelGeometry] = weak_self()
+                    if self_ is None or self_._context is None:
                         return
-                    weak_self._generation_count += 1
-                    if chunk_key in weak_self._pending_chunks:
-                        weak_self._chunks[chunk_key] = weak_self._pending_chunks.pop(chunk_key)
-                    if chunk_key in weak_self._chunks:
-                        weak_self._create_vao(weak_self._chunks[chunk_key])
+                    self_._generation_count += 1
+                    if chunk_key in self_._pending_chunks:
+                        if chunk_key in self._chunks:
+                            print("existing data")
+                        self_._chunks[chunk_key] = self_._pending_chunks.pop(chunk_key)
+                    if chunk_key in self_._chunks:
+                        self_._create_vao(self_._chunks[chunk_key])
 
-                    weak_self._generation_count -= 1
-                    weak_self._queue_next_chunk()
+                    self_._generation_count -= 1
+                    self_._queue_next_chunk()
 
             widget_chunk_data.geometry_changed.connect(on_change)

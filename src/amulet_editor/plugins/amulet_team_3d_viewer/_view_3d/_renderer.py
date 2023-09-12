@@ -19,7 +19,6 @@ from OpenGL.GL import (
     GL_COLOR_BUFFER_BIT,
     GL_DEPTH_BUFFER_BIT,
     GL_DEPTH_TEST,
-    GL_CULL_FACE,
 )
 
 from amulet_editor.data.project import get_level
@@ -56,6 +55,7 @@ class FirstPersonCanvas(QOpenGLWidget, QOpenGLFunctions):
     def __init__(self, parent=None):
         QOpenGLWidget.__init__(self, parent)
         QOpenGLFunctions.__init__(self)
+        self._initialised = False
 
         self._level = get_level()
 
@@ -107,31 +107,57 @@ class FirstPersonCanvas(QOpenGLWidget, QOpenGLFunctions):
 
     def initializeGL(self):
         """Private initialisation method called by the QOpenGLWidget"""
-        log.debug(f"Initialising GL for {self}")
-        self.initializeOpenGLFunctions()
-        self.glClearColor(*self.background_colour, 1)
-        self._render_level.initializeGL()
+        # You must only put calls that do not need destructing here.
+        # Normal initialisation must go in the showEvent and destruction in the hideEvent
+        with CatchException():
+            log.debug(f"Initialising GL for {self}")
+            self.initializeOpenGLFunctions()
+            self.glClearColor(*self.background_colour, 1)
+            self._initialised = True
 
-        # Set the start position after OpenGL has been initialised
-        self._render_level.set_dimension(self._level.dimensions[0])
-        self.camera.location = Location(0, 0, 0)
+    def __del__(self):
+        log.debug("__del__ FirstPersonCanvas")
 
     @property
     def camera(self) -> Camera:
         return self._camera
 
     def showEvent(self, event: QShowEvent) -> None:
-        self._render_level.start()
+        with CatchException():
+            log.debug("Showing FirstPersonCanvas")
+            self.makeCurrent()
+
+            if not self._initialised or QOpenGLContext.currentContext() is None:
+                # This can get run before initializeGL in some cases
+                # If we don't skip, it crashes the program.
+                return
+
+            self._render_level.initializeGL()
+            # TODO: pull this data from somewhere
+            # Set the start position after OpenGL has been initialised
+            self._render_level.set_dimension(self._level.dimensions[0])
+            self.camera.location = Location(0, 0, 0)
+
+            self.doneCurrent()
 
     def hideEvent(self, event: QHideEvent) -> None:
-        self._render_level.stop()
+        with CatchException():
+            log.debug("Hiding FirstPersonCanvas")
+            self.makeCurrent()
+
+            self._render_level.destroyGL()
+
+            self.doneCurrent()
 
     def paintGL(self):
         """Private paint method called by the QOpenGLWidget"""
         with CatchException():
-            if QOpenGLContext.currentContext() is not self.context():
-                log.error("Tried to paint from a different context.")
+            if not self._initialised or not self.isVisible() or QOpenGLContext.currentContext() is not self.context() is not None:
+                # Sometimes paintGL is run before initializeGL or when the window is not visible.
+                # Sometimes it is called when the context is not active.
+                # If we don't skip these cases it crashes the program.
                 return
+
             self.glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT)
             self.glEnable(GL_DEPTH_TEST)
 
