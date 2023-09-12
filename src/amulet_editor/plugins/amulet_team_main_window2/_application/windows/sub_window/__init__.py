@@ -1,5 +1,7 @@
 from typing import Iterable, Union, Type
 
+from PySide6.QtGui import QCloseEvent
+
 from amulet_team_main_window2._application.widget import Widget
 from amulet_team_main_window2._application.windows.window_proxy import (
     AbstractWindowProxy,
@@ -9,7 +11,10 @@ from ..layout import Layout
 
 
 class AmuletSubWindow(Ui_AmuletSubWindow):
-    pass
+    def closeEvent(self, event: QCloseEvent):
+        # The parent keeps this object alive. We need to do this so it can be destroyed
+        self.setParent(None)
+        self.deleteLater()
 
 
 class AmuletSubWindowProxy(AbstractWindowProxy):
