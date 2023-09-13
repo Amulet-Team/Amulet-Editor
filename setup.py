@@ -1,5 +1,5 @@
 from typing import List, Tuple
-from setuptools import setup, find_packages
+from setuptools import setup
 from wheel.bdist_wheel import bdist_wheel
 from Cython.Build import cythonize
 import glob
@@ -9,6 +9,7 @@ import subprocess
 import logging
 import re
 import versioneer
+import PySide6
 
 
 first_party = {
@@ -113,7 +114,8 @@ if next(glob.iglob("src/**/*.pyx", recursive=True), None):
             "OPENMP_CLARGS": omp_clargs,
             "OPENMP_CPPCARGS": omp_cppcargs,
             "OPENMP_CPPLARGS": omp_cpplargs,
-        },
+            "PySide6Lib": PySide6.__path__[0]
+        }
     )
 else:
     ext = ()
