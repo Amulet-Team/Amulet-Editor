@@ -670,8 +670,6 @@ class WidgetLevelGeometry(QObject, Drawable):
         The caller must activate the context.
         """
         with CatchException():
-            if QOpenGLContext.currentContext() is not self._context:
-                raise ContextException("Context is not valid")
             self._context = None
             self._program = None
             self._matrix_location = None
@@ -948,22 +946,27 @@ class WidgetLevelGeometry(QObject, Drawable):
                 self._queue_next_chunk()
 
             # on_change cannot strongly reference self otherwise there is a circular reference
-            weak_self = ref(self)
+            widget_chunk_data.geometry_changed.connect(self.get_on_change_callback(ref(self), chunk_key))
 
-            def on_change():
-                with CatchException():
-                    self_: Optional[WidgetLevelGeometry] = weak_self()
-                    if self_ is None or self_._context is None:
-                        return
-                    self_._generation_count += 1
-                    if chunk_key in self_._pending_chunks:
-                        if chunk_key in self._chunks:
-                            print("existing data")
-                        self_._chunks[chunk_key] = self_._pending_chunks.pop(chunk_key)
+    @staticmethod
+    def get_on_change_callback(
+        weak_self: Callable[[], Optional[WidgetLevelGeometry]],
+        chunk_key: ChunkKey
+    ):
+        def on_change():
+            with CatchException():
+                self_: Optional[WidgetLevelGeometry] = weak_self()
+                if self_ is None or self_._context is None:
+                    return
+                self_._generation_count += 1
+                if chunk_key in self_._pending_chunks:
                     if chunk_key in self_._chunks:
-                        self_._create_vao(self_._chunks[chunk_key])
+                        print("existing data")
+                    self_._chunks[chunk_key] = self_._pending_chunks.pop(chunk_key)
+                if chunk_key in self_._chunks:
+                    self_._create_vao(self_._chunks[chunk_key])
 
-                    self_._generation_count -= 1
-                    self_._queue_next_chunk()
+                self_._generation_count -= 1
+                self_._queue_next_chunk()
 
-            widget_chunk_data.geometry_changed.connect(on_change)
+        return on_change
