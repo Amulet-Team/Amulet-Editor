@@ -140,6 +140,7 @@ class SharedVBOManager(QObject):
         There will be no active OpenGL context in the main thread when this is finished.
         """
         log.debug("destroy_vbo")
+
         def destroy_vbo():
             with self._lock:
                 if vbo not in self._vbos:
@@ -550,7 +551,9 @@ class WidgetLevelGeometry(QObject, Drawable):
     _generation_count: int
 
     # OpenGL attributes
-    _context: Optional[QOpenGLContext]  # The presence of a context dictates that the state is active
+    _context: Optional[
+        QOpenGLContext
+    ]  # The presence of a context dictates that the state is active
     _surface: QOffscreenSurface
     _program: Optional[QOpenGLShaderProgram]
     _matrix_location: Optional[int]
@@ -596,7 +599,9 @@ class WidgetLevelGeometry(QObject, Drawable):
             )
 
         if self._context is not None:
-            raise RuntimeError("This has been initialised before without being destroyed.")
+            raise RuntimeError(
+                "This has been initialised before without being destroyed."
+            )
 
         # Initialise the shader
         self._program = QOpenGLShaderProgram()
@@ -860,9 +865,7 @@ class WidgetLevelGeometry(QObject, Drawable):
     _queue_chunk = Signal()
 
     def _create_vao(self, chunk: WidgetChunkData, signal=True):
-        if self._context is None or not self._context.makeCurrent(
-                self._surface
-        ):
+        if self._context is None or not self._context.makeCurrent(self._surface):
             raise ContextException("Could not make context current.")
 
         f = QOpenGLContext.currentContext().functions()
@@ -879,9 +882,7 @@ class WidgetLevelGeometry(QObject, Drawable):
 
         # vertex coord
         f.glEnableVertexAttribArray(0)
-        f.glVertexAttribPointer(
-            0, 3, GL_FLOAT, GL_FALSE, 12 * FloatSize, VoidPtr(0)
-        )
+        f.glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 12 * FloatSize, VoidPtr(0))
         # texture coord
         f.glEnableVertexAttribArray(1)
         f.glVertexAttribPointer(
@@ -946,12 +947,13 @@ class WidgetLevelGeometry(QObject, Drawable):
                 self._queue_next_chunk()
 
             # on_change cannot strongly reference self otherwise there is a circular reference
-            widget_chunk_data.geometry_changed.connect(self.get_on_change_callback(ref(self), chunk_key))
+            widget_chunk_data.geometry_changed.connect(
+                self.get_on_change_callback(ref(self), chunk_key)
+            )
 
     @staticmethod
     def get_on_change_callback(
-        weak_self: Callable[[], Optional[WidgetLevelGeometry]],
-        chunk_key: ChunkKey
+        weak_self: Callable[[], Optional[WidgetLevelGeometry]], chunk_key: ChunkKey
     ):
         def on_change():
             with CatchException():
