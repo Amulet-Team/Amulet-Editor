@@ -107,7 +107,9 @@ class AmuletMainWindow(Ui_AmuletMainWindow):
             if not is_registered_widget(layout):
                 raise RuntimeError(f"Widget {layout} has not been registered.")
             for index in range(self.view_container.count() - 1, -1, -1):
-                self.view_container.widget(index).deleteLater()
+                widget = self.view_container.widget(index)
+                widget.hide()
+                widget.deleteLater()
             try:
                 widget = layout()
             except Exception as e:
