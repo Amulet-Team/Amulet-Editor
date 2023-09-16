@@ -79,7 +79,7 @@ class GlData:
         log.debug("Init context data")
         self.data_valid = True
         self._init_context_data()
-        
+
     def _init_context_data(self):
         self.render_level.initializeGL()
 
@@ -101,8 +101,8 @@ class GlData:
     def __del__(self):
         with CatchException():
             log.debug("__del__ GlData")
-            if self.context_valid:
-                raise RuntimeError("Context was not destroyed.")
+            if self.data_valid:
+                raise RuntimeError("Context data was not destroyed.")
 
 
 class FirstPersonCanvas(QOpenGLWidget, QOpenGLFunctions):
