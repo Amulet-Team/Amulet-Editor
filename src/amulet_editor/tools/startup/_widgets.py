@@ -1,12 +1,16 @@
 import pathlib
 from typing import Optional
+from datetime import datetime
 
+from PIL.ImageQt import ImageQt
+
+from amulet.level.abc import Level, DiskLevel
 from amulet_editor.data import build
-from amulet_editor.models.minecraft import LevelData
+from amulet_editor.models.text import Motd
 from amulet_editor.models.widgets import AStylableSvgWidget
 from amulet_editor.models.widgets import QElidedLabel
 from PySide6.QtCore import QCoreApplication, QEvent, QSize, Qt
-from PySide6.QtGui import QEnterEvent, QImage, QPixmap
+from PySide6.QtGui import QEnterEvent, QImage, QPixmap, QIcon
 from PySide6.QtWidgets import (
     QGridLayout,
     QHBoxLayout,
@@ -94,23 +98,23 @@ class QLevelSelectionCard(QPushButton):
     def setLayout(self, arg__1: QLayout) -> None:
         return None
 
-    def setLevel(self, level_data: Optional[LevelData]):
-        if level_data is not None:
-            icon_path = (
-                level_data.icon_path
-                if level_data.icon_path is not None
-                else build.get_resource("images/missing_world_icon.png")
-            )
-            level_icon = QPixmap(QImage(icon_path))
+    def setLevel(self, level: Level | None) -> None:
+        if level is None:
+            self.swgt_container.setCurrentIndex(0)
+        else:
+            thumbnail_image: QImage = ImageQt(level.thumbnail)
+            level_icon = QPixmap(thumbnail_image)
             level_icon = level_icon.scaledToHeight(80)
 
-            level_name = level_data.name.get_html(font_weight=600)
-            file_name = pathlib.PurePath(level_data.path).name
-            version = f"{level_data.edition} - {level_data.version}"
-            last_played = (
-                level_data.last_played.astimezone(tz=None)
-                .strftime("%B %d, %Y %I:%M %p")
-                .replace(" 0", " ")
+            level_name = Motd(level.level_name).get_html(font_weight=600)
+            if isinstance(level, DiskLevel):
+                file_name = pathlib.PurePath(level.path).name
+            else:
+                file_name = ""
+            version = f"{level.platform} - {level.max_game_version}"
+            modified_time = (
+                datetime.fromtimestamp(level.modified_time).astimezone()
+                .strftime("%d %B %Y %I:%M %p")
             )
 
             widget = QWidget(self.swgt_container)
@@ -132,13 +136,13 @@ class QLevelSelectionCard(QPushButton):
 
             lbl_version = QElidedLabel(version, widget)
 
-            lbl_last_played = QElidedLabel(last_played, widget)
+            lbl_modified_time = QElidedLabel(modified_time, widget)
 
             grid.addWidget(lbl_pixmap, 0, 0, 4, 1)
             grid.addWidget(lbl_level_name, 0, 1, 1, 1)
             grid.addWidget(lbl_file_name, 1, 1, 1, 1)
             grid.addWidget(lbl_version, 2, 1, 1, 1)
-            grid.addWidget(lbl_last_played, 3, 1, 1, 1)
+            grid.addWidget(lbl_modified_time, 3, 1, 1, 1)
 
             widget.setLayout(grid)
 
@@ -147,8 +151,6 @@ class QLevelSelectionCard(QPushButton):
 
             self.swgt_container.addWidget(widget)
             self.swgt_container.setCurrentIndex(1)
-        else:
-            self.swgt_container.setCurrentIndex(0)
 
     def layout(self) -> QLayout:
         return super().layout()
