@@ -24,7 +24,7 @@ def new_thread(name: str) -> QThread:
     return thread
 
 
-def unload_plugin():
+def unload_plugin() -> None:
     threads = tuple(_threads)
 
     # Quit all threads.

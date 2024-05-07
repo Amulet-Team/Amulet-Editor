@@ -23,17 +23,17 @@ class HomeWidget(QWidget, Widget):
         self._layout.setContentsMargins(0, 0, 0, 0)
         self._set_landing_page()
 
-    def activate_view(self):
+    def activate_view(self) -> None:
         self._set_landing_page()
 
-    def setCentralWidget(self, widget: QWidget):
+    def setCentralWidget(self, widget: QWidget) -> None:
         for _ in range(self._layout.count()):
             old_widget = self._layout.takeAt(0)
             if old_widget is not None:
                 old_widget.widget().deleteLater()
         self._layout.addWidget(widget)
 
-    def _set_landing_page(self):
+    def _set_landing_page(self) -> None:
         page = HomePage(self)
         # Connect signals
         page.btn_open_world.clicked.connect(self._set_open_world_page)
@@ -42,13 +42,13 @@ class HomeWidget(QWidget, Widget):
         # )
 
         @Slot(int)
-        def _locale_change(index: int):
+        def _locale_change(index: int) -> None:
             set_locale(page.cbo_language.currentData())
 
         page.cbo_language.currentIndexChanged.connect(_locale_change)
         self.setCentralWidget(page)
 
-    def _set_open_world_page(self):
+    def _set_open_world_page(self) -> None:
         page = OpenWorldPage()
         page.btn_back.clicked.connect(self._set_landing_page)
         self.setCentralWidget(page)
