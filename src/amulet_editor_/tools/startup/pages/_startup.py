@@ -1,5 +1,5 @@
 from amulet_editor import __version__
-from amulet_editor.data import build
+from amulet_editor.resources import get_resource
 from amulet_editor.tools.startup._widgets import AIconCard
 from PySide6.QtCore import QCoreApplication, QSize, Qt
 from PySide6.QtGui import QImage, QPixmap
@@ -21,7 +21,7 @@ class StartupPage(QWidget):
         # self.frm_nav_header.setProperty("color", "on_surface")
 
     def setupUi(self):
-        amulet_logo = QPixmap(QImage(build.get_resource("images/amulet_logo.png")))
+        amulet_logo = QPixmap(QImage(get_resource("images/amulet_logo.png")))
         amulet_logo = amulet_logo.scaledToHeight(128)
 
         self.lbl_app_icon = QLabel()
@@ -41,21 +41,21 @@ class StartupPage(QWidget):
         self.lbl_app_version.setProperty("subfamily", "semi_light")
 
         self.crd_open_level = AIconCard(
-            build.get_resource(f"icons/tabler/file-symlink.svg"),
+            get_resource(f"icons/tabler/file-symlink.svg"),
             QSize(25, 25),
             parent=self,
         )
         self.crd_open_level.setMinimumWidth(200)
 
         self.crd_open_project = AIconCard(
-            build.get_resource(f"icons/tabler/file-symlink.svg"),
+            get_resource(f"icons/tabler/file-symlink.svg"),
             QSize(25, 25),
             parent=self,
         )
         self.crd_open_project.setMinimumWidth(200)
 
         self.crd_new_project = AIconCard(
-            build.get_resource(f"icons/tabler/file-plus.svg"),
+            get_resource(f"icons/tabler/file-plus.svg"),
             QSize(25, 25),
             parent=self,
         )

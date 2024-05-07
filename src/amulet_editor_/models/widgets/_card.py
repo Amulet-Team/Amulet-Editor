@@ -1,6 +1,6 @@
 from typing import Optional
 
-from amulet_editor.data import build
+from amulet_editor.resources import get_resource
 from PySide6.QtCore import QEvent, Qt
 from PySide6.QtGui import QEnterEvent, QPixmap
 from PySide6.QtWidgets import (
@@ -85,7 +85,7 @@ class ALinkCard(QPushButton):
         layout.addWidget(self.lbl_description)
 
         self.svg_ext_icon = AStylableSvgWidget(
-            build.get_resource(f"icons/tabler/external-link.svg")
+            get_resource(f"icons/tabler/external-link.svg")
         )
         self.svg_ext_icon.setAttribute(Qt.WidgetAttribute.WA_TransparentForMouseEvents)
         self.svg_ext_icon.setFixedSize(15, 15)

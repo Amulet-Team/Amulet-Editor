@@ -5,7 +5,7 @@ from datetime import datetime
 from PIL.ImageQt import ImageQt
 
 from amulet.level.abc import Level, DiskLevel
-from amulet_editor.data import build
+from amulet_editor.resources import get_resource
 from amulet_editor.models.text import Motd
 from amulet_editor.models.widgets import AStylableSvgWidget
 from amulet_editor.models.widgets import QElidedLabel
@@ -41,7 +41,7 @@ class AIconCard(QPushButton):
         layout.setSpacing(5)
         self.setLayout(layout)
 
-        self._svg_icon = AStylableSvgWidget(build.get_resource(icon))
+        self._svg_icon = AStylableSvgWidget(get_resource(icon))
         self._svg_icon.setAttribute(Qt.WidgetAttribute.WA_TransparentForMouseEvents)
         self._svg_icon.setSizePolicy(
             QSizePolicy.Policy.Maximum, QSizePolicy.Policy.Maximum
@@ -72,7 +72,7 @@ class AIconCard(QPushButton):
     def setIcon(self, icon_path: QIcon | QPixmap | str) -> None:
         if not isinstance(icon_path, str):
             raise TypeError
-        self._svg_icon.load(build.get_resource(icon_path))
+        self._svg_icon.load(get_resource(icon_path))
 
     def enterEvent(self, event: QEnterEvent) -> None:
         self.setProperty("hover", "true")

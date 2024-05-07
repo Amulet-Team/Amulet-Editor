@@ -1,6 +1,6 @@
 from typing import Optional
 
-from amulet_editor.data import build
+from amulet_editor.resources import get_resource
 from amulet_editor.models.widgets._label import QHoverLabel
 from PySide6.QtCore import QEvent, QSize, Qt
 from PySide6.QtGui import QColor, QEnterEvent, QPainter, QPaintEvent, QImage
@@ -52,7 +52,7 @@ class AIconButton(QPushButton):
 
     def __init__(
         self,
-        icon_path: str = build.get_resource("icons/tabler/question-mark.svg"),
+        icon_path: str = get_resource("icons/tabler/question-mark.svg"),
         parent: QWidget | None = None,
     ):
         super().__init__(parent)

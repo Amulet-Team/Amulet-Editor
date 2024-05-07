@@ -6,10 +6,8 @@ from shiboken6 import isValid
 from PySide6.QtCore import QSize, Qt
 from PySide6.QtWidgets import QFrame, QWidget, QVBoxLayout, QHBoxLayout, QButtonGroup
 
-from amulet_editor.models.widgets import ADragContainer
+from amulet_editor.models.widgets import ADragContainer, ATooltipIconButton
 from amulet_editor.models.widgets.traceback_dialog import display_exception
-
-from amulet_editor.models.widgets._icon import ATooltipIconButton
 
 
 class ButtonProxy:

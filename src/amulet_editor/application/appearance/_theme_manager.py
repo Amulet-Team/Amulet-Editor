@@ -2,24 +2,26 @@ import os
 from typing import Optional
 
 from amulet_editor.application.appearance._theme import Theme
-from amulet_editor.data import build, project
+from amulet_editor.resources import get_resource
+# from amulet_editor.data import project
 from PySide6.QtCore import QObject, Signal
 
 
 class ThemeManager(QObject):
     changed = Signal(object)
 
-    def __init__(self):
+    def __init__(self) -> None:
         super().__init__(parent=None)
         self._theme: Optional[Theme] = None
 
         self._themes: list[Theme] = []
-        theme_dir = build.get_resource("themes")
+        theme_dir = get_resource("themes")
         for theme_ in os.listdir(theme_dir):
             if theme_ != "_default":
                 self._themes.append(Theme(os.path.join(theme_dir, theme_)))
 
-        self.set_theme(project.settings()["theme"])
+        # self.set_theme(project.settings()["theme"])
+        self.set_theme("Amulet Dark")
 
     @property
     def theme(self) -> Theme:

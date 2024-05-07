@@ -2,7 +2,7 @@ import webbrowser
 from dataclasses import dataclass
 from functools import partial
 
-from amulet_editor.data import build
+from amulet_editor.resources import get_resource
 from amulet_editor.models.widgets import ALinkCard
 from PySide6.QtCore import QCoreApplication, Qt
 from PySide6.QtWidgets import QLabel, QVBoxLayout, QWidget
@@ -63,7 +63,7 @@ class StartupPanel(QWidget):
         for link in links:
             link_card = ALinkCard(
                 link.name,
-                build.get_resource(f"icons/tabler/{link.icon}"),
+                get_resource(f"icons/tabler/{link.icon}"),
                 self.wgt_links,
             )
             link_card.clicked.connect(partial(webbrowser.open, link.url))

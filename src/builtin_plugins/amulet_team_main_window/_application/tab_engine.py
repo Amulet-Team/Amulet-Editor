@@ -45,7 +45,6 @@ from PySide6.QtCore import (
     QRect,
 )
 
-from amulet_editor.data.build import get_resource
 from amulet_editor.models.widgets.traceback_dialog import DisplayException
 import tablericons
 
