@@ -6,7 +6,7 @@
 ##
 ## WARNING! All changes made in this file will be lost when recompiling UI file!
 ################################################################################
-from PySide6.QtCore import QCoreApplication, QMetaObject, QEvent
+from PySide6.QtCore import QCoreApplication, QMetaObject, Qt, QEvent
 from PySide6.QtWidgets import (
     QHBoxLayout,
     QLabel,
@@ -18,8 +18,10 @@ from PySide6.QtWidgets import (
 
 
 class Ui_SettingsPage(QWidget):
-    def __init__(self, *args, **kwargs) -> None:
-        super().__init__(*args, **kwargs)
+    def __init__(
+        self, parent: QWidget | None = None, f: Qt.WindowType = Qt.WindowType.Widget
+    ) -> None:
+        super().__init__(parent, f)
         if not self.objectName():
             self.setObjectName("SettingsPage")
         self.resize(748, 788)

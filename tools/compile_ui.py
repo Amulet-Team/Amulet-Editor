@@ -36,6 +36,13 @@ Enums = [
 ]
 
 
+InitArgs: dict[str, str] = {
+    "QWidget": "def __init__(self, parent: QWidget | None = None, f: Qt.WindowType = Qt.WindowType.Widget) -> None:\n        super().__init__(parent, f)",
+    "QDialog": "def __init__(self, parent: QWidget | None = None, f: Qt.WindowType = Qt.WindowType.Dialog) -> None:\n        super().__init__(parent, f)",
+    "QMainWindow": "def __init__(self, parent: QWidget | None = None, flags: Qt.WindowType = Qt.WindowType.Window) -> None:\n        super().__init__(parent, f)",
+}
+
+
 def _compile_ui_file(ui_path: str) -> str | None:
     py_path = ui_path[:-2] + "py"
 
@@ -56,8 +63,11 @@ def _compile_ui_file(ui_path: str) -> str | None:
         py = pyf.read()
 
     ui = ET.parse(ui_path)
-    class_name = ui.find("class").text
-    super_name = ui.find("widget").attrib["class"]
+    class_element = ui.find("class")
+    super_element = ui.find("widget")
+    assert class_element is not None and super_element is not None
+    class_name = class_element.text
+    super_name = super_element.attrib["class"]
 
     # Run some postprocessing
     # Remove comments. The ones generated do not add anything
@@ -69,7 +79,10 @@ def _compile_ui_file(ui_path: str) -> str | None:
     # Replace setupUi with constructor
     py = re.sub(
         f"def setupUi\\(self, {class_name}\\):",
-        "def __init__(self, *args, **kwargs) -> None:\n        super().__init__(*args, **kwargs)",
+        InitArgs.get(
+            super_name,
+            "def __init__(self, *args, **kwargs) -> None:\n        super().__init__(*args, **kwargs)"
+        ),
         py,
     )
 
@@ -125,6 +138,7 @@ def _try_compile_ui_file(ui_path: str) -> str | None:
         return _compile_ui_file(ui_path)
     except Exception:
         print(traceback.format_exc())
+    return None
 
 
 def main() -> None:
@@ -136,7 +150,11 @@ def main() -> None:
         ):
             futures.append(executor.submit(_try_compile_ui_file, ui_path))
 
-    paths = [f.result() for f in futures]
+    paths: list[str] = []
+    for f in futures:
+        result = f.result()
+        if result is not None:
+            paths.append(result)
     if paths:
         subprocess.run([sys.executable, "-m", "black", *paths])
 
