@@ -9,7 +9,7 @@ _obj = LocaleObject()
 locale_changed = _obj.locale_changed
 
 
-def set_locale(locale: QLocale):
+def set_locale(locale: QLocale) -> None:
     """Set the application locale"""
     QLocale.setDefault(locale)
     locale_changed.emit(locale)

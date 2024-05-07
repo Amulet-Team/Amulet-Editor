@@ -24,7 +24,7 @@ from PySide6.QtWidgets import (
 
 
 class ImportLevelMenu(QObject):
-    def __init__(self, set_panel: Callable[[Optional[QWidget]], None]):
+    def __init__(self, set_panel: Callable[[Optional[QWidget]], None]) -> None:
         super().__init__()
 
         self.project_directory = paths.project_directory()
@@ -61,7 +61,7 @@ class ImportLevelMenu(QObject):
     def next_menu(self) -> Optional[Menu]:
         return None
 
-    def import_level(self):
+    def import_level(self) -> None:
         path = QFileDialog.getExistingDirectory(
             None,
             "Select Minecraft World",
@@ -76,13 +76,13 @@ class ImportLevelMenu(QObject):
             level_data = LevelData(amulet.load_format(path))
             self.set_level(level_data)
 
-    def select_level(self):
+    def select_level(self) -> None:
         if self._widget.crd_select_level.isChecked():
             self.set_panel(self._world_selection_panel)
         else:
             self.set_panel(None)
 
-    def set_level(self, level_data: LevelData):
+    def set_level(self, level_data: LevelData) -> None:
         self.project_data.level_directory = level_data.path
 
         self._widget.lne_import_level.setText(level_data.path)
@@ -90,27 +90,27 @@ class ImportLevelMenu(QObject):
 
         self.enable_next.emit(True)
 
-    def set_project_data(self, project_data: ProjectData):
+    def set_project_data(self, project_data: ProjectData) -> None:
         self.project_data = project_data
 
-    def check_focus(self, old: Optional[QWidget], new: Optional[QWidget]):
+    def check_focus(self, old: Optional[QWidget], new: Optional[QWidget]) -> None:
         alternate_focus = [self._widget.lne_import_level]
 
         if new in alternate_focus:
             self.uncheck_level_card()
 
-    def uncheck_level_card(self):
+    def uncheck_level_card(self) -> None:
         self._widget.crd_select_level.setChecked(False)
         self._widget.crd_select_level.clicked.emit()
 
 
 class ImportLevelWidget(QWidget):
-    def __init__(self):
+    def __init__(self) -> None:
         super().__init__()
 
         self.setupUi()
 
-    def setupUi(self):
+    def setupUi(self) -> None:
         # Create 'Select Level' frame
         self.lbl_select_level = QLabel(self)
         self.lbl_select_level.setProperty("color", "on_primary")
@@ -159,7 +159,7 @@ class ImportLevelWidget(QWidget):
 
         self.retranslateUi()
 
-    def retranslateUi(self):
+    def retranslateUi(self) -> None:
         # Disable formatting to condense tranlate functions
         # fmt: off
         self.lbl_select_level.setText(QCoreApplication.translate("NewProjectTypePage", "Select World", None))

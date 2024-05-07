@@ -101,7 +101,7 @@ def is_landing_process() -> Optional[bool]:
 
 
 @register_remote_procedure
-def call_global(address, args, kwargs):
+def call_global(address, args, kwargs) -> None:
     """
     Call a procedure in all child processes.
     The return values are discarded.
@@ -118,7 +118,7 @@ def call_global(address, args, kwargs):
 
 # class register_global_remote_procedure:
 #     """A decorator that enables a function to be called in all processes."""
-#     def __init__(self, func: Callable):
+#     def __init__(self, func: Callable) -> None:
 #         if not callable(func):
 #             raise TypeError("func must be callable")
 #         self._func = register_remote_procedure(func)
@@ -138,7 +138,7 @@ _remote_call_listener = QLocalServer()
 _listener_connections: dict[RemoteProcedureCallingConnection, Optional[bool]] = {}
 
 
-def _on_listener_connect():
+def _on_listener_connect() -> None:
     with DisplayException("Error initialising socket", suppress=True, log=log):
         socket = _remote_call_listener.nextPendingConnection()
         connection = RemoteProcedureCallingConnection(socket)
@@ -147,11 +147,11 @@ def _on_listener_connect():
 
         if _is_broker:
 
-            def is_landing_success(response: bool):
+            def is_landing_success(response: bool) -> None:
                 log.debug(f"New connection is_landing {response}")
                 _listener_connections[connection] = response
 
-            def is_landing_err(tb_str):
+            def is_landing_err(tb_str) -> None:
                 logging.exception(tb_str)
 
             connection.call(
@@ -160,7 +160,7 @@ def _on_listener_connect():
                 is_landing_process,
             )
 
-        def on_disconnect():
+        def on_disconnect() -> None:
             with DisplayException("Error on socket disconnect", suppress=True, log=log):
                 is_landing = _listener_connections.pop(connection, None)
                 log.debug(f"Listener connection disconnected {socket}. {is_landing}")
@@ -194,7 +194,7 @@ _remote_call_listener.newConnection.connect(_on_listener_connect)
 class RemoteProcedureCallingConnection:
     """A subclass of QLocalSocket to facilitate calling a procedure in a remote process and getting the return value."""
 
-    def __init__(self, socket: QLocalSocket = None):
+    def __init__(self, socket: QLocalSocket = None) -> None:
         self.socket = socket or QLocalSocket()
         # A dictionary mapping the UUID for the call to the callback functions.
         self._calls: CallDataStorage = {}
@@ -240,7 +240,7 @@ class RemoteProcedureCallingConnection:
         payload = self.encode_request(identifier, address, args, kwargs)
         self.socket.write(payload)
 
-    def _process_msg(self):
+    def _process_msg(self) -> None:
         with DisplayException(
             "Exception processing remote procedure call.", suppress=True, log=log
         ):
@@ -310,7 +310,7 @@ class RemoteProcedureCallingConnection:
         return struct.pack(">I", payload_size) + payload
 
     @classmethod
-    def encode_request(cls, identifier: bytes, address: str, args, kwargs):
+    def encode_request(cls, identifier: bytes, address: str, args, kwargs) -> bytes:
         """
         Encode an RPC request.
 
@@ -337,7 +337,7 @@ class RemoteProcedureCallingConnection:
 _broker_connection = RemoteProcedureCallingConnection()
 
 
-def init_rpc(broker=False):
+def init_rpc(broker=False) -> None:
     """Init the messaging state"""
     global _is_broker
     log.debug("Initialising RPC.")
@@ -354,7 +354,7 @@ def init_rpc(broker=False):
         else:
             raise Exception(msg)
 
-    def on_connect():
+    def on_connect() -> None:
         with DisplayException("Error on socket connect", suppress=True, log=log):
             nonlocal failed_connections
             failed_connections = 0
@@ -362,7 +362,7 @@ def init_rpc(broker=False):
 
             if _is_broker:
 
-                def on_success_response(result):
+                def on_success_response(result) -> None:
                     if result == server_uuid:
                         log.debug("I am the broker")
                         _broker_connection.socket.close()
@@ -370,7 +370,7 @@ def init_rpc(broker=False):
                         log.debug("Exiting because a broker already exists.")
                         QApplication.quit()
 
-                def on_error_response(tb_str):
+                def on_error_response(tb_str) -> None:
                     log.exception(tb_str)
                     display_exception(
                         title="Broker exception",
@@ -382,7 +382,7 @@ def init_rpc(broker=False):
                     on_success_response, on_error_response, get_server_uuid
                 )
 
-    def on_error():
+    def on_error() -> None:
         with DisplayException(
             "Error on socket connection error", suppress=True, log=log
         ):

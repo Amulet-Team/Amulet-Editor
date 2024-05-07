@@ -12,12 +12,12 @@ from PySide6.QtWidgets import (
 
 
 class SelectPackagesPage(QWidget):
-    def __init__(self):
+    def __init__(self) -> None:
         super().__init__()
 
         self.setupUi()
 
-    def setupUi(self):
+    def setupUi(self) -> None:
         # Create 'Inner Container' frame
         self.frm_inner_container = QFrame(self)
         self.frm_inner_container.setFrameShape(QFrame.Shape.NoFrame)
@@ -121,7 +121,7 @@ class SelectPackagesPage(QWidget):
         # Translate widget text
         self.retranslateUi()
 
-    def retranslateUi(self):
+    def retranslateUi(self) -> None:
         # Disable formatting to condense tranlate functions
         # fmt: off
         self.lbl_header.setText(QCoreApplication.translate("NewProjectTypePage", "Packages", None))

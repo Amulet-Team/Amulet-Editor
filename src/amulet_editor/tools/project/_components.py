@@ -16,7 +16,7 @@ from PySide6.QtWidgets import QPlainTextEdit, QTextEdit, QWidget
 
 
 class QCodeEditor(QPlainTextEdit):
-    def __init__(self, parent=None):
+    def __init__(self, parent=None) -> None:
         super().__init__(parent)
         self.lineNumberArea = QLineNumberArea(self)
         self.lineNumberArea.setProperty("backgroundColor", "background")
@@ -28,7 +28,7 @@ class QCodeEditor(QPlainTextEdit):
         self.cursorPositionChanged.connect(self.highlightCurrentLine)
         self.updateLineNumberAreaWidth(0)
 
-    def lineNumberAreaWidth(self):
+    def lineNumberAreaWidth(self) -> int:
         digits = 1
         max_value = max(1, self.blockCount())
         while max_value >= 10:
@@ -37,10 +37,10 @@ class QCodeEditor(QPlainTextEdit):
         space = 3 + self.fontMetrics().horizontalAdvance("9") * (digits + 2)
         return space
 
-    def updateLineNumberAreaWidth(self, _):
+    def updateLineNumberAreaWidth(self, _) -> None:
         self.setViewportMargins(self.lineNumberAreaWidth(), 0, 0, 0)
 
-    def updateLineNumberArea(self, rect: QRect, dy: int):
+    def updateLineNumberArea(self, rect: QRect, dy: int) -> None:
         if dy:
             self.lineNumberArea.scroll(0, dy)
         else:
@@ -50,14 +50,14 @@ class QCodeEditor(QPlainTextEdit):
         if rect.contains(self.viewport().rect()):
             self.updateLineNumberAreaWidth(0)
 
-    def resizeEvent(self, event: QResizeEvent):
+    def resizeEvent(self, event: QResizeEvent) -> None:
         super().resizeEvent(event)
         cr = self.contentsRect()
         self.lineNumberArea.setGeometry(
             QRect(cr.left(), cr.top(), self.lineNumberAreaWidth(), cr.height())
         )
 
-    def highlightCurrentLine(self):
+    def highlightCurrentLine(self) -> None:
         extraSelections = []
         if not self.isReadOnly():
             selection = QTextEdit.ExtraSelection()
@@ -69,7 +69,7 @@ class QCodeEditor(QPlainTextEdit):
             extraSelections.append(selection)
         self.setExtraSelections(extraSelections)
 
-    def lineNumberAreaPaintEvent(self, event: QPaintEvent):
+    def lineNumberAreaPaintEvent(self, event: QPaintEvent) -> None:
         painter = QPainter(self.lineNumberArea)
 
         painter.fillRect(event.rect(), appearance.theme().background.get_qcolor())
@@ -98,7 +98,7 @@ class QCodeEditor(QPlainTextEdit):
             bottom = top + self.blockBoundingRect(block).height()
             blockNumber += 1
 
-    def keyPressEvent(self, event: QKeyEvent):
+    def keyPressEvent(self, event: QKeyEvent) -> None:
         if event.key() == Qt.Key.Key_Tab:
             tc = self.textCursor()
             tc.insertText("    ")
@@ -107,19 +107,19 @@ class QCodeEditor(QPlainTextEdit):
 
 
 class QLineNumberArea(QWidget):
-    def __init__(self, editor: QCodeEditor):
+    def __init__(self, editor: QCodeEditor) -> None:
         super().__init__(editor)
         self.editor = editor
 
-    def sizeHint(self):
+    def sizeHint(self) -> QSize:
         return QSize(self.editor.lineNumberAreaWidth(), 0)
 
-    def paintEvent(self, event: QPaintEvent):
+    def paintEvent(self, event: QPaintEvent) -> None:
         self.editor.lineNumberAreaPaintEvent(event)
 
 
 class MCFunctionHighlighter(QSyntaxHighlighter):
-    def __init__(self, parent=None):
+    def __init__(self, parent=None) -> None:
         super().__init__(parent)
 
         self._mappings = {}
@@ -213,10 +213,10 @@ class MCFunctionHighlighter(QSyntaxHighlighter):
         pattern = r"^(" + function_re + r")\b|(?<=run )\b(" + function_re + r")\b"
         self.add_mapping(pattern, function_format)
 
-    def add_mapping(self, pattern, fmt):
+    def add_mapping(self, pattern, fmt) -> None:
         self._mappings[pattern] = fmt
 
-    def highlightBlock(self, text):
+    def highlightBlock(self, text) -> None:
         for pattern, fmt in self._mappings.items():
             for match in re.finditer(pattern, text):
                 start, end = match.span()
@@ -224,7 +224,7 @@ class MCFunctionHighlighter(QSyntaxHighlighter):
 
 
 class JsonHighlighter(QSyntaxHighlighter):
-    def __init__(self, parent=None):
+    def __init__(self, parent=None) -> None:
         super().__init__(parent)
 
         self._mappings = {}
@@ -254,10 +254,10 @@ class JsonHighlighter(QSyntaxHighlighter):
         pattern = r"(?<=:\s)(-*((\d+[.]\d+)|(\d+)))"
         self.add_mapping(pattern, number_value_format)
 
-    def add_mapping(self, pattern, fmt):
+    def add_mapping(self, pattern, fmt) -> None:
         self._mappings[pattern] = fmt
 
-    def highlightBlock(self, text):
+    def highlightBlock(self, text) -> None:
         for pattern, fmt in self._mappings.items():
             for match in re.finditer(pattern, text):
                 start, end = match.span()

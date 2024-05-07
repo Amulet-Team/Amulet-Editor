@@ -31,7 +31,7 @@ class ProjectData:
 
 class Menu(Protocol):
     @abstractmethod
-    def __init__(self, set_panel: Callable):
+    def __init__(self, set_panel: Callable) -> None:
         raise NotImplementedError
 
     @property
@@ -47,7 +47,7 @@ class Menu(Protocol):
         raise NotImplementedError
 
     @abstractmethod
-    def navigated(self, destination):
+    def navigated(self, destination) -> None:
         """Receives a Navigate enum to convey navigation to and from this menu."""
         raise NotImplementedError
 

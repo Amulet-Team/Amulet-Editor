@@ -10,7 +10,7 @@ import json
 ProjectRoot = os.path.dirname(os.path.dirname(__file__))
 
 
-def main():
+def main() -> None:
     paths = []
     for path in glob.glob(
         os.path.join(ProjectRoot, "src", "**", "*.ui"), recursive=True

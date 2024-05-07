@@ -16,7 +16,7 @@ ProjectRoot = os.path.dirname(os.path.dirname(__file__))
 UIC = os.path.join(os.path.dirname(__file__), "uic.exe")
 
 
-def _compile_ui_file(ui_path: str):
+def _compile_ui_file(ui_path: str) -> str:
     py_path = ui_path[:-2] + "py"
 
     # Make sure we are not overwriting user code
@@ -62,7 +62,7 @@ def _compile_ui_file(ui_path: str):
     # Replace retranslateUi with _localise
     py = py.replace(
         "def retranslateUi(self, self):",
-        "def changeEvent(self, event: QEvent):\n        super().changeEvent(event)\n        if event.type() == QEvent.Type.LanguageChange:\n            self._localise()\n    def _localise(self):",
+        "def changeEvent(self, event: QEvent) -> None:\n        super().changeEvent(event)\n        if event.type() == QEvent.Type.LanguageChange:\n            self._localise()\n    def _localise(self) -> None:",
     )
     py = re.sub(
         r"from PySide6\.QtCore import \(.*?\)",
@@ -89,14 +89,14 @@ def _compile_ui_file(ui_path: str):
     return py_path
 
 
-def _try_compile_ui_file(ui_path: str):
+def _try_compile_ui_file(ui_path: str) -> str:
     try:
         return _compile_ui_file(ui_path)
     except Exception:
         print(traceback.format_exc())
 
 
-def main():
+def main() -> None:
     futures = []
     # For each UI file in the project
     with ThreadPoolExecutor() as executor:
