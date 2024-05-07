@@ -1,11 +1,23 @@
 import os
+import importlib.util
 
-import amulet_editor
 from ._application import data_directory
 
 
+_builtin_plugin_dir: str | None = None
+
+
 def first_party_plugin_directory() -> str:
-    return os.path.abspath(os.path.join(amulet_editor.__path__[0], "plugins"))
+    global _builtin_plugin_dir
+    if _builtin_plugin_dir is None:
+        spec = importlib.util.find_spec("builtin_plugins")
+        if spec is None:
+            raise RuntimeError
+        paths = spec.submodule_search_locations
+        if not paths:
+            raise RuntimeError
+        _builtin_plugin_dir = paths[0]
+    return _builtin_plugin_dir
 
 
 def third_party_plugin_directory() -> str:

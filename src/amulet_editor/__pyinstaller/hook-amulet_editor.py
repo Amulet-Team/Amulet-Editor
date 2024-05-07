@@ -7,7 +7,7 @@ from PyInstaller.utils.hooks import (
 datas = [
     *collect_data_files("amulet_editor", excludes=["**/*.ui", "**/*.c", "**/*.pyx"]),
     *collect_data_files(
-        "amulet_editor.plugins",
+        "builtin_plugins",
         include_py_files=True,
         excludes=["**/*.ui", "**/*.c", "**/*.pyx", "**/*.pyc"],
     ),
@@ -15,7 +15,7 @@ datas = [
 ]
 
 hiddenimports = [
-    *collect_submodules("amulet_editor", lambda name: name != "amulet_editor.plugins"),
+    *collect_submodules("amulet_editor"),
     "PySide6",
     "OpenGL",
 ]

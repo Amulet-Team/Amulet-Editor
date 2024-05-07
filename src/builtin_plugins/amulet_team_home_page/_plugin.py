@@ -1,6 +1,5 @@
 from __future__ import annotations
 import os
-from typing import Optional
 
 from PySide6.QtCore import QLocale, QCoreApplication
 
@@ -16,16 +15,16 @@ from .home import HomeWidget
 
 
 # Qt only weekly references this. We must hold a strong reference to stop it getting garbage collected
-_translator: Optional[ATranslator] = None
+_translator: ATranslator | None = None
 
-home_button: Optional[amulet_team_main_window2.ButtonProxy] = None
+home_button: amulet_team_main_window2.ButtonProxy | None = None
 
 
-def _set_home_layout():
+def _set_home_layout() -> None:
     amulet_team_main_window2.get_main_window().set_layout(HomeWidget)
 
 
-def load_plugin():
+def load_plugin() -> None:
     global _translator, home_button
     _translator = ATranslator()
     _locale_changed()
@@ -44,7 +43,7 @@ def load_plugin():
     home_button.click()
 
 
-def _locale_changed():
+def _locale_changed() -> None:
     _translator.load_lang(
         QLocale(),
         "",
@@ -52,7 +51,7 @@ def _locale_changed():
     )
 
 
-def unload_plugin():
+def unload_plugin() -> None:
     amulet_team_main_window2.unregister_widget(HomeWidget)
     QCoreApplication.removeTranslator(_translator)
 
