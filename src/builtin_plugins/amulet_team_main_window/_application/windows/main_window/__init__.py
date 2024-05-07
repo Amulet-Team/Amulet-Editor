@@ -12,12 +12,12 @@ from amulet_editor.models.widgets.traceback_dialog import display_exception
 
 from amulet_team_inspector import show_inspector
 
-from amulet_team_main_window2._application.widget import Widget, is_registered_widget
-from amulet_team_main_window2._application.windows.window_proxy import (
+from amulet_team_main_window._application.widget import Widget, is_registered_widget
+from amulet_team_main_window._application.windows.window_proxy import (
     AbstractWindowProxy,
 )
-from amulet_team_main_window2._application.windows.layout import Layout
-from amulet_team_main_window2._application.windows.tab_engine_imp import (
+from amulet_team_main_window._application.windows.layout import Layout
+from amulet_team_main_window._application.windows.tab_engine_imp import (
     StackedTabWidget,
 )
 

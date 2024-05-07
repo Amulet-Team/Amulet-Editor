@@ -10,7 +10,7 @@ from PySide6.QtWidgets import QMainWindow, QLabel
 
 from amulet_team_inspector import show_inspector
 
-from amulet_team_main_window2._application.tab_engine import (
+from amulet_team_main_window._application.tab_engine import (
     TabEngineStackedTabWidget,
     RecursiveSplitter,
     TabPage,
