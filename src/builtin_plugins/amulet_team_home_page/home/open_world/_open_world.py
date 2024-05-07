@@ -2,7 +2,7 @@
 ################################################################################
 ## Form generated from reading UI file '_open_world.ui'
 ##
-## Created by: Qt User Interface Compiler version 6.5.2
+## Created by: Qt User Interface Compiler version 6.7.0
 ##
 ## WARNING! All changes made in this file will be lost when recompiling UI file!
 ################################################################################
@@ -20,7 +20,7 @@ from PySide6.QtWidgets import (
 
 
 class Ui_OpenWorldPage(QWidget):
-    def __init__(self, *args, **kwargs):
+    def __init__(self, *args, **kwargs) -> None:
         super().__init__(*args, **kwargs)
         if not self.objectName():
             self.setObjectName("OpenWorldPage")
@@ -35,7 +35,7 @@ class Ui_OpenWorldPage(QWidget):
 
         self.btn_back = QPushButton(self)
         self.btn_back.setObjectName("btn_back")
-        sizePolicy = QSizePolicy(QSizePolicy.Fixed, QSizePolicy.Fixed)
+        sizePolicy = QSizePolicy(QSizePolicy.Policy.Fixed, QSizePolicy.Policy.Fixed)
         sizePolicy.setHorizontalStretch(0)
         sizePolicy.setVerticalStretch(0)
         sizePolicy.setHeightForWidth(self.btn_back.sizePolicy().hasHeightForWidth())
@@ -50,7 +50,7 @@ class Ui_OpenWorldPage(QWidget):
         self._lyt_header.addWidget(self._lbl_title)
 
         self._horizontal_spacer = QSpacerItem(
-            30, 30, QSizePolicy.Fixed, QSizePolicy.Minimum
+            30, 30, QSizePolicy.Policy.Fixed, QSizePolicy.Policy.Minimum
         )
         self._lyt_header.addItem(self._horizontal_spacer)
         self.verticalLayout.addLayout(self._lyt_header)
@@ -75,19 +75,19 @@ class Ui_OpenWorldPage(QWidget):
         self.verticalLayout.addLayout(self.horizontalLayout)
 
         self._vertical_spacer = QSpacerItem(
-            20, 40, QSizePolicy.Minimum, QSizePolicy.Expanding
+            20, 40, QSizePolicy.Policy.Minimum, QSizePolicy.Policy.Expanding
         )
         self.verticalLayout.addItem(self._vertical_spacer)
 
         self._localise()
         QMetaObject.connectSlotsByName(self)
 
-    def changeEvent(self, event: QEvent):
+    def changeEvent(self, event: QEvent) -> None:
         super().changeEvent(event)
         if event.type() == QEvent.Type.LanguageChange:
             self._localise()
 
-    def _localise(self):
+    def _localise(self) -> None:
         self.setWindowTitle(QCoreApplication.translate("OpenWorldPage", "Form", None))
         self.btn_back.setText("")
         self._lbl_title.setText(

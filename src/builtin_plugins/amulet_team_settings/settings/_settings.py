@@ -2,7 +2,7 @@
 ################################################################################
 ## Form generated from reading UI file '_settings.ui'
 ##
-## Created by: Qt User Interface Compiler version 6.5.2
+## Created by: Qt User Interface Compiler version 6.7.0
 ##
 ## WARNING! All changes made in this file will be lost when recompiling UI file!
 ################################################################################
@@ -18,7 +18,7 @@ from PySide6.QtWidgets import (
 
 
 class Ui_SettingsPage(QWidget):
-    def __init__(self, *args, **kwargs):
+    def __init__(self, *args, **kwargs) -> None:
         super().__init__(*args, **kwargs)
         if not self.objectName():
             self.setObjectName("SettingsPage")
@@ -30,7 +30,7 @@ class Ui_SettingsPage(QWidget):
         self.horizontalLayout.setContentsMargins(0, 0, 0, 0)
 
         self.horizontalSpacer_2 = QSpacerItem(
-            40, 20, QSizePolicy.Expanding, QSizePolicy.Minimum
+            40, 20, QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Minimum
         )
         self.horizontalLayout.addItem(self.horizontalSpacer_2)
 
@@ -43,13 +43,13 @@ class Ui_SettingsPage(QWidget):
         self._central_layout.addWidget(self.label)
 
         self.verticalSpacer = QSpacerItem(
-            20, 40, QSizePolicy.Minimum, QSizePolicy.Expanding
+            20, 40, QSizePolicy.Policy.Minimum, QSizePolicy.Policy.Expanding
         )
         self._central_layout.addItem(self.verticalSpacer)
         self.horizontalLayout.addLayout(self._central_layout)
 
         self.horizontalSpacer = QSpacerItem(
-            40, 20, QSizePolicy.Expanding, QSizePolicy.Minimum
+            40, 20, QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Minimum
         )
         self.horizontalLayout.addItem(self.horizontalSpacer)
         self.horizontalLayout.setStretch(0, 1)
@@ -58,11 +58,11 @@ class Ui_SettingsPage(QWidget):
         self._localise()
         QMetaObject.connectSlotsByName(self)
 
-    def changeEvent(self, event: QEvent):
+    def changeEvent(self, event: QEvent) -> None:
         super().changeEvent(event)
         if event.type() == QEvent.Type.LanguageChange:
             self._localise()
 
-    def _localise(self):
+    def _localise(self) -> None:
         self.setWindowTitle(QCoreApplication.translate("SettingsPage", "Form", None))
         self.label.setText(QCoreApplication.translate("SettingsPage", "Settings", None))

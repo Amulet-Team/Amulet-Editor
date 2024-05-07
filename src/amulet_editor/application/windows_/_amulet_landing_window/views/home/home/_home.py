@@ -2,7 +2,7 @@
 ################################################################################
 ## Form generated from reading UI file '_home.ui'
 ##
-## Created by: Qt User Interface Compiler version 6.5.2
+## Created by: Qt User Interface Compiler version 6.7.0
 ##
 ## WARNING! All changes made in this file will be lost when recompiling UI file!
 ################################################################################
@@ -21,7 +21,7 @@ from PySide6.QtWidgets import (
 
 
 class Ui_HomePage(QWidget):
-    def __init__(self, *args, **kwargs):
+    def __init__(self, *args, **kwargs) -> None:
         super().__init__(*args, **kwargs)
         if not self.objectName():
             self.setObjectName("HomePage")
@@ -33,7 +33,7 @@ class Ui_HomePage(QWidget):
         self.horizontalLayout.setContentsMargins(0, 0, 0, 0)
 
         self.horizontalSpacer_2 = QSpacerItem(
-            40, 20, QSizePolicy.Expanding, QSizePolicy.Minimum
+            40, 20, QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Minimum
         )
         self.horizontalLayout.addItem(self.horizontalSpacer_2)
 
@@ -42,7 +42,7 @@ class Ui_HomePage(QWidget):
         self._central_layout.setContentsMargins(50, 50, 50, 50)
 
         self.verticalSpacer_2 = QSpacerItem(
-            20, 40, QSizePolicy.Minimum, QSizePolicy.Expanding
+            20, 40, QSizePolicy.Policy.Minimum, QSizePolicy.Policy.Expanding
         )
         self._central_layout.addItem(self.verticalSpacer_2)
 
@@ -71,7 +71,7 @@ class Ui_HomePage(QWidget):
         self._central_layout.addWidget(self.lbl_app_version)
 
         self._vertical_spacer = QSpacerItem(
-            20, 20, QSizePolicy.Minimum, QSizePolicy.Fixed
+            20, 20, QSizePolicy.Policy.Minimum, QSizePolicy.Policy.Fixed
         )
         self._central_layout.addItem(self._vertical_spacer)
 
@@ -111,13 +111,13 @@ class Ui_HomePage(QWidget):
         self._central_layout.addLayout(self.gridLayout)
 
         self.verticalSpacer = QSpacerItem(
-            20, 40, QSizePolicy.Minimum, QSizePolicy.Expanding
+            20, 40, QSizePolicy.Policy.Minimum, QSizePolicy.Policy.Expanding
         )
         self._central_layout.addItem(self.verticalSpacer)
         self.horizontalLayout.addLayout(self._central_layout)
 
         self.horizontalSpacer = QSpacerItem(
-            40, 20, QSizePolicy.Expanding, QSizePolicy.Minimum
+            40, 20, QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Minimum
         )
         self.horizontalLayout.addItem(self.horizontalSpacer)
 
@@ -130,12 +130,12 @@ class Ui_HomePage(QWidget):
         self._localise()
         QMetaObject.connectSlotsByName(self)
 
-    def changeEvent(self, event: QEvent):
+    def changeEvent(self, event: QEvent) -> None:
         super().changeEvent(event)
         if event.type() == QEvent.Type.LanguageChange:
             self._localise()
 
-    def _localise(self):
+    def _localise(self) -> None:
         self.setWindowTitle(QCoreApplication.translate("HomePage", "Form", None))
         self.lbl_app_name.setText(
             QCoreApplication.translate("HomePage", "Amulet Editor", None)
