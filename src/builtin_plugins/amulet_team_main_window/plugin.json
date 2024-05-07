@@ -1,10 +1,11 @@
 {
-	"identifier": "amulet_team_main_window_old",
+	"identifier": "amulet_team_main_window",
 	"version": "1.0.0",
 	"name": "Amulet Main Window",
 	"depends": {
 		"python": "~=3.9",
 		"library": [
+			"shiboken6~=6.2",
 			"PySide6_Essentials~=6.2",
 			"amulet_editor~=1.0a0"
 		],
