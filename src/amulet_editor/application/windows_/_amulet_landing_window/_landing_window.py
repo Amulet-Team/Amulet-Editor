@@ -28,8 +28,8 @@ class Ui_AmuletLandingWindow(QMainWindow):
 
         self._toolbar = AToolBar(self.central_widget)
         self._toolbar.setObjectName("_toolbar")
-        self._toolbar.setFrameShape(QFrame.NoFrame)
-        self._toolbar.setFrameShadow(QFrame.Raised)
+        self._toolbar.setFrameShape(QFrame.Shape.NoFrame)
+        self._toolbar.setFrameShadow(QFrame.Shadow.Raised)
         self._toolbar.setProperty("backgroundColor", "surface")
         self.horizontalLayout.addWidget(self._toolbar)
 
