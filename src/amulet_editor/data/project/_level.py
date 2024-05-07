@@ -1,12 +1,7 @@
-from typing import Optional
+from amulet.level.abc import Level
 
-from amulet.api.level import BaseLevel
-from amulet_editor.models.minecraft import LevelData
-
-level_data: Optional[LevelData] = None
-
-level: Optional[BaseLevel] = None
+level: Level | None = None
 
 
-def get_level() -> Optional[BaseLevel]:
+def get_level() -> Level | None:
     return level

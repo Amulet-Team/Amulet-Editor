@@ -5,7 +5,6 @@ from typing import Callable, Optional
 import amulet
 from amulet_editor.data import minecraft, paths
 from amulet_editor.models.generic import Observer
-from amulet_editor.models.minecraft import LevelData
 from amulet_editor.models.widgets import AIconButton
 from amulet_editor.tools.startup._models import Menu, ProjectData
 from amulet_editor.tools.startup._widgets import QLevelSelectionCard

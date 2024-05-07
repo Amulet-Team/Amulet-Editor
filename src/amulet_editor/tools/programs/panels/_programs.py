@@ -4,7 +4,6 @@ from typing import Optional
 
 import amulet
 from amulet_editor.data import build, project
-from amulet_editor.models.minecraft import LevelData
 from PySide6.QtCore import QDir, QSize, Qt, Signal
 from PySide6.QtWidgets import (
     QFileSystemModel,
@@ -33,11 +32,10 @@ class ProgramsPanel(QWidget):
         self.file_selected.emit(file)
 
     def set_folder(self, folder: str):
-        self.level_data = LevelData(amulet.load_format(folder))
-
         self.trv_directory.setRootIndex(self.model.index(folder))
         self.crd_directory.lbl_description.setText(
-            self.level_data.name.get_plain_text()
+            ""
+            # self.level_data.name.get_plain_text()
         )
 
         try:
