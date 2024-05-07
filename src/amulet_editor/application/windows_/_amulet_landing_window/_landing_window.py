@@ -2,7 +2,7 @@
 ################################################################################
 ## Form generated from reading UI file '_landing_window.ui'
 ##
-## Created by: Qt User Interface Compiler version 6.5.2
+## Created by: Qt User Interface Compiler version 6.7.0
 ##
 ## WARNING! All changes made in this file will be lost when recompiling UI file!
 ################################################################################
@@ -13,7 +13,7 @@ from amulet_editor.models.widgets._toolbar import AToolBar
 
 
 class Ui_AmuletLandingWindow(QMainWindow):
-    def __init__(self, *args, **kwargs):
+    def __init__(self, *args, **kwargs) -> None:
         super().__init__(*args, **kwargs)
         if not self.objectName():
             self.setObjectName("AmuletLandingWindow")
@@ -42,12 +42,12 @@ class Ui_AmuletLandingWindow(QMainWindow):
         self._localise()
         QMetaObject.connectSlotsByName(self)
 
-    def changeEvent(self, event: QEvent):
+    def changeEvent(self, event: QEvent) -> None:
         super().changeEvent(event)
         if event.type() == QEvent.Type.LanguageChange:
             self._localise()
 
-    def _localise(self):
+    def _localise(self) -> None:
         self.setWindowTitle(
             QCoreApplication.translate("AmuletLandingWindow", "MainWindow", None)
         )

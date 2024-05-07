@@ -11,12 +11,13 @@ import re
 import traceback
 import xml.etree.ElementTree as ET
 from concurrent.futures import ThreadPoolExecutor
+import PySide6
 
 ProjectRoot = os.path.dirname(os.path.dirname(__file__))
-UIC = os.path.join(os.path.dirname(__file__), "uic.exe")
+UIC = os.path.join(PySide6.__path__[0], "uic.exe")
 
 
-def _compile_ui_file(ui_path: str) -> str:
+def _compile_ui_file(ui_path: str) -> str | None:
     py_path = ui_path[:-2] + "py"
 
     # Make sure we are not overwriting user code
@@ -26,7 +27,7 @@ def _compile_ui_file(ui_path: str) -> str:
                 print(
                     f"Skipping compilation of {ui_path} because a user generated python file would be overwritten."
                 )
-                return
+                return None
 
     # Convert the UI file to python code
     subprocess.run(["pyside6-uic", ui_path, "-o", py_path])
@@ -49,7 +50,7 @@ def _compile_ui_file(ui_path: str) -> str:
     # Replace setupUi with constructor
     py = re.sub(
         f"def setupUi\\(self, {class_name}\\):",
-        "def __init__(self, *args, **kwargs):\n        super().__init__(*args, **kwargs)",
+        "def __init__(self, *args, **kwargs) -> None:\n        super().__init__(*args, **kwargs)",
         py,
     )
 
@@ -89,7 +90,7 @@ def _compile_ui_file(ui_path: str) -> str:
     return py_path
 
 
-def _try_compile_ui_file(ui_path: str) -> str:
+def _try_compile_ui_file(ui_path: str) -> str | None:
     try:
         return _compile_ui_file(ui_path)
     except Exception:
