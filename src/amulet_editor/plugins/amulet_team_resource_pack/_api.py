@@ -9,7 +9,7 @@ import logging
 
 from PySide6.QtCore import QObject, QCoreApplication, Signal
 
-from amulet.api.level import BaseLevel
+from amulet.level.abc import Level
 from amulet_editor.models.generic._promise import Promise
 from amulet_editor.models.widgets.traceback_dialog import DisplayException
 
@@ -72,7 +72,7 @@ class ResourcePackContainer(QObject):
         Initialise the default resource pack for this level if one does not already exist.
         This is completed asynchronously. A promise is emitted from changing.
 
-        >>> def load(level: BaseLevel):
+        >>> def load(level: Level):
         >>>     container = get_resource_pack_container(level)
         >>>     promise = container.init(level)
         >>>     def on_ready():

@@ -130,7 +130,7 @@ class SDist(cmdclass["sdist"]):
         ("freeze-first=", None, ""),
     ]
 
-    def initialize_options(self):
+    def initialize_options(self) -> None:
         super().initialize_options()
         self.freeze_first = None
 
@@ -144,11 +144,11 @@ class BDistWheel(bdist_wheel):
         ),
     ]
 
-    def initialize_options(self):
+    def initialize_options(self) -> None:
         super().initialize_options()
         self.freeze_first = None
 
-    def finalize_options(self):
+    def finalize_options(self) -> None:
         if self.freeze_first:
             self.distribution.install_requires = freeze_requirements(
                 list(self.distribution.install_requires)

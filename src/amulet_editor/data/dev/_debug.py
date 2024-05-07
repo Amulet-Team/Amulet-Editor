@@ -1,4 +1,4 @@
-def enable_trace():
+def enable_trace() -> None:
     """
     Enable debugging support.
     This must be called to allow debugging python function run in a QThreadPool.

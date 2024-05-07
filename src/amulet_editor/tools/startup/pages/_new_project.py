@@ -22,7 +22,7 @@ from PySide6.QtWidgets import (
 
 
 class NewProjectMenu(QObject):
-    def __init__(self, set_panel: Callable[[Optional[QWidget]], None]):
+    def __init__(self, set_panel: Callable[[Optional[QWidget]], None]) -> None:
         super().__init__()
 
         self.level_directory: Optional[str] = None
@@ -44,7 +44,7 @@ class NewProjectMenu(QObject):
     def enable_next(self) -> Observer:
         return self._enable_next
 
-    def navigated(self, destination):
+    def navigated(self, destination) -> None:
         if destination == Navigate.HERE:
             project_name = self._widget.lne_project_name.text().strip()
             self._enable_next.emit(len(project_name) > 0)
@@ -57,7 +57,7 @@ class NewProjectMenu(QObject):
         menu.set_project_data(self.project_data)
         return menu
 
-    def select_folder(self):
+    def select_folder(self) -> None:
         folder = QFileDialog.getExistingDirectory(
             None,
             "Select Folder",
@@ -70,7 +70,7 @@ class NewProjectMenu(QObject):
             self.project_data.directory = folder
             self._widget.lne_project_directory.setText(folder)
 
-    def check_enable_next(self, project_name: str):
+    def check_enable_next(self, project_name: str) -> None:
         project_name = project_name.strip()
         self.project_data.name = project_name
         self._enable_next.emit(len(project_name) > 0)

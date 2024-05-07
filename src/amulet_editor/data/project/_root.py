@@ -8,7 +8,6 @@ import amulet
 from amulet_editor.data import paths
 from amulet_editor.data.project import _level
 from amulet_editor.models.generic import Observer
-from amulet_editor.models.minecraft import LevelData
 
 _root: Optional[str] = None
 
@@ -57,9 +56,6 @@ def root() -> str:
 def set_root(path: str):
     """Changes the root directory of the current project."""
     global _root
-
-    if os.path.exists(os.path.join(path, "level.dat")):
-        _level.level_data = LevelData(amulet.load_format(path))
 
     remember_project(path)
 

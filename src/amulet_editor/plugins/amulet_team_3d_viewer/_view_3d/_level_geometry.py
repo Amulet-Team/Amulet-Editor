@@ -32,10 +32,10 @@ from OpenGL.GL import (
     GL_ONE_MINUS_SRC_ALPHA,
 )
 
-from amulet.api.data_types import Dimension
-from amulet.api.level import BaseLevel
-from amulet.api.errors import ChunkLoadError, ChunkDoesNotExist
-from amulet.api.chunk import Chunk
+from amulet.data_types import DimensionId
+from amulet.level.abc import Level
+from amulet.errors import ChunkLoadError, ChunkDoesNotExist
+from amulet.chunk import Chunk
 
 import thread_manager
 
@@ -58,7 +58,7 @@ FloatSize = ctypes.sizeof(ctypes.c_float)
 
 log = logging.getLogger(__name__)
 
-ChunkKey = tuple[Dimension, int, int]
+ChunkKey = tuple[DimensionId, int, int]
 
 
 class ContextException(RuntimeError):
@@ -219,7 +219,7 @@ class ChunkGeneratorWorker(QObject):
     @Slot(object, object, object, object)
     def _generate_chunk(
         self,
-        level: BaseLevel,
+        level: Level,
         vbo_manager: SharedVBOManager,
         chunk_key: ChunkKey,
         chunk_data: SharedChunkData,
@@ -281,7 +281,7 @@ class ChunkGeneratorWorker(QObject):
             log.debug(f"Generated chunk {chunk_key}")
 
     def _sub_chunks(
-        self, level: BaseLevel, dimension: Dimension, cx: int, cz: int, chunk: Chunk
+        self, level: Level, dimension: DimensionId, cx: int, cz: int, chunk: Chunk
     ) -> list[tuple[numpy.ndarray, int]]:
         """
         Create sub-chunk arrays that extend into the neighbour sub-chunks by one block.
@@ -372,7 +372,7 @@ class ChunkGenerator(QObject):
 
     def generate_chunk(
         self,
-        level: BaseLevel,
+        level: Level,
         vbo_manager: SharedVBOManager,
         chunk_key: ChunkKey,
         chunk: SharedChunkData,
@@ -397,10 +397,10 @@ class SharedLevelGeometry(QObject):
 
     # Class variables
     _instances_lock = Lock()
-    _instances: WeakKeyDictionary[BaseLevel, SharedLevelGeometry] = {}
+    _instances: WeakKeyDictionary[Level, SharedLevelGeometry] = {}
 
     # Instance variables
-    _level: Callable[[], Optional[BaseLevel]]
+    _level: Callable[[], Optional[Level]]
     _chunks_lock: Lock
     # Store the chunk data weakly so that it gets automatically deallocated
     _chunks: WeakValueDictionary[ChunkKey, SharedChunkData]
@@ -409,13 +409,13 @@ class SharedLevelGeometry(QObject):
     _vbo_manager: SharedVBOManager
 
     @classmethod
-    def instance(cls, level: BaseLevel) -> SharedLevelGeometry:
+    def instance(cls, level: Level) -> SharedLevelGeometry:
         with cls._instances_lock:
             if level not in cls._instances:
                 cls._instances[level] = invoke(lambda: SharedLevelGeometry(level))
             return cls._instances[level]
 
-    def __init__(self, level: BaseLevel):
+    def __init__(self, level: Level):
         """To get an instance of this class you should use :classmethod:`instance`"""
         super().__init__()
         self._level = ref(level)
@@ -477,7 +477,7 @@ def empty_iterator():
 
 
 def get_grid_spiral(
-    dimension: Dimension, cx: int, cz: int, r: int
+    dimension: DimensionId, cx: int, cz: int, r: int
 ) -> Generator[ChunkKey, None, None]:
     """A generator that yields a 2D grid spiraling from the centre."""
     sign = 1
@@ -545,7 +545,7 @@ class WidgetLevelGeometry(QObject, Drawable):
 
     _load_radius: int
     _unload_radius: int
-    _dimension: Optional[Dimension]
+    _dimension: Optional[DimensionId]
     _camera_chunk: Optional[tuple[int, int]]
     _chunk_finder: Generator[ChunkKey, None, None]
     _generation_count: int
@@ -819,7 +819,7 @@ class WidgetLevelGeometry(QObject, Drawable):
 
         self._context.doneCurrent()
 
-    def set_dimension(self, dimension: Dimension):
+    def set_dimension(self, dimension: DimensionId):
         if dimension != self._dimension:
             self._dimension = dimension
             self._clear_chunks()

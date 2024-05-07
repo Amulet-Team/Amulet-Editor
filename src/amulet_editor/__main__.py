@@ -1,13 +1,13 @@
 #!/usr/bin/env python3
 
 
-def main():
+def main() -> None:
     try:
         # Verify the python version
         import sys
 
-        if sys.version_info[:2] < (3, 9):
-            raise Exception("Must be using Python 3.9+")
+        if sys.version_info[:2] < (3, 11):
+            raise Exception("Must be using Python 3.11+")
 
         # This is required when running from a frozen bundle (eg pyinstaller)
         from multiprocessing import freeze_support

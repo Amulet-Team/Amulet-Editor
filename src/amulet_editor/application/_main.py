@@ -1,7 +1,8 @@
 from __future__ import annotations
 
 import threading
-from typing import Optional
+from typing import Optional, Callable, TypeAlias, Any, Union
+from types import FrameType
 import sys
 import os
 import logging
@@ -15,11 +16,12 @@ from PySide6.QtCore import (
     qInstallMessageHandler,
     QtMsgType,
     QLocale,
+    QMessageLogContext
 )
 from PySide6.QtWidgets import QApplication
 from PySide6.QtGui import QSurfaceFormat
 
-import amulet
+from amulet.level import get_level
 import amulet_editor
 from amulet_editor.models.widgets.traceback_dialog import DisplayException
 from amulet_editor.data.project import _level
@@ -30,11 +32,13 @@ from ._cli import parse_args, BROKER
 from ._app import AmuletApp
 from amulet_editor.data.paths._application import _init_paths, logging_directory
 
+TraceFunction: TypeAlias = Callable[[FrameType, str, Any], Union["TraceFunction", None]]
+
 log = logging.getLogger(__name__)
 qt_log = logging.getLogger("Qt")
 
 
-def _qt_log(msg_type, context, msg):
+def _qt_log(msg_type: QtMsgType, context: QMessageLogContext, msg: str) -> None:
     if msg_type == QtMsgType.QtDebugMsg:
         qt_log.debug(msg)
     if msg_type == QtMsgType.QtInfoMsg:
@@ -47,7 +51,7 @@ def _qt_log(msg_type, context, msg):
         qt_log.fatal(msg)
 
 
-def app_main():
+def app_main() -> None:
     args = parse_args()
     _init_paths(args.data_dir, args.config_dir, args.cache_dir, args.log_dir)
 
@@ -71,14 +75,16 @@ def app_main():
     # TODO: remove old log files
 
     class StdCapture(TextIOWrapper):
-        def __init__(self, logger):
-            super().__init__(log_file)
+        def __init__(self, logger: Callable[[str], None]) -> None:
+            super().__init__(log_file)  # type: ignore
             self._logger = logger
 
-        def write(self, msg):
+        def write(self, msg) -> int:
             msg = msg.rstrip()
             if msg:
                 self._logger(msg)
+                return len(msg)
+            return 0
 
     # Convert all direct stdout calls (eg print) to info log calls
     sys.stdout = StdCapture(logging.getLogger("Python stdout").info)
@@ -93,7 +99,7 @@ def app_main():
 
     if args.trace:
 
-        def trace_calls(frame, event, arg):
+        def trace_calls(frame: FrameType, event: str, arg: Any) -> TraceFunction:
             if event == "call":
                 try:
                     qual_name = frame.f_code.co_qualname
@@ -137,7 +143,7 @@ def app_main():
         else:
             log.debug("Loading level.")
             with DisplayException(f"Failed loading level at path {level_path}"):
-                _level.level = amulet.load_level(level_path)
+                _level.level = get_level(level_path)
 
     rpc.init_rpc(is_broker)
 

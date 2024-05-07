@@ -18,7 +18,7 @@ from . import appearance
 
 
 class AmuletApp(QApplication):
-    def __init__(self):
+    def __init__(self) -> None:
         super().__init__()
         self.setApplicationName("Amulet Editor")
         self.setApplicationVersion(__version__)
@@ -39,7 +39,7 @@ class AmuletApp(QApplication):
         return QApplication.instance()
 
     @Slot()
-    def _last_window_closed(self):
+    def _last_window_closed(self) -> None:
         # The unload method opens a window and then closes it.
         # We must unbind this signal so that it does not end in a loop.
         self.lastWindowClosed.disconnect(self._last_window_closed)
@@ -49,7 +49,7 @@ class AmuletApp(QApplication):
         self.quit()
 
     @Slot()
-    def _locale_changed(self):
+    def _locale_changed(self) -> None:
         self._translator.load_lang(
             QLocale(),
             "",

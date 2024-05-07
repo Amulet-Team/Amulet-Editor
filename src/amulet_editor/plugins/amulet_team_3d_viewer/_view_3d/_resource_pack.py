@@ -18,8 +18,8 @@ from PySide6.QtOpenGL import QOpenGLTexture
 from minecraft_model_reader.api.resource_pack.base import BaseResourcePackManager
 from minecraft_model_reader import BlockMesh
 import PyMCTranslate
-from amulet.api.block import Block
-from amulet.api.level import BaseLevel
+from amulet.block import Block
+from amulet.level.abc import Level
 
 from ._textureatlas import create_atlas
 
@@ -215,7 +215,7 @@ class RenderResourcePackContainer(QObject):
     # Emitted when the resource pack has changed.
     changed = Signal()
 
-    def __init__(self, level: BaseLevel):
+    def __init__(self, level: Level):
         super().__init__()
         self._level = ref(level)
         self._lock = RLock()

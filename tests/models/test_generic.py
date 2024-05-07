@@ -4,10 +4,10 @@ from amulet_editor.models.generic import Observer
 
 
 class TestObserver(unittest.TestCase):
-    def test_connect_none(self):
+    def test_connect_none(self) -> None:
         """Connect one callback to observer and ensure it exists"""
 
-        def test_callback():
+        def test_callback() -> None:
             pass
 
         observer = Observer(None)
@@ -16,11 +16,11 @@ class TestObserver(unittest.TestCase):
         self.assertIn(test_callback, observer._callbacks)
         self.assertEqual(len(observer._callbacks), 1)
 
-    def test_emit_none(self):
+    def test_emit_none(self) -> None:
         """Emit observer twice and ensure both events occur"""
         self.emit_count = 0
 
-        def test_callback():
+        def test_callback() -> None:
             self.emit_count += 1
 
         observer = Observer(None)
@@ -31,11 +31,11 @@ class TestObserver(unittest.TestCase):
         observer.emit()
         self.assertEqual(self.emit_count, 2)
 
-    def test_emit_raise(self):
+    def test_emit_raise(self) -> None:
         """Attempt to pass invalid emit types"""
 
         class TestClass:
-            def __init__(self):
+            def __init__(self) -> None:
                 pass
 
         observer = Observer(str)
@@ -45,19 +45,19 @@ class TestObserver(unittest.TestCase):
         with self.assertRaises(TypeError):
             observer.emit(TestClass)
 
-    def test_emit_class(self):
+    def test_emit_class(self) -> None:
         """Emit class and subclass and ensure both are valid"""
         self.emit_count = 0
 
         class TestClass:
-            def __init__(self):
+            def __init__(self) -> None:
                 pass
 
         class TestSubclass(TestClass):
-            def __init__(self):
+            def __init__(self) -> None:
                 pass
 
-        def test_callback(cls: TestClass):
+        def test_callback(cls: TestClass) -> None:
             self.assertIsInstance(cls, TestClass)
             self.emit_count += 1
 

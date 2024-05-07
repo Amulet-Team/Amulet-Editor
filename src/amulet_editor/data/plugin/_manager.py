@@ -2,8 +2,8 @@ from __future__ import annotations
 
 import inspect
 import time
-from typing import NamedTuple, Optional
-from types import FrameType
+from typing import NamedTuple, Optional, Callable
+from types import FrameType, ModuleType
 from threading import RLock
 import os
 from os.path import normpath, samefile
@@ -94,7 +94,7 @@ _splash_unload_screen: Optional[Splash] = None
 
 
 class PluginJobThread(QThread):
-    def run(self):
+    def run(self) -> None:
         while True:
             job: Optional[PluginJob] = None
             while True:
@@ -137,7 +137,7 @@ def get_trace_paths() -> list[str]:
     )[1:]
 
 
-def _validate_import(imported_name: str, frame: FrameType):
+def _validate_import(imported_name: str, frame: FrameType) -> None:
     # Plugins can only import libraries and plugins they have specified as a dependency.
     # Plugins can only be imported by other plugins.
     # We step back through the stack.
@@ -205,13 +205,13 @@ def _validate_import(imported_name: str, frame: FrameType):
         )
 
 
-class CustomSysModules(UserDict):
-    def __init__(self, original: dict):
+class CustomSysModules(UserDict[str, ModuleType]):
+    def __init__(self, original: dict) -> None:
         super().__init__()
         self.data = original  # I would prefer to do this but getitem does not get called if this line is used instead.
         # self.data = copy(original)
 
-    def __getitem__(self, imported_name: str):
+    def __getitem__(self, imported_name: str) -> ModuleType:
         if not isinstance(imported_name, str):
             raise TypeError
 
@@ -226,7 +226,7 @@ class CustomSysModules(UserDict):
 
         return super().__getitem__(imported_name)
 
-    def _remove_plugin(self, plugin_name: str):
+    def _remove_plugin(self, plugin_name: str) -> None:
         plugin_prefix = f"{plugin_name}."
         key: str
         for key in list(self.data.keys()):
@@ -234,7 +234,7 @@ class CustomSysModules(UserDict):
                 del self[key]
 
 
-def wrap_importer(imp):
+def wrap_importer(imp) -> Callable:
     def wrap_importer_import(name, globals=None, locals=None, fromlist=(), level=0):
         if level:
             name_split = globals["__name__"].split(".")
@@ -250,7 +250,7 @@ def wrap_importer(imp):
     return wrap_importer_import
 
 
-def load():
+def load() -> None:
     """
     Find plugins and initialise the state.
     This must be called before any other functions in this module can be called.
@@ -294,7 +294,7 @@ def load():
     log.debug("Finished loading plugins.")
 
 
-def unload():
+def unload() -> None:
     """
     Called just before application exit to tear down all plugins.
     :return:
@@ -340,7 +340,7 @@ def get_plugins_state() -> dict[LibraryUID, bool]:
     return {}
 
 
-def _set_plugin_state(plugin_container: PluginContainer, plugin_state: PluginState):
+def _set_plugin_state(plugin_container: PluginContainer, plugin_state: PluginState) -> None:
     plugin_container.state = plugin_state
     uid = plugin_container.data.uid
     identifier = uid.identifier
@@ -358,7 +358,7 @@ def _set_plugin_state(plugin_container: PluginContainer, plugin_state: PluginSta
     _event.plugin_state_change.emit(plugin_container.data.uid, plugin_container.state)
 
 
-def scan_plugins():
+def scan_plugins() -> None:
     """
     Scan the plugin directory for newly added plugins.
     This does not load the python code. It just parses the plugin.json file and populates the plugin entry.
@@ -416,21 +416,21 @@ def scan_plugins():
 #     _plugin_queue.put(PluginJob(plugin_uid, PluginJobType.Enable))
 
 
-def _has_library(requirement: Requirement):
+def _has_library(requirement: Requirement) -> bool:
     try:
         return version(requirement.identifier) in requirement.specifier
     except Exception:
         return False
 
 
-def _has_plugin(requirement: Requirement):
+def _has_plugin(requirement: Requirement) -> bool:
     return (
         requirement.identifier in _enabled_plugins
         and _enabled_plugins[requirement.identifier] in requirement
     )
 
 
-def _enable_plugin(plugin_uid: LibraryUID):
+def _enable_plugin(plugin_uid: LibraryUID) -> None:
     """Enable a plugin. This must only be called by the job thread.
     :param plugin_uid: The unique identifier of the plugin to enable
     :raises: Exception if an error happened when loading the plugin.
@@ -508,7 +508,7 @@ def _enable_plugin(plugin_uid: LibraryUID):
                         enabled_count += 1
 
 
-def _plugin_diagnostic():
+def _plugin_diagnostic() -> None:
     """Useful plugin diagnostic data."""
     log.debug(f"Found {len(_plugins)} plugins.")
     for plugin_container in list(_plugins.values()):
@@ -538,7 +538,7 @@ def _plugin_diagnostic():
 #     _plugin_queue.put(PluginJob(plugin_uid, PluginJobType.Disable))
 
 
-def _disable_plugin(plugin_uid: LibraryUID):
+def _disable_plugin(plugin_uid: LibraryUID) -> None:
     """Disable a plugin and inactive all dependents. This must only be called by the job thread."""
     with _plugin_lock:
         if not isinstance(plugin_uid, LibraryUID):
@@ -552,7 +552,7 @@ def _disable_plugin(plugin_uid: LibraryUID):
         _set_plugin_state(plugin_container, PluginState.Disabled)
 
 
-def _unload_plugin(plugin_container: PluginContainer):
+def _unload_plugin(plugin_container: PluginContainer) -> None:
     """Unload and destroy a plugin. This must only be called by the job thread."""
     _recursive_inactive_plugins(plugin_container.data.uid)
     if _splash_load_screen is not None:
@@ -583,7 +583,7 @@ def _unload_plugin(plugin_container: PluginContainer):
         modules._remove_plugin(plugin_container.data.uid.identifier)
 
 
-def _recursive_inactive_plugins(plugin_uid: LibraryUID):
+def _recursive_inactive_plugins(plugin_uid: LibraryUID) -> None:
     """
     Recursively inactive all dependents of a plugin This must only be called by the job thread.
     When a plugin is disabled none of its dependents are valid any more so they must be inactivated.
