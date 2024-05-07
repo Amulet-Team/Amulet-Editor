@@ -3,15 +3,15 @@ from typing import Union
 from PySide6.QtWidgets import QWidget
 from PySide6.QtGui import QMouseEvent
 
-from amulet_team_main_window2._application.tab_engine import (
+from amulet_team_main_window._application.tab_engine import (
     AbstractTabContainer,
     AbstractTabBar,
     AbstractTabContainerWidget,
     AbstractStackedTabWidget,
     TabPage,
 )
-import amulet_team_main_window2._application.windows.main_window as main_window
-import amulet_team_main_window2._application.windows.sub_window as sub_window
+import amulet_team_main_window._application.windows.main_window as main_window
+import amulet_team_main_window._application.windows.sub_window as sub_window
 
 
 class TabContainerWidget(AbstractTabContainerWidget):

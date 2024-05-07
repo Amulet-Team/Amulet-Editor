@@ -4,7 +4,7 @@ from typing import Type, Union, NamedTuple
 
 from PySide6.QtCore import Qt
 
-from amulet_team_main_window2._application.widget import Widget
+from amulet_team_main_window._application.widget import Widget
 
 
 class Layout(NamedTuple):

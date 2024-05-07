@@ -9,26 +9,27 @@ UID = str
 
 
 def get_windows() -> tuple[AmuletMainWindow, ...]:
-    return (_plugin.window,)
+    return (get_active_window(),)
 
 
 def get_active_window() -> AmuletMainWindow:
+    assert _plugin.window is not None
     return _plugin.window
 
 
-def register_view(view_cls: Type[View], icon: str, name: str):
+def register_view(view_cls: Type[View], icon: str, name: str) -> None:
     for window in get_windows():
         window.register_view(view_cls, icon, name)
 
 
-def unregister_view(view_cls: Type[View]):
+def unregister_view(view_cls: Type[View]) -> None:
     for window in get_windows():
         window.unregister_view(view_cls)
 
 
 def add_toolbar_button(
-    uid: UID, icon_path: str, name: str, callback: Callable[[], None] = None
-):
+    uid: UID, icon_path: str, name: str, callback: Callable[[], None] = lambda: None
+) -> None:
     """
     Add an icon to the toolbar for all windows.
 
@@ -43,8 +44,8 @@ def add_toolbar_button(
 
 
 def add_static_toolbar_button(
-    uid: UID, icon_path: str, name: str, callback: Callable[[], None] = None
-):
+    uid: UID, icon_path: str, name: str, callback: Callable[[], None] = lambda: None
+) -> None:
     """
     Add a static icon to the toolbar for all windows.
     These should be reserved for special cases.
@@ -60,7 +61,7 @@ def add_static_toolbar_button(
         window.add_static_toolbar_button(uid, icon_path, name, callback)
 
 
-def remove_toolbar_button(uid: UID):
+def remove_toolbar_button(uid: UID) -> None:
     """
     Remove a toolbar button from all windows.
 

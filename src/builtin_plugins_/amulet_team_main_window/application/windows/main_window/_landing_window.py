@@ -16,7 +16,7 @@ class Ui_AmuletLandingWindow(QMainWindow):
     def __init__(
         self, parent: QWidget | None = None, flags: Qt.WindowType = Qt.WindowType.Window
     ) -> None:
-        super().__init__(parent, f)
+        super().__init__(parent, flags)
         if not self.objectName():
             self.setObjectName("AmuletLandingWindow")
         self.resize(800, 600)
