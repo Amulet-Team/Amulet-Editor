@@ -53,7 +53,7 @@ class AIconButton(QPushButton):
     def __init__(
         self,
         icon_path: str = build.get_resource("icons/tabler/question-mark.svg"),
-        parent: QWidget = None,
+        parent: QWidget | None = None,
     ):
         super().__init__(parent)
         self.setProperty("hover", "false")

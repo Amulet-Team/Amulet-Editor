@@ -1,11 +1,11 @@
-from typing import Optional
+from typing import Optional, Iterable
 import os
-from PySide6.QtCore import QTranslator, QLocale, QDir
+from PySide6.QtCore import QTranslator, QLocale, QDir, QObject
 
 
 class ATranslator(QTranslator):
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
+    def __init__(self, parent: QObject | None = None) -> None:
+        super().__init__(parent)
         self._translations: dict[str, str] = {}
         self._path = ""
 
@@ -25,7 +25,7 @@ class ATranslator(QTranslator):
     ) -> bool:
         self._translations.clear()
 
-        def get_codes():
+        def get_codes() -> Iterable[str]:
             for language_ in locale.uiLanguages():
                 language_split = language_.split("-")
                 for i in range(len(language_split), -1, -1):

@@ -114,7 +114,7 @@ def parse_args() -> Args:
 
 
 # TODO: move this somewhere more sensible
-def spawn_process(path: str = None) -> None:
+def spawn_process(path: str | None = None) -> None:
     """Spawn the broker process passing over the input CLI values."""
     this_args = parse_args()
     new_args = [sys.executable, sys.argv[0]]

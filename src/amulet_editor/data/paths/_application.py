@@ -1,5 +1,4 @@
 import os
-from typing import Optional
 
 from PySide6.QtCore import QStandardPaths
 
@@ -31,11 +30,11 @@ DefaultLogDir = os.path.join(
 
 
 def _init_paths(
-    data_dir: Optional[str],
-    config_dir: Optional[str],
-    cache_dir: Optional[str],
-    log_dir: Optional[str],
-):
+    data_dir: str | None,
+    config_dir: str | None,
+    cache_dir: str | None,
+    log_dir: str | None,
+) -> None:
     if data_dir is None:
         os.environ.setdefault("DATA_DIR", DefaultDataDir)
     else:
@@ -104,7 +103,7 @@ def user_directory() -> str:
     return directory
 
 
-def project_directory(project_name: Optional[str] = None) -> str:
+def project_directory(project_name: str | None = None) -> str:
     """Returns a path to the default location for storing Amulet projects."""
 
     documents = os.path.normpath(

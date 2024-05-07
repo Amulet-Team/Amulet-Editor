@@ -2,7 +2,7 @@ from PySide6.QtCore import Slot, QSize, Qt
 from PySide6.QtGui import QGuiApplication, QIcon
 
 from ._traceback_dialog import Ui_AmuletTracebackDialog
-from amulet_editor.data.build import get_resource
+from amulet_editor.resources import get_resource
 
 
 class _AmuletTracebackDialog(Ui_AmuletTracebackDialog):
