@@ -6,15 +6,17 @@
 ##
 ## WARNING! All changes made in this file will be lost when recompiling UI file!
 ################################################################################
-from PySide6.QtCore import QCoreApplication, QMetaObject, QEvent
+from PySide6.QtCore import QCoreApplication, QMetaObject, Qt, QEvent
 from PySide6.QtWidgets import QFrame, QHBoxLayout, QMainWindow, QWidget
 from ._view import ViewContainer
 from amulet_editor.models.widgets._toolbar import AToolBar
 
 
 class Ui_AmuletLandingWindow(QMainWindow):
-    def __init__(self, *args, **kwargs) -> None:
-        super().__init__(*args, **kwargs)
+    def __init__(
+        self, parent: QWidget | None = None, flags: Qt.WindowType = Qt.WindowType.Window
+    ) -> None:
+        super().__init__(parent, f)
         if not self.objectName():
             self.setObjectName("AmuletLandingWindow")
         self.resize(800, 600)

@@ -20,8 +20,10 @@ from PySide6.QtWidgets import (
 
 
 class Ui_OpenWorldPage(QWidget):
-    def __init__(self, *args, **kwargs) -> None:
-        super().__init__(*args, **kwargs)
+    def __init__(
+        self, parent: QWidget | None = None, f: Qt.WindowType = Qt.WindowType.Widget
+    ) -> None:
+        super().__init__(parent, f)
         if not self.objectName():
             self.setObjectName("OpenWorldPage")
         self.resize(264, 247)

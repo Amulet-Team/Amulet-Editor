@@ -17,12 +17,15 @@ from PySide6.QtWidgets import (
     QSpacerItem,
     QTextEdit,
     QVBoxLayout,
+    QWidget,
 )
 
 
 class Ui_AmuletTracebackDialog(QDialog):
-    def __init__(self, *args, **kwargs) -> None:
-        super().__init__(*args, **kwargs)
+    def __init__(
+        self, parent: QWidget | None = None, f: Qt.WindowType = Qt.WindowType.Dialog
+    ) -> None:
+        super().__init__(parent, f)
         if not self.objectName():
             self.setObjectName("AmuletTracebackDialog")
         self.resize(400, 300)

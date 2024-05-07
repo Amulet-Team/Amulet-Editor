@@ -6,14 +6,16 @@
 ##
 ## WARNING! All changes made in this file will be lost when recompiling UI file!
 ################################################################################
-from PySide6.QtCore import QCoreApplication, QMetaObject, QEvent
-from PySide6.QtWidgets import QMainWindow
+from PySide6.QtCore import QCoreApplication, QMetaObject, Qt, QEvent
+from PySide6.QtWidgets import QMainWindow, QWidget
 from amulet_team_main_window2._application.tab_engine import RecursiveSplitter
 
 
 class Ui_AmuletSubWindow(QMainWindow):
-    def __init__(self, *args, **kwargs) -> None:
-        super().__init__(*args, **kwargs)
+    def __init__(
+        self, parent: QWidget | None = None, flags: Qt.WindowType = Qt.WindowType.Window
+    ) -> None:
+        super().__init__(parent, f)
         if not self.objectName():
             self.setObjectName("AmuletSubWindow")
         self.resize(1129, 792)

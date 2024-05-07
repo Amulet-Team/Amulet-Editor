@@ -7,12 +7,14 @@
 ## WARNING! All changes made in this file will be lost when recompiling UI file!
 ################################################################################
 from PySide6.QtCore import QCoreApplication, QMetaObject, Qt, QEvent
-from PySide6.QtWidgets import QDialog, QLabel, QVBoxLayout
+from PySide6.QtWidgets import QDialog, QLabel, QVBoxLayout, QWidget
 
 
 class Ui_Splash(QDialog):
-    def __init__(self, *args, **kwargs) -> None:
-        super().__init__(*args, **kwargs)
+    def __init__(
+        self, parent: QWidget | None = None, f: Qt.WindowType = Qt.WindowType.Dialog
+    ) -> None:
+        super().__init__(parent, f)
         if not self.objectName():
             self.setObjectName("Splash")
         self.resize(400, 300)
