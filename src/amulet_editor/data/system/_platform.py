@@ -2,7 +2,7 @@ import csv
 import platform
 
 
-def _platform_name():
+def _platform_name() -> str:
     systems = {"Darwin": "mac", "Linux": "linux", "Windows": "windows"}
 
     try:

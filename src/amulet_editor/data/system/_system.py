@@ -1,23 +1,23 @@
 from amulet_editor.data.system import _platform
 
 
-def get_system():
+def get_system() -> str:
     return _platform.PLATFORM_NAME
 
 
-def is_linux():
+def is_linux() -> bool:
     return _platform.PLATFORM_NAME == "linux"
 
 
-def is_mac():
+def is_mac() -> bool:
     return _platform.PLATFORM_NAME == "mac"
 
 
-def is_windows():
+def is_windows() -> bool:
     return _platform.PLATFORM_NAME == "windows"
 
 
-def is_arch():
+def is_arch() -> bool:
     if is_linux():
         return (
             "arch" in _platform.LINUX_RELEASE["ID"]
@@ -27,7 +27,7 @@ def is_arch():
         return False
 
 
-def is_fedora():
+def is_fedora() -> bool:
     if is_linux():
         return (
             "fedora" in _platform.LINUX_RELEASE["ID"]
@@ -37,7 +37,7 @@ def is_fedora():
         return False
 
 
-def is_ubuntu():
+def is_ubuntu() -> bool:
     if is_linux():
         return (
             "ubuntu" in _platform.LINUX_RELEASE["ID"]

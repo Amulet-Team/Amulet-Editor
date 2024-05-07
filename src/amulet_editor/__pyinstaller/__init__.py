@@ -1,2 +1,2 @@
-def get_hook_dirs():
+def get_hook_dirs() -> None:
     return __path__

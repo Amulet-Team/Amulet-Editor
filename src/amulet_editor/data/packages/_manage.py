@@ -4,7 +4,7 @@ from amulet_editor.data.packages._cache import enabled_tools, installed_packages
 from amulet_editor.models.package import AmuletPackage, AmuletTool
 
 
-def install_builtins():
+def install_builtins() -> None:
     pass
 
 

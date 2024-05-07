@@ -11,7 +11,7 @@ T = TypeVar("T")
 
 @final
 class InvokeMethod(QObject):
-    def __init__(self):
+    def __init__(self) -> None:
         super().__init__()
         self.__method = None
         self.__return = None
@@ -67,7 +67,7 @@ class InvokeMethod(QObject):
     start_signal = Signal()
 
     @Slot()
-    def execute(self):
+    def execute(self) -> None:
         try:
             self.__return = self.__method()
         except BaseException as e:

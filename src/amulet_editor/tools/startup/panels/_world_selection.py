@@ -61,7 +61,7 @@ class WorldSelectionPanel(QWidget):
     level_data = Signal(LevelData)
     parse = Signal(str)
 
-    def __init__(self):
+    def __init__(self) -> None:
         super().__init__()
 
         self.setupUi()
@@ -98,20 +98,20 @@ class WorldSelectionPanel(QWidget):
         self.cbx_sort.currentIndexChanged.connect(self.sort_cards)
         self.btn_sort.clicked.connect(self.toggle_sort)
 
-    def card_clicked(self, clicked_card: QPixCard):
+    def card_clicked(self, clicked_card: QPixCard) -> None:
         for card in self._world_cards:
             card.setChecked(False)
 
         clicked_card.setChecked(True)
         self.level_data.emit(clicked_card.level_data)
 
-    def load_world_cards(self):
+    def load_world_cards(self) -> None:
         level_paths = minecraft.locate_levels(minecraft.save_directories())
 
         for path in level_paths:
             self.parse.emit(path)
 
-    def new_world_card(self, parsed_level: ParsedLevel):
+    def new_world_card(self, parsed_level: ParsedLevel) -> None:
         level_data = parsed_level.level_data
 
         level_icon = QPixmap(QImage(parsed_level.icon_path))
@@ -143,13 +143,13 @@ class WorldSelectionPanel(QWidget):
 
         self.filter_cards()
 
-    def show_search_options(self):
+    def show_search_options(self) -> None:
         if self.btn_search_level.isChecked():
             self.scr_search_options.setVisible(True)
         else:
             self.scr_search_options.setVisible(False)
 
-    def toggle_sort(self):
+    def toggle_sort(self) -> None:
         self._sort_descending = not self._sort_descending
         if self._sort_descending:
             self.btn_sort.setIcon("sort-descending.svg")
@@ -182,7 +182,7 @@ class WorldSelectionPanel(QWidget):
 
             self.cbx_edition.insertItem(index, edition)
 
-    def filter_cards(self):
+    def filter_cards(self) -> None:
         search_text = self.lne_search_level.text()
         edition = self.cbx_edition.currentText()
         version = self.cbx_version.currentText()
@@ -199,7 +199,7 @@ class WorldSelectionPanel(QWidget):
 
         self.sort_cards()
 
-    def sort_cards(self):
+    def sort_cards(self) -> None:
         sort_by = self.cbx_sort.currentText()
 
         if sort_by == "Name":
@@ -226,7 +226,7 @@ class WorldSelectionPanel(QWidget):
             self.wgt_search_results.layout().addWidget(world_card)
             world_card.show()
 
-    def setupUi(self):
+    def setupUi(self) -> None:
         # 'Search Level' field
         self.lbl_search_level = QLabel(self)
         self.lbl_search_level.setProperty("color", "on_primary")
@@ -370,7 +370,7 @@ class WorldSelectionPanel(QWidget):
         # Translate widget text
         self.retranslateUi()
 
-    def retranslateUi(self):
+    def retranslateUi(self) -> None:
         # Disable formatting to condense tranlate functions
         # fmt: off
         self.lbl_search_level.setText(QCoreApplication.translate("NewProjectTypePage", "Search", None))

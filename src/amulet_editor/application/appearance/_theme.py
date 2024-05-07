@@ -77,7 +77,7 @@ class Theme:
             style_sheet = fh.read().replace('"', "")
 
         icons: set[str] = set(
-            [icon for icon in re.findall("url\((.*?)\)", style_sheet)]
+            [icon for icon in re.findall(r"url\((.*?)\)", style_sheet)]
         )
         for icon in icons:
             style_sheet = style_sheet.replace(

@@ -8,7 +8,7 @@ from amulet_editor.models.plugin import PluginV1
 window: Optional[AmuletMainWindow] = None
 
 
-def load_plugin():
+def load_plugin() -> None:
     global window
     window = AmuletMainWindow()
     window.showMaximized()
