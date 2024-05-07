@@ -27,23 +27,23 @@ def unregister_view(view_cls: Type[View]):
 
 
 def add_toolbar_button(
-    uid: UID, icon: str, name: str, callback: Callable[[], None] = None
+    uid: UID, icon_path: str, name: str, callback: Callable[[], None] = None
 ):
     """
     Add an icon to the toolbar for all windows.
 
     :param uid: The unique identifier of the button. Eg: author_name:button_name
-    :param icon: The icon path to use in the toolbar.
+    :param icon_path: The path to an SVG image the button should use.
     :param name: The name of the view to use in the icon tooltip.
     :param callback: The function to call when the button is clicked.
     :return:
     """
     for window in get_windows():
-        window.add_toolbar_button(uid, icon, name, callback)
+        window.add_toolbar_button(uid, icon_path, name, callback)
 
 
 def add_static_toolbar_button(
-    uid: UID, icon: str, name: str, callback: Callable[[], None] = None
+    uid: UID, icon_path: str, name: str, callback: Callable[[], None] = None
 ):
     """
     Add a static icon to the toolbar for all windows.
@@ -51,13 +51,13 @@ def add_static_toolbar_button(
     Third party plugins should use :func:`add_button`.
 
     :param uid: The unique identifier of the button. Eg: author_name:button_name
-    :param icon: The icon path to use in the toolbar.
+    :param icon_path: The path to an SVG image the button should use.
     :param name: The name of the view to use in the icon tooltip.
     :param callback: The function to call when the button is clicked.
     :return:
     """
     for window in get_windows():
-        window.add_static_toolbar_button(uid, icon, name, callback)
+        window.add_static_toolbar_button(uid, icon_path, name, callback)
 
 
 def remove_toolbar_button(uid: UID):

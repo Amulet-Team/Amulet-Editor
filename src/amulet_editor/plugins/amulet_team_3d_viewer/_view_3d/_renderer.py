@@ -19,11 +19,10 @@ from OpenGL.GL import (
     GL_COLOR_BUFFER_BIT,
     GL_DEPTH_BUFFER_BIT,
     GL_DEPTH_TEST,
-    GL_CULL_FACE,
 )
 
 from amulet_editor.data.project import get_level
-
+from amulet_editor.models.widgets.traceback_dialog import CatchException
 from amulet_team_resource_pack._api import get_resource_pack_container
 
 from ._camera import Camera, Location, Rotation
@@ -36,16 +35,74 @@ log = logging.getLogger(__name__)
 
 """
 GPU Memory Deallocation
-GPU memory must be associated either with the context or the widget.
-Widget memory must be destroyed when the widget is destroyed.
-    self.destroyed.connect(func)
 Context memory must be destroyed when the context is destroyed.
     self.context().aboutToBeDestroyed.connect(func)
     
-Note that if you use a method bound to the instance being destroyed IT WILL NOT BE CALLED.
-Due to this all references to GPU memory must be stored in a class stored as an attribute
-and a method on that instance should be bound to one of the above examples.
+Note that func must be a python function not a method. If it is a method IT WILL NOT BE CALLED.
+I suggest defining a functon in initGL and bind that. Make sure you don't have circular references.
 """
+
+
+class GlData:
+    context_valid: bool
+    data_valid: bool
+    render_level: WidgetLevelGeometry
+
+    def __init__(self, render_level: WidgetLevelGeometry):
+        self.context_valid = False
+        self.data_valid = False
+        self.render_level = render_level
+
+    def is_valid(self) -> bool:
+        return self.context_valid and self.data_valid
+
+    def init_context(self):
+        if self.context_valid:
+            raise RuntimeError("Context was not destroyed.")
+        self.context_valid = True
+
+    def destroy_context(self):
+        if not self.context_valid:
+            raise RuntimeError("Context was not initialised")
+        if self.data_valid:
+            raise RuntimeError("Data has not been destroyed.")
+        self.context_valid = False
+
+    def init_context_data(self):
+        """
+        Initialise the context data.
+        The caller is responsible for managing the context.
+        """
+        if not self.context_valid or self.is_valid():
+            # If the context has not been initialised or if it is already full set up then skip
+            return
+        log.debug("Init context data")
+        self.data_valid = True
+        self._init_context_data()
+
+    def _init_context_data(self):
+        self.render_level.initializeGL()
+
+    def destroy_context_data(self):
+        """
+        Destroy the context data.
+        The caller is responsible for managing the context.
+        """
+        if not self.is_valid():
+            return
+        self.data_valid = False
+        log.debug("Destroying context data")
+        self._destroy_context_data()
+        log.debug("Destroyed GL")
+
+    def _destroy_context_data(self):
+        self.render_level.destroyGL()
+
+    def __del__(self):
+        with CatchException():
+            log.debug("__del__ GlData")
+            if self.data_valid:
+                raise RuntimeError("Context data was not destroyed.")
 
 
 class FirstPersonCanvas(QOpenGLWidget, QOpenGLFunctions):
@@ -53,13 +110,22 @@ class FirstPersonCanvas(QOpenGLWidget, QOpenGLFunctions):
 
     _start_pos: QPoint
 
+    # All the OpenGL data owned by this context must be stored in this instance.
+    # This allows the destructor to have access to the data without needing a pointer to self.
+    # Having a pointer to self would stop self being garbage collected.
+    _gl_data: GlData
+
     def __init__(self, parent=None):
         QOpenGLWidget.__init__(self, parent)
         QOpenGLFunctions.__init__(self)
 
+        self._level = get_level()
+        self._gl_data = GlData(WidgetLevelGeometry(self._level))
+        self._gl_data.render_level.geometry_changed.connect(self.update)
+
         self._camera = Camera()
         self.camera.transform_changed.connect(self.update)
-        self.camera.location = Location(0, 0, 0)
+        self.camera.location_changed.connect(self._on_move)
         self._start_pos = QPoint()
         self._mouse_captured = False
 
@@ -86,21 +152,13 @@ class FirstPersonCanvas(QOpenGLWidget, QOpenGLFunctions):
             self._down, (KeySrc.Keyboard, Qt.Key.Key_Semicolon), frozenset(), 10
         )
 
-        self.camera.location_changed.connect(self._on_move)
-
-        level = get_level()
-        self._render_level = WidgetLevelGeometry(level)
-        self._render_level.geometry_changed.connect(self.update)
-        self._render_level.set_dimension(level.dimensions[0])
-        self._render_level.set_location(0, 0)
-
-        self._resource_pack_container = get_resource_pack_container(level)
+        self._resource_pack_container = get_resource_pack_container(self._level)
         self._resource_pack_container.changing.connect(
             lambda prom: prom.progress_change.connect(
                 lambda prog: print(f"Loading resource pack {prog}")
             )
         )
-        self._gl_resource_pack_container = get_gl_resource_pack_container(level)
+        self._gl_resource_pack_container = get_gl_resource_pack_container(self._level)
         self._gl_resource_pack_container.changing.connect(
             lambda prom: prom.progress_change.connect(
                 lambda prog: print(f"Loading GL resource pack {prog}")
@@ -110,32 +168,73 @@ class FirstPersonCanvas(QOpenGLWidget, QOpenGLFunctions):
 
     def initializeGL(self):
         """Private initialisation method called by the QOpenGLWidget"""
-        log.debug(f"Initialising GL for {self}")
-        self.initializeOpenGLFunctions()
-        self.glClearColor(*self.background_colour, 1)
-        self._render_level.initializeGL()
+        # You must only put calls that do not need destructing here.
+        # Normal initialisation must go in the showEvent and destruction in the hideEvent
+        with CatchException():
+            log.debug(f"Initialising GL for {self}")
+            gl_data = self._gl_data
+            gl_data.init_context()
+
+            def destroy_context():
+                nonlocal gl_data  # This is required for gl_data to be garbage collected
+                with CatchException():
+                    log.debug("Context aboutToBeDestroyed")
+                    gl_data.destroy_context()
+
+            # This doesn't work if bound to a method. It must be a function
+            self.context().aboutToBeDestroyed.connect(
+                destroy_context, Qt.ConnectionType.DirectConnection
+            )
+
+            # Do the initialisation
+            self.initializeOpenGLFunctions()
+            self.glClearColor(*self.background_colour, 1)
+            gl_data.init_context_data()
+            # TODO: pull this data from somewhere
+            # Set the start position after OpenGL has been initialised
+            gl_data.render_level.set_dimension(self._level.dimensions[0])
+            self.camera.location = Location(0, 0, 0)
+
+    def __del__(self):
+        log.debug("__del__ FirstPersonCanvas")
 
     @property
     def camera(self) -> Camera:
         return self._camera
 
-    def showEvent(self, event: QShowEvent) -> None:
-        self._render_level.start()
+    def showEvent(self, event: QShowEvent):
+        with CatchException():
+            log.debug("show")
+            self.makeCurrent()
+            self._gl_data.init_context_data()
+            self.doneCurrent()
 
-    def hideEvent(self, event: QHideEvent) -> None:
-        self._render_level.stop()
+    def hideEvent(self, event: QHideEvent):
+        with CatchException():
+            log.debug("hide")
+            self.makeCurrent()
+            self._gl_data.destroy_context_data()
+            self.doneCurrent()
 
     def paintGL(self):
         """Private paint method called by the QOpenGLWidget"""
-        if QOpenGLContext.currentContext() is not self.context():
-            log.error("Tried to paint from a different context.")
-            return
-        self.glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT)
-        self.glEnable(GL_DEPTH_TEST)
+        with CatchException():
+            if (
+                not self._gl_data.is_valid()
+                or not self.isVisible()
+                or QOpenGLContext.currentContext() is not self.context() is not None
+            ):
+                # Sometimes paintGL is run before initializeGL or when the window is not visible.
+                # Sometimes it is called when the context is not active.
+                # If we don't skip these cases it crashes the program.
+                return
 
-        self._render_level.paintGL(
-            self.camera.intrinsic_matrix, self.camera.extrinsic_matrix
-        )
+            self.glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT)
+            self.glEnable(GL_DEPTH_TEST)
+
+            self._gl_data.render_level.paintGL(
+                self.camera.intrinsic_matrix, self.camera.extrinsic_matrix
+            )
 
     def resizeGL(self, width, height):
         """Private resize method called by the QOpenGLWidget"""
@@ -176,7 +275,7 @@ class FirstPersonCanvas(QOpenGLWidget, QOpenGLFunctions):
 
     def _on_move(self):
         x, _, z = self.camera.location
-        self._render_level.set_location(x // 16, z // 16)
+        self._gl_data.render_level.set_location(x // 16, z // 16)
 
     def _move_relative(self, angle: int, dt: float):
         x, y, z = self.camera.location

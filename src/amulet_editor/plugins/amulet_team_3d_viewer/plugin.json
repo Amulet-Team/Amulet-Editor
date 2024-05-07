@@ -17,9 +17,11 @@
 		],
 		"plugin": [
 			"amulet_team_locale~=1.0",
-			"amulet_team_main_window~=1.0",
+			"amulet_team_main_window2~=1.0",
 			"amulet_team_home_page~=1.0",
-			"amulet_team_resource_pack~=1.0"
+			"amulet_team_resource_pack~=1.0",
+			"tablericons~=1.0",
+			"thread_manager~=1.0"
 		]
 	},
 	"locked": "true"

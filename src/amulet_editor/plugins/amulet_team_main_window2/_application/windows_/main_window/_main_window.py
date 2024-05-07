@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import Callable, Optional
+from typing import Optional
 from weakref import ref
 import random
 
@@ -10,7 +10,7 @@ from PySide6.QtWidgets import QMainWindow, QLabel
 
 from amulet_team_inspector import show_inspector
 
-from amulet_team_main_window2.application.widgets.tab_engine._tab_engine import (
+from amulet_team_main_window2._application.tab_engine import (
     TabEngineStackedTabWidget,
     RecursiveSplitter,
     TabPage,

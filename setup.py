@@ -1,5 +1,5 @@
 from typing import List, Tuple
-from setuptools import setup, find_packages
+from setuptools import setup
 from wheel.bdist_wheel import bdist_wheel
 from Cython.Build import cythonize
 import glob

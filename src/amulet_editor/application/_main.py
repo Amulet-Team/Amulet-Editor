@@ -79,8 +79,9 @@ def app_main() -> None:
             super().__init__(log_file)  # type: ignore
             self._logger = logger
 
-        def write(self, msg: str) -> int:
-            if msg != "\n":
+        def write(self, msg) -> int:
+            msg = msg.rstrip()
+            if msg:
                 self._logger(msg)
                 return len(msg)
             return 0

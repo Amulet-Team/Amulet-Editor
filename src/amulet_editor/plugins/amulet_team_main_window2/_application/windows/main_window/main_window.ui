@@ -1,0 +1,89 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ui version="4.0">
+ <class>AmuletMainWindow</class>
+ <widget class="QMainWindow" name="AmuletMainWindow">
+  <property name="geometry">
+   <rect>
+    <x>0</x>
+    <y>0</y>
+    <width>1129</width>
+    <height>792</height>
+   </rect>
+  </property>
+  <property name="windowTitle">
+   <string>Amulet Editor</string>
+  </property>
+  <widget class="QWidget" name="_widget">
+   <layout class="QVBoxLayout" name="_widget_layout" stretch="0,1">
+    <property name="spacing">
+     <number>0</number>
+    </property>
+    <property name="leftMargin">
+     <number>0</number>
+    </property>
+    <property name="topMargin">
+     <number>0</number>
+    </property>
+    <property name="rightMargin">
+     <number>0</number>
+    </property>
+    <property name="bottomMargin">
+     <number>0</number>
+    </property>
+    <item>
+     <layout class="QHBoxLayout" name="_header_layout">
+      <property name="spacing">
+       <number>0</number>
+      </property>
+      <item>
+       <widget class="QComboBox" name="context_switch"/>
+      </item>
+      <item>
+       <spacer name="_header_spacer">
+        <property name="orientation">
+         <enum>Qt::Horizontal</enum>
+        </property>
+        <property name="sizeHint" stdset="0">
+         <size>
+          <width>40</width>
+          <height>20</height>
+         </size>
+        </property>
+       </spacer>
+      </item>
+     </layout>
+    </item>
+    <item>
+     <layout class="QHBoxLayout" name="_main_layout" stretch="0,1">
+      <item>
+       <widget class="ToolBar" name="toolbar">
+        <property name="backgroundColor" stdset="0">
+         <string notr="true">surface</string>
+        </property>
+       </widget>
+      </item>
+      <item>
+       <widget class="RecursiveSplitter" name="view_container"/>
+      </item>
+     </layout>
+    </item>
+   </layout>
+  </widget>
+ </widget>
+ <customwidgets>
+  <customwidget>
+   <class>ToolBar</class>
+   <extends>QFrame</extends>
+   <header>.toolbar</header>
+   <container>1</container>
+  </customwidget>
+  <customwidget>
+   <class>RecursiveSplitter</class>
+   <extends>QFrame</extends>
+   <header>amulet_team_main_window2._application.tab_engine</header>
+   <container>1</container>
+  </customwidget>
+ </customwidgets>
+ <resources/>
+ <connections/>
+</ui>

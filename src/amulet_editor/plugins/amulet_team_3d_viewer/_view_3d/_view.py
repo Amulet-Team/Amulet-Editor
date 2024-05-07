@@ -1,17 +1,18 @@
 from __future__ import annotations
 
 from typing import Optional
-import traceback
 
 from PySide6.QtCore import Qt
-from PySide6.QtWidgets import QWidget, QVBoxLayout, QLabel
+from PySide6.QtWidgets import QWidget, QVBoxLayout
 
-from amulet_team_main_window.application.windows.main_window import View
+from amulet_team_main_window2 import Widget
 
 from ._renderer import FirstPersonCanvas
 
 
-class View3D(QWidget, View):
+class View3D(QWidget, Widget):
+    name = "3D View"
+
     def __init__(
         self, parent: Optional[QWidget] = None, f: Qt.WindowType = Qt.WindowType.Widget
     ):

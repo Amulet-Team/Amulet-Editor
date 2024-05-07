@@ -2,6 +2,8 @@ from typing import Union, Callable, Optional, Literal
 from threading import Lock
 from enum import IntEnum
 import time
+from weakref import WeakMethod
+from inspect import ismethod
 
 from PySide6.QtCore import QObject, QEvent, Slot, Signal, QTimer, Qt
 from PySide6.QtGui import QMouseEvent, QKeyEvent, QScrollEvent, QMoveEvent
@@ -25,7 +27,7 @@ KeyT = Union[
 ]
 ModifierT = frozenset[KeyT]
 Number = Union[float, int]
-ReceiverT = Union[Slot, Signal, Callable[[], None]]
+ReceiverT = Union[Slot, Signal, Callable[[], None], WeakMethod]
 
 
 class TimerData(QObject):
@@ -230,7 +232,11 @@ class KeyCatcher(QObject):
                 storage.timers[interval] = TimerData(interval)
             timer_data = storage.timers[interval]
             timer_data.delta_timeout.connect(receiver)
-            timer_data.receivers.add(receiver)
+            if ismethod(receiver):
+                # If this class strongly stores references to methods they can't get garbage collected
+                timer_data.receivers.add(WeakMethod(receiver))
+            else:
+                timer_data.receivers.add(receiver)
 
     def disconnect_repeating(
         self,
@@ -253,7 +259,10 @@ class KeyCatcher(QObject):
             timer_data = storage.timers.get(interval)
             if timer_data is not None:
                 timer_data.delta_timeout.disconnect(receiver)
-                timer_data.receivers.remove(receiver)
+                if ismethod(receiver):
+                    timer_data.receivers.remove(WeakMethod(receiver))
+                else:
+                    timer_data.receivers.remove(receiver)
             self._clean_storage(key, modifiers)
 
 

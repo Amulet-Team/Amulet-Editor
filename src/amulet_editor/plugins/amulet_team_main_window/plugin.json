@@ -1,5 +1,5 @@
 {
-	"identifier": "amulet_team_main_window",
+	"identifier": "amulet_team_main_window_old",
 	"version": "1.0.0",
 	"name": "Amulet Main Window",
 	"depends": {
@@ -10,7 +10,8 @@
 		],
 		"plugin": [
 			"amulet_team_app~=1.0",
-			"amulet_team_inspector~=1.0"
+			"amulet_team_inspector~=1.0",
+			"tablericons~=1.0"
 		]
 	},
 	"locked": "true"

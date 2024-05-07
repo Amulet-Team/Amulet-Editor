@@ -50,5 +50,5 @@ class Ui_AmuletLandingWindow(QMainWindow):
 
     def _localise(self):
         self.setWindowTitle(
-            QCoreApplication.translate("AmuletLandingWindow", "MainWindow", None)
+            QCoreApplication.translate("AmuletLandingWindow", "Amulet Editor", None)
         )

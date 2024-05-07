@@ -1,3 +1,10 @@
+"""
+This is a generic tab engine system.
+You must subclass the abstract classes and implement custom handling for the following cases.
+1) When the last tab is removed
+2) When a tab is dropped into empty space
+"""
+
 from __future__ import annotations
 from typing import Optional, Union as Intersection, Union
 from enum import IntEnum
@@ -40,9 +47,8 @@ from PySide6.QtCore import (
 
 from amulet_editor.data.build import get_resource
 from amulet_editor.models.widgets.traceback_dialog import DisplayException
+import tablericons
 
-import amulet_team_main_window2.application.windows.sub_window as sub_window
-import amulet_team_main_window2.application.windows.main_window as main_window
 
 _button_size: Optional[QSize] = None
 
@@ -64,7 +70,7 @@ class TabPage:
         return None
 
 
-class TabEngineTabButton(QFrame):
+class TabButton(QFrame):
     """A tab button."""
 
     def __init__(self, label: str, icon: Optional[QIcon]):
@@ -79,7 +85,7 @@ class TabEngineTabButton(QFrame):
         self.close_button = QPushButton()
         size = int(button_size().height() * 0.75)
         self.close_button.setFixedSize(size, size)
-        self.close_button.setIcon(QIcon(get_resource("icons/tabler/x.svg")))
+        self.close_button.setIcon(QIcon(tablericons.x))
         self.close_button.setFlat(True)
         self.layout.addWidget(self.close_button)
 
@@ -213,7 +219,7 @@ class DragTabRenderer(QWidget):
         painter.end()
 
 
-class TabEngineTabContainerWidget(QWidget):
+class AbstractTabContainerWidget(QWidget):
     """
     A widget containing tab buttons.
     This represents the whole area including the area off screen.
@@ -222,15 +228,15 @@ class TabEngineTabContainerWidget(QWidget):
     tab_changed = Signal(int)
 
     drag_start_pos: QPoint
-    active_button: Optional[TabEngineTabButton]
+    active_button: Optional[TabButton]
 
     # The widget being dragged or None
     dragged_widget: Optional[Intersection[QWidget, TabPage]]
     # The widget that was previously highlighted
     highlight_widget: Union[
         None,
-        tuple[TabEngineStackedTabWidget, DragSplitRenderer],
-        tuple[TabEngineTabContainerWidget, DragTabRenderer],
+        tuple[AbstractStackedTabWidget, DragSplitRenderer],
+        tuple[AbstractTabContainerWidget, DragTabRenderer],
     ]
 
     def __init__(self, *args, **kwargs):
@@ -245,7 +251,7 @@ class TabEngineTabContainerWidget(QWidget):
         self.highlight_widget = None
 
     def add_tab(self, label: str, icon: QIcon = None):
-        tab = TabEngineTabButton(label, icon)
+        tab = TabButton(label, icon)
         if self.active_button is None:
             self.active_button = tab
             tab.display_clicked()
@@ -254,7 +260,7 @@ class TabEngineTabContainerWidget(QWidget):
         self.layout.addWidget(tab)
 
     def insert_tab(self, index: int, label: str, icon: QIcon = None):
-        tab = TabEngineTabButton(label, icon)
+        tab = TabButton(label, icon)
         if self.active_button is None:
             self.active_button = tab
             tab.display_clicked()
@@ -285,21 +291,21 @@ class TabEngineTabContainerWidget(QWidget):
         return self.layout.indexOf(self.active_button)
 
     @property
-    def container(self) -> TabEngineTabContainer:
+    def container(self) -> AbstractTabContainer:
         parent = self.parent().parent()
-        if not isinstance(parent, TabEngineTabContainer):
+        if not isinstance(parent, AbstractTabContainer):
             raise RuntimeError(
-                "Parent of TabEngineTabContainerWidget must be TabEngineTabContainer"
+                "Parent of AbstractTabContainerWidget must be AbstractTabContainer"
             )
         return parent
 
-    def _get_button_at(self, point: QPoint) -> Optional[TabEngineTabButton]:
+    def _get_button_at(self, point: QPoint) -> Optional[TabButton]:
         child = self.childAt(point)
         if child is None:
             return
         while child.parent() != self:
             child = child.parent()
-        if isinstance(child, TabEngineTabButton):
+        if isinstance(child, TabButton):
             return child
 
     def mousePressEvent(self, event: QMouseEvent):
@@ -339,10 +345,10 @@ class TabEngineTabContainerWidget(QWidget):
                     self.highlight_widget = None
 
             if self.highlight_widget is None:
-                if isinstance(widget, TabEngineStackedTabWidget):
+                if isinstance(widget, AbstractStackedTabWidget):
                     render_widget = DragSplitRenderer(widget)
                     self.highlight_widget = widget, render_widget
-                elif isinstance(widget, TabEngineTabContainerWidget):
+                elif isinstance(widget, AbstractTabContainerWidget):
                     render_widget = DragTabRenderer(widget)
                     self.highlight_widget = widget, render_widget
 
@@ -377,12 +383,12 @@ class TabEngineTabContainerWidget(QWidget):
 
     def _get_drop_widget(
         self, point: QPoint
-    ) -> Union[None, TabEngineTabContainerWidget, TabEngineStackedTabWidget]:
+    ) -> Union[None, AbstractTabContainerWidget, AbstractStackedTabWidget]:
         """Get the widget that the dragged widget will be dropped into."""
         widget = QApplication.widgetAt(point)
         while widget is not None:
             if isinstance(
-                widget, (TabEngineTabContainerWidget, TabEngineStackedTabWidget)
+                widget, (AbstractTabContainerWidget, AbstractStackedTabWidget)
             ):
                 return widget
             widget = widget.parent()
@@ -398,12 +404,12 @@ class TabEngineTabContainerWidget(QWidget):
             self.releaseMouse()
 
             widget, render_widget = self.highlight_widget or (None, None)
-            if isinstance(widget, TabEngineTabContainerWidget) and isinstance(
+            if isinstance(widget, AbstractTabContainerWidget) and isinstance(
                 render_widget, DragTabRenderer
             ):
                 # Dropped into a tab bar
                 widget.container.tab_bar.tab_widget.add_page(self.dragged_widget)
-            elif isinstance(widget, TabEngineStackedTabWidget) and isinstance(
+            elif isinstance(widget, AbstractStackedTabWidget) and isinstance(
                 render_widget, DragSplitRenderer
             ):
                 drop_area = render_widget.drop_area
@@ -421,7 +427,7 @@ class TabEngineTabContainerWidget(QWidget):
 
                     new_splitter.addWidget(widget)
 
-                    tab_widget = TabEngineStackedTabWidget()
+                    tab_widget = self._new_stacked_tab_widget()
                     tab_widget.add_page(self.dragged_widget)
                     if drop_area in {DropArea.Top, DropArea.Bottom}:
                         new_splitter.setOrientation(Qt.Orientation.Vertical)
@@ -437,13 +443,7 @@ class TabEngineTabContainerWidget(QWidget):
                     new_splitter.setSizes([2048, 2048])
             else:
                 # Dropped into space or a non-compatible widget
-                new_window = sub_window.AmuletSubWindow(
-                    main_window.AmuletMainWindow.main_window()
-                )
-                tab_widget = new_window.splitter_widget.widget(0)
-                tab_widget.add_page(self.dragged_widget)
-                new_window.move(event.globalPosition().toPoint())
-                new_window.show()
+                self._on_drop_in_space(self.dragged_widget, event)
 
             if render_widget is not None:
                 render_widget.close()
@@ -455,15 +455,23 @@ class TabEngineTabContainerWidget(QWidget):
         else:
             super().mouseReleaseEvent(event)
 
+    def _new_stacked_tab_widget(self) -> AbstractStackedTabWidget:
+        raise NotImplementedError
 
-class TabEngineTabContainer(QScrollArea):
+    def _on_drop_in_space(
+        self, dragged_widget: Union[QWidget, TabPage], drop_event: QMouseEvent
+    ):
+        raise NotImplementedError
+
+
+class AbstractTabContainer(QScrollArea):
     """A scrollable widget to contain tab buttons."""
 
     tab_changed = Signal(int)
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self.widget = TabEngineTabContainerWidget()
+        self.widget = self._new_tab_container_widget()
         self.widget.tab_changed.connect(self.tab_changed)
         self.setWidget(self.widget)
 
@@ -475,13 +483,14 @@ class TabEngineTabContainer(QScrollArea):
         self.setHorizontalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
         self.horizontalScrollBar().hide()
 
+    def _new_tab_container_widget(self) -> AbstractTabContainerWidget:
+        raise NotImplementedError
+
     @property
-    def tab_bar(self) -> TabEngineTabBar:
+    def tab_bar(self) -> AbstractTabBar:
         parent = self.parent()
-        if not isinstance(parent, TabEngineTabBar):
-            raise RuntimeError(
-                "Parent of TabEngineTabContainer must be TabEngineTabBar"
-            )
+        if not isinstance(parent, AbstractTabBar):
+            raise RuntimeError("Parent of AbstractTabContainer must be AbstractTabBar")
         return parent
 
     def sizeHint(self) -> QSize:
@@ -492,7 +501,7 @@ class TabEngineTabContainer(QScrollArea):
         scroll_bar.setValue(scroll_bar.value() - event.angleDelta().y())
 
 
-class TabEngineTabBar(QWidget):
+class AbstractTabBar(QWidget):
     """A custom class that behaves like a QTabBar."""
 
     tab_changed = Signal(int)
@@ -511,7 +520,7 @@ class TabEngineTabBar(QWidget):
         self.layout.addWidget(self.left_button)
         self.left_button.clicked.connect(self._move_left)
 
-        self.tab_container = TabEngineTabContainer()
+        self.tab_container = self._new_tab_container()
         self.tab_container.tab_changed.connect(self.tab_changed)
         self.layout.addWidget(self.tab_container)
 
@@ -524,6 +533,9 @@ class TabEngineTabBar(QWidget):
         self.plus_button.setFixedSize(button_height, button_height)
         self.layout.addWidget(self.plus_button)
         self.plus_button.clicked.connect(self.add_clicked)
+
+    def _new_tab_container(self) -> AbstractTabContainer:
+        raise NotImplementedError
 
     def add_tab(self, label: str, icon: QIcon = None):
         self.tab_container.widget.add_tab(label, icon)
@@ -544,10 +556,12 @@ class TabEngineTabBar(QWidget):
         return self.tab_container.widget.current_index()
 
     @property
-    def tab_widget(self) -> TabEngineStackedTabWidget:
+    def tab_widget(self) -> AbstractStackedTabWidget:
         parent = self.parent()
-        if not isinstance(parent, TabEngineStackedTabWidget):
-            raise RuntimeError("Parent of TabEngineTabBar must be TabEngineTabWidget")
+        if not isinstance(parent, AbstractStackedTabWidget):
+            raise RuntimeError(
+                "Parent of AbstractTabBar must be AbstractStackedTabWidget"
+            )
         return parent
 
     def _check_size(self):
@@ -578,22 +592,26 @@ class TabEngineTabBar(QWidget):
         self._check_size()
 
 
-class TabEngineStackedTabWidget(QWidget):
+class AbstractStackedTabWidget(QWidget):
     """A custom class that behaves like a QTabWidget"""
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.setAcceptDrops(True)
         self._layout = QVBoxLayout()
+        self._layout.setContentsMargins(0, 0, 0, 0)
         self.setLayout(self._layout)
 
-        self.tab_bar = TabEngineTabBar()
+        self.tab_bar = self._new_tab_bar()
         self._layout.addWidget(self.tab_bar)
         self.stacked_widget = QStackedWidget()
         self._layout.addWidget(self.stacked_widget)
 
         self.tab_bar.tab_changed.connect(self.stacked_widget.setCurrentIndex)
         self.tab_bar.add_clicked.connect(self._add)
+
+    def _new_tab_bar(self) -> AbstractTabBar:
+        raise NotImplementedError
 
     @Slot()
     def _add(self):
@@ -664,24 +682,16 @@ class TabEngineStackedTabWidget(QWidget):
             )
 
         elif splitter_widget.count() == 1:
-            parent = splitter_widget.parent()
-            if isinstance(parent, main_window.AmuletMainWindow):
-                # If this widget is the last TabEngineStackedTabWidget in the AmuletMainWindow and has no tabs, open the default tab
-                # TODO: add the default page
-                print("add page")
-            elif isinstance(parent, sub_window.AmuletSubWindow):
-                parent.deleteLater()
-            else:
-                raise RuntimeError
+            self._on_last_removed()
         else:
             raise RuntimeError
 
-        # if isinstance(tab_widget, TabEngineStackedTabWidget):
+        # if isinstance(tab_widget, AbstractStackedTabWidget):
         #     if not tab_widget.count():
         #         # If there are no tabs in the stacked tab widget
         #         splitter_widget = tab_widget.splitter
         #         if isinstance(splitter_widget.parent(), main_window.AmuletMainWindow) and splitter_widget.count() == 1:
-        #             # If this widget is the last TabEngineStackedTabWidget in the AmuletMainWindow and has no tabs, open the default tab
+        #             # If this widget is the last AbstractStackedTabWidget in the AmuletMainWindow and has no tabs, open the default tab
         #             # TODO: add the default page
         #             print("add page")
         #         else:
@@ -700,13 +710,16 @@ class TabEngineStackedTabWidget(QWidget):
         #     elif tab_widget.count() == 1 and isinstance(parent, RecursiveSplitter):
         #         # If the widget only has one item in it them move the item into the parent splitter
         #         tab_widget = tab_widget.widget(0)
-        #         if not isinstance(tab_widget, TabEngineStackedTabWidget):
+        #         if not isinstance(tab_widget, AbstractStackedTabWidget):
         #             raise RuntimeError
         #         index = parent.indexOf(tab_widget)
         #         parent.replaceWidget(index, tab_widget)
         #         tab_widget.setParent(None)
         #         tab_widget.hide()
         #         tab_widget.deleteLater()
+
+    def _on_last_removed(self):
+        raise NotImplementedError
 
     def count(self) -> int:
         return self.tab_bar.count()
@@ -719,7 +732,7 @@ class TabEngineStackedTabWidget(QWidget):
         parent = self.parent()
         if not isinstance(parent, RecursiveSplitter):
             raise RuntimeError(
-                "Parent of TabEngineStackedTabWidget must be RecursiveSplitter"
+                "Parent of AbstractStackedTabWidget must be RecursiveSplitter"
             )
         return parent
 
@@ -729,17 +742,17 @@ class RecursiveSplitter(QSplitter):
         super().__init__(*args, **kwargs)
         self.setChildrenCollapsible(False)
 
-    def addWidget(self, widget: Union[TabEngineStackedTabWidget, RecursiveSplitter]):
-        if not isinstance(widget, (TabEngineStackedTabWidget, RecursiveSplitter)):
+    def addWidget(self, widget: Union[AbstractStackedTabWidget, RecursiveSplitter]):
+        if not isinstance(widget, (AbstractStackedTabWidget, RecursiveSplitter)):
             raise TypeError(
                 "widget must be an instance of TabArea or RecursiveSplitter"
             )
         super().addWidget(widget)
 
     def insertWidget(
-        self, index: int, widget: Union[TabEngineStackedTabWidget, RecursiveSplitter]
+        self, index: int, widget: Union[AbstractStackedTabWidget, RecursiveSplitter]
     ):
-        if not isinstance(widget, (TabEngineStackedTabWidget, RecursiveSplitter)):
+        if not isinstance(widget, (AbstractStackedTabWidget, RecursiveSplitter)):
             raise TypeError(
                 "widget must be an instance of TabArea or RecursiveSplitter"
             )

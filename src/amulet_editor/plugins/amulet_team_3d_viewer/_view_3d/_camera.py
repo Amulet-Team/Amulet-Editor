@@ -41,8 +41,8 @@ class Camera(QObject):
     # Private variables
     _bounds: Bounds
     # Extrinsic attrs
-    _location: Location
-    _rotation: Rotation
+    _location: Optional[Location]
+    _rotation: Optional[Rotation]
     # Matrix
     _intrinsic_matrix: QMatrix4x4
     _extrinsic_matrix: Optional[QMatrix4x4]
@@ -65,8 +65,8 @@ class Camera(QObject):
             1_000_000_000,
             1_000_000_000,
         )
-        self._location = Location(0.0, 0.0, 0.0)
-        self._rotation = Rotation(0.0, 0.0)
+        self._location = None
+        self._rotation = None
 
         self._intrinsic_matrix = QMatrix4x4()
         self._extrinsic_matrix = None
@@ -81,7 +81,7 @@ class Camera(QObject):
     @property
     def location(self) -> Location:
         """The location of the camera. (x, y, z)"""
-        return self._location
+        return self._location or Location(0.0, 0.0, 0.0)
 
     @location.setter
     def location(self, location: Location):
@@ -110,7 +110,7 @@ class Camera(QObject):
         """The rotation of the camera. (azimuth/yaw, elevation/pitch).
         This should behave the same as how Minecraft handles it.
         """
-        return self._rotation
+        return self._rotation or Rotation(0.0, 0.0)
 
     @rotation.setter
     def rotation(self, rotation: Rotation):
@@ -192,8 +192,8 @@ class Camera(QObject):
         """The matrix storing all extrinsic parameters (location/rotation)"""
         if self._extrinsic_matrix is None:
             self._extrinsic_matrix = QMatrix4x4()
-            location = self._location
-            rotation = self._rotation
+            location = self.location
+            rotation = self.rotation
             self._extrinsic_matrix.rotate(rotation.elevation, 1, 0, 0)
             self._extrinsic_matrix.rotate(rotation.azimuth, 0, 1, 0)
             self._extrinsic_matrix.translate(-location.x, -location.y, -location.z)
