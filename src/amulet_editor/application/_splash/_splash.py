@@ -23,13 +23,13 @@ class Ui_Splash(QDialog):
         self._logo = QLabel(self)
         self._logo.setObjectName("_logo")
         self._logo.setText("")
-        self._logo.setAlignment(Qt.AlignCenter)
+        self._logo.setAlignment(Qt.AlignmentFlag.AlignCenter)
         self._layout.addWidget(self._logo)
 
         self._msg = QLabel(self)
         self._msg.setObjectName("_msg")
         self._msg.setText("")
-        self._msg.setAlignment(Qt.AlignCenter)
+        self._msg.setAlignment(Qt.AlignmentFlag.AlignCenter)
         self._layout.addWidget(self._msg)
         self._layout.setStretch(0, 1)
 

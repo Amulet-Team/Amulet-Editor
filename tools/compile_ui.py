@@ -3,6 +3,7 @@ Compile all Qt Designer UI files in the project to python files.
 After generating it removes unused imports and reformats with Black.
 """
 
+from typing import Any
 import glob
 import os
 import subprocess
@@ -11,10 +12,28 @@ import re
 import traceback
 import xml.etree.ElementTree as ET
 from concurrent.futures import ThreadPoolExecutor
-import PySide6
+from enum import EnumType
+import PySide6.QtWidgets
+import PySide6.QtCore
+
 
 ProjectRoot = os.path.dirname(os.path.dirname(__file__))
 UIC = os.path.join(PySide6.__path__[0], "uic.exe")
+
+
+def _get_enums(obj: Any) -> list[EnumType]:
+    enums = []
+    for name in dir(obj):
+        val = getattr(obj, name)
+        if isinstance(val, EnumType):
+            enums.append(val)
+    return enums
+
+
+Enums = [
+    *_get_enums(PySide6.QtWidgets.QFrame),
+    *_get_enums(PySide6.QtCore.Qt),
+]
 
 
 def _compile_ui_file(ui_path: str) -> str | None:
@@ -71,6 +90,17 @@ def _compile_ui_file(ui_path: str) -> str | None:
         py,
         flags=re.DOTALL,
     )
+
+    # Fix enums. The generator creates enums as unscoped enums but PySide6 depreciated them.
+    for enum in Enums:
+        qual_name: str = enum.__qualname__
+        prefix = ".".join(qual_name.split(".")[:-1])
+        for enum_name in enum.__members__:
+            py = re.sub(
+                r"\b" + prefix + r"\." + enum_name + r"\b",
+                f"{qual_name}.{enum_name}",
+                py
+            )
 
     # Write the file back
     with open(py_path, "w") as pyf:

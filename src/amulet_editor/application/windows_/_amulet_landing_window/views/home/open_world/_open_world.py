@@ -49,7 +49,7 @@ class Ui_OpenWorldPage(QWidget):
 
         self._lbl_title = QLabel(self)
         self._lbl_title.setObjectName("_lbl_title")
-        self._lbl_title.setAlignment(Qt.AlignCenter)
+        self._lbl_title.setAlignment(Qt.AlignmentFlag.AlignCenter)
         self._lyt_header.addWidget(self._lbl_title)
 
         self._horizontal_spacer = QSpacerItem(
@@ -60,8 +60,8 @@ class Ui_OpenWorldPage(QWidget):
 
         self.frame = QFrame(self)
         self.frame.setObjectName("frame")
-        self.frame.setFrameShape(QFrame.HLine)
-        self.frame.setFrameShadow(QFrame.Raised)
+        self.frame.setFrameShape(QFrame.Shape.HLine)
+        self.frame.setFrameShadow(QFrame.Shadow.Raised)
         self.frame.setProperty("borderTop", "surface")
         self._vertical_layout.addWidget(self.frame)
 
