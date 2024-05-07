@@ -44,6 +44,7 @@ def load_plugin() -> None:
 
 
 def _locale_changed() -> None:
+    assert _translator is not None
     _translator.load_lang(
         QLocale(),
         "",
@@ -52,8 +53,9 @@ def _locale_changed() -> None:
 
 
 def unload_plugin() -> None:
-    amulet_team_main_window2.unregister_widget(HomeWidget)
-    QCoreApplication.removeTranslator(_translator)
+    amulet_team_main_window.unregister_widget(HomeWidget)
+    if _translator is not None:
+        QCoreApplication.removeTranslator(_translator)
 
 
 plugin = PluginV1(load_plugin, unload_plugin)

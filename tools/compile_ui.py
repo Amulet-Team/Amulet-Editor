@@ -39,7 +39,7 @@ Enums = [
 InitArgs: dict[str, str] = {
     "QWidget": "def __init__(self, parent: QWidget | None = None, f: Qt.WindowType = Qt.WindowType.Widget) -> None:\n        super().__init__(parent, f)",
     "QDialog": "def __init__(self, parent: QWidget | None = None, f: Qt.WindowType = Qt.WindowType.Dialog) -> None:\n        super().__init__(parent, f)",
-    "QMainWindow": "def __init__(self, parent: QWidget | None = None, flags: Qt.WindowType = Qt.WindowType.Window) -> None:\n        super().__init__(parent, f)",
+    "QMainWindow": "def __init__(self, parent: QWidget | None = None, flags: Qt.WindowType = Qt.WindowType.Window) -> None:\n        super().__init__(parent, flags)",
 }
 
 

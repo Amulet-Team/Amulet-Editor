@@ -13,13 +13,13 @@ from amulet_team_main_window.api import add_static_toolbar_button
 _windows: list = []
 
 
-def load_plugin():
+def load_plugin() -> None:
     add_static_toolbar_button(
         "amulet_team:settings", tablericons.settings, "Settings", _on_click
     )
 
 
-def _on_click(self):
+def _on_click(self) -> None:
     settings = SettingsPage()
     settings.setWindowModality(Qt.WindowModality.ApplicationModal)
     settings.showNormal()
