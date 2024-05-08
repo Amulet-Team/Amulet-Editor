@@ -21,7 +21,7 @@ from OpenGL.GL import (
     GL_DEPTH_TEST,
 )
 
-from amulet_editor.data.project import get_level
+from amulet_editor.data.level import get_level
 from amulet_editor.models.widgets.traceback_dialog import CatchException
 from amulet_team_resource_pack._api import get_resource_pack_container
 

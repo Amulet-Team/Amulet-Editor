@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from amulet_editor.data.project import get_level
+from amulet_editor.data.level import get_level
 from amulet_editor.models.plugin import PluginV1
 
 
