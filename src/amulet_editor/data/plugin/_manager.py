@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import inspect
 import time
-from typing import NamedTuple, Optional, Callable
+from typing import NamedTuple, Optional, Callable, Protocol
 from types import FrameType, ModuleType
 from threading import RLock
 import os
@@ -12,17 +12,18 @@ import logging
 from importlib import import_module
 from importlib.util import spec_from_file_location, module_from_spec
 from importlib.metadata import version, packages_distributions
-from queue import Queue, Empty
+from queue import Queue
 from enum import Enum
 import sys
 from collections import UserDict
+from collections.abc import Mapping, Sequence
 import re
 import traceback
 import builtins
 
 from packaging.version import Version
 
-from PySide6.QtCore import QThread, Signal, QObject
+from PySide6.QtCore import Signal, QObject
 
 from amulet_editor.application._splash import Splash
 from amulet_editor.application._invoke import invoke
@@ -92,29 +93,6 @@ _splash_load_screen: Optional[Splash] = None
 _splash_unload_screen: Optional[Splash] = None
 
 
-class PluginJobThread(QThread):
-    def run(self) -> None:
-        while True:
-            job: Optional[PluginJob] = None
-            while True:
-                if self.isInterruptionRequested():
-                    log.debug("Exiting plugin job thread")
-                    return
-                try:
-                    job = _plugin_queue.get(timeout=0.1)
-                except Empty:
-                    continue
-                else:
-                    break
-            if job.job_type is PluginJobType.Enable:
-                _enable_plugin(job.plugin_identifier)
-            elif job.job_type is PluginJobType.Disable:
-                _disable_plugin(job.plugin_identifier)
-            elif job.job_type is PluginJobType.Reload:
-                _disable_plugin(job.plugin_identifier)
-                _enable_plugin(job.plugin_identifier)
-
-
 class Event(QObject):
     plugin_state_change = Signal(LibraryUID, PluginState)
 
@@ -126,14 +104,14 @@ TracePattern = re.compile(r"\s*File\s*\"(?P<path>.*?)\"")
 
 
 def get_trace_paths() -> list[str]:
-    return list(
-        reversed(
-            [
-                normpath(TracePattern.match(line).group("path"))
-                for line in traceback.format_stack()
-            ]
-        )
-    )[1:]
+    paths = []
+    for line in reversed(traceback.format_stack()[:1]):
+        match = TracePattern.match(line)
+        if match:
+            paths.append(normpath(match.group("path")))
+        else:
+            log.error(f"Could not parse traceback line {line!r}")
+    return paths
 
 
 def _validate_import(imported_name: str, frame: FrameType) -> None:
@@ -147,19 +125,21 @@ def _validate_import(imported_name: str, frame: FrameType) -> None:
     imported_root_name = imported_name.split(".")[0]
 
     # Find what imported the module
-    while frame.f_globals.get("__name__").split(".")[0] == "importlib":
+    frame_: FrameType | None = frame
+    while frame_ is not None and frame_.f_globals.get("__name__", "").split(".")[0] == "importlib":
         # Skip over the import mechanisms
-        frame = frame.f_back
+        frame_ = frame_.f_back
 
-    if frame.f_globals.get("__name__") == __name__ and frame.f_code.co_name in {
+    if frame_ is not None and frame_.f_globals.get("__name__") == __name__ and frame_.f_code.co_name in {
         "_enable_plugin",
         "wrap_importer_import",
     }:
         return
 
-    importer_name = frame.f_globals.get("__name__")
+    assert frame_ is not None
+    importer_name = frame_.f_globals.get("__name__")
     if importer_name is None:
-        raise RuntimeError(f"Could not find __name__ attribute for frame\n{frame}")
+        raise RuntimeError(f"Could not find __name__ attribute for frame\n{frame_}")
 
     importer_root_name = importer_name.split(".")[0]
     if importer_root_name in _enabled_plugins:
@@ -198,7 +178,7 @@ def _validate_import(imported_name: str, frame: FrameType) -> None:
                         f"Plugin {importer_root_name} imported library {imported_root_name} which it does not have authority for.\nYou must list a dependency in your plugin's metadata to be able to import it."
                     )
     elif imported_root_name in _enabled_plugins:
-        code = frame.f_code
+        code = frame_.f_code
         raise RuntimeError(
             f"Plugin module {imported_name} was imported by a non-plugin module {importer_name} {getattr(code, 'co_qualname', None) or getattr(code, 'co_name', 'could not resolve function name')}"
         )
@@ -218,10 +198,10 @@ class CustomSysModules(UserDict[str, ModuleType]):
         frame = inspect.currentframe()
         if frame is not None:
             frame = frame.f_back
-            while frame.f_globals.get("__name__") == "collections.abc":
+            while frame is not None and frame.f_globals.get("__name__") == "collections.abc":
                 frame = frame.f_back
-
-            _validate_import(imported_name, frame)
+            if frame is not None:
+                _validate_import(imported_name, frame)
 
         return super().__getitem__(imported_name)
 
@@ -233,19 +213,40 @@ class CustomSysModules(UserDict[str, ModuleType]):
                 del self[key]
 
 
-def wrap_importer(imp) -> Callable:
-    def wrap_importer_import(name, globals=None, locals=None, fromlist=(), level=0):
+class ImportProtocol(Protocol):
+    def __call__(
+        self,
+        name: str,
+        globals: Mapping[str, object] | None = None,
+        locals: Mapping[str, object] | None = None,
+        fromlist: Sequence[str] = (),
+        level: int = 0
+    ) -> ModuleType:
+        ...
+
+
+def wrap_importer(imp: ImportProtocol) -> ImportProtocol:
+    def wrap_importer_import(
+        name: str,
+        globals: Mapping[str, object] | None = None,
+        locals: Mapping[str, object] | None = None,
+        fromlist: Sequence[str] = (),
+        level: int = 0
+    ) -> ModuleType:
         if level:
-            name_split = globals["__name__"].split(".")
+            assert globals is not None
+            module_src = globals["__name__"]
+            assert isinstance(module_src, str)
+            name_split = module_src.split(".")
             imported_name = f"{'.'.join(name_split[:len(name_split)-level+1])}.{name}"
         else:
             imported_name = name
         frame = inspect.currentframe()
         if frame is not None:
             frame = frame.f_back
+            assert frame is not None
             _validate_import(imported_name, frame)
         return imp(name, globals=globals, locals=locals, fromlist=fromlist, level=level)
-
     return wrap_importer_import
 
 
@@ -278,7 +279,7 @@ def load() -> None:
                         sys.path.pop(i)
                         break
 
-        sys.modules = CustomSysModules(sys.modules)
+        sys.modules = CustomSysModules(sys.modules)  # type: ignore
         builtins.__import__ = wrap_importer(builtins.__import__)
         scan_plugins()
         plugin_state = get_plugins_state()
@@ -381,10 +382,12 @@ def scan_plugins() -> None:
                         pass
                     else:
                         # Imported a module with this name
+                        mod_file = mod.__file__
+                        assert mod_file is not None
                         if (
                             plugin_path != mod.__path__[0]
                             if hasattr(mod, "__path__")
-                            else plugin_path != os.path.splitext(mod.__file__)[0]
+                            else plugin_path != os.path.splitext(mod_file)[0]
                         ):
                             # If the path does not match the expected path then it shadows an existing module
                             log.warning(
@@ -470,11 +473,14 @@ def _enable_plugin(plugin_uid: LibraryUID) -> None:
                         )
                         if spec is None:
                             raise Exception
+                        loader = spec.loader
+                        if loader is None:
+                            raise Exception
                         mod = module_from_spec(spec)
                         if mod is None:
                             raise Exception
                         sys.modules[plugin_container.data.uid.identifier] = mod
-                        spec.loader.exec_module(mod)
+                        loader.exec_module(mod)
 
                         plugin_container.instance = mod
 
@@ -565,6 +571,7 @@ def _unload_plugin(plugin_container: PluginContainer) -> None:
 
     try:
         # User code must be run from the main thread to avoid issues.
+        assert plugin_container.plugin is not None
         invoke(plugin_container.plugin.unload)
     except Exception as e:
         log.exception(e)

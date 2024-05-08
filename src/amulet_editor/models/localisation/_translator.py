@@ -58,9 +58,9 @@ class ATranslator(QTranslator):
         self,
         context: str,
         source_text: str,
-        disambiguation: Optional[bytes] = None,
+        disambiguation: str | None = None,
         n: int = -1,
     ) -> str:
         return super().translate(
             context, source_text, disambiguation, n
-        ) or self._translations.get(f"{context}.{source_text}", None)
+        ) or self._translations.get(f"{context}.{source_text}", f"{context}.{source_text}")

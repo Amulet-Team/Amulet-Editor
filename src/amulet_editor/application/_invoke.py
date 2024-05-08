@@ -1,5 +1,5 @@
 from __future__ import annotations
-from typing import TypeVar, Callable
+from typing import TypeVar, Callable, Generic
 from PySide6.QtCore import Slot, Signal, QObject, Qt, QThread
 from PySide6.QtGui import QGuiApplication
 
@@ -10,15 +10,17 @@ T = TypeVar("T")
 
 
 @final
-class InvokeMethod(QObject):
+class InvokeMethod(QObject, Generic[T]):
+    __method: Callable[[], T]
+    __return: T
+    __exception: BaseException | None
+
     def __init__(self) -> None:
         super().__init__()
-        self.__method = None
-        self.__return = None
-        self.__exception = None
+        self.__exception: BaseException | None = None
 
     @classmethod
-    def invoke(cls, method: Callable[[], T], parent: QObject = None) -> T:
+    def invoke(cls, method: Callable[[], T], parent: QObject | None = None) -> T:
         """
         Invoke a method and get the return value in a callback.
         This is useful for calling a method across threads.
@@ -36,6 +38,7 @@ class InvokeMethod(QObject):
         if parent is None:
             # Default to the app if not defined
             parent = QGuiApplication.instance()
+            assert parent is not None
 
         # Get the thread from the object
         thread = parent.thread()
@@ -59,10 +62,10 @@ class InvokeMethod(QObject):
         self.setParent(None)
 
         # Process return
-        if self.__exception is not None:
-            raise self.__exception
-        else:
+        if self.__exception is None:
             return self.__return
+        else:
+            raise self.__exception
 
     start_signal = Signal()
 

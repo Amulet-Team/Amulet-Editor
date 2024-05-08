@@ -17,7 +17,7 @@ class LibraryUID:
     def __repr__(self) -> str:
         return f"LibraryUID({self._identifier!r}, {self._version!r})"
 
-    def __str__(self):
+    def __str__(self) -> str:
         return f"{self._identifier} {self._version}"
 
     @property
@@ -30,11 +30,11 @@ class LibraryUID:
         """The version number of the plugin."""
         return self._version
 
-    def to_string(self):
+    def to_string(self) -> str:
         return f"{self.identifier}@{self.version}"
 
     @classmethod
-    def from_string(cls, s: str):
+    def from_string(cls, s: str) -> LibraryUID:
         match = re.fullmatch(r"(?P<identifier>[a-zA-Z_]+\w*)@(?P<version>.*)", s)
         if match is None:
             raise ValueError(f"Invalid LibraryUID string: {s}")

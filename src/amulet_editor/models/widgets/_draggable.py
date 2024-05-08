@@ -12,7 +12,7 @@ class ADragContainer(QWidget):
 
     def __init__(
         self,
-        parent: QWidget = None,
+        parent: QWidget | None = None,
         orientation: Qt.Orientation = Qt.Orientation.Vertical,
     ):
         super().__init__(parent)
@@ -26,7 +26,7 @@ class ADragContainer(QWidget):
 
         self._drag = None
 
-    def mouseMoveEvent(self, event: QMouseEvent):
+    def mouseMoveEvent(self, event: QMouseEvent) -> None:
         if event.buttons() == Qt.MouseButton.LeftButton:
             if self._drag is None:
                 for i in range(self._layout.count()):
@@ -47,5 +47,5 @@ class ADragContainer(QWidget):
         else:
             self._drag = None
 
-    def add_item(self, item: QWidget):
+    def add_item(self, item: QWidget) -> None:
         self._layout.addWidget(item)

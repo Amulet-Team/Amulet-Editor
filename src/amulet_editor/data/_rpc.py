@@ -53,7 +53,7 @@ log = logging.getLogger(__name__)
 CallableT = TypeVar("CallableT", bound=Callable)
 UUID = bytes
 SuccessCallbackT = Callable[[Any], Any]
-ErrorCallbackT = Callable[[Exception], Any]
+ErrorCallbackT = Callable[[str], Any]
 # The function address and args to pass
 CallDataT = tuple[str, Sequence, Mapping]
 CallDataStorage = dict[UUID, tuple[CallDataT, tuple[SuccessCallbackT, ErrorCallbackT]]]
@@ -100,20 +100,20 @@ def is_landing_process() -> Optional[bool]:
     return get_level() is None
 
 
-@register_remote_procedure
-def call_global(address, args, kwargs) -> None:
-    """
-    Call a procedure in all child processes.
-    The return values are discarded.
-
-    :param address: The address of the procedure to call.
-    :param args: The arguments to pass to the procedure.
-    :param kwargs: The keyword arguments to pass to the procedure.
-    """
-    if not _is_broker:
-        raise RuntimeError("This function is not valid in this context.")
-    # TODO: call the function in all child processes
-    raise NotImplementedError
+# @register_remote_procedure
+# def call_global(address, args, kwargs) -> None:
+#     """
+#     Call a procedure in all child processes.
+#     The return values are discarded.
+#
+#     :param address: The address of the procedure to call.
+#     :param args: The arguments to pass to the procedure.
+#     :param kwargs: The keyword arguments to pass to the procedure.
+#     """
+#     if not _is_broker:
+#         raise RuntimeError("This function is not valid in this context.")
+#     # TODO: call the function in all child processes
+#     raise NotImplementedError
 
 
 # class register_global_remote_procedure:
@@ -151,7 +151,7 @@ def _on_listener_connect() -> None:
                 log.debug(f"New connection is_landing {response}")
                 _listener_connections[connection] = response
 
-            def is_landing_err(tb_str) -> None:
+            def is_landing_err(tb_str: str) -> None:
                 logging.exception(tb_str)
 
             connection.call(
@@ -194,7 +194,9 @@ _remote_call_listener.newConnection.connect(_on_listener_connect)
 class RemoteProcedureCallingConnection:
     """A subclass of QLocalSocket to facilitate calling a procedure in a remote process and getting the return value."""
 
-    def __init__(self, socket: QLocalSocket = None) -> None:
+    socket: QLocalSocket
+
+    def __init__(self, socket: QLocalSocket | None = None) -> None:
         self.socket = socket or QLocalSocket()
         # A dictionary mapping the UUID for the call to the callback functions.
         self._calls: CallDataStorage = {}
@@ -213,9 +215,9 @@ class RemoteProcedureCallingConnection:
         success_callback: SuccessCallbackT,
         error_callback: ErrorCallbackT,
         func: Callable,
-        *args,
-        **kwargs,
-    ):
+        *args: Any,
+        **kwargs: Any,
+    ) -> None:
         """
         Call a function in the connected process.
 
@@ -265,7 +267,7 @@ class RemoteProcedureCallingConnection:
                         payload[37:],
                     )
                     if is_response:
-                        log.debug(f"New response from {self.socket} {identifier}")
+                        log.debug(f"New response from {self.socket} {identifier.decode()}")
                         _, (success_callback, error_callback) = self._calls.pop(
                             identifier
                         )
@@ -298,7 +300,7 @@ class RemoteProcedureCallingConnection:
                             self.socket.write(payload)
 
                         except Exception:
-                            log.debug(f"Exception processing request {identifier}")
+                            log.debug(f"Exception processing request {identifier.decode()}")
                             payload = self.encode_error_response(
                                 identifier, traceback.format_exc()
                             )
@@ -310,7 +312,7 @@ class RemoteProcedureCallingConnection:
         return struct.pack(">I", payload_size) + payload
 
     @classmethod
-    def encode_request(cls, identifier: bytes, address: str, args, kwargs) -> bytes:
+    def encode_request(cls, identifier: bytes, address: str, args: Any, kwargs: Any) -> bytes:
         """
         Encode an RPC request.
 
@@ -337,7 +339,7 @@ class RemoteProcedureCallingConnection:
 _broker_connection = RemoteProcedureCallingConnection()
 
 
-def init_rpc(broker=False) -> None:
+def init_rpc(broker: bool = False) -> None:
     """Init the messaging state"""
     global _is_broker
     log.debug("Initialising RPC.")
@@ -362,7 +364,7 @@ def init_rpc(broker=False) -> None:
 
             if _is_broker:
 
-                def on_success_response(result) -> None:
+                def on_success_response(result: Any) -> None:
                     if result == server_uuid:
                         log.debug("I am the broker")
                         _broker_connection.socket.close()
@@ -370,7 +372,7 @@ def init_rpc(broker=False) -> None:
                         log.debug("Exiting because a broker already exists.")
                         QApplication.quit()
 
-                def on_error_response(tb_str) -> None:
+                def on_error_response(tb_str: str) -> None:
                     log.exception(tb_str)
                     display_exception(
                         title="Broker exception",

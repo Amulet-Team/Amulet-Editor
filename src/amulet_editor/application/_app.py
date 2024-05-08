@@ -36,7 +36,9 @@ class AmuletApp(QApplication):
 
     @staticmethod
     def instance() -> Optional[AmuletApp]:
-        return QApplication.instance()
+        instance = QApplication.instance()
+        assert isinstance(instance, AmuletApp)
+        return instance
 
     @Slot()
     def _last_window_closed(self) -> None:

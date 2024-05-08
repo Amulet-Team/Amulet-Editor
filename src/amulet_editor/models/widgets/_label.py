@@ -14,7 +14,7 @@ from PySide6.QtWidgets import QGraphicsDropShadowEffect, QLabel, QSizePolicy, QW
 
 
 class QElidedLabel(QLabel):
-    def __init__(self, text: str = "", parent: QWidget = None):
+    def __init__(self, text: str = "", parent: QWidget | None = None) -> None:
         if parent is None:
             super().__init__()
         else:
@@ -22,7 +22,7 @@ class QElidedLabel(QLabel):
 
         self._text = text
         self._text_elide_mode = Qt.TextElideMode.ElideRight
-        self._text_width = 0
+        self._text_width: float = 0
         self._width_hint = None
 
         self.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Preferred)
@@ -44,7 +44,7 @@ class QElidedLabel(QLabel):
     def elideMode(self) -> Qt.TextElideMode:
         return self._text_elide_mode
 
-    def setElideMode(self, mode: Qt.TextElideMode):
+    def setElideMode(self, mode: Qt.TextElideMode) -> None:
         self._text_elide_mode = (
             mode
             if mode
@@ -61,17 +61,17 @@ class QElidedLabel(QLabel):
     def text(self) -> str:
         return self._text
 
-    def setText(self, text: str):
+    def setText(self, text: str) -> None:
         self._text = text
         self._format_text()
 
-    def resizeEvent(self, event: QResizeEvent):
+    def resizeEvent(self, event: QResizeEvent) -> None:
         self._format_text()
 
-    def _format_text(self):
+    def _format_text(self) -> None:
         super().setText(self._elide_text(self._text))
 
-    def _elide_text(self, text: str):
+    def _elide_text(self, text: str) -> str:
         doc = QTextDocument()
         max_width = self.width()
         metric = QFontMetrics(self.font())
@@ -134,10 +134,8 @@ class QElidedLabel(QLabel):
 
 
 class QHoverLabel(QLabel):
-    def __init__(self, text: str, ref: QWidget):
-        super().__init__(ref)
-
-        self._ref_widget = ref
+    def __init__(self, text: str, parent: QWidget):
+        super().__init__(parent)
 
         self.shadow = QGraphicsDropShadowEffect(self)
         self.shadow.setBlurRadius(7)
@@ -151,22 +149,29 @@ class QHoverLabel(QLabel):
         self.setParent(self.window())
         self.setText(text)
 
-    def setText(self, text: str):
+    def setText(self, text: str) -> None:
         super().setText(text)
         self.setFixedSize(self.minimumSizeHint() + QSize(30, 6))
 
-    def showEvent(self, event: QShowEvent):
-        pos_gbl = self._ref_widget.parent().mapToGlobal(self._ref_widget.pos())
-        pos_rel = self.parent().mapFromGlobal(pos_gbl)
+    def showEvent(self, event: QShowEvent) -> None:
+        parent = self.parent()
+        assert isinstance(parent, QWidget)
+        # TODO: do we need the grandparent?
+        grandparent = parent.parent()
+        assert isinstance(grandparent, QWidget)
+        pos_gbl = grandparent.mapToGlobal(parent.pos())
+        pos_rel = parent.mapFromGlobal(pos_gbl)
         pos_mov = QPoint(
-            pos_rel.x() + self._ref_widget.width() + 3,
-            pos_rel.y() + (self._ref_widget.height() - self.height()) // 2,
+            pos_rel.x() + parent.width() + 3,
+            pos_rel.y() + (parent.height() - self.height()) // 2,
         )
         self.move(pos_mov)
 
-        self.parent().update()  # Fix rendering artifacts
+        parent.update()  # Fix rendering artifacts
         return super().showEvent(event)
 
-    def hideEvent(self, event: QHideEvent):
-        self.parent().update()  # Fix rendering artifacts
+    def hideEvent(self, event: QHideEvent) -> None:
+        parent = self.parent()
+        assert isinstance(parent, QWidget)
+        parent.update()  # Fix rendering artifacts
         return super().hideEvent(event)

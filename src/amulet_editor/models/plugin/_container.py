@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import json
 import os.path
-from typing import Optional, Type, Protocol
+from typing import Optional, Type, Protocol, Any, TypeGuard, TypeVar
 from abc import ABC, abstractmethod
 from packaging.version import Version
 from packaging.specifiers import SpecifierSet
@@ -16,6 +16,15 @@ from ._uid import LibraryUID
 
 
 _plugin_classes: dict[int, Type[PluginContainer]] = {}
+
+
+T = TypeVar("T")
+
+
+def validate_cast(obj: Any, cls: type[T], msg: str) -> T:
+    if isinstance(obj, cls):
+        return obj
+    raise TypeError(msg)
 
 
 class Plugin(Protocol):
@@ -43,7 +52,7 @@ class PluginContainer(ABC):
     plugin: Optional[PluginV1]
     state: PluginState
 
-    FormatVersion: int = None
+    FormatVersion: int = -1
 
     def __init__(self, data: PluginData):
         self.data = data
@@ -58,14 +67,10 @@ class PluginContainer(ABC):
         plugin_path is the system path to a directory containing a plugin.json file.
         """
         with open(os.path.join(plugin_path, "plugin.json")) as f:
-            plugin_data = json.load(f)
-        if not isinstance(plugin_data, dict):
-            raise TypeError("plugin.json must be a dictionary.")
+            plugin_data = validate_cast(json.load(f), dict, "plugin.json must be a dictionary.")
 
         # Get the plugin identifier
-        format_version = plugin_data.get("format_version", 1)
-        if not isinstance(format_version, int):
-            raise TypeError("plugin.json[format_version] must be an int")
+        format_version = validate_cast(plugin_data.get("format_version", 1), int, "plugin.json[format_version] must be an int")
         try:
             cls2 = _plugin_classes[format_version]
         except KeyError:
@@ -84,8 +89,8 @@ class PluginContainer(ABC):
     ) -> PluginContainer:
         raise NotImplementedError
 
-    def __init_subclass__(cls, **kwargs):
-        if cls.FormatVersion is None:
+    def __init_subclass__(cls, **kwargs: Any) -> None:
+        if cls.FormatVersion == -1:
             raise NotImplementedError("FormatVersion has not been set.")
         if cls.FormatVersion in _plugin_classes:
             raise ValueError(
@@ -97,7 +102,7 @@ class PluginContainer(ABC):
 class PluginContainerV1(PluginContainer):
     FormatVersion = 1
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         return f"PluginContainerV1({self.data.path})"
 
     @classmethod
@@ -109,52 +114,34 @@ class PluginContainerV1(PluginContainer):
         plugin_path is the system path to a directory containing a plugin.json file.
         """
         # Get the plugin identifier
-        plugin_identifier = plugin_data.get("identifier")
-        if not isinstance(plugin_identifier, str):
-            raise TypeError("plugin.json[identifier] must be a string")
+        plugin_identifier = validate_cast(plugin_data.get("identifier"), str, "plugin.json[identifier] must be a string")
         if not plugin_identifier.isidentifier():
             raise ValueError(
                 "plugin.json[identifier] must be a valid python identifier"
             )
 
         # Get the plugin version
-        plugin_version_string = plugin_data.get("version")
-        if not isinstance(plugin_version_string, str):
-            raise TypeError("plugin.json[version] must be a PEP 440 version string")
+        plugin_version_string = validate_cast(plugin_data.get("version"), str, "plugin.json[version] must be a PEP 440 version string")
         plugin_version = Version(plugin_version_string)
 
         # Get the plugin name
-        plugin_name = plugin_data.get("name")
-        if not isinstance(plugin_version_string, str):
-            raise TypeError("plugin.json[name] must be a string")
+        plugin_name = validate_cast(plugin_data.get("name"), str, "plugin.json[name] must be a string")
 
         # Get the plugin dependencies
-        depends_raw: dict = plugin_data.get("depends")
-        if not isinstance(depends_raw, dict):
-            raise TypeError(
-                'plugin.json[depends] must be a dictionary of the form {"python": "~=3.9", "library": [], "plugin": []}'
-            )
+        depends_raw = validate_cast(plugin_data.get("depends"), dict, 'plugin.json[depends] must be a dictionary of the form {"python": "~=3.9", "library": [], "plugin": []}')
 
-        python_raw = depends_raw.get("python")
-        if not isinstance(python_raw, str):
-            raise TypeError(
-                'plugin.json[depends][python] must be a string of the form "~=3.9"'
-            )
+        python_raw = validate_cast(depends_raw.get("python"), str, 'plugin.json[depends][python] must be a string of the form "~=3.9"')
         python = SpecifierSet(python_raw)
 
-        library_depends_raw: dict = depends_raw.get("library", [])
-        if not isinstance(library_depends_raw, list) and all(
-            isinstance(d, str) for d in library_depends_raw
-        ):
+        library_depends_raw = validate_cast(depends_raw.get("library", []), list, "plugin.json[depends][library] must be a list")
+        if not all(isinstance(d, str) for d in library_depends_raw):
             raise TypeError(
                 'plugin.json[depends][library] must be a list of string identifiers and version specifiers if defined.\nEg. ["PySide6_Essentials~=6.4"]'
             )
         library_depends = tuple(map(Requirement.from_string, library_depends_raw))
 
-        plugin_depends_raw: dict = depends_raw.get("plugin", [])
-        if not isinstance(plugin_depends_raw, list) and all(
-            isinstance(d, str) for d in plugin_depends_raw
-        ):
+        plugin_depends_raw = validate_cast(depends_raw.get("plugin", []), list, "plugin.json[depends][plugin] must be a list")
+        if not all(isinstance(d, str) for d in plugin_depends_raw):
             raise TypeError(
                 'plugin.json[depends][plugin] must be a list of string identifiers and version specifiers if defined.\nEg. ["plugin_1~=1.0", "plugin_2~=1.3"]'
             )
