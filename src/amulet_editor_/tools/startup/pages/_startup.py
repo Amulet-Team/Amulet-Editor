@@ -21,7 +21,7 @@ class StartupPage(QWidget):
         # self.frm_nav_header.setProperty("color", "on_surface")
 
     def setupUi(self):
-        amulet_logo = QPixmap(QImage(get_resource("images/amulet_logo.png")))
+        amulet_logo = QPixmap(QImage(get_resource("icons/amulet/amulet_logo.png")))
         amulet_logo = amulet_logo.scaledToHeight(128)
 
         self.lbl_app_icon = QLabel()
