@@ -41,6 +41,7 @@ def load_plugin():
 
 
 def _locale_changed():
+    assert _translator is not None
     _translator.load_lang(
         QLocale(),
         "",

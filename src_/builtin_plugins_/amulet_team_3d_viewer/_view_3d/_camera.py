@@ -55,7 +55,7 @@ class Camera(QObject):
         "_extrinsic_matrix",
     )
 
-    def __init__(self, parent: QObject = None):
+    def __init__(self, parent: QObject | None = None) -> None:
         super().__init__(parent)
         self._bounds = Bounds(
             -1_000_000_000,
@@ -84,7 +84,7 @@ class Camera(QObject):
         return self._location or Location(0.0, 0.0, 0.0)
 
     @location.setter
-    def location(self, location: Location):
+    def location(self, location: Location) -> None:
         """Set the location of the camera. (x, y, z)."""
 
         # Clamp location to the bounds.
@@ -113,7 +113,7 @@ class Camera(QObject):
         return self._rotation or Rotation(0.0, 0.0)
 
     @rotation.setter
-    def rotation(self, rotation: Rotation):
+    def rotation(self, rotation: Rotation) -> None:
         """Set the rotation of the camera. (azimuth/yaw, elevation/pitch).
         azimuth (-180 to 180), elevation (-90 to 90)
         This should behave the same as how Minecraft handles it."""
@@ -128,7 +128,7 @@ class Camera(QObject):
             self.extrinsics_changed.emit()
             self.transform_changed.emit()
 
-    def set_extrinsics(self, location: Location, rotation: Rotation):
+    def set_extrinsics(self, location: Location, rotation: Rotation) -> None:
         """Set the camera location and rotation in one property."""
         location = self._clamp_location(location)
         rotation = self._clamp_rotation(rotation)
@@ -158,7 +158,7 @@ class Camera(QObject):
         aspect_ratio: float,
         near_plane: float,
         far_plane: float,
-    ):
+    ) -> None:
         """Set the projection to perspective with the given settings."""
         self._intrinsic_matrix.setToIdentity()
         self._intrinsic_matrix.perspective(
@@ -175,7 +175,7 @@ class Camera(QObject):
         top: float,
         near_plane: float,
         far_plane: float,
-    ):
+    ) -> None:
         """Set the projection to orthographic with the given settings."""
         self._intrinsic_matrix.setToIdentity()
         self._intrinsic_matrix.ortho(left, right, bottom, top, near_plane, far_plane)

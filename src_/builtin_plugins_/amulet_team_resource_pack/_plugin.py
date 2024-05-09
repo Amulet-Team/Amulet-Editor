@@ -16,7 +16,7 @@ import amulet_team_resource_pack
 _translator: Optional[ATranslator] = None
 
 
-def load_plugin():
+def load_plugin() -> None:
     global _translator
     _translator = ATranslator()
     _locale_changed()
@@ -24,7 +24,8 @@ def load_plugin():
     amulet_team_locale.locale_changed.connect(_locale_changed)
 
 
-def _locale_changed():
+def _locale_changed() -> None:
+    assert _translator is not None
     _translator.load_lang(
         QLocale(),
         "",
@@ -34,7 +35,8 @@ def _locale_changed():
     )
 
 
-def unload_plugin():
+def unload_plugin() -> None:
+    assert _translator is not None
     QCoreApplication.removeTranslator(_translator)
 
 

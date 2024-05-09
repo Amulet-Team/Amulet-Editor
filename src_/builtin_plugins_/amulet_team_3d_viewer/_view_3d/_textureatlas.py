@@ -25,7 +25,7 @@
 import logging
 from PIL import Image
 import math
-from typing import Dict, Tuple, List, Optional
+from typing import Dict, Tuple, List
 from collections.abc import Collection
 from amulet_editor.models.generic._promise import Promise
 
@@ -40,7 +40,7 @@ class AtlasTooSmall(Exception):
     pass
 
 
-class Packable(object):
+class Packable:
     """A two-dimensional object with position information."""
 
     def __init__(self, width: int, height: int):
@@ -54,7 +54,7 @@ class Packable(object):
         return self._x
 
     @x.setter
-    def x(self, value: int):
+    def x(self, value: int) -> None:
         self._x = value
 
     @property
@@ -62,7 +62,7 @@ class Packable(object):
         return self._y
 
     @y.setter
-    def y(self, value: int):
+    def y(self, value: int) -> None:
         self._y = value
 
     @property
@@ -81,15 +81,15 @@ class Packable(object):
 class PackRegion(object):
     """A region that two-dimensional Packable objects can be packed into."""
 
-    def __init__(self, x: int, y: int, width: int, height: int):
+    def __init__(self, x: int, y: int, width: int, height: int) -> None:
         """Constructor."""
         self._x = x
         self._y = y
         self._width = width
         self._height = height
-        self._sub1: Optional[PackRegion] = None
-        self._sub2: Optional[PackRegion] = None
-        self._packable: Optional[Packable] = None
+        self._sub1: PackRegion | None = None
+        self._sub2: PackRegion | None = None
+        self._packable: Packable | None = None
 
     @property
     def x(self) -> int:
@@ -108,20 +108,21 @@ class PackRegion(object):
         return self._height
 
     @property
-    def packable(self) -> Packable:
+    def packable(self) -> Packable | None:
         return self._packable
 
-    def get_all_packables(self):
+    def get_all_packables(self) -> list[Packable]:
         """Returns a list of all Packables in this region and sub-regions."""
-        if self._packable:
-            return (
-                [self._packable]
-                + self._sub1.get_all_packables()
-                + self._sub2.get_all_packables()
-            )
-        return []
+        packables = []
+        if self._packable is not None:
+            packables.append(self._packable)
+        if self._sub1 is not None:
+            packables.extend(self._sub1.get_all_packables())
+        if self._sub2 is not None:
+            packables.extend(self._sub2.get_all_packables())
+        return packables
 
-    def pack(self, packable: Packable, border: int):
+    def pack(self, packable: Packable, border: int) -> bool:
         """Pack 2D packable into this region."""
         if not self._packable:
             # Is there room to pack this?
@@ -153,13 +154,14 @@ class PackRegion(object):
             return True
 
         # Pack into sub-region
+        assert self._sub1 is not None and self._sub2 is not None
         return self._sub1.pack(packable, border) or self._sub2.pack(packable, border)
 
 
 class Frame(Packable):
     """An image file that can be packed into a PackRegion."""
 
-    def __init__(self, filename: str):
+    def __init__(self, filename: str) -> None:
         self._filename = filename
 
         # Determine frame dimensions
@@ -175,7 +177,7 @@ class Frame(Packable):
     def filename(self) -> str:
         return self._filename
 
-    def draw(self, image: Image.Image, border: int):
+    def draw(self, image: Image.Image, border: int) -> None:
         """Draw this frame into another Image."""
         if border:
             image.paste(
@@ -188,7 +190,7 @@ class Frame(Packable):
 class Texture(object):
     """A collection of one or more frames."""
 
-    def __init__(self, name: str, frames: List[Frame]):
+    def __init__(self, name: str, frames: List[Frame]) -> None:
         self._name = name
         self._frames: List[Frame] = frames
 
@@ -204,7 +206,7 @@ class Texture(object):
 class TextureAtlas(PackRegion):
     """Texture Atlas generator."""
 
-    def __init__(self, width: int, height: int, border: int = 0):
+    def __init__(self, width: int, height: int, border: int = 0) -> None:
         super(TextureAtlas, self).__init__(0, 0, width, height)
         self._textures: List[Texture] = []
         self._border = border
@@ -213,7 +215,7 @@ class TextureAtlas(PackRegion):
     def textures(self) -> List[Texture]:
         return self._textures
 
-    def pack(self, texture: Texture):
+    def pack(self, texture: Texture) -> None:
         """Pack a Texture into this atlas."""
         self._textures.append(texture)
         for frame in texture.frames:
@@ -240,21 +242,10 @@ class TextureAtlas(PackRegion):
                 f.draw(out, self._border)
         return out
 
-    def write(self, filename: str, mode: str):
+    def write(self, filename: str, mode: str) -> None:
         """Generates and saves the final texture atlas."""
         out = self.generate(mode)
         out.save(filename)
-
-
-class TextureAtlasMap(object):
-    """Texture Atlas Map file generator."""
-
-    def __init__(self, atlas):
-        self._atlas = atlas
-
-    def write(self, fd):
-        """Writes the texture atlas map file into file object fd."""
-        raise Exception("Not Implemented")
 
 
 def create_atlas(

@@ -19,11 +19,11 @@ def load_plugin() -> None:
     )
 
 
-def _on_click(self) -> None:
+def _on_click() -> None:
     settings = SettingsPage()
     settings.setWindowModality(Qt.WindowModality.ApplicationModal)
     settings.showNormal()
-    self._windows.append(settings)
+    _windows.append(settings)
 
 
 plugin = PluginV1(load_plugin)

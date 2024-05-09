@@ -31,14 +31,14 @@ class ResourcePackContainer(QObject):
     # Emitted when the resource pack has changed.
     changed = Signal()
 
-    def __init__(self):
+    def __init__(self) -> None:
         super().__init__()
         self._lock = RLock()
         self._resource_pack: Optional[BaseResourcePackManager] = None
-        self._loader: Optional[Promise[None]] = None
+        self._loader: Optional[Promise[bool]] = None
 
     @property
-    def loader(self) -> Optional[Promise[None]]:
+    def loader(self) -> Optional[Promise[bool]]:
         """
         If the resource pack is being loaded this will be a promise.
         This can be used to update a GUI to show the progress.
@@ -67,7 +67,7 @@ class ResourcePackContainer(QObject):
             )
         return rp
 
-    def init(self):
+    def init(self) -> None:
         """
         Initialise the default resource pack for this level if one does not already exist.
         This is completed asynchronously. A promise is emitted from changing.
@@ -118,7 +118,8 @@ class ResourcePackContainer(QObject):
                     self.changed.emit()
                     log.debug("Loaded resource pack.")
                     return False
-                return True
+            # TODO: if an exception was raised it won't be loaded.
+            return True
 
         promise_ = Promise[bool](init)
         old_loader = self._loader
@@ -143,10 +144,10 @@ class ResourcePackContainer(QObject):
 
 
 _lock = Lock()
-_level_data: WeakKeyDictionary[BaseLevel, ResourcePackContainer] = WeakKeyDictionary()
+_level_data: WeakKeyDictionary[Level, ResourcePackContainer] = WeakKeyDictionary()
 
 
-def get_resource_pack_container(level: BaseLevel) -> ResourcePackContainer:
+def get_resource_pack_container(level: Level) -> ResourcePackContainer:
     with _lock:
         if level not in _level_data:
             _level_data[level] = ResourcePackContainer()

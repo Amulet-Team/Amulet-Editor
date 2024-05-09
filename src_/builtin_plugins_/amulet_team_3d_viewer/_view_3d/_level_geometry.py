@@ -586,7 +586,7 @@ class WidgetLevelGeometry(QObject, Drawable):
 
         self._queue_chunk.connect(self._process_chunk)
 
-    def initializeGL(self):
+    def initializeGL(self) -> None:
         """
         Initialise the opengl state.
         The widget context must be current before calling this.
@@ -684,7 +684,7 @@ class WidgetLevelGeometry(QObject, Drawable):
     def __del__(self):
         log.debug("__del__ WidgetLevelGeometry")
 
-    def paintGL(self, projection_matrix: QMatrix4x4, view_matrix: QMatrix4x4):
+    def paintGL(self, projection_matrix: QMatrix4x4, view_matrix: QMatrix4x4) -> None:
         """
         Draw the level.
         The context must be active before calling this.

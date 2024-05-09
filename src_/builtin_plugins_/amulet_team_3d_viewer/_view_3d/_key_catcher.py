@@ -48,15 +48,15 @@ class TimerData(QObject):
         self._timer.setInterval(msec)
         self._timer.timeout.connect(self._tick)
 
-    def _tick(self):
+    def _tick(self) -> None:
         self.delta_timeout.emit(time.time() - self._last_timeout)
         self._last_timeout = time.time()
 
-    def start(self):
+    def start(self) -> None:
         self._last_timeout = time.time()
         self._timer.start()
 
-    def stop(self):
+    def stop(self) -> None:
         self._timer.stop()
 
 
@@ -82,7 +82,7 @@ class KeyCatcher(QObject):
     >>> widget.installEventFilter(key_catcher)
     """
 
-    def __init__(self, parent: QObject = None):
+    def __init__(self, parent: QObject | None = None) -> None:
         super().__init__(parent)
         self._lock = Lock()
         self._pressed_buttons: set[KeyT] = set()
@@ -110,7 +110,7 @@ class KeyCatcher(QObject):
             pass
         return super().eventFilter(watched, event)
 
-    def _key_pressed(self, key: KeyT):
+    def _key_pressed(self, key: KeyT) -> None:
         with self._lock:
             if key not in self._pressed_buttons:
                 self._pressed_buttons.add(key)
@@ -139,7 +139,7 @@ class KeyCatcher(QObject):
                             del best_storage.timers[interval]
                     best_storage.one_shot.emit()
 
-    def _key_released(self, key: KeyT):
+    def _key_released(self, key: KeyT) -> None:
         with self._lock:
             for storage in self._keys.get(key, ()):
                 for timer_data in storage.timers.values():
@@ -147,7 +147,7 @@ class KeyCatcher(QObject):
             if key in self._pressed_buttons:
                 self._pressed_buttons.remove(key)
 
-    def _get_storage(self, key: KeyT, modifiers: frozenset[KeyT]):
+    def _get_storage(self, key: KeyT, modifiers: frozenset[KeyT]) -> EventStorage:
         """Lock must be acquired when calling this"""
         key_storage = self._key_combos.setdefault(key, {})
         if modifiers not in key_storage:
@@ -157,7 +157,7 @@ class KeyCatcher(QObject):
                 self._keys.setdefault(key_, []).append(storage)
         return key_storage[modifiers]
 
-    def _clean_storage(self, key: KeyT, modifiers: frozenset[KeyT]):
+    def _clean_storage(self, key: KeyT, modifiers: frozenset[KeyT]) -> None:
         """Lock must be acquired when calling this"""
         # Get the storage
         storage = self._get_storage(key, modifiers)
@@ -177,7 +177,7 @@ class KeyCatcher(QObject):
         receiver: Union[Slot, Signal, Callable[[], None]],
         key: KeyT,
         modifiers: frozenset[KeyT],
-    ):
+    ) -> None:
         """
         Connect a receiver (slot, signal or function) to a key press that is called once when pressed.
 
@@ -195,7 +195,7 @@ class KeyCatcher(QObject):
         receiver: Union[Slot, Signal, Callable[[], None]],
         key: KeyT,
         modifiers: frozenset[KeyT],
-    ):
+    ) -> None:
         """
         Disconnect a single shot receiver.
         The arguments must be the same as were passed to the :meth:`connect_single_shot` method.
@@ -217,7 +217,7 @@ class KeyCatcher(QObject):
         key: KeyT,
         modifiers: frozenset[KeyT],
         interval: int,
-    ):
+    ) -> None:
         """
         Connect a receiver (slot, signal or function) to a key press that is called once when pressed and every interval ms after until released.
 
@@ -244,7 +244,7 @@ class KeyCatcher(QObject):
         key: KeyT,
         modifiers: frozenset[KeyT],
         interval: int,
-    ):
+    ) -> None:
         """
         Disconnect a repeating receiver (slot, signal or function).
         The arguments must be the same as were passed to the :meth:`connect_repeating` method.
