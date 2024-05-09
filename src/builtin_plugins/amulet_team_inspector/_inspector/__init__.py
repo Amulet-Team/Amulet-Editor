@@ -2,7 +2,7 @@ from typing import Optional
 from weakref import ref
 
 from PySide6.QtWidgets import QTreeWidgetItem, QApplication, QWidget
-from PySide6.QtCore import QObject, QRect, QEvent, QPoint
+from PySide6.QtCore import QObject, QRect, QEvent, QPoint, Qt
 from PySide6.QtGui import QMouseEvent, QPainter, QColor, QIcon
 
 from amulet_editor.models.widgets.traceback_dialog import DisplayException
@@ -19,22 +19,23 @@ class TreeWidgetItem(QTreeWidgetItem):
         else:
             return cls(widget)
 
-    def __init__(self, widget: QObject):
+    def __init__(self, widget: QObject) -> None:
         super().__init__([str(widget)])
         self.widget = ref(widget)
         for child in widget.children():
             item = self.create(child)
-            self.addChild(item)
+            if item is not None:
+                self.addChild(item)
 
 
 class CustomDraw(QObject):
-    def __init__(self, target: QWidget):
+    def __init__(self, target: QWidget) -> None:
         super().__init__(target)
         self.target = target
         self.background = target.grab()
         self.target.installEventFilter(self)
 
-    def eventFilter(self, obj, event):
+    def eventFilter(self, obj: QObject, event: QEvent) -> bool:
         if obj == self.target and event.type() == QEvent.Type.Paint:
             painter = QPainter(self.target)
             painter.drawPixmap(QPoint(0, 0), self.background)
@@ -48,8 +49,10 @@ class CustomDraw(QObject):
 
 
 class InspectorTool(Ui_InspectionTool):
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
+    def __init__(
+        self, parent: QWidget | None = None, f: Qt.WindowType = Qt.WindowType.Widget
+    ) -> None:
+        super().__init__(parent, f)
         self._inspect = False
         self._highlight: Optional[tuple[QWidget, QObject]] = None
 
@@ -61,7 +64,7 @@ class InspectorTool(Ui_InspectionTool):
         self.run_button.clicked.connect(self.run_code)
         self.reload()
 
-    def reload(self):
+    def reload(self) -> None:
         self.tree_widget.clear()
         for window in QApplication.topLevelWidgets():
             root = TreeWidgetItem.create(window)
@@ -70,19 +73,19 @@ class InspectorTool(Ui_InspectionTool):
         if self.tree_widget.topLevelItemCount():
             self.tree_widget.topLevelItem(0)
 
-    def inspect(self):
+    def inspect(self) -> None:
         self.setMouseTracking(True)
         self.grabMouse()
         self._inspect = True
 
-    def _remove_highlight(self):
+    def _remove_highlight(self) -> None:
         if self._highlight is not None:
             widget, filt = self._highlight
             widget.removeEventFilter(filt)
             widget.update()
             self._highlight = None
 
-    def mouseMoveEvent(self, event: QMouseEvent):
+    def mouseMoveEvent(self, event: QMouseEvent) -> None:
         if self._inspect:
             widget = QApplication.widgetAt(event.globalPosition().toPoint())
             if not widget:
@@ -101,7 +104,7 @@ class InspectorTool(Ui_InspectionTool):
         else:
             super().mouseMoveEvent(event)
 
-    def mousePressEvent(self, event: QMouseEvent):
+    def mousePressEvent(self, event: QMouseEvent) -> None:
         if self._inspect:
             self._inspect = False
             self.releaseMouse()
@@ -110,7 +113,7 @@ class InspectorTool(Ui_InspectionTool):
         else:
             super().mousePressEvent(event)
 
-    def run_code(self):
+    def run_code(self) -> None:
         item = self.tree_widget.currentItem()
         if not isinstance(item, TreeWidgetItem):
             return
@@ -125,7 +128,7 @@ class InspectorTool(Ui_InspectionTool):
 _inspector = None
 
 
-def show_inspector():
+def show_inspector() -> None:
     global _inspector
     if _inspector is None:
         _inspector = InspectorTool()

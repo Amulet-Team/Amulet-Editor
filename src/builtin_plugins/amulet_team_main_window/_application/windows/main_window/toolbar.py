@@ -20,24 +20,24 @@ class ButtonProxy:
 
     def __init__(self, button: ATooltipIconButton):
         self.__button = button
-        self.__callback = None
+        self.__callback: Callable[[], None] | None = None
 
-    def __del__(self):
+    def __del__(self) -> None:
         self.delete()
 
-    def delete(self):
+    def delete(self) -> None:
         """Delete the button"""
         if isValid(self.__button):
             self.__button.deleteLater()
 
-    def set_icon(self, icon_path: str):
+    def set_icon(self, icon_path: str) -> None:
         self.__button.setIcon(icon_path)
 
-    def set_name(self, name: str):
+    def set_name(self, name: str) -> None:
         self.__button.setToolTip(name)
 
-    def set_callback(self, callback: Callable[[], None] = None):
-        def on_click(evt):
+    def set_callback(self, callback: Callable[[], None] | None = None) -> None:
+        def on_click() -> None:
             if callback is not None:
                 try:
                     callback()
@@ -53,7 +53,7 @@ class ButtonProxy:
         self.__callback = on_click
         self.__button.clicked.connect(on_click)
 
-    def click(self):
+    def click(self) -> None:
         self.__button.click()
 
 
@@ -65,10 +65,10 @@ class ToolBar(QFrame):
 
     def __init__(
         self,
-        parent: Optional[QWidget] = None,
+        parent: QWidget | None = None,
         f: Qt.WindowType = Qt.WindowType.Widget,
-        orientation=Qt.Orientation.Vertical,
-    ):
+        orientation: Qt.Orientation = Qt.Orientation.Vertical,
+    ) -> None:
         super().__init__(parent, f)
 
         layout_cls = {
@@ -93,9 +93,9 @@ class ToolBar(QFrame):
 
     def add_button(
         self,
-        sticky=False,
-        static=False,
-    ):
+        sticky: bool = False,
+        static: bool = False,
+    ) -> ButtonProxy:
         """
         Add a static button.
         This is reserved for internal use only.

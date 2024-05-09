@@ -3,7 +3,7 @@ from .tab_engine import TabPage
 
 
 class Widget(TabPage):
-    def activate_view(self):
+    def activate_view(self) -> None:
         """
         Run every time the view is activated by code or by clicking the tool button associated with the view.
         This is useful if the view wants to reset to a default state every time the tool button is clicked.
@@ -19,7 +19,7 @@ class Widget(TabPage):
         """
         return True
 
-    def disable_view(self):
+    def disable_view(self) -> None:
         """
         This is run when a view is about to be removed from a view container.
         This gives the view a chance to do any cleaning up before it is removed and potentially destroyed.
@@ -31,11 +31,11 @@ class Widget(TabPage):
 _widget_classes: set[Type[Widget]] = set()
 
 
-def is_registered_widget(widget_cls: Type[Widget]):
+def is_registered_widget(widget_cls: Type[Widget]) -> bool:
     return widget_cls in _widget_classes
 
 
-def register_widget(widget_cls: Type[Widget]):
+def register_widget(widget_cls: Type[Widget]) -> None:
     """
     Register a widget class.
 
@@ -49,7 +49,7 @@ def register_widget(widget_cls: Type[Widget]):
     # TODO: find out if any filler widgets want to be this widget
 
 
-def unregister_widget(widget_cls: Type[Widget]):
+def unregister_widget(widget_cls: Type[Widget]) -> None:
     """
     Unregister a widget.
 

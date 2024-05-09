@@ -2,7 +2,7 @@ from amulet_editor.data._localisation import set_locale, locale_changed  # noqa
 from amulet_editor.models.plugin import PluginV1
 
 
-def load_plugin():
+def load_plugin() -> None:
     # TODO: load locale this from a config file
     pass
 

@@ -11,14 +11,14 @@ from ..layout import Layout
 
 
 class AmuletSubWindow(Ui_AmuletSubWindow):
-    def closeEvent(self, event: QCloseEvent):
+    def closeEvent(self, event: QCloseEvent) -> None:
         # The parent keeps this object alive. We need to do this so it can be destroyed
         self.setParent(None)
         self.deleteLater()
 
 
 class AmuletSubWindowProxy(AbstractWindowProxy):
-    def set_layout(self, layout: Union[Type[Widget], Layout]):
+    def set_layout(self, layout: Union[Type[Widget], Layout]) -> None:
         pass
 
 

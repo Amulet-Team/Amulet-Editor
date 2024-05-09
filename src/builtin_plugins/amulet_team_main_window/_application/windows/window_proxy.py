@@ -7,6 +7,6 @@ from .layout import Layout
 
 class AbstractWindowProxy(ABC):
     @abstractmethod
-    def set_layout(self, layout: Union[Type[Widget], Layout]):
+    def set_layout(self, layout: Union[Type[Widget], Layout]) -> None:
         """Configure the layout as requested"""
         raise NotImplementedError

@@ -127,12 +127,12 @@ class AmuletMainWindow(Ui_AmuletMainWindow):
 
 
 class AmuletMainWindowProxy(AbstractWindowProxy):
-    def __init__(self, window: AmuletMainWindow):
-        self.__window = ref(window)
+    def __init__(self, window: AmuletMainWindow) -> None:
+        self.__window = ref[AmuletMainWindow](window)
 
-    def set_layout(self, layout: Union[Type[Widget], Layout]):
+    def set_layout(self, layout: Union[Type[Widget], Layout]) -> None:
         """Configure the layout as requested"""
-        window: AmuletMainWindow = self.__window()
+        window = self.__window()
         if window is None:
             raise RuntimeError
         window.set_layout(layout)
@@ -142,7 +142,7 @@ def get_main_window() -> AmuletMainWindowProxy:
     return AmuletMainWindow.instance().proxy
 
 
-def add_toolbar_button(*, sticky=False, static=False) -> ButtonProxy:
+def add_toolbar_button(*, sticky: bool = False, static: bool = False) -> ButtonProxy:
     """
     Add an icon to the toolbar for all windows.
 

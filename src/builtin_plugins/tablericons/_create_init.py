@@ -16,7 +16,7 @@ DigitAlt = {
 }
 
 
-def main():
+def main() -> None:
     package_path = os.path.dirname(__file__)
     lines = []
     for path in glob.glob(
