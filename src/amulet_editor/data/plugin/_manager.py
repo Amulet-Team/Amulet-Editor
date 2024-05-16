@@ -280,7 +280,7 @@ def load() -> None:
                         break
 
         # Disable importing from builtin_plugins
-        sys.modules["builtin_plugins"] = None
+        sys.modules["builtin_plugins"] = None  # type: ignore
 
         sys.modules = CustomSysModules(sys.modules)  # type: ignore
         builtins.__import__ = wrap_importer(builtins.__import__)
