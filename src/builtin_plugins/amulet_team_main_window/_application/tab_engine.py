@@ -6,7 +6,7 @@ You must subclass the abstract classes and implement custom handling for the fol
 """
 
 from __future__ import annotations
-from typing import Optional, Union as Intersection, Union, overload
+from typing import Optional, Union as Intersection, Union, overload, Any
 from enum import IntEnum
 
 from PySide6.QtWidgets import (
@@ -303,7 +303,7 @@ class AbstractTabContainerWidget(QWidget):
         return parent
 
     def _get_button_at(self, point: QPoint) -> TabButton | None:
-        child = self.childAt(point)
+        child: QObject = self.childAt(point)
         if child is None:
             return
         while child.parent() != self:
@@ -389,7 +389,7 @@ class AbstractTabContainerWidget(QWidget):
         self, point: QPoint
     ) -> Union[None, AbstractTabContainerWidget, AbstractStackedTabWidget]:
         """Get the widget that the dragged widget will be dropped into."""
-        widget = QApplication.widgetAt(point)
+        widget: QObject = QApplication.widgetAt(point)
         while widget is not None:
             if isinstance(
                 widget, (AbstractTabContainerWidget, AbstractStackedTabWidget)
@@ -473,11 +473,11 @@ class AbstractTabContainer(QScrollArea):
 
     tab_changed = Signal(int)
 
-    def __init__(self, *args, **kwargs) -> None:
-        super().__init__(*args, **kwargs)
-        self.widget = self._new_tab_container_widget()
-        self.widget.tab_changed.connect(self.tab_changed)
-        self.setWidget(self.widget)
+    def __init__(self, parent: QWidget | None = None) -> None:
+        super().__init__(parent)
+        self.tab_container_widget = self._new_tab_container_widget()
+        self.tab_container_widget.tab_changed.connect(self.tab_changed)
+        self.setWidget(self.tab_container_widget)
 
         self.setSizePolicy(QSizePolicy.Policy.Preferred, QSizePolicy.Policy.Preferred)
         self.setWidgetResizable(True)
@@ -498,7 +498,7 @@ class AbstractTabContainer(QScrollArea):
         return parent
 
     def sizeHint(self) -> QSize:
-        return self.widget.layout_.sizeHint()
+        return self.tab_container_widget.layout_.sizeHint()
 
     def wheelEvent(self, event: QWheelEvent) -> None:
         scroll_bar = self.horizontalScrollBar()
@@ -511,8 +511,8 @@ class AbstractTabBar(QWidget):
     tab_changed = Signal(int)
     add_clicked = Signal()
 
-    def __init__(self, *args, **kwargs) -> None:
-        super().__init__(*args, **kwargs)
+    def __init__(self, parent: QWidget | None = None, f: Qt.WindowType = Qt.WindowType.Widget) -> None:
+        super().__init__(parent, f)
         self.layout_ = QHBoxLayout(self)
         self.layout_.setSpacing(0)
         self.layout_.setContentsMargins(0, 0, 0, 0)
@@ -542,22 +542,22 @@ class AbstractTabBar(QWidget):
         raise NotImplementedError
 
     def add_tab(self, label: str, icon: QIcon | None = None) -> None:
-        self.tab_container.widget.add_tab(label, icon)
+        self.tab_container.tab_container_widget.add_tab(label, icon)
         self._check_size()
 
     def insert_tab(self, index: int, label: str, icon: QIcon | None = None) -> None:
-        self.tab_container.widget.insert_tab(index, label, icon)
+        self.tab_container.tab_container_widget.insert_tab(index, label, icon)
         self._check_size()
 
     def remove_tab(self, index: int) -> None:
-        self.tab_container.widget.remove_tab(index)
+        self.tab_container.tab_container_widget.remove_tab(index)
         self._check_size()
 
     def count(self) -> int:
-        return self.tab_container.widget.count()
+        return self.tab_container.tab_container_widget.count()
 
     def current_index(self) -> int:
-        return self.tab_container.widget.current_index()
+        return self.tab_container.tab_container_widget.current_index()
 
     @property
     def tab_widget(self) -> AbstractStackedTabWidget:
@@ -630,7 +630,7 @@ class AbstractStackedTabWidget(QWidget):
         with DisplayException(f"Error in {page.__class__}"):
             if not (isinstance(page, QWidget) and isinstance(page, TabPage)):
                 raise TypeError(
-                    f"Page of type {page.__class__} must be an instace of QWidget and TabPage"
+                    f"Page of type {type(page)} must be an instance of QWidget and TabPage"
                 )
             name = page.name
             icon = page.icon
@@ -641,11 +641,13 @@ class AbstractStackedTabWidget(QWidget):
         return name, icon
 
     def add_page(self, page: Intersection[QWidget, TabPage]) -> None:
+        assert isinstance(page, QWidget) and isinstance(page, TabPage)
         name, icon = self._validate_page(page)
         self.tab_bar.add_tab(name, icon)
         self.stacked_widget.addWidget(page)
 
     def insert_page(self, index: int, page: Intersection[QWidget, TabPage]) -> None:
+        assert isinstance(page, QWidget) and isinstance(page, TabPage)
         name, icon = self._validate_page(page)
         self.tab_bar.insert_tab(index, name, icon)
         self.stacked_widget.insertWidget(index, page)
@@ -748,7 +750,7 @@ class RecursiveSplitter(QSplitter):
     @overload
     def __init__(self, parent: QWidget | None = None) -> None:
         ...
-    def __init__(self, *args, **kwargs) -> None:
+    def __init__(self, *args: Any, **kwargs: Any) -> None:
         super().__init__(*args, **kwargs)
         self.setChildrenCollapsible(False)
 
