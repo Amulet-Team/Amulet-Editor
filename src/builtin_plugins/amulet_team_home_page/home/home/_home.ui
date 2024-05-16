@@ -144,29 +144,8 @@
      </item>
      <item>
       <layout class="QGridLayout" name="_button_layout" columnstretch="1,0">
-       <item row="1" column="1">
-        <widget class="QPushButton" name="btn_new_project">
-         <property name="enabled">
-          <bool>false</bool>
-         </property>
-         <property name="text">
-          <string>btn_create_project</string>
-         </property>
-        </widget>
-       </item>
-       <item row="1" column="0">
-        <widget class="QLabel" name="_lbl_new_project">
-         <property name="text">
-          <string>lbl_create_project</string>
-         </property>
-        </widget>
-       </item>
-       <item row="2" column="0">
-        <widget class="QLabel" name="_lbl_new_project_2">
-         <property name="text">
-          <string>lbl_open_project</string>
-         </property>
-        </widget>
+       <item row="1" column="0" colspan="2">
+        <widget class="QComboBox" name="cbo_language"/>
        </item>
        <item row="0" column="1">
         <widget class="QPushButton" name="btn_open_world">
@@ -175,23 +154,10 @@
          </property>
         </widget>
        </item>
-       <item row="3" column="0" colspan="2">
-        <widget class="QComboBox" name="cbo_language"/>
-       </item>
        <item row="0" column="0">
         <widget class="QLabel" name="_lbl_open_level">
          <property name="text">
           <string>lbl_open_level</string>
-         </property>
-        </widget>
-       </item>
-       <item row="2" column="1">
-        <widget class="QPushButton" name="btn_open_project">
-         <property name="enabled">
-          <bool>false</bool>
-         </property>
-         <property name="text">
-          <string>btn_open_project</string>
          </property>
         </widget>
        </item>

@@ -80,35 +80,17 @@ class Ui_HomePage(QWidget):
         self._button_layout = QGridLayout()
         self._button_layout.setObjectName("_button_layout")
 
-        self.btn_new_project = QPushButton(self)
-        self.btn_new_project.setObjectName("btn_new_project")
-        self.btn_new_project.setEnabled(False)
-        self._button_layout.addWidget(self.btn_new_project, 1, 1, 1, 1)
-
-        self._lbl_new_project = QLabel(self)
-        self._lbl_new_project.setObjectName("_lbl_new_project")
-        self._button_layout.addWidget(self._lbl_new_project, 1, 0, 1, 1)
-
-        self._lbl_new_project_2 = QLabel(self)
-        self._lbl_new_project_2.setObjectName("_lbl_new_project_2")
-        self._button_layout.addWidget(self._lbl_new_project_2, 2, 0, 1, 1)
+        self.cbo_language = QComboBox(self)
+        self.cbo_language.setObjectName("cbo_language")
+        self._button_layout.addWidget(self.cbo_language, 1, 0, 1, 2)
 
         self.btn_open_world = QPushButton(self)
         self.btn_open_world.setObjectName("btn_open_world")
         self._button_layout.addWidget(self.btn_open_world, 0, 1, 1, 1)
 
-        self.cbo_language = QComboBox(self)
-        self.cbo_language.setObjectName("cbo_language")
-        self._button_layout.addWidget(self.cbo_language, 3, 0, 1, 2)
-
         self._lbl_open_level = QLabel(self)
         self._lbl_open_level.setObjectName("_lbl_open_level")
         self._button_layout.addWidget(self._lbl_open_level, 0, 0, 1, 1)
-
-        self.btn_open_project = QPushButton(self)
-        self.btn_open_project.setObjectName("btn_open_project")
-        self.btn_open_project.setEnabled(False)
-        self._button_layout.addWidget(self.btn_open_project, 2, 1, 1, 1)
         self._button_layout.setColumnStretch(0, 1)
         self._central_layout.addLayout(self._button_layout)
 
@@ -142,21 +124,9 @@ class Ui_HomePage(QWidget):
         self._lbl_app_name.setText(
             QCoreApplication.translate("HomePage", "amulet_editor", None)
         )
-        self.btn_new_project.setText(
-            QCoreApplication.translate("HomePage", "btn_create_project", None)
-        )
-        self._lbl_new_project.setText(
-            QCoreApplication.translate("HomePage", "lbl_create_project", None)
-        )
-        self._lbl_new_project_2.setText(
-            QCoreApplication.translate("HomePage", "lbl_open_project", None)
-        )
         self.btn_open_world.setText(
             QCoreApplication.translate("HomePage", "btn_open_level", None)
         )
         self._lbl_open_level.setText(
             QCoreApplication.translate("HomePage", "lbl_open_level", None)
-        )
-        self.btn_open_project.setText(
-            QCoreApplication.translate("HomePage", "btn_open_project", None)
         )
