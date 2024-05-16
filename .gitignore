@@ -124,6 +124,4 @@ venv.bak/
 *.pyproject.user
 *.ui.autosave
 
-*.ini
-
 working/
