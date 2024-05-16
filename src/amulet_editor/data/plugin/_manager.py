@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import inspect
 import time
-from typing import NamedTuple, Optional, Callable, Protocol
+from typing import NamedTuple, Optional, Protocol
 from types import FrameType, ModuleType
 from threading import RLock
 import os
@@ -385,13 +385,16 @@ def scan_plugins() -> None:
                         pass
                     else:
                         # Imported a module with this name
-                        mod_file = mod.__file__
-                        assert mod_file is not None
-                        if (
-                            plugin_path != mod.__path__[0]
-                            if hasattr(mod, "__path__")
-                            else plugin_path != os.path.splitext(mod_file)[0]
-                        ):
+                        found_path: str | None
+                        try:
+                            # Only packages have a __path__ attribute.
+                            found_path = mod.__path__[0]
+                        except AttributeError:
+                            # All modules have a __file__ attribute, but it is None for namespace packages.
+                            found_path = mod.__file__
+                            if found_path is not None:
+                                found_path = os.path.splitext(found_path)[0]
+                        if plugin_path != found_path:
                             # If the path does not match the expected path then it shadows an existing module
                             log.warning(
                                 f"Skipping {plugin_container.data.path} because it would shadow module {plugin_uid.identifier}."
