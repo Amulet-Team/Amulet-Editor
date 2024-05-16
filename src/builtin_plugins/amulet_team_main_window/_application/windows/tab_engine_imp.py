@@ -20,7 +20,7 @@ class TabContainerWidget(AbstractTabContainerWidget):
 
     def _on_drop_in_space(
         self, dragged_widget: Union[QWidget, TabPage], drop_event: QMouseEvent
-    ):
+    ) -> None:
         new_window = sub_window.AmuletSubWindow(main_window.AmuletMainWindow.instance())
         tab_widget = StackedTabWidget()
         new_window.view_container.addWidget(tab_widget)
@@ -43,7 +43,7 @@ class StackedTabWidget(AbstractStackedTabWidget):
     def _new_tab_bar(self) -> AbstractTabBar:
         return TabBar()
 
-    def _on_last_removed(self):
+    def _on_last_removed(self) -> None:
         parent = self.window()
         if isinstance(parent, main_window.AmuletMainWindow):
             # If this widget is the last AbstractStackedTabWidget in the AmuletMainWindow and has no tabs, open the default tab

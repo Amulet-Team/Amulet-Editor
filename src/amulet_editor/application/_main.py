@@ -24,7 +24,7 @@ from PySide6.QtGui import QSurfaceFormat
 from amulet.level import get_level
 import amulet_editor
 from amulet_editor.models.widgets.traceback_dialog import DisplayException
-from amulet_editor.data.project import _level
+from amulet_editor.data.level import _level
 from amulet_editor.models.localisation import ATranslator
 import amulet_editor.data._rpc as rpc
 

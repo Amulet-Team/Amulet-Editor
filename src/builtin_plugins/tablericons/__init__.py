@@ -3,7 +3,7 @@ import os
 _package_path = os.path.dirname(__file__)
 
 
-def _get_path(name):
+def _get_path(name: str) -> str:
     return os.path.join(_package_path, "_resources", name)
 
 

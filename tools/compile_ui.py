@@ -32,6 +32,7 @@ def _get_enums(obj: Any) -> list[EnumType]:
 
 Enums = [
     *_get_enums(PySide6.QtWidgets.QFrame),
+    *_get_enums(PySide6.QtWidgets.QDialogButtonBox),
     *_get_enums(PySide6.QtCore.Qt),
 ]
 

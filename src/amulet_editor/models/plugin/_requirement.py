@@ -27,7 +27,7 @@ class Requirement:
         return self._specifier
 
     @classmethod
-    def from_string(cls, requirement: str):
+    def from_string(cls, requirement: str) -> Requirement:
         match = RequirementPattern.fullmatch(requirement)
         if match is None:
             raise ValueError(
@@ -36,13 +36,13 @@ class Requirement:
         specifier = SpecifierSet(match.group("requirement"))
         return cls(match.group("identifier"), specifier)
 
-    def __contains__(self, item: LibraryUID):
+    def __contains__(self, item: LibraryUID) -> bool:
         if not isinstance(item, LibraryUID):
             raise TypeError
         return item.identifier == self.identifier and item.version in self.specifier
 
-    def __str__(self):
+    def __str__(self) -> str:
         return f"{self.identifier}{self.specifier}"
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         return f"{self.__class__.__name__}({self.identifier!r}, {self.specifier!r})"

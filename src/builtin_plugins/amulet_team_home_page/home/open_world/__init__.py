@@ -3,7 +3,7 @@ from PySide6.QtWidgets import QFileDialog, QApplication, QWidget
 from PySide6.QtCore import Qt
 from ._open_world import Ui_OpenWorldPage
 from amulet_editor.application._cli import spawn_process
-from amulet_editor.data.project import get_level
+from amulet_editor.data.level import get_level
 import tablericons
 
 

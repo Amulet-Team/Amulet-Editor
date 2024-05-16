@@ -10,7 +10,7 @@ from PySide6.QtGui import QIcon
 import amulet_editor
 from amulet_editor import __version__
 from amulet_editor.models.localisation import ATranslator
-from amulet_editor.data import build
+from amulet_editor.resources import get_resource
 from amulet_editor.data._localisation import locale_changed
 import amulet_editor.data.plugin._manager as plugin_manager
 
@@ -22,7 +22,7 @@ class AmuletApp(QApplication):
         super().__init__()
         self.setApplicationName("Amulet Editor")
         self.setApplicationVersion(__version__)
-        self.setWindowIcon(QIcon(build.get_resource("icons/amulet/Icon.ico")))
+        self.setWindowIcon(QIcon(get_resource("icons/amulet/Icon.ico")))
 
         self._translator = ATranslator()
         self._locale_changed()
@@ -36,7 +36,9 @@ class AmuletApp(QApplication):
 
     @staticmethod
     def instance() -> Optional[AmuletApp]:
-        return QApplication.instance()
+        instance = QApplication.instance()
+        assert isinstance(instance, AmuletApp)
+        return instance
 
     @Slot()
     def _last_window_closed(self) -> None:

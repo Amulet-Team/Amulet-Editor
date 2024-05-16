@@ -6,7 +6,7 @@ import re
 from pathlib import Path
 from typing import Any
 
-from amulet_editor.data import build
+from amulet_editor.resources import get_resource
 from PySide6.QtGui import QColor
 from PySide6.QtWidgets import QApplication
 
@@ -45,7 +45,7 @@ class Theme:
 
         self._style_sheets: dict[str, str] = {}
 
-        path_style_sheets = build.get_resource(
+        path_style_sheets = get_resource(
             os.path.join("themes", "_default", "style_sheets")
         )
         for style_name in os.listdir(path_style_sheets):
@@ -83,7 +83,7 @@ class Theme:
             style_sheet = style_sheet.replace(
                 "url({})".format(icon),
                 "url({})".format(
-                    Path(build.get_resource(os.path.join("icons", icon))).as_posix()
+                    Path(get_resource(os.path.join("icons", icon))).as_posix()
                 ),
             )
 

@@ -7,6 +7,7 @@ import traceback
 
 from PySide6.QtGui import QShortcut
 from PySide6.QtCore import Qt
+from PySide6.QtWidgets import QWidget
 
 from amulet_editor.models.widgets.traceback_dialog import display_exception
 
@@ -60,8 +61,10 @@ class AmuletMainWindow(Ui_AmuletMainWindow):
                 cls._instance = AmuletMainWindow()
             return cls._instance
 
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
+    def __init__(
+            self, parent: QWidget | None = None, flags: Qt.WindowType = Qt.WindowType.Window
+    ) -> None:
+        super().__init__(parent, flags)
         self.proxy = AmuletMainWindowProxy(self)
 
         # self._view_classes: dict[Type[View], UUID] = {}
@@ -99,7 +102,7 @@ class AmuletMainWindow(Ui_AmuletMainWindow):
     #
     #     self._toolbar.activate(self._view_classes[view_cls])
 
-    def set_layout(self, layout: Union[Type[Widget], Layout]):
+    def set_layout(self, layout: Union[Type[Widget], Layout]) -> None:
         """Configure the layout as requested"""
         if isinstance(layout, Layout):
             raise NotImplementedError
@@ -127,12 +130,12 @@ class AmuletMainWindow(Ui_AmuletMainWindow):
 
 
 class AmuletMainWindowProxy(AbstractWindowProxy):
-    def __init__(self, window: AmuletMainWindow):
-        self.__window = ref(window)
+    def __init__(self, window: AmuletMainWindow) -> None:
+        self.__window = ref[AmuletMainWindow](window)
 
-    def set_layout(self, layout: Union[Type[Widget], Layout]):
+    def set_layout(self, layout: Union[Type[Widget], Layout]) -> None:
         """Configure the layout as requested"""
-        window: AmuletMainWindow = self.__window()
+        window = self.__window()
         if window is None:
             raise RuntimeError
         window.set_layout(layout)
@@ -142,7 +145,7 @@ def get_main_window() -> AmuletMainWindowProxy:
     return AmuletMainWindow.instance().proxy
 
 
-def add_toolbar_button(*, sticky=False, static=False) -> ButtonProxy:
+def add_toolbar_button(*, sticky: bool = False, static: bool = False) -> ButtonProxy:
     """
     Add an icon to the toolbar for all windows.
 

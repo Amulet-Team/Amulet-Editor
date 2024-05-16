@@ -1,9 +1,9 @@
 from typing import Optional
 
-from amulet_editor.data import build
+from amulet_editor.resources import get_resource
 from amulet_editor.models.widgets._label import QHoverLabel
 from PySide6.QtCore import QEvent, QSize, Qt
-from PySide6.QtGui import QColor, QEnterEvent, QPainter, QPaintEvent, QImage
+from PySide6.QtGui import QColor, QEnterEvent, QPainter, QPaintEvent, QImage, QPixmap, QIcon
 from PySide6.QtWidgets import QWidget, QStyleOption, QStyle, QVBoxLayout, QPushButton
 from PySide6.QtSvgWidgets import QSvgWidget
 
@@ -14,7 +14,7 @@ class AStylableSvgWidget(QSvgWidget):
     Set the background via QSS and this widget will merge the colour of the background with the transparency of the SVG icon.
     """
 
-    def paintEvent(self, event: QPaintEvent):
+    def paintEvent(self, event: QPaintEvent) -> None:
         buffer_width = max(self.width(), 50)
         buffer_height = max(self.height(), 50)
 
@@ -52,9 +52,9 @@ class AIconButton(QPushButton):
 
     def __init__(
         self,
-        icon_path: str = build.get_resource("icons/tabler/question-mark.svg"),
-        parent: QWidget = None,
-    ):
+        icon_path: str = get_resource("icons/tabler/question-mark.svg"),
+        parent: QWidget | None = None,
+    ) -> None:
         super().__init__(parent)
         self.setProperty("hover", "false")
         self._layout = QVBoxLayout(self)
@@ -63,18 +63,21 @@ class AIconButton(QPushButton):
         self._icon = AStylableSvgWidget(icon_path)
         self._layout.addWidget(self._icon)
 
-    def setIcon(self, icon_path: Optional[str] = None):
-        self._icon.load(icon_path)
+    def setIcon(self, icon: str | QIcon | QPixmap) -> None:
+        if isinstance(icon, str):
+            self._icon.load(icon)
+        else:
+            raise TypeError
 
-    def setIconSize(self, size: QSize):
+    def setIconSize(self, size: QSize) -> None:
         self._icon.setFixedSize(size)
 
-    def enterEvent(self, event: QEnterEvent):
+    def enterEvent(self, event: QEnterEvent) -> None:
         self.setProperty("hover", "true")
         self.setStyleSheet("/* /")  # Force a style update.
         super().enterEvent(event)
 
-    def leaveEvent(self, event: QEvent):
+    def leaveEvent(self, event: QEvent) -> None:
         if not self.isChecked():
             self.setProperty("hover", "false")
         self.setStyleSheet("/* /")  # Force a style update.
@@ -82,16 +85,20 @@ class AIconButton(QPushButton):
 
 
 class ATooltipIconButton(AIconButton):
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
+    def __init__(
+        self,
+        icon_path: str = get_resource("icons/tabler/question-mark.svg"),
+        parent: QWidget | None = None,
+    ) -> None:
+        super().__init__(icon_path, parent)
         self._hlbl_tooltip: Optional[QHoverLabel] = None
 
-    def enterEvent(self, event: QEnterEvent):
+    def enterEvent(self, event: QEnterEvent) -> None:
         if self._hlbl_tooltip is not None and len(self._hlbl_tooltip.text()) > 0:
             self._hlbl_tooltip.show()
         super().enterEvent(event)
 
-    def leaveEvent(self, event: QEvent):
+    def leaveEvent(self, event: QEvent) -> None:
         if self._hlbl_tooltip is not None:
             self._hlbl_tooltip.hide()
         super().leaveEvent(event)
@@ -99,7 +106,7 @@ class ATooltipIconButton(AIconButton):
     def toolTip(self) -> str:
         return "" if self._hlbl_tooltip is None else self._hlbl_tooltip.text()
 
-    def setToolTip(self, label: str):
+    def setToolTip(self, label: str) -> None:
         if self._hlbl_tooltip is None:
             self._hlbl_tooltip = QHoverLabel(label, self)
             self._hlbl_tooltip.hide()

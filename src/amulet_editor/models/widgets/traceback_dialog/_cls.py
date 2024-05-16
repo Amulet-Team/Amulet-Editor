@@ -1,8 +1,9 @@
 from PySide6.QtCore import Slot, QSize, Qt
 from PySide6.QtGui import QGuiApplication, QIcon
+from PySide6.QtWidgets import QWidget
 
 from ._traceback_dialog import Ui_AmuletTracebackDialog
-from amulet_editor.data.build import get_resource
+from amulet_editor.resources import get_resource
 
 
 class _AmuletTracebackDialog(Ui_AmuletTracebackDialog):
@@ -10,12 +11,12 @@ class _AmuletTracebackDialog(Ui_AmuletTracebackDialog):
 
     def __init__(
         self,
-        parent=None,
-        f=Qt.WindowType.Widget,
+        parent: QWidget | None = None,
+        f: Qt.WindowType = Qt.WindowType.Widget,
         title: str = "",
         error: str = "",
         traceback: str = "",
-    ):
+    ) -> None:
         super().__init__(parent, f)
         self._traceback = traceback
         alert_icon = QIcon(get_resource("icons/tabler/alert-circle.svg")).pixmap(
@@ -28,6 +29,6 @@ class _AmuletTracebackDialog(Ui_AmuletTracebackDialog):
         self._traceback_text.setText(traceback)
 
     @Slot()
-    def _on_copy(self):
+    def _on_copy(self) -> None:
         clipboard = QGuiApplication.clipboard()
         clipboard.setText(self._traceback)

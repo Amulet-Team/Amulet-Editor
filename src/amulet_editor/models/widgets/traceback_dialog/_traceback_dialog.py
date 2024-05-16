@@ -75,7 +75,7 @@ class Ui_AmuletTracebackDialog(QDialog):
         )
         self._ok_button_box.setSizePolicy(sizePolicy)
         self._ok_button_box.setOrientation(Qt.Orientation.Horizontal)
-        self._ok_button_box.setStandardButtons(QDialogButtonBox.Ok)
+        self._ok_button_box.setStandardButtons(QDialogButtonBox.StandardButton.Ok)
         self._button_layout.addWidget(self._ok_button_box)
         self._main_layout.addLayout(self._button_layout)
 

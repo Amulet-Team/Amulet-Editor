@@ -1,14 +1,11 @@
 {
 	"files": [
-		"src\\amulet_editor\\application\\windows_\\_amulet_landing_window\\_landing_window.ui",
-		"src\\amulet_editor\\application\\windows_\\_amulet_landing_window\\views\\home\\home\\_home.ui",
-		"src\\amulet_editor\\application\\windows_\\_amulet_landing_window\\views\\home\\open_world\\_open_world.ui",
 		"src\\amulet_editor\\application\\_splash\\_splash.ui",
-		"src\\amulet_editor\\models\\widgets\\_traceback_dialog\\_traceback_dialog.ui",
-		"src\\amulet_editor\\plugins\\amulet_team_home_page\\home\\home\\_home.ui",
-		"src\\amulet_editor\\plugins\\amulet_team_home_page\\home\\open_world\\_open_world.ui",
-		"src\\amulet_editor\\plugins\\amulet_team_inspector\\_inspector\\_inspector.ui",
-		"src\\amulet_editor\\plugins\\amulet_team_main_window\\application\\windows\\main_window\\_landing_window.ui",
-		"src\\amulet_editor\\plugins\\amulet_team_settings\\settings\\_settings.ui"
+		"src\\amulet_editor\\models\\widgets\\traceback_dialog\\_traceback_dialog.ui",
+		"src\\builtin_plugins\\amulet_team_home_page\\home\\home\\_home.ui",
+		"src\\builtin_plugins\\amulet_team_home_page\\home\\open_world\\_open_world.ui",
+		"src\\builtin_plugins\\amulet_team_inspector\\_inspector\\_inspector.ui",
+		"src\\builtin_plugins\\amulet_team_main_window\\_application\\windows\\main_window\\main_window.ui",
+		"src\\builtin_plugins\\amulet_team_main_window\\_application\\windows\\sub_window\\sub_window.ui"
 	]
 }

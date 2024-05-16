@@ -6,7 +6,7 @@ You must subclass the abstract classes and implement custom handling for the fol
 """
 
 from __future__ import annotations
-from typing import Optional, Union as Intersection, Union
+from typing import Optional, Union as Intersection, Union, overload, Any
 from enum import IntEnum
 
 from PySide6.QtWidgets import (
@@ -45,7 +45,6 @@ from PySide6.QtCore import (
     QRect,
 )
 
-from amulet_editor.data.build import get_resource
 from amulet_editor.models.widgets.traceback_dialog import DisplayException
 import tablericons
 
@@ -76,23 +75,23 @@ class TabButton(QFrame):
     def __init__(self, label: str, icon: Optional[QIcon]):
         super().__init__()
         self.setSizePolicy(QSizePolicy.Policy.Preferred, QSizePolicy.Policy.Fixed)
-        self.layout = QHBoxLayout()
-        self.layout.setContentsMargins(0, 0, 0, 0)
-        self.setLayout(self.layout)
-        self.layout.addStretch()
-        self.layout.addWidget(QLabel(label))
-        self.layout.addStretch()
+        self.layout_ = QHBoxLayout()
+        self.layout_.setContentsMargins(0, 0, 0, 0)
+        self.setLayout(self.layout_)
+        self.layout_.addStretch()
+        self.layout_.addWidget(QLabel(label))
+        self.layout_.addStretch()
         self.close_button = QPushButton()
         size = int(button_size().height() * 0.75)
         self.close_button.setFixedSize(size, size)
         self.close_button.setIcon(QIcon(tablericons.x))
         self.close_button.setFlat(True)
-        self.layout.addWidget(self.close_button)
+        self.layout_.addWidget(self.close_button)
 
-    def display_clicked(self):
+    def display_clicked(self) -> None:
         self.setFrameStyle(QFrame.Shape.Panel | QFrame.Shadow.Sunken)
 
-    def display_unclicked(self):
+    def display_unclicked(self) -> None:
         self.setFrameStyle(QFrame.Shape.Panel | QFrame.Shadow.Raised)
 
     def sizeHint(self) -> QSize:
@@ -110,7 +109,7 @@ class DropArea(IntEnum):
 class DragSplitRenderer(QWidget):
     """A class to implement custom drawing while the user is dragging a tab."""
 
-    def __init__(self, target: QWidget):
+    def __init__(self, target: QWidget) -> None:
         super().__init__(target)
         self.target = target
         self.setWindowFlags(Qt.WindowType.FramelessWindowHint)
@@ -126,7 +125,7 @@ class DragSplitRenderer(QWidget):
         self._compute_polygons()
         self.show()
 
-    def _compute_polygons(self):
+    def _compute_polygons(self) -> None:
         shape = self.size()
         if shape != self.shape:
             width = self.width()
@@ -166,10 +165,10 @@ class DragSplitRenderer(QWidget):
 
             self.shape = shape
 
-    def resizeEvent(self, event: QResizeEvent):
+    def resizeEvent(self, event: QResizeEvent) -> None:
         self._compute_polygons()
 
-    def paintEvent(self, event: QPaintEvent):
+    def paintEvent(self, event: QPaintEvent) -> None:
         painter = QPainter(self)
 
         cursor_point = QCursor.pos() - self.mapToGlobal(QPoint(0, 0))
@@ -197,7 +196,7 @@ class DragSplitRenderer(QWidget):
 class DragTabRenderer(QWidget):
     """A class to implement custom drawing while the user is dragging a tab."""
 
-    def __init__(self, target: QWidget):
+    def __init__(self, target: QWidget) -> None:
         super().__init__(target)
         self.target = target
         self.setWindowFlags(Qt.WindowType.FramelessWindowHint)
@@ -210,7 +209,7 @@ class DragTabRenderer(QWidget):
         self.resize(target.size())
         self.show()
 
-    def paintEvent(self, event: QPaintEvent):
+    def paintEvent(self, event: QPaintEvent) -> None:
         painter = QPainter(self)
 
         normal_colour = QColor(115, 215, 255, 128)
@@ -239,56 +238,60 @@ class AbstractTabContainerWidget(QWidget):
         tuple[AbstractTabContainerWidget, DragTabRenderer],
     ]
 
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
+    def __init__(self, parent: QWidget | None = None, f: Qt.WindowType = Qt.WindowType.Widget) -> None:
+        super().__init__(parent, f)
         self.setAcceptDrops(True)
         self.drag_start_pos = QPoint()
-        self.layout = QHBoxLayout(self)
-        self.layout.setSpacing(0)
-        self.layout.setContentsMargins(0, 0, 0, 0)
+        self.layout_ = QHBoxLayout(self)
+        self.layout_.setSpacing(0)
+        self.layout_.setContentsMargins(0, 0, 0, 0)
         self.active_button = None
         self.dragged_widget = None
         self.highlight_widget = None
 
-    def add_tab(self, label: str, icon: QIcon = None):
+    def add_tab(self, label: str, icon: QIcon | None = None)  -> None:
         tab = TabButton(label, icon)
         if self.active_button is None:
             self.active_button = tab
             tab.display_clicked()
         else:
             tab.display_unclicked()
-        self.layout.addWidget(tab)
+        self.layout_.addWidget(tab)
 
-    def insert_tab(self, index: int, label: str, icon: QIcon = None):
+    def insert_tab(self, index: int, label: str, icon: QIcon | None = None) -> None:
         tab = TabButton(label, icon)
         if self.active_button is None:
             self.active_button = tab
             tab.display_clicked()
         else:
             tab.display_unclicked()
-        self.layout.insertWidget(index, tab)
+        self.layout_.insertWidget(index, tab)
 
-    def remove_tab(self, index: int):
-        item = self.layout.itemAt(index)
+    def remove_tab(self, index: int) -> None:
+        item = self.layout_.itemAt(index)
         widget = item.widget()
-        self.layout.removeItem(item)
+        self.layout_.removeItem(item)
         is_active = widget == self.active_button
         widget.hide()
         widget.deleteLater()
         if is_active:
             if self.count():
                 active_index = min(self.count() - 1, index)
-                item = self.layout.itemAt(active_index)
-                self.active_button = item.widget()
+                item = self.layout_.itemAt(active_index)
+                button_widget = item.widget()
+                assert isinstance(button_widget, TabButton)
+                self.active_button = button_widget
                 self.active_button.display_clicked()
             else:
                 self.active_button = None
 
     def count(self) -> int:
-        return self.layout.count()
+        return self.layout_.count()
 
     def current_index(self) -> int:
-        return self.layout.indexOf(self.active_button)
+        if self.active_button is not None:
+            return self.layout_.indexOf(self.active_button)
+        return -1
 
     @property
     def container(self) -> AbstractTabContainer:
@@ -299,16 +302,17 @@ class AbstractTabContainerWidget(QWidget):
             )
         return parent
 
-    def _get_button_at(self, point: QPoint) -> Optional[TabButton]:
-        child = self.childAt(point)
+    def _get_button_at(self, point: QPoint) -> TabButton | None:
+        child: QObject = self.childAt(point)
         if child is None:
             return
         while child.parent() != self:
             child = child.parent()
         if isinstance(child, TabButton):
             return child
+        return None
 
-    def mousePressEvent(self, event: QMouseEvent):
+    def mousePressEvent(self, event: QMouseEvent) -> None:
         # If left-clicked
         if event.button() == Qt.MouseButton.LeftButton:
             # Store the click position
@@ -325,11 +329,11 @@ class AbstractTabContainerWidget(QWidget):
             button.display_clicked()
             self.active_button = button
             # Notify of tab change
-            self.tab_changed.emit(self.layout.indexOf(button))
+            self.tab_changed.emit(self.layout_.indexOf(button))
         else:
             super().mousePressEvent(event)
 
-    def mouseMoveEvent(self, event: QMouseEvent):
+    def mouseMoveEvent(self, event: QMouseEvent) -> None:
         # If the mouse has been clicked and dragged beyond the minimum distance then start dragging
         if self.dragged_widget is not None:
             # Drag has already started. Update the widget display.
@@ -372,7 +376,7 @@ class AbstractTabContainerWidget(QWidget):
             painter.end()
 
             # Remove the tab
-            tab_index = self.layout.indexOf(self.active_button)
+            tab_index = self.layout_.indexOf(self.active_button)
             self.dragged_widget = self.container.tab_bar.tab_widget.remove_page(
                 tab_index
             )
@@ -385,7 +389,7 @@ class AbstractTabContainerWidget(QWidget):
         self, point: QPoint
     ) -> Union[None, AbstractTabContainerWidget, AbstractStackedTabWidget]:
         """Get the widget that the dragged widget will be dropped into."""
-        widget = QApplication.widgetAt(point)
+        widget: QObject = QApplication.widgetAt(point)
         while widget is not None:
             if isinstance(
                 widget, (AbstractTabContainerWidget, AbstractStackedTabWidget)
@@ -394,7 +398,7 @@ class AbstractTabContainerWidget(QWidget):
             widget = widget.parent()
         return None
 
-    def mouseReleaseEvent(self, event: QMouseEvent):
+    def mouseReleaseEvent(self, event: QMouseEvent) -> None:
         if self.dragged_widget is None:
             # If not dragging. Reset values
             self.drag_start_pos = QPoint()
@@ -460,7 +464,7 @@ class AbstractTabContainerWidget(QWidget):
 
     def _on_drop_in_space(
         self, dragged_widget: Union[QWidget, TabPage], drop_event: QMouseEvent
-    ):
+    ) -> None:
         raise NotImplementedError
 
 
@@ -469,11 +473,11 @@ class AbstractTabContainer(QScrollArea):
 
     tab_changed = Signal(int)
 
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        self.widget = self._new_tab_container_widget()
-        self.widget.tab_changed.connect(self.tab_changed)
-        self.setWidget(self.widget)
+    def __init__(self, parent: QWidget | None = None) -> None:
+        super().__init__(parent)
+        self.tab_container_widget = self._new_tab_container_widget()
+        self.tab_container_widget.tab_changed.connect(self.tab_changed)
+        self.setWidget(self.tab_container_widget)
 
         self.setSizePolicy(QSizePolicy.Policy.Preferred, QSizePolicy.Policy.Preferred)
         self.setWidgetResizable(True)
@@ -494,9 +498,9 @@ class AbstractTabContainer(QScrollArea):
         return parent
 
     def sizeHint(self) -> QSize:
-        return self.widget.layout.sizeHint()
+        return self.tab_container_widget.layout_.sizeHint()
 
-    def wheelEvent(self, event: QWheelEvent):
+    def wheelEvent(self, event: QWheelEvent) -> None:
         scroll_bar = self.horizontalScrollBar()
         scroll_bar.setValue(scroll_bar.value() - event.angleDelta().y())
 
@@ -507,53 +511,53 @@ class AbstractTabBar(QWidget):
     tab_changed = Signal(int)
     add_clicked = Signal()
 
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        self.layout = QHBoxLayout(self)
-        self.layout.setSpacing(0)
-        self.layout.setContentsMargins(0, 0, 0, 0)
+    def __init__(self, parent: QWidget | None = None, f: Qt.WindowType = Qt.WindowType.Widget) -> None:
+        super().__init__(parent, f)
+        self.layout_ = QHBoxLayout(self)
+        self.layout_.setSpacing(0)
+        self.layout_.setContentsMargins(0, 0, 0, 0)
 
         button_height = button_size().height()
 
         self.left_button = QPushButton("<")
         self.left_button.setFixedSize(button_height, button_height)
-        self.layout.addWidget(self.left_button)
+        self.layout_.addWidget(self.left_button)
         self.left_button.clicked.connect(self._move_left)
 
         self.tab_container = self._new_tab_container()
         self.tab_container.tab_changed.connect(self.tab_changed)
-        self.layout.addWidget(self.tab_container)
+        self.layout_.addWidget(self.tab_container)
 
         self.right_button = QPushButton(">")
         self.right_button.setFixedSize(button_height, button_height)
-        self.layout.addWidget(self.right_button)
+        self.layout_.addWidget(self.right_button)
         self.right_button.clicked.connect(self._move_right)
 
         self.plus_button = QPushButton("+")
         self.plus_button.setFixedSize(button_height, button_height)
-        self.layout.addWidget(self.plus_button)
+        self.layout_.addWidget(self.plus_button)
         self.plus_button.clicked.connect(self.add_clicked)
 
     def _new_tab_container(self) -> AbstractTabContainer:
         raise NotImplementedError
 
-    def add_tab(self, label: str, icon: QIcon = None):
-        self.tab_container.widget.add_tab(label, icon)
+    def add_tab(self, label: str, icon: QIcon | None = None) -> None:
+        self.tab_container.tab_container_widget.add_tab(label, icon)
         self._check_size()
 
-    def insert_tab(self, index: int, label: str, icon: QIcon = None):
-        self.tab_container.widget.insert_tab(index, label, icon)
+    def insert_tab(self, index: int, label: str, icon: QIcon | None = None) -> None:
+        self.tab_container.tab_container_widget.insert_tab(index, label, icon)
         self._check_size()
 
-    def remove_tab(self, index: int):
-        self.tab_container.widget.remove_tab(index)
+    def remove_tab(self, index: int) -> None:
+        self.tab_container.tab_container_widget.remove_tab(index)
         self._check_size()
 
     def count(self) -> int:
-        return self.tab_container.widget.count()
+        return self.tab_container.tab_container_widget.count()
 
     def current_index(self) -> int:
-        return self.tab_container.widget.current_index()
+        return self.tab_container.tab_container_widget.current_index()
 
     @property
     def tab_widget(self) -> AbstractStackedTabWidget:
@@ -564,7 +568,7 @@ class AbstractTabBar(QWidget):
             )
         return parent
 
-    def _check_size(self):
+    def _check_size(self) -> None:
         if (
             self.tab_container.size().width()
             + self.left_button.width() * self.left_button.isVisible()
@@ -578,16 +582,16 @@ class AbstractTabBar(QWidget):
             self.right_button.show()
 
     @Slot()
-    def _move_left(self):
+    def _move_left(self) -> None:
         scroll_bar = self.tab_container.horizontalScrollBar()
         scroll_bar.setValue(scroll_bar.value() - button_size().width() * 2)
 
     @Slot()
-    def _move_right(self):
+    def _move_right(self) -> None:
         scroll_bar = self.tab_container.horizontalScrollBar()
         scroll_bar.setValue(scroll_bar.value() + button_size().width() * 2)
 
-    def resizeEvent(self, event: QResizeEvent):
+    def resizeEvent(self, event: QResizeEvent) -> None:
         super().resizeEvent(event)
         self._check_size()
 
@@ -595,8 +599,8 @@ class AbstractTabBar(QWidget):
 class AbstractStackedTabWidget(QWidget):
     """A custom class that behaves like a QTabWidget"""
 
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
+    def __init__(self, parent: QWidget | None = None, f: Qt.WindowType = Qt.WindowType.Widget) -> None:
+        super().__init__(parent, f)
         self.setAcceptDrops(True)
         self._layout = QVBoxLayout()
         self._layout.setContentsMargins(0, 0, 0, 0)
@@ -614,7 +618,7 @@ class AbstractStackedTabWidget(QWidget):
         raise NotImplementedError
 
     @Slot()
-    def _add(self):
+    def _add(self) -> None:
         # from PySide6.QtWidgets import QLabel
         # i = random.randint(0, 9)
         # self.add_tab(QLabel(f"Test Widget {i}"), "test" + "a"*random.randint(0, 20) + str(i))
@@ -626,7 +630,7 @@ class AbstractStackedTabWidget(QWidget):
         with DisplayException(f"Error in {page.__class__}"):
             if not (isinstance(page, QWidget) and isinstance(page, TabPage)):
                 raise TypeError(
-                    f"Page of type {page.__class__} must be an instace of QWidget and TabPage"
+                    f"Page of type {type(page)} must be an instance of QWidget and TabPage"
                 )
             name = page.name
             icon = page.icon
@@ -636,12 +640,14 @@ class AbstractStackedTabWidget(QWidget):
                 raise TypeError("Page icon is invalid")
         return name, icon
 
-    def add_page(self, page: Intersection[QWidget, TabPage]):
+    def add_page(self, page: Intersection[QWidget, TabPage]) -> None:
+        assert isinstance(page, QWidget) and isinstance(page, TabPage)
         name, icon = self._validate_page(page)
         self.tab_bar.add_tab(name, icon)
         self.stacked_widget.addWidget(page)
 
-    def insert_page(self, index: int, page: Intersection[QWidget, TabPage]):
+    def insert_page(self, index: int, page: Intersection[QWidget, TabPage]) -> None:
+        assert isinstance(page, QWidget) and isinstance(page, TabPage)
         name, icon = self._validate_page(page)
         self.tab_bar.insert_tab(index, name, icon)
         self.stacked_widget.insertWidget(index, page)
@@ -654,7 +660,7 @@ class AbstractStackedTabWidget(QWidget):
         # clean_up_widgets(self)
         return widget
 
-    def clean_up(self):
+    def clean_up(self) -> None:
         """
         A tab gets closed on a window
         If it was the last tab in the window
@@ -718,7 +724,7 @@ class AbstractStackedTabWidget(QWidget):
         #         tab_widget.hide()
         #         tab_widget.deleteLater()
 
-    def _on_last_removed(self):
+    def _on_last_removed(self) -> None:
         raise NotImplementedError
 
     def count(self) -> int:
@@ -738,11 +744,17 @@ class AbstractStackedTabWidget(QWidget):
 
 
 class RecursiveSplitter(QSplitter):
-    def __init__(self, *args, **kwargs):
+    @overload
+    def __init__(self, orientation: Qt.Orientation, parent: QWidget | None = None) -> None:
+        ...
+    @overload
+    def __init__(self, parent: QWidget | None = None) -> None:
+        ...
+    def __init__(self, *args: Any, **kwargs: Any) -> None:
         super().__init__(*args, **kwargs)
         self.setChildrenCollapsible(False)
 
-    def addWidget(self, widget: Union[AbstractStackedTabWidget, RecursiveSplitter]):
+    def addWidget(self, widget: Union[AbstractStackedTabWidget, RecursiveSplitter]) -> None:
         if not isinstance(widget, (AbstractStackedTabWidget, RecursiveSplitter)):
             raise TypeError(
                 "widget must be an instance of TabArea or RecursiveSplitter"
@@ -751,7 +763,7 @@ class RecursiveSplitter(QSplitter):
 
     def insertWidget(
         self, index: int, widget: Union[AbstractStackedTabWidget, RecursiveSplitter]
-    ):
+    ) -> None:
         if not isinstance(widget, (AbstractStackedTabWidget, RecursiveSplitter)):
             raise TypeError(
                 "widget must be an instance of TabArea or RecursiveSplitter"
