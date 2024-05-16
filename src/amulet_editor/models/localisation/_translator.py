@@ -60,7 +60,7 @@ class ATranslator(QTranslator):
         source_text: str,
         disambiguation: str | None = None,
         n: int = -1,
-    ) -> str:
+    ) -> str | None:
         return super().translate(
             context, source_text, disambiguation, n
-        ) or self._translations.get(f"{context}.{source_text}", f"{context}.{source_text}")
+        ) or self._translations.get(f"{context}.{source_text}")

@@ -7,7 +7,7 @@ Patches: dict[str, list[tuple[str, str]]] = {
     os.path.join(PySide6Path, "QtCore.pyi"): [
         (
             "def translate(self, context: Union[bytes, bytearray, memoryview], sourceText: Union[bytes, bytearray, memoryview], disambiguation: Union[bytes, bytearray, memoryview, NoneType] = ..., n: int = ...) -> str: ...",
-            "def translate(self, context: Union[str], sourceText: Union[str], disambiguation: Union[str, NoneType] = ..., n: int = ...) -> str: ...",
+            "def translate(self, context: Union[str], sourceText: Union[str], disambiguation: Union[str, NoneType] = ..., n: int = ...) -> Union[str, None]: ...",
         ),
         (
             "def data(self) -> Union[bytes, bytearray, memoryview]: ...",
