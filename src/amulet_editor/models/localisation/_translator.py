@@ -1,4 +1,4 @@
-from typing import Optional, Iterable
+from typing import Iterable
 import os
 from PySide6.QtCore import QTranslator, QLocale, QDir, QObject
 
