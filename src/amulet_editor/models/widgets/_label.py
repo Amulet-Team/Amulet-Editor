@@ -135,7 +135,9 @@ class QElidedLabel(QLabel):
 
 class QHoverLabel(QLabel):
     def __init__(self, text: str, parent: QWidget):
-        super().__init__(parent)
+        super().__init__(parent.window())
+
+        self._parent = parent
 
         self.shadow = QGraphicsDropShadowEffect(self)
         self.shadow.setBlurRadius(7)
@@ -146,7 +148,6 @@ class QHoverLabel(QLabel):
         self.setAlignment(Qt.AlignmentFlag.AlignCenter)
         self.setGraphicsEffect(self.shadow)
         self.setObjectName("hover_label")
-        self.setParent(self.window())
         self.setText(text)
 
     def setText(self, text: str) -> None:
@@ -154,20 +155,16 @@ class QHoverLabel(QLabel):
         self.setFixedSize(self.minimumSizeHint() + QSize(30, 6))
 
     def showEvent(self, event: QShowEvent) -> None:
-        parent = self.parent()
-        assert isinstance(parent, QWidget)
-        # TODO: do we need the grandparent?
-        grandparent = parent.parent()
-        assert isinstance(grandparent, QWidget)
-        pos_gbl = grandparent.mapToGlobal(parent.pos())
-        pos_rel = parent.mapFromGlobal(pos_gbl)
+        window = self.parentWidget()
+        parent = self._parent
+        pos_gbl = parent.mapToGlobal(QPoint(0, 0))
+        pos_rel = window.mapFromGlobal(pos_gbl)
         pos_mov = QPoint(
             pos_rel.x() + parent.width() + 3,
             pos_rel.y() + (parent.height() - self.height()) // 2,
         )
         self.move(pos_mov)
 
-        parent.update()  # Fix rendering artifacts
         return super().showEvent(event)
 
     def hideEvent(self, event: QHideEvent) -> None:
