@@ -13,4 +13,4 @@ def load_plugin() -> None:
     window.showMaximized()
 
 
-plugin = PluginV1(load_plugin)
+plugin = PluginV1(load=load_plugin)

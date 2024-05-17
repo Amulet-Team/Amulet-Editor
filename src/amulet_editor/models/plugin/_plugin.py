@@ -1,6 +1,8 @@
-from typing import Callable, NamedTuple
+from typing import Callable
+from dataclasses import dataclass
 
 
-class PluginV1(NamedTuple):
+@dataclass(frozen=True, kw_only=True)
+class PluginV1:
     load: Callable[[], None] = lambda: None
     unload: Callable[[], None] = lambda: None

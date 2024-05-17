@@ -8,4 +8,4 @@ def load_plugin() -> None:
     AmuletMainWindow.instance().showMaximized()
 
 
-plugin = PluginV1(load_plugin)
+plugin = PluginV1(load=load_plugin)

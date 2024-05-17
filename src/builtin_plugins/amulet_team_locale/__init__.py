@@ -7,4 +7,4 @@ def load_plugin() -> None:
     pass
 
 
-plugin = PluginV1(load_plugin)
+plugin = PluginV1(load=load_plugin)

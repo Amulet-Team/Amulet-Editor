@@ -40,4 +40,4 @@ def unload_plugin() -> None:
     QCoreApplication.removeTranslator(_translator)
 
 
-plugin = PluginV1(load_plugin, unload_plugin)
+plugin = PluginV1(load=load_plugin, unload=unload_plugin)

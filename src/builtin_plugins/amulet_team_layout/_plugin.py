@@ -26,4 +26,4 @@ def unload_plugin() -> None:
     # unregister_view(View3D)
 
 
-plugin = PluginV1(load_plugin, unload_plugin)
+plugin = PluginV1(load=load_plugin, unload=unload_plugin)
