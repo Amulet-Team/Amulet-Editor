@@ -7,7 +7,7 @@ Patches: dict[str, list[tuple[str, str]]] = {
     os.path.join(PySide6Path, "QtCore.pyi"): [
         (
             "def translate(self, context: Union[bytes, bytearray, memoryview], sourceText: Union[bytes, bytearray, memoryview], disambiguation: Union[bytes, bytearray, memoryview, NoneType] = ..., n: int = ...) -> str: ...",
-            "def translate(self, context: Union[str], sourceText: Union[str], disambiguation: Union[str, NoneType] = ..., n: int = ...) -> Union[str, None]: ...",
+            "def translate(self, context: str, sourceText: str, disambiguation: Union[str, NoneType] = ..., n: int = ...) -> Union[str, None]: ...",
         ),
         (
             "def data(self) -> Union[bytes, bytearray, memoryview]: ...",
@@ -18,6 +18,10 @@ Patches: dict[str, list[tuple[str, str]]] = {
         (
             "def setParent(self, parent: PySide6.QtGui.QWindow",
             "def setParent(self, parent: Optional[PySide6.QtGui.QWindow]",
+        ),
+        (
+            "def glVertexAttribPointer(self, indx: int, size: int, type: int, normalized: int, stride: int, ptr: int) -> None: ...",
+            "def glVertexAttribPointer(self, indx: int, size: int, type: int, normalized: int, stride: int, ptr: Shiboken.VoidPtr) -> None: ...",
         ),
     ]
 }
