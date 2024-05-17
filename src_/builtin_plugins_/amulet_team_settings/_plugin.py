@@ -26,4 +26,4 @@ def _on_click() -> None:
     _windows.append(settings)
 
 
-plugin = PluginV1(load_plugin)
+plugin = PluginV1(load=load_plugin)
