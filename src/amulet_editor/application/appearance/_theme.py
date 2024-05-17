@@ -4,28 +4,28 @@ import json
 import os
 import re
 from pathlib import Path
-from typing import Any
+from typing import Any, TypeVar
+from abc import ABC, abstractmethod
 
 from amulet_editor.resources import get_resource
 from PySide6.QtGui import QColor
 from PySide6.QtWidgets import QApplication
+
+T = TypeVar("T")
+
+
+def dynamic_cast(obj: Any, cls: type[T]) -> T:
+    if isinstance(obj, cls):
+        return obj
+    raise TypeError(f"{obj} is not an instance of {cls}")
 
 
 class Color:
     def __init__(self, colour_hex: str):
         self._qcolor = QColor(colour_hex)
 
-    def get_qcolor(self) -> QColor:
-        return self._qcolor
-
     def get_hex(self) -> str:
         return self._qcolor.name()
-
-    def get_rgb(self) -> str:
-        return "rgb({}, {}, {})".format(*self._qcolor.getRgb())
-
-    def get_rgba(self) -> str:
-        return "rgba({}, {}, {}, {})".format(*self._qcolor.getRgb())
 
     def darker(self, percent: int = 100) -> Color:
         if percent < 0:
@@ -38,43 +38,60 @@ class Color:
         return Color(self._qcolor.lighter(100 + percent).name())
 
 
-class Theme:
+class AbstractBaseTheme(ABC):
+    @abstractmethod
+    def apply(self, application: QApplication) -> None:
+        raise NotImplementedError
+
+    @property
+    @abstractmethod
+    def name(self) -> str:
+        raise NotImplementedError
+
+
+class LegacyTheme(AbstractBaseTheme):
     def __init__(self, theme_dir: str):
         with open(os.path.join(theme_dir, "theme.json"), "r") as fh:
-            self._theme: dict[str, Any] = json.load(fh)
+            theme_json: dict = dynamic_cast(json.load(fh), dict)
 
-        self._style_sheets: dict[str, str] = {}
+        self._name: str = dynamic_cast(theme_json["theme_name"], str)
 
-        path_style_sheets = get_resource(
-            os.path.join("themes", "_default", "style_sheets")
-        )
-        for style_name in os.listdir(path_style_sheets):
-            self._style_sheets[style_name] = self.load_style_sheet(
-                os.path.join(path_style_sheets, style_name)
+        # Get the style theme
+        self._style: str = dynamic_cast(theme_json["style"], str)
+
+        style_sheet_path = os.path.join(theme_dir, "style_sheets", "application.qss")
+        if not os.path.isfile(style_sheet_path):
+            # If no override is defined fall back to the default.
+            style_sheet_path = get_resource(
+                os.path.join("themes", "_default", "style_sheets", "application.qss")
             )
 
-        path_style_sheets = os.path.join(theme_dir, "style_sheets")
-        if os.path.isdir(path_style_sheets):
-            for style_name in os.listdir(path_style_sheets):
-                self._style_sheets[style_name] = self.load_style_sheet(
-                    os.path.join(path_style_sheets, style_name)
-                )
+        # Load the style sheet
+        with open(style_sheet_path) as f:
+            raw_style_sheet = f.read()
 
-    def apply(self, application: QApplication):
-        """Apply theme to a `QtWidgets.QApplication`."""
-        application.setStyle(self._theme["style"])
-        application.setStyleSheet(self._style_sheets["application.qss"])
+        # Format the style sheet.
+        self._style_sheet = self._format_style_sheet(raw_style_sheet, theme_json)
 
-    def get_style_sheet(self, file_name: str) -> str:
-        """Returns Qt style sheet from current theme with matching file name."""
-        return self._style_sheets.get(file_name, "")
+    @staticmethod
+    def _format_style_sheet(raw_style_sheet: str, theme_json: dict[str, Any]) -> str:
+        """Returns Qt style sheet. Substitutes placeholder colors with theme colors."""
+        style_sheet = raw_style_sheet.replace('"', "")
 
-    def load_style_sheet(self, file_path: str) -> str:
-        """Returns Qt style sheet at the provided file path. Substitutes placeholder colors with theme colors.
-        \nGenerally `get_style_sheet()` should be used instead of this method.
-        """
-        with open(file_path, "r") as fh:
-            style_sheet = fh.read().replace('"', "")
+        font_family = theme_json["font"]["family"]
+        font_subfamilies = theme_json["font"].get("subfamilies", {})
+        primary = Color(theme_json["material_colors"]["primary"])
+        primary_variant = Color(theme_json["material_colors"]["primary_variant"])
+        on_primary = Color(theme_json["material_colors"]["on_primary"])
+        secondary = Color(theme_json["material_colors"]["secondary"])
+        secondary_variant = Color(theme_json["material_colors"]["secondary_variant"])
+        on_secondary = Color(theme_json["material_colors"]["on_secondary"])
+        background = Color(theme_json["material_colors"]["background"])
+        on_background = Color(theme_json["material_colors"]["on_background"])
+        surface = Color(theme_json["material_colors"]["surface"])
+        on_surface = Color(theme_json["material_colors"]["on_surface"])
+        error = Color(theme_json["material_colors"]["error"])
+        on_error = Color(theme_json["material_colors"]["on_error"])
 
         icons: set[str] = set(
             [icon for icon in re.findall(r"url\((.*?)\)", style_sheet)]
@@ -87,138 +104,72 @@ class Theme:
                 ),
             )
 
-        font_subfamilies: set[str] = set(
+        font_subfamilies_: set[str] = set(
             [
                 subfamily
                 for subfamily in re.findall("{(.+?)}", style_sheet)
                 if "font_family." in subfamily
             ]
         )
-        for subfamily in font_subfamilies:
-            try:
-                font_data = subfamily.split(".")
-                style_sheet = style_sheet.replace(
-                    f"{{{subfamily}}}",
-                    '"{}"'.format(
-                        " ".join(
-                            [
-                                self.font_family,
-                                self.font_subfamilies.get(font_data[1], ""),
-                            ]
-                        ).strip()
-                    ),
-                )
-            except:
-                raise ValueError(
-                    f'unparsable font data: "{font_data}" in stylesheet "{file_path}"'
-                )
+        for subfamily in font_subfamilies_:
+            font_data = subfamily.split(".")
+            style_sheet = style_sheet.replace(
+                f"{{{subfamily}}}",
+                '"{}"'.format(
+                    " ".join(
+                        [
+                            font_family,
+                            font_subfamilies.get(font_data[1], ""),
+                        ]
+                    ).strip()
+                ),
+            )
 
         modified_colors: set[str] = set(
             [
                 color
                 for color in re.findall("{(.+?)}", style_sheet)
-                if color not in self._theme["material_colors"]
-                and color.rsplit(".", 2)[0] in self._theme["material_colors"]
+                if color not in theme_json["material_colors"]
+                   and color.rsplit(".", 2)[0] in theme_json["material_colors"]
             ]
         )
         for modified_color in modified_colors:
-            try:
-                color_data = modified_color.split(".")
-                if color_data[1] == "darker":
-                    style_sheet = style_sheet.replace(
-                        f"{{{modified_color}}}",
-                        Color(self._theme["material_colors"][color_data[0]])
-                        .darker(int(color_data[2]))
-                        .get_hex(),
-                    )
-                elif color_data[1] == "lighter":
-                    style_sheet = style_sheet.replace(
-                        f"{{{modified_color}}}",
-                        Color(self._theme["material_colors"][color_data[0]])
-                        .lighter(int(color_data[2]))
-                        .get_hex(),
-                    )
-            except:
-                raise ValueError(
-                    f'unparsable color data: "{color_data}" in stylesheet "{file_path}"'
+            color_data = modified_color.split(".")
+            if color_data[1] == "darker":
+                style_sheet = style_sheet.replace(
+                    f"{{{modified_color}}}",
+                    Color(theme_json["material_colors"][color_data[0]])
+                    .darker(int(color_data[2]))
+                    .get_hex(),
+                )
+            elif color_data[1] == "lighter":
+                style_sheet = style_sheet.replace(
+                    f"{{{modified_color}}}",
+                    Color(theme_json["material_colors"][color_data[0]])
+                    .lighter(int(color_data[2]))
+                    .get_hex(),
                 )
 
         return style_sheet.format(
-            font_family=self.font_family,
-            background=self.background.get_hex(),
-            error=self.error.get_hex(),
-            primary=self.primary.get_hex(),
-            primary_variant=self.primary_variant.get_hex(),
-            secondary=self.secondary.get_hex(),
-            secondary_variant=self.secondary_variant.get_hex(),
-            surface=self.surface.get_hex(),
-            on_background=self.on_background.get_hex(),
-            on_error=self.on_error.get_hex(),
-            on_primary=self.on_primary.get_hex(),
-            on_secondary=self.on_secondary.get_hex(),
-            on_surface=self.on_surface.get_hex(),
+            font_family=font_family,
+            background=background.get_hex(),
+            error=error.get_hex(),
+            primary=primary.get_hex(),
+            primary_variant=primary_variant.get_hex(),
+            secondary=secondary.get_hex(),
+            secondary_variant=secondary_variant.get_hex(),
+            surface=surface.get_hex(),
+            on_background=on_background.get_hex(),
+            on_error=on_error.get_hex(),
+            on_primary=on_primary.get_hex(),
+            on_secondary=on_secondary.get_hex(),
+            on_surface=on_surface.get_hex(),
         )
+
+    def apply(self, application: QApplication) -> None:
+        application.setStyle(self._style)
+        application.setStyleSheet(self._style_sheet)
 
     @property
     def name(self) -> str:
-        return self._theme["theme_name"]
-
-    @property
-    def font_family(self) -> str:
-        return self._theme["font"]["family"]
-
-    @property
-    def font_subfamilies(self) -> dict[str, str]:
-        return self._theme["font"].get("subfamilies", {})
-
-    @property
-    def font_size(self) -> str:
-        return self._theme["font"]["size"]
-
-    @property
-    def primary(self) -> Color:
-        return Color(self._theme["material_colors"]["primary"])
-
-    @property
-    def primary_variant(self) -> Color:
-        return Color(self._theme["material_colors"]["primary_variant"])
-
-    @property
-    def on_primary(self) -> Color:
-        return Color(self._theme["material_colors"]["on_primary"])
-
-    @property
-    def secondary(self) -> Color:
-        return Color(self._theme["material_colors"]["secondary"])
-
-    @property
-    def secondary_variant(self) -> Color:
-        return Color(self._theme["material_colors"]["secondary_variant"])
-
-    @property
-    def on_secondary(self) -> Color:
-        return Color(self._theme["material_colors"]["on_secondary"])
-
-    @property
-    def background(self) -> Color:
-        return Color(self._theme["material_colors"]["background"])
-
-    @property
-    def on_background(self) -> Color:
-        return Color(self._theme["material_colors"]["on_background"])
-
-    @property
-    def surface(self) -> Color:
-        return Color(self._theme["material_colors"]["surface"])
-
-    @property
-    def on_surface(self) -> Color:
-        return Color(self._theme["material_colors"]["on_surface"])
-
-    @property
-    def error(self) -> Color:
-        return Color(self._theme["material_colors"]["error"])
-
-    @property
-    def on_error(self) -> Color:
-        return Color(self._theme["material_colors"]["on_error"])
+        return self._name
