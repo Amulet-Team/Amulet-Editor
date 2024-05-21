@@ -2,17 +2,20 @@
 Registering layouts, adding layout buttons and enabling layouts"""
 
 from __future__ import annotations
+from typing import Callable, cast
 from threading import Lock, current_thread, main_thread
 from dataclasses import dataclass
 import re
-from weakref import WeakValueDictionary
+from weakref import WeakValueDictionary, ref
 
-from PySide6.QtWidgets import QPushButton
 from PySide6.QtCore import Qt, QPoint, QSize
+
+from amulet_editor.models.widgets import ATooltipIconButton
 
 from ._main_window import get_main_window
 from ._sub_window import sub_windows
 from ._tab_engine import TabWidget
+from ._toolbar import ButtonProxy
 
 
 UniqueIdPattern = re.compile(r'[a-z0-9-]+')
@@ -43,8 +46,8 @@ class WidgetConfig:
 
 @dataclass(frozen=True)
 class WindowConfig:
-    origin: QPoint
-    size: QSize
+    origin: QPoint | None
+    size: QSize | None
     layout: SplitterConfig | WidgetConfig
 
 
@@ -58,7 +61,7 @@ class LayoutConfig:
 class LayoutContainer:
     default: LayoutConfig
     layout: LayoutConfig
-    button: QPushButton | None = None
+    button: Callable[[], ATooltipIconButton | None] = cast(Callable[[], ATooltipIconButton | None], lambda: None)
 
 
 # The lock must be acquired before reading/writing the objects below.
@@ -147,16 +150,17 @@ def activate_layout(layout_id: str) -> None:
     """
     with lock:
         layout_container = _get_layout_container(layout_id)
-        if layout_container.button is not None:
+        button = layout_container.button()
+        if button is not None:
             # If the layout has an associated button, click it.
-            layout_container.button.click()
+            button.click()
         else:
             # If there is no associated button then manually enable it.
             get_main_window().toolbar.uncheck_layout_buttons()
-            _activate_layout(layout_container)
+            _setup_layout(layout_container.layout)
 
 
-def create_layout_button(layout_id: str) -> None:
+def create_layout_button(layout_id: str) -> ButtonProxy:
     """Create a button that will activate the specified layout.
 
     The layout must be registered before calling this.
@@ -165,25 +169,17 @@ def create_layout_button(layout_id: str) -> None:
     """
     with lock:
         layout_container = _get_layout_container(layout_id)
-        if layout_container.button is not None:
+        if layout_container.button() is not None:
             raise ValueError(f"A layout button for id {layout_id} already exists.")
         button = get_main_window().toolbar.add_layout_button()
-        button.clicked.connect(lambda: _activate_layout(layout_container))
-        layout_container.button = button
+        button.clicked.connect(lambda: _setup_layout(layout_container.layout))
+        layout_container.button = ref(button)
         # TODO: set up the button
         #  Context menu:
         #   Reset to default layout
         #   Delete button
 
-
-def destroy_layout_button(layout_id: str) -> None:
-    with lock:
-        layout_container = _get_layout_container(layout_id)
-        button = layout_container.button
-        if button is None:
-            raise ValueError(f"No layout button exists for id {layout_id}")
-        layout_container.button = None
-        button.deleteLater()
+        return ButtonProxy(button)
 
 
 def populate_widgets(widget_cls: type[TabWidget]) -> None:
@@ -196,11 +192,6 @@ def populate_widgets(widget_cls: type[TabWidget]) -> None:
 
 def remove_widgets(widget_cls: type[TabWidget]) -> None:
     """Remove all widgets of this type and replace with a missing widget."""
-
-
-def _activate_layout(layout_container: LayoutContainer) -> None:
-    """Set up the widgets according to the layout."""
-    _setup_layout(layout_container.layout)
 
 
 def _setup_layout(layout: LayoutConfig) -> None:
