@@ -8,11 +8,11 @@ from PySide6.QtWidgets import QWidget, QVBoxLayout
 from .home import HomePage
 from .open_world import OpenWorldPage
 
-from amulet_team_main_window import Widget
+from amulet_team_main_window import TabWidget
 from amulet_team_locale import set_locale
 
 
-class HomeWidget(QWidget, Widget):
+class HomeWidget(TabWidget):
     name = "Home"
 
     def __init__(
@@ -21,9 +21,6 @@ class HomeWidget(QWidget, Widget):
         super().__init__(parent, f)
         self._layout = QVBoxLayout(self)
         self._layout.setContentsMargins(0, 0, 0, 0)
-        self._set_landing_page()
-
-    def activate_view(self) -> None:
         self._set_landing_page()
 
     def setCentralWidget(self, widget: QWidget) -> None:
