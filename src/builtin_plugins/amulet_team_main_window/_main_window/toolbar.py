@@ -1,10 +1,12 @@
 from typing import Callable
 from threading import RLock
 import traceback
+from weakref import finalize
 
-from shiboken6 import isValid
 from PySide6.QtCore import QSize, Qt
 from PySide6.QtWidgets import QFrame, QWidget, QVBoxLayout, QHBoxLayout, QButtonGroup
+
+from amulet.utils.weakref import CallableWeakMethod
 
 from amulet_editor.models.widgets import ADragContainer, ATooltipIconButton
 from amulet_editor.models.widgets.traceback_dialog import display_exception
@@ -18,23 +20,36 @@ class ButtonProxy:
     This is also used to access and remove the button.
     """
 
-    def __init__(self, button: ATooltipIconButton):
-        self.__button = button
-        self.__callback: Callable[[], None] | None = None
+    def __init__(self, button: ATooltipIconButton) -> None:
+        """
+        :param button: The button to wrap.
+        :param on_delete: A function to call just before deleting the button.
+        """
+        self._button: ATooltipIconButton | None = button
+        self._on_click: Callable[[], None] | None = None
+        self._finalise = finalize(self, CallableWeakMethod(self._destroy))
+
+    def _get_button(self) -> ATooltipIconButton:
+        if self._button is None:
+            raise RuntimeError("The button has already been destroyed.")
+        return self._button
+
+    def _destroy(self) -> None:
+        self._get_button().deleteLater()
+        self._button = None
 
     def __del__(self) -> None:
-        self.delete()
+        self._finalise()
 
     def delete(self) -> None:
         """Delete the button"""
-        if isValid(self.__button):
-            self.__button.deleteLater()
+        self._finalise()
 
     def set_icon(self, icon_path: str) -> None:
-        self.__button.setIcon(icon_path)
+        self._get_button().setIcon(icon_path)
 
     def set_name(self, name: str) -> None:
-        self.__button.setToolTip(name)
+        self._get_button().setToolTip(name)
 
     def set_callback(self, callback: Callable[[], None] | None = None) -> None:
         def on_click() -> None:
@@ -48,13 +63,14 @@ class ButtonProxy:
                         traceback=traceback.format_exc(),
                     )
 
-        if self.__callback is not None:
-            self.__button.clicked.disconnect(self.__callback)
-        self.__callback = on_click
-        self.__button.clicked.connect(on_click)
+        button = self._get_button()
+        if self._on_click is not None:
+            button.clicked.disconnect(self._on_click)
+        self._on_click = on_click
+        button.clicked.connect(on_click)
 
     def click(self) -> None:
-        self.__button.click()
+        self._get_button().click()
 
 
 class ToolBar(QFrame):
