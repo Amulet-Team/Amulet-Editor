@@ -1,17 +1,13 @@
-from typing import Union
-
-from PySide6.QtWidgets import QWidget
 from PySide6.QtGui import QMouseEvent
 
-from amulet_team_main_window._application.tab_engine import (
+from ._tab_engine import (
     AbstractTabContainer,
     AbstractTabBar,
     AbstractTabContainerWidget,
     AbstractStackedTabWidget,
-    TabPage,
+    TabWidget,
 )
-import amulet_team_main_window._application.windows.main_window as main_window
-import amulet_team_main_window._application.windows.sub_window as sub_window
+from amulet_team_main_window import _main_window as main_window, _sub_window as sub_window
 
 
 class TabContainerWidget(AbstractTabContainerWidget):
@@ -19,9 +15,9 @@ class TabContainerWidget(AbstractTabContainerWidget):
         return StackedTabWidget()
 
     def _on_drop_in_space(
-        self, dragged_widget: Union[QWidget, TabPage], drop_event: QMouseEvent
+        self, dragged_widget: TabWidget, drop_event: QMouseEvent
     ) -> None:
-        new_window = sub_window.AmuletSubWindow(main_window.AmuletMainWindow.instance())
+        new_window = sub_window.AmuletSubWindow(main_window.get_main_window())
         tab_widget = StackedTabWidget()
         new_window.view_container.addWidget(tab_widget)
         tab_widget.add_page(dragged_widget)

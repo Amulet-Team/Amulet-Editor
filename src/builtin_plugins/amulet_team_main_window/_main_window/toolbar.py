@@ -1,4 +1,4 @@
-from typing import Optional, Callable
+from typing import Callable
 from threading import RLock
 import traceback
 
@@ -81,39 +81,33 @@ class ToolBar(QFrame):
         self._lyt_main.setContentsMargins(0, 0, 0, 0)
         self.setLayout(self._lyt_main)
 
-        self._wgt_dynamic_tools = ADragContainer(self, orientation)
-        self._lyt_main.addWidget(self._wgt_dynamic_tools)
+        self._wgt_layout_buttons = ADragContainer(self, orientation)
+        self._lyt_main.addWidget(self._wgt_layout_buttons)
 
-        self._lyt_fixed_tools = layout_cls()
-        self._lyt_fixed_tools.addStretch()
-        self._lyt_main.addLayout(self._lyt_fixed_tools)
+        self._lyt_static_buttons = layout_cls()
+        self._lyt_static_buttons.addStretch()
+        self._lyt_main.addLayout(self._lyt_static_buttons)
 
-        self._button_group = QButtonGroup()
+        self._layout_button_group = QButtonGroup()
         self._lock = RLock()
 
-    def add_button(
-        self,
-        sticky: bool = False,
-        static: bool = False,
-    ) -> ButtonProxy:
-        """
-        Add a static button.
-        This is reserved for internal use only.
-
-        :param sticky: If True, the button will stick down when pressed.
-        :param static: If True, the button will be in a different section and can't be moved.
-        """
+    def add_layout_button(self) -> ATooltipIconButton:
+        """Add a button to the toolbar."""
         button = ATooltipIconButton()
         button.setFixedSize(QSize(40, 40))
         button.setIconSize(QSize(30, 30))
+        button.setCheckable(True)
+        self._layout_button_group.addButton(button)
+        self._wgt_layout_buttons.add_item(button)
+        return button
 
-        if sticky:
-            button.setCheckable(True)
-            self._button_group.addButton(button)
+    def uncheck_layout_buttons(self) -> None:
+        self._layout_button_group.checkedButton().setChecked(False)
 
-        if static:
-            self._lyt_fixed_tools.insertWidget(1, button)
-        else:
-            self._wgt_dynamic_tools.add_item(button)
-
-        return ButtonProxy(button)
+    def add_static_button(self) -> ATooltipIconButton:
+        """Add a button to the toolbar."""
+        button = ATooltipIconButton()
+        button.setFixedSize(QSize(40, 40))
+        button.setIconSize(QSize(30, 30))
+        self._lyt_static_buttons.insertWidget(1, button)
+        return button

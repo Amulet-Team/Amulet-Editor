@@ -19,7 +19,7 @@
   <customwidget>
    <class>RecursiveSplitter</class>
    <extends>QFrame</extends>
-   <header>amulet_team_main_window._application.tab_engine</header>
+   <header>amulet_team_main_window._tab_engine</header>
    <container>1</container>
   </customwidget>
  </customwidgets>

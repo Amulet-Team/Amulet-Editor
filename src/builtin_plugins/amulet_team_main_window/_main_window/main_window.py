@@ -17,7 +17,7 @@ from PySide6.QtWidgets import (
     QWidget,
 )
 from .toolbar import ToolBar
-from amulet_team_main_window._application.tab_engine import RecursiveSplitter
+from amulet_team_main_window._tab_engine import RecursiveSplitter
 
 
 class Ui_AmuletMainWindow(QMainWindow):
