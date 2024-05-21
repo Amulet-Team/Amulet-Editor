@@ -198,7 +198,12 @@ class CustomSysModules(UserDict[str, ModuleType]):
         frame = inspect.currentframe()
         if frame is not None:
             frame = frame.f_back
-            while frame is not None and frame.f_globals.get("__name__") == "collections.abc":
+            while frame is not None and frame.f_globals.get("__name__") in {
+                "collections",
+                "collections.abc",
+                "inspect",
+                "dataclasses"
+            }:
                 frame = frame.f_back
             if frame is not None:
                 _validate_import(imported_name, frame)
