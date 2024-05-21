@@ -8,6 +8,7 @@ from amulet_editor.models.plugin import PluginV1
 
 import amulet_team_locale
 import amulet_team_main_window
+from amulet_team_main_window import register_widget
 
 import amulet_team_home_page
 from .home import HomeWidget
@@ -18,13 +19,13 @@ _translator: ATranslator | None = None
 
 
 def load_plugin() -> None:
-    global _translator, home_button
+    global _translator
     _translator = ATranslator()
     _locale_changed()
     QCoreApplication.installTranslator(_translator)
     amulet_team_locale.locale_changed.connect(_locale_changed)
 
-    amulet_team_main_window.register_widget(HomeWidget)
+    register_widget(HomeWidget)
 
 
 def _locale_changed() -> None:
