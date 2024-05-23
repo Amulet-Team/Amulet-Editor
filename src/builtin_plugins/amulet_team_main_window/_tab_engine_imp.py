@@ -17,7 +17,7 @@ class TabContainerWidget(AbstractTabContainerWidget):
     def _on_drop_in_space(
         self, dragged_widget: TabWidget, drop_event: QMouseEvent
     ) -> None:
-        new_window = sub_window.AmuletSubWindow(main_window.get_main_window())
+        new_window = sub_window.create_sub_window()
         tab_widget = StackedTabWidget()
         new_window.view_container.addWidget(tab_widget)
         tab_widget.add_page(dragged_widget)
