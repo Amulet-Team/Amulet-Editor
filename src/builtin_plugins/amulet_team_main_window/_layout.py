@@ -42,7 +42,6 @@ class WidgetConfig:
 @dataclass(frozen=True)
 class WidgetStackConfig:
     widgets: tuple[WidgetConfig, ...]
-    selected: int
 
 
 @dataclass(frozen=True)
@@ -207,10 +206,13 @@ def remove_widgets(widget_cls: type[TabWidget]) -> None:
 
 def _init_layout(view_container: RecursiveSplitter, layout: SplitterConfig | WidgetStackConfig) -> None:
     if isinstance(layout, SplitterConfig):
-        raise NotImplementedError
+        splitter_widget = RecursiveSplitter(layout.orientation)
+        view_container.addWidget(splitter_widget)
+        _init_layout(splitter_widget, layout.first)
+        _init_layout(splitter_widget, layout.second)
     elif isinstance(layout, WidgetStackConfig):
         tab_widget = StackedTabWidget()
-        view_container.insertWidget(0, tab_widget)
+        view_container.addWidget(tab_widget)
         for widget_config in layout.widgets:
             widget: TabWidget
             try:
