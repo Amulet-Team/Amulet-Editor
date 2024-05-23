@@ -23,6 +23,16 @@ Patches: dict[str, list[tuple[str, str]]] = {
             "def glVertexAttribPointer(self, indx: int, size: int, type: int, normalized: int, stride: int, ptr: int) -> None: ...",
             "def glVertexAttribPointer(self, indx: int, size: int, type: int, normalized: int, stride: int, ptr: Shiboken.VoidPtr) -> None: ...",
         ),
+    ],
+    os.path.join(PySide6Path, "QtWidgets.pyi"): [
+        (
+            "def spacerItem(self) -> PySide6.QtWidgets.QSpacerItem: ...\n    def widget(self) -> PySide6.QtWidgets.QWidget: ...",
+            "def spacerItem(self) -> Optional[PySide6.QtWidgets.QSpacerItem]: ...\n    def widget(self) -> Optional[PySide6.QtWidgets.QWidget]: ...",
+        ),
+        (
+            "def itemAt(self, arg__1: int) -> PySide6.QtWidgets.QLayoutItem: ...",
+            "def itemAt(self, arg__1: int) -> Optional[PySide6.QtWidgets.QLayoutItem]: ...",
+        ),
     ]
 }
 
