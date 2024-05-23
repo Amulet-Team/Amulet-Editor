@@ -12,10 +12,13 @@ from PySide6.QtCore import Qt, QPoint, QSize
 
 from amulet_editor.models.widgets import ATooltipIconButton
 
-from ._main_window import get_main_window
-from ._sub_window import sub_windows
+from ._main_window import AmuletMainWindow, get_main_window
+from ._sub_window import AmuletSubWindow, sub_windows, create_sub_window
 from ._tab_engine import TabWidget
 from ._toolbar import ButtonProxy
+from ._widget import get_widget_cls, MissingWidget
+from ._tab_engine import RecursiveSplitter
+from ._tab_engine_imp import StackedTabWidget
 
 
 UniqueIdPattern = re.compile(r'[a-z0-9-]+')
@@ -32,23 +35,29 @@ UniqueIdPattern = re.compile(r'[a-z0-9-]+')
 
 
 @dataclass(frozen=True)
-class SplitterConfig:
-    first: SplitterConfig | WidgetConfig
-    second: SplitterConfig | WidgetConfig
-    orientation: Qt.Orientation
-    weight: float
+class WidgetConfig:
+    qualname: str
 
 
 @dataclass(frozen=True)
-class WidgetConfig:
-    qualname: str
+class WidgetStackConfig:
+    widgets: tuple[WidgetConfig, ...]
+    selected: int
+
+
+@dataclass(frozen=True)
+class SplitterConfig:
+    first: SplitterConfig | WidgetStackConfig
+    second: SplitterConfig | WidgetStackConfig
+    orientation: Qt.Orientation
+    weight: float
 
 
 @dataclass(frozen=True)
 class WindowConfig:
     origin: QPoint | None
     size: QSize | None
-    layout: SplitterConfig | WidgetConfig
+    layout: SplitterConfig | WidgetStackConfig
 
 
 @dataclass(frozen=True)
@@ -57,11 +66,20 @@ class LayoutConfig:
     sub_windows: tuple[WindowConfig, ...]
 
 
+@dataclass(frozen=True)
+class HiddenLayout:
+    """Storage for layout UI elements when not active."""
+    main_window_splitter: RecursiveSplitter
+    sub_windows: tuple[AmuletSubWindow, ...]
+
+
 @dataclass
 class LayoutContainer:
-    default: LayoutConfig
-    layout: LayoutConfig
-    button: Callable[[], ATooltipIconButton | None] = cast(Callable[[], ATooltipIconButton | None], lambda: None)
+    layout_id: str
+    default_config: LayoutConfig
+    layout_config: LayoutConfig
+    button_ref: Callable[[], ATooltipIconButton | None] = cast(Callable[[], ATooltipIconButton | None], lambda: None)
+    hidden_layout: HiddenLayout | None = None
 
 
 # The lock must be acquired before reading/writing the objects below.
@@ -69,7 +87,7 @@ lock = Lock()
 # The layouts that have been registered
 layouts = dict[str, LayoutContainer]()
 # The id for the currently active layout
-_active_layout: str | None = None
+_active_layout: LayoutContainer | None = None
 # Widgets where the class does not exist yet.
 _missing_widgets = WeakValueDictionary[str, TabWidget]()
 
@@ -106,7 +124,7 @@ def register_layout(layout_id: str, layout: LayoutConfig) -> None:
     with lock:
         if layout_id in layouts:
             raise ValueError(f"Layout id {layout_id} has already been registered.")
-        layout_container = LayoutContainer(layout, layout)
+        layout_container = LayoutContainer(layout_id, layout, layout)
         layouts[layout_id] = layout_container
 
 
@@ -114,6 +132,7 @@ def unregister_layout(layout_id: str) -> None:
     """Unregister the layout.
 
     When the plugin is unloaded, it must unregister all layouts that it registered.
+    If a button was created it must be destroyed before calling this.
 
     :param layout_id: The unique identifier for the layout.
     :return:
@@ -124,16 +143,7 @@ def unregister_layout(layout_id: str) -> None:
         del layouts[layout_id]
 
 
-# def set_layout(layout_id: str, layout: LayoutConfig) -> None:
-#     """Set the layout configuration for this layout."""
-
-
-def delete_layout(layout_id: str) -> None:
-    """Destroy a layout and all config data for the layout."""
-    raise NotImplementedError
-
-
-def active_layout() -> str | None:
+def active_layout() -> LayoutContainer | None:
     """Get the unique id for the currently active layout."""
     return _active_layout
 
@@ -150,14 +160,14 @@ def activate_layout(layout_id: str) -> None:
     """
     with lock:
         layout_container = _get_layout_container(layout_id)
-        button = layout_container.button()
+        button = layout_container.button_ref()
         if button is not None:
             # If the layout has an associated button, click it.
             button.click()
         else:
             # If there is no associated button then manually enable it.
             get_main_window().toolbar.uncheck_layout_buttons()
-            _setup_layout(layout_container.layout)
+            _setup_layout(layout_container)
 
 
 def create_layout_button(layout_id: str) -> ButtonProxy:
@@ -169,15 +179,16 @@ def create_layout_button(layout_id: str) -> ButtonProxy:
     """
     with lock:
         layout_container = _get_layout_container(layout_id)
-        if layout_container.button() is not None:
+        if layout_container.button_ref() is not None:
             raise ValueError(f"A layout button for id {layout_id} already exists.")
         button = get_main_window().toolbar.add_layout_button()
-        button.clicked.connect(lambda: _setup_layout(layout_container.layout))
-        layout_container.button = ref(button)
+        button.clicked.connect(lambda: _setup_layout(layout_container))
+        layout_container.button_ref = ref(button)
         # TODO: set up the button
         #  Context menu:
         #   Reset to default layout
         #   Delete button
+        #   Save layout
 
         return ButtonProxy(button)
 
@@ -194,15 +205,127 @@ def remove_widgets(widget_cls: type[TabWidget]) -> None:
     """Remove all widgets of this type and replace with a missing widget."""
 
 
-def _setup_layout(layout: LayoutConfig) -> None:
-    """Tear down the existing widgets and populate the new layout."""
-    assert current_thread() is main_thread(), "This can only be called from the main thread."
-    # Tear down existing layout
+def _init_layout(view_container: RecursiveSplitter, layout: SplitterConfig | WidgetStackConfig) -> None:
+    if isinstance(layout, SplitterConfig):
+        raise NotImplementedError
+    elif isinstance(layout, WidgetStackConfig):
+        tab_widget = StackedTabWidget()
+        view_container.insertWidget(0, tab_widget)
+        for widget_config in layout.widgets:
+            widget: TabWidget
+            try:
+                widget_cls = get_widget_cls(widget_config.qualname)
+            except KeyError:
+                widget = MissingWidget(widget_config.qualname)
+            else:
+                widget = widget_cls()
 
+            tab_widget.add_page(widget)
+    else:
+        raise RuntimeError(f"Unknown layout type {type(layout)}")
+
+
+def _init_window(window: AmuletMainWindow | AmuletSubWindow, config: WindowConfig) -> None:
+    view_container = window.view_container
+    # TODO: set window position and size
+    layout = config.layout
     # Set up new layout
-    raise NotImplementedError
+    _init_layout(view_container, layout)
+
+
+def _create_layout(layout_container: LayoutContainer) -> None:
+    """Initialisation of the layout."""
+    layout_config = layout_container.layout_config
+    _init_window(get_main_window(), layout_config.main_window)
+    for config in layout_config.sub_windows:
+        _init_window(create_sub_window(), config)
+
+
+def _destroy_layout() -> None:
+    """Destroy the existing layout.
+    This is used when resetting the active layout."""
+    for sub_window in sub_windows:
+        sub_window.close()
+    main_view_container = get_main_window().view_container
+    for index in range(main_view_container.count() - 1, -1, -1):
+        widget = main_view_container.widget(index)
+        widget.hide()
+        widget.deleteLater()
+
+
+def _setup_layout(new_layout_container: LayoutContainer) -> None:
+    """Tear down the existing widgets and populate the new layout."""
+    global _active_layout
+    assert current_thread() is main_thread(), "This can only be called from the main thread."
+
+    old_layout_container = active_layout()
+
+    if old_layout_container is new_layout_container:
+        # If the layout is already active then do nothing.
+        return
+
+    old_sub_windows = []
+    if old_layout_container is not None:
+        # Pull down all the old sub-windows
+        old_sub_windows = list(sub_windows)
+        sub_windows.clear()
+        for sub_window in old_sub_windows:
+            sub_window.hide()
+
+    main_window = get_main_window()
+    hidden_layout = new_layout_container.hidden_layout
+    if hidden_layout is None:
+        # Layout was not active before
+        # Create from scratch
+        old_main_view_container = main_window.replace_view_container(RecursiveSplitter())
+        _create_layout(new_layout_container)
+    else:
+        new_main_view_container = hidden_layout.main_window_splitter
+        old_main_view_container = main_window.replace_view_container(new_main_view_container)
+        new_main_view_container.show()
+        for sub_window in hidden_layout.sub_windows:
+            sub_window.show()
+        sub_windows.update(hidden_layout.sub_windows)
+        new_layout_container.hidden_layout = None
+    # Without this the last shown sub-window will be active.
+    main_window.activateWindow()
+
+    if old_layout_container is None:
+        old_main_view_container.deleteLater()
+    else:
+        old_main_view_container.hide()
+        old_layout_container.hidden_layout = HiddenLayout(
+            old_main_view_container,
+            tuple(old_sub_windows)
+        )
+
+    _active_layout = new_layout_container
 
 
 def _get_layout_config() -> LayoutConfig:
     """Get the current layout configuration."""
     raise NotImplementedError
+
+
+def save_layout_config() -> None:
+    """Save the layout configuration for the active layout."""
+    with lock:
+        layout_container = active_layout()
+        if layout_container is None:
+            return
+        layout_container.layout_config = _get_layout_config()
+        # TODO: save config file.
+
+
+def reset_layout_config(layout_id: str) -> None:
+    """Reset the layout to its default configuration.
+    If the layout is active this will update the display.
+    """
+    assert current_thread() is main_thread(), "This can only be called from the main thread."
+    with lock:
+        layout_container = _get_layout_container(layout_id)
+        layout_container.layout_config = layout_container.default_config
+        # TODO: delete config file.
+        if active_layout() is layout_container:
+            _destroy_layout()
+            _create_layout(layout_container)
