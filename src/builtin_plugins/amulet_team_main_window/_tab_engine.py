@@ -6,7 +6,7 @@ You must subclass the abstract classes and implement custom handling for the fol
 """
 
 from __future__ import annotations
-from typing import Optional, Union as Intersection, Union, overload, Any
+from typing import Optional, Union, overload, Any
 from enum import IntEnum
 
 from PySide6.QtWidgets import (
@@ -41,8 +41,6 @@ from PySide6.QtCore import (
     Qt,
     QObject,
     QSize,
-    QEvent,
-    QRect,
 )
 
 from amulet_editor.models.widgets.traceback_dialog import DisplayException
@@ -59,14 +57,23 @@ def button_size() -> QSize:
     return _button_size
 
 
-class TabPage:
+class TabWidget(QWidget):
     @property
     def name(self) -> str:
-        return "TabPageNameGoesHere"
+        # TODO: convert this to a translation key
+        return "TabWidgetNameGoesHere"
 
     @property
     def icon(self) -> Optional[QIcon]:
         return None
+
+    def disable_view(self) -> None:
+        """
+        This is run when a view is about to be removed from a view container.
+        This gives the view a chance to do any cleaning up before it is removed and potentially destroyed.
+        This method must leave the view in a state where it can be destroyed or activated again.
+        """
+        pass
 
 
 class TabButton(QFrame):
@@ -230,7 +237,7 @@ class AbstractTabContainerWidget(QWidget):
     active_button: Optional[TabButton]
 
     # The widget being dragged or None
-    dragged_widget: Optional[Intersection[QWidget, TabPage]]
+    dragged_widget: TabWidget | None
     # The widget that was previously highlighted
     highlight_widget: Union[
         None,
@@ -463,7 +470,7 @@ class AbstractTabContainerWidget(QWidget):
         raise NotImplementedError
 
     def _on_drop_in_space(
-        self, dragged_widget: Union[QWidget, TabPage], drop_event: QMouseEvent
+        self, dragged_widget: TabWidget, drop_event: QMouseEvent
     ) -> None:
         raise NotImplementedError
 
@@ -625,12 +632,12 @@ class AbstractStackedTabWidget(QWidget):
         pass
 
     def _validate_page(
-        self, page: Intersection[QWidget, TabPage]
+        self, page: TabWidget
     ) -> tuple[str, Optional[QIcon]]:
         with DisplayException(f"Error in {page.__class__}"):
-            if not (isinstance(page, QWidget) and isinstance(page, TabPage)):
+            if not isinstance(page, TabWidget):
                 raise TypeError(
-                    f"Page of type {type(page)} must be an instance of QWidget and TabPage"
+                    f"Page of type {type(page)} must be an instance of TabWidget"
                 )
             name = page.name
             icon = page.icon
@@ -640,21 +647,20 @@ class AbstractStackedTabWidget(QWidget):
                 raise TypeError("Page icon is invalid")
         return name, icon
 
-    def add_page(self, page: Intersection[QWidget, TabPage]) -> None:
-        assert isinstance(page, QWidget) and isinstance(page, TabPage)
+    def add_page(self, page: TabWidget) -> None:
         name, icon = self._validate_page(page)
         self.tab_bar.add_tab(name, icon)
         self.stacked_widget.addWidget(page)
 
-    def insert_page(self, index: int, page: Intersection[QWidget, TabPage]) -> None:
-        assert isinstance(page, QWidget) and isinstance(page, TabPage)
+    def insert_page(self, index: int, page: TabWidget) -> None:
         name, icon = self._validate_page(page)
         self.tab_bar.insert_tab(index, name, icon)
         self.stacked_widget.insertWidget(index, page)
 
-    def remove_page(self, index: int) -> Intersection[QWidget, TabPage]:
+    def remove_page(self, index: int) -> TabWidget:
         self.tab_bar.remove_tab(index)
         widget = self.stacked_widget.widget(index)
+        assert isinstance(widget, TabWidget)
         self.stacked_widget.removeWidget(widget)
         widget.setParent(None)
         # clean_up_widgets(self)

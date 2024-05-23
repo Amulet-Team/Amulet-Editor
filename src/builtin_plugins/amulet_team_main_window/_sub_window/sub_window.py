@@ -8,7 +8,7 @@
 ################################################################################
 from PySide6.QtCore import QCoreApplication, QMetaObject, Qt, QEvent
 from PySide6.QtWidgets import QMainWindow, QWidget
-from amulet_team_main_window._application.tab_engine import RecursiveSplitter
+from amulet_team_main_window._tab_engine import RecursiveSplitter
 
 
 class Ui_AmuletSubWindow(QMainWindow):
