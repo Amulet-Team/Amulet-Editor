@@ -10,6 +10,7 @@ from amulet_team_inspector import show_inspector
 
 from .main_window import Ui_AmuletMainWindow
 from .toolbar import ButtonProxy
+from .._tab_engine import RecursiveSplitter
 
 
 # Terminology
@@ -97,6 +98,13 @@ class AmuletMainWindow(Ui_AmuletMainWindow):
     #             self.view_container.insertWidget(0, tab_widget)
     #     else:
     #         raise RuntimeError
+
+    def replace_view_container(self, new_view_container: RecursiveSplitter) -> RecursiveSplitter:
+        old_view_container = self.view_container
+        layout_item = self._main_layout.replaceWidget(old_view_container, new_view_container, options=Qt.FindChildOption.FindDirectChildrenOnly)
+        assert old_view_container is layout_item.widget()
+        self.view_container = new_view_container
+        return old_view_container
 
 
 # The lock must be acquired before reading/writing the objects below.
