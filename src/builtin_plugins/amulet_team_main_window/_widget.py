@@ -1,6 +1,9 @@
 """A module to manage widget class registration and access."""
 from threading import Lock
 
+from PySide6.QtWidgets import QVBoxLayout, QLabel
+from PySide6.QtCore import Qt
+
 from ._tab_engine import TabWidget
 from . import _layout as layout
 
@@ -56,3 +59,19 @@ def get_widget_cls(widget_qualname: str) -> type[TabWidget]:
     """
     with lock:
         return _widget_classes[widget_qualname]
+
+
+class MissingWidget(TabWidget):
+    def __init__(self, qualname: str) -> None:
+        super().__init__()
+        self._qualname = qualname
+        label = QLabel(qualname)
+        label.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        layout_ = QVBoxLayout()
+        layout_.addWidget(label)
+        self.setLayout(layout_)
+
+    @property
+    def name(self) -> str:
+        # TODO: convert this to a translation key
+        return self._qualname
