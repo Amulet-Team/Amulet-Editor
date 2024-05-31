@@ -276,7 +276,9 @@ class AbstractTabContainerWidget(QWidget):
 
     def remove_tab(self, index: int) -> None:
         item = self.layout_.itemAt(index)
+        assert item is not None
         widget = item.widget()
+        assert widget is not None
         self.layout_.removeItem(item)
         is_active = widget == self.active_button
         widget.hide()
@@ -285,6 +287,7 @@ class AbstractTabContainerWidget(QWidget):
             if self.count():
                 active_index = min(self.count() - 1, index)
                 item = self.layout_.itemAt(active_index)
+                assert item is not None
                 button_widget = item.widget()
                 assert isinstance(button_widget, TabButton)
                 self.active_button = button_widget
@@ -760,7 +763,7 @@ class RecursiveSplitter(QSplitter):
         super().__init__(*args, **kwargs)
         self.setChildrenCollapsible(False)
 
-    def addWidget(self, widget: Union[AbstractStackedTabWidget, RecursiveSplitter]) -> None:
+    def addWidget(self, widget: AbstractStackedTabWidget | RecursiveSplitter) -> None:  # type: ignore
         if not isinstance(widget, (AbstractStackedTabWidget, RecursiveSplitter)):
             raise TypeError(
                 "widget must be an instance of TabArea or RecursiveSplitter"
@@ -768,7 +771,7 @@ class RecursiveSplitter(QSplitter):
         super().addWidget(widget)
 
     def insertWidget(
-        self, index: int, widget: Union[AbstractStackedTabWidget, RecursiveSplitter]
+        self, index: int, widget: AbstractStackedTabWidget | RecursiveSplitter  # type: ignore
     ) -> None:
         if not isinstance(widget, (AbstractStackedTabWidget, RecursiveSplitter)):
             raise TypeError(
