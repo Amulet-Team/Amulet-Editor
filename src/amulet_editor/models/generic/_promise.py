@@ -1,14 +1,20 @@
 from __future__ import annotations
 
-from typing import Generic, TypeVar, Callable, Any, Generator, Union
+from typing import Generic, TypeVar, Callable
 from threading import Lock
-from enum import IntEnum
+from enum import IntEnum, Enum
 from PySide6.QtCore import QObject, Signal, QThreadPool, SignalInstance
 from amulet_editor.data.dev._debug import enable_trace
 
 
 T = TypeVar("T")
-Void = object()
+
+
+class VoidType(Enum):
+    Void = 0
+
+
+Void = VoidType.Void
 
 
 class Promise(QObject, Generic[T]):
@@ -50,15 +56,15 @@ class Promise(QObject, Generic[T]):
         self._status = self.Status.NotStarted
         self._cancel_requested = False
         self._target = target
-        self._value: T = Void
-        self._exception = Void
+        self._value: T | VoidType = Void
+        self._exception: BaseException | VoidType = Void
 
     ready = Signal()
     canceled = Signal()
     progress_change = Signal(float)
     progress_text_change = Signal(str)
 
-    def _op_wrapper(self):
+    def _op_wrapper(self) -> None:
         try:
             value = self._target(
                 Promise.Data(
@@ -80,17 +86,17 @@ class Promise(QObject, Generic[T]):
             self._status = self.Status.Finished
             self.ready.emit()
 
-    def _thread_op_wrapper(self):
+    def _thread_op_wrapper(self) -> None:
         enable_trace()
         self._op_wrapper()
 
-    def _set_start(self):
+    def _set_start(self) -> None:
         with self._lock:
             if self._status is not self.Status.NotStarted:
                 raise RuntimeError("This promise has already been started.")
             self._status = self.Status.Running
 
-    def start(self):
+    def start(self) -> None:
         """
         Run the operation wrapped by the promise in a new thread.
         This will return immediately.
@@ -131,7 +137,7 @@ class Promise(QObject, Generic[T]):
 
         progress_multiplier = max_progress - min_progress
 
-        def tick(progress: float):
+        def tick(progress: float) -> None:
             parent_promise.progress_change.emit(
                 progress * progress_multiplier + min_progress
             )
@@ -144,7 +150,7 @@ class Promise(QObject, Generic[T]):
         self._op_wrapper()
         return self.get_return()
 
-    def cancel(self):
+    def cancel(self) -> None:
         """
         Request the operation be canceled.
         It is down to the operation to implement support for this.
