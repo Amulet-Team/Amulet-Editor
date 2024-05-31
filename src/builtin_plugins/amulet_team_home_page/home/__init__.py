@@ -25,9 +25,11 @@ class HomeWidget(TabWidget):
 
     def setCentralWidget(self, widget: QWidget) -> None:
         for _ in range(self._layout.count()):
-            old_widget = self._layout.takeAt(0)
-            if old_widget is not None:
-                old_widget.widget().deleteLater()
+            old_layout_item = self._layout.takeAt(0)
+            if old_layout_item is not None:
+                old_widget = old_layout_item.widget()
+                if old_widget is not None:
+                    old_widget.deleteLater()
         self._layout.addWidget(widget)
 
     def _set_landing_page(self) -> None:
