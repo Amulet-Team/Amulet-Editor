@@ -8,7 +8,9 @@ import tablericons
 
 
 class OpenWorldPage(Ui_OpenWorldPage):
-    def __init__(self, parent: QWidget | None = None, f: Qt.WindowType = Qt.WindowType.Widget):
+    def __init__(
+        self, parent: QWidget | None = None, f: Qt.WindowType = Qt.WindowType.Widget
+    ):
         super().__init__(parent, f)
         self.btn_back.setIcon(QIcon(tablericons.arrow_left))
         self.load_file_button.clicked.connect(self.open_file)

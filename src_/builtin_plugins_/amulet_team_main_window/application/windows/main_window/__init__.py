@@ -106,7 +106,11 @@ class AmuletMainWindow(Ui_AmuletLandingWindow):
         self._toolbar.add_dynamic_button(uid, icon_path, name, callback)
 
     def add_static_toolbar_button(
-        self, uid: UID, icon_path: str, name: str, callback: Callable[[], None] | None = None
+        self,
+        uid: UID,
+        icon_path: str,
+        name: str,
+        callback: Callable[[], None] | None = None,
     ):
         """
         Add a static icon to the toolbar for this window only.

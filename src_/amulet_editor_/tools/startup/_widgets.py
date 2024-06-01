@@ -113,7 +113,8 @@ class QLevelSelectionCard(QPushButton):
                 file_name = ""
             version = f"{level.platform} - {level.max_game_version}"
             modified_time = (
-                datetime.fromtimestamp(level.modified_time).astimezone()
+                datetime.fromtimestamp(level.modified_time)
+                .astimezone()
                 .strftime("%d %B %Y %I:%M %p")
             )
 

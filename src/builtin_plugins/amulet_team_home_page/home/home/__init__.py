@@ -46,7 +46,9 @@ def _get_locales() -> tuple[tuple[tuple[str, QLocale], ...], int]:
 
 
 class HomePage(Ui_HomePage):
-    def __init__(self, parent: QWidget | None = None, f: Qt.WindowType = Qt.WindowType.Widget):
+    def __init__(
+        self, parent: QWidget | None = None, f: Qt.WindowType = Qt.WindowType.Widget
+    ):
         super().__init__(parent, f)
         amulet_logo = QPixmap(QImage(get_resource("icons/amulet/amulet_logo.png")))
         amulet_logo = amulet_logo.scaledToHeight(128)

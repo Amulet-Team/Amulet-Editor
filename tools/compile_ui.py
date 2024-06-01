@@ -82,7 +82,7 @@ def _compile_ui_file(ui_path: str) -> str | None:
         f"def setupUi\\(self, {class_name}\\):",
         InitArgs.get(
             super_name,
-            "def __init__(self, *args, **kwargs) -> None:\n        super().__init__(*args, **kwargs)"
+            "def __init__(self, *args, **kwargs) -> None:\n        super().__init__(*args, **kwargs)",
         ),
         py,
     )
@@ -113,7 +113,7 @@ def _compile_ui_file(ui_path: str) -> str | None:
             py = re.sub(
                 r"\b" + prefix + r"\." + enum_name + r"\b",
                 f"{qual_name}.{enum_name}",
-                py
+                py,
             )
 
     # Write the file back

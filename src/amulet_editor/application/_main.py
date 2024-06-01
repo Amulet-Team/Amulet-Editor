@@ -16,7 +16,7 @@ from PySide6.QtCore import (
     qInstallMessageHandler,
     QtMsgType,
     QLocale,
-    QMessageLogContext
+    QMessageLogContext,
 )
 from PySide6.QtWidgets import QApplication
 from PySide6.QtGui import QSurfaceFormat

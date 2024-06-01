@@ -33,7 +33,7 @@ Patches: dict[str, list[tuple[str, str]]] = {
             "def itemAt(self, arg__1: int) -> PySide6.QtWidgets.QLayoutItem: ...",
             "def itemAt(self, arg__1: int) -> Optional[PySide6.QtWidgets.QLayoutItem]: ...",
         ),
-    ]
+    ],
 }
 
 
@@ -47,5 +47,5 @@ def main() -> None:
             f.write(stub)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()

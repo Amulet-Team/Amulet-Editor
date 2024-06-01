@@ -70,10 +70,16 @@ class PluginContainer(ABC):
         plugin_path is the system path to a directory containing a plugin.json file.
         """
         with open(os.path.join(plugin_path, "plugin.json")) as f:
-            plugin_data = dynamic_cast(json.load(f), dict, "plugin.json must be a dictionary.")
+            plugin_data = dynamic_cast(
+                json.load(f), dict, "plugin.json must be a dictionary."
+            )
 
         # Get the plugin identifier
-        format_version = dynamic_cast(plugin_data.get("format_version", 1), int, "plugin.json[format_version] must be an int")
+        format_version = dynamic_cast(
+            plugin_data.get("format_version", 1),
+            int,
+            "plugin.json[format_version] must be an int",
+        )
         try:
             cls2 = _plugin_classes[format_version]
         except KeyError:
@@ -117,33 +123,59 @@ class PluginContainerV1(PluginContainer):
         plugin_path is the system path to a directory containing a plugin.json file.
         """
         # Get the plugin identifier
-        plugin_identifier = dynamic_cast(plugin_data.get("identifier"), str, "plugin.json[identifier] must be a string")
+        plugin_identifier = dynamic_cast(
+            plugin_data.get("identifier"),
+            str,
+            "plugin.json[identifier] must be a string",
+        )
         if not plugin_identifier.isidentifier():
             raise ValueError(
                 "plugin.json[identifier] must be a valid python identifier"
             )
 
         # Get the plugin version
-        plugin_version_string = dynamic_cast(plugin_data.get("version"), str, "plugin.json[version] must be a PEP 440 version string")
+        plugin_version_string = dynamic_cast(
+            plugin_data.get("version"),
+            str,
+            "plugin.json[version] must be a PEP 440 version string",
+        )
         plugin_version = Version(plugin_version_string)
 
         # Get the plugin name
-        plugin_name = dynamic_cast(plugin_data.get("name"), str, "plugin.json[name] must be a string")
+        plugin_name = dynamic_cast(
+            plugin_data.get("name"), str, "plugin.json[name] must be a string"
+        )
 
         # Get the plugin dependencies
-        depends_raw = dynamic_cast(plugin_data.get("depends"), dict, 'plugin.json[depends] must be a dictionary of the form {"python": "~=3.9", "library": [], "plugin": []}')
+        depends_raw = dynamic_cast(
+            plugin_data.get("depends"),
+            dict,
+            'plugin.json[depends] must be a dictionary of the form {"python": "~=3.9", "library": [], "plugin": []}',
+        )
 
-        python_raw = dynamic_cast(depends_raw.get("python"), str, 'plugin.json[depends][python] must be a string of the form "~=3.9"')
+        python_raw = dynamic_cast(
+            depends_raw.get("python"),
+            str,
+            'plugin.json[depends][python] must be a string of the form "~=3.9"',
+        )
         python = SpecifierSet(python_raw)
 
-        library_depends_raw = dynamic_cast(depends_raw.get("library", []), list, "plugin.json[depends][library] must be a list")
+        library_depends_raw = dynamic_cast(
+            depends_raw.get("library", []),
+            list,
+            "plugin.json[depends][library] must be a list",
+        )
         if not all(isinstance(d, str) for d in library_depends_raw):
             raise TypeError(
                 'plugin.json[depends][library] must be a list of string identifiers and version specifiers if defined.\nEg. ["PySide6_Essentials~=6.4"]'
             )
         library_depends = tuple(map(Requirement.from_string, library_depends_raw))
 
-        plugin_depends_raw = dynamic_cast(depends_raw.get("plugin", []), list, "plugin.json[depends][plugin] must be a list")
+        plugin_depends_raw = dynamic_cast(
+            depends_raw.get("plugin", []),
+            list,
+            "plugin.json[depends][plugin] must be a list",
+        )
         if not all(isinstance(d, str) for d in plugin_depends_raw):
             raise TypeError(
                 'plugin.json[depends][plugin] must be a list of string identifiers and version specifiers if defined.\nEg. ["plugin_1~=1.0", "plugin_2~=1.3"]'

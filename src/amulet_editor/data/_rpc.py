@@ -267,7 +267,9 @@ class RemoteProcedureCallingConnection:
                         payload[37:],
                     )
                     if is_response:
-                        log.debug(f"New response from {self.socket} {identifier.decode()}")
+                        log.debug(
+                            f"New response from {self.socket} {identifier.decode()}"
+                        )
                         _, (success_callback, error_callback) = self._calls.pop(
                             identifier
                         )
@@ -300,7 +302,9 @@ class RemoteProcedureCallingConnection:
                             self.socket.write(payload)
 
                         except Exception:
-                            log.debug(f"Exception processing request {identifier.decode()}")
+                            log.debug(
+                                f"Exception processing request {identifier.decode()}"
+                            )
                             payload = self.encode_error_response(
                                 identifier, traceback.format_exc()
                             )
@@ -312,7 +316,9 @@ class RemoteProcedureCallingConnection:
         return struct.pack(">I", payload_size) + payload
 
     @classmethod
-    def encode_request(cls, identifier: bytes, address: str, args: Any, kwargs: Any) -> bytes:
+    def encode_request(
+        cls, identifier: bytes, address: str, args: Any, kwargs: Any
+    ) -> bytes:
         """
         Encode an RPC request.
 

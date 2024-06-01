@@ -126,14 +126,22 @@ def _validate_import(imported_name: str, frame: FrameType) -> None:
 
     # Find what imported the module
     frame_: FrameType | None = frame
-    while frame_ is not None and frame_.f_globals.get("__name__", "").split(".")[0] == "importlib":
+    while (
+        frame_ is not None
+        and frame_.f_globals.get("__name__", "").split(".")[0] == "importlib"
+    ):
         # Skip over the import mechanisms
         frame_ = frame_.f_back
 
-    if frame_ is not None and frame_.f_globals.get("__name__") == __name__ and frame_.f_code.co_name in {
-        "_enable_plugin",
-        "wrap_importer_import",
-    }:
+    if (
+        frame_ is not None
+        and frame_.f_globals.get("__name__") == __name__
+        and frame_.f_code.co_name
+        in {
+            "_enable_plugin",
+            "wrap_importer_import",
+        }
+    ):
         return
 
     assert frame_ is not None
@@ -202,7 +210,7 @@ class CustomSysModules(UserDict[str, ModuleType]):
                 "collections",
                 "collections.abc",
                 "inspect",
-                "dataclasses"
+                "dataclasses",
             }:
                 frame = frame.f_back
             if frame is not None:
@@ -225,9 +233,8 @@ class ImportProtocol(Protocol):
         globals: Mapping[str, object] | None = None,
         locals: Mapping[str, object] | None = None,
         fromlist: Sequence[str] = (),
-        level: int = 0
-    ) -> ModuleType:
-        ...
+        level: int = 0,
+    ) -> ModuleType: ...
 
 
 def wrap_importer(imp: ImportProtocol) -> ImportProtocol:
@@ -236,7 +243,7 @@ def wrap_importer(imp: ImportProtocol) -> ImportProtocol:
         globals: Mapping[str, object] | None = None,
         locals: Mapping[str, object] | None = None,
         fromlist: Sequence[str] = (),
-        level: int = 0
+        level: int = 0,
     ) -> ModuleType:
         if level:
             assert globals is not None
@@ -252,6 +259,7 @@ def wrap_importer(imp: ImportProtocol) -> ImportProtocol:
             assert frame is not None
             _validate_import(imported_name, frame)
         return imp(name, globals=globals, locals=locals, fromlist=fromlist, level=level)
+
     return wrap_importer_import
 
 
@@ -348,7 +356,9 @@ def get_plugins_state() -> dict[LibraryUID, bool]:
     return {}
 
 
-def _set_plugin_state(plugin_container: PluginContainer, plugin_state: PluginState) -> None:
+def _set_plugin_state(
+    plugin_container: PluginContainer, plugin_state: PluginState
+) -> None:
     plugin_container.state = plugin_state
     uid = plugin_container.data.uid
     identifier = uid.identifier
