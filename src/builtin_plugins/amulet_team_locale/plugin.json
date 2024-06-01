@@ -3,7 +3,7 @@
 	"version": "1.0.0",
 	"name": "Amulet Locale",
 	"depends": {
-		"python": "~=3.9",
+		"python": "~=3.11",
 		"library": [
 			"amulet_editor~=1.0a0"
 		]
