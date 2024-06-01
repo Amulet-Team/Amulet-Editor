@@ -21,7 +21,8 @@ sub_windows = WeakSet[AmuletSubWindow]()
 
 def create_sub_window() -> AmuletSubWindow:
     """Create a new sub-window.
-    The main window owns the sub-window and a weak reference is stored in sub_windows."""
+    The main window owns the sub-window and a weak reference is stored in sub_windows.
+    """
     window = AmuletSubWindow(main_window.get_main_window())
     sub_windows.add(window)
     return window

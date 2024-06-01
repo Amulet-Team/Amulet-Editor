@@ -21,7 +21,7 @@ from ._tab_engine import RecursiveSplitter
 from ._tab_engine_imp import StackedTabWidget
 
 
-UniqueIdPattern = re.compile(r'[a-z0-9-]+')
+UniqueIdPattern = re.compile(r"[a-z0-9-]+")
 
 
 # TODO: what should this be?
@@ -68,6 +68,7 @@ class LayoutConfig:
 @dataclass(frozen=True)
 class HiddenLayout:
     """Storage for layout UI elements when not active."""
+
     main_window_splitter: RecursiveSplitter
     sub_windows: tuple[AmuletSubWindow, ...]
 
@@ -77,7 +78,9 @@ class LayoutContainer:
     layout_id: str
     default_config: LayoutConfig
     layout_config: LayoutConfig
-    button_ref: Callable[[], ATooltipIconButton | None] = cast(Callable[[], ATooltipIconButton | None], lambda: None)
+    button_ref: Callable[[], ATooltipIconButton | None] = cast(
+        Callable[[], ATooltipIconButton | None], lambda: None
+    )
     hidden_layout: HiddenLayout | None = None
 
 
@@ -197,14 +200,18 @@ def populate_widgets(widget_cls: type[TabWidget]) -> None:
 
     If a widget is created before its plugin is loaded it will be a missing widget.
     This function replaces all missing widgets with the real widget."""
-    assert current_thread() is main_thread(), "This can only be called from the main thread."
+    assert (
+        current_thread() is main_thread()
+    ), "This can only be called from the main thread."
 
 
 def remove_widgets(widget_cls: type[TabWidget]) -> None:
     """Remove all widgets of this type and replace with a missing widget."""
 
 
-def _init_layout(view_container: RecursiveSplitter, layout: SplitterConfig | WidgetStackConfig) -> None:
+def _init_layout(
+    view_container: RecursiveSplitter, layout: SplitterConfig | WidgetStackConfig
+) -> None:
     if isinstance(layout, SplitterConfig):
         splitter_widget = RecursiveSplitter(layout.orientation)
         view_container.addWidget(splitter_widget)
@@ -227,7 +234,9 @@ def _init_layout(view_container: RecursiveSplitter, layout: SplitterConfig | Wid
         raise RuntimeError(f"Unknown layout type {type(layout)}")
 
 
-def _init_window(window: AmuletMainWindow | AmuletSubWindow, config: WindowConfig) -> None:
+def _init_window(
+    window: AmuletMainWindow | AmuletSubWindow, config: WindowConfig
+) -> None:
     view_container = window.view_container
     # TODO: set window position and size
     layout = config.layout
@@ -258,7 +267,9 @@ def _destroy_layout() -> None:
 def _setup_layout(new_layout_container: LayoutContainer) -> None:
     """Tear down the existing widgets and populate the new layout."""
     global _active_layout
-    assert current_thread() is main_thread(), "This can only be called from the main thread."
+    assert (
+        current_thread() is main_thread()
+    ), "This can only be called from the main thread."
 
     old_layout_container = active_layout()
 
@@ -279,11 +290,15 @@ def _setup_layout(new_layout_container: LayoutContainer) -> None:
     if hidden_layout is None:
         # Layout was not active before
         # Create from scratch
-        old_main_view_container = main_window.replace_view_container(RecursiveSplitter())
+        old_main_view_container = main_window.replace_view_container(
+            RecursiveSplitter()
+        )
         _create_layout(new_layout_container)
     else:
         new_main_view_container = hidden_layout.main_window_splitter
-        old_main_view_container = main_window.replace_view_container(new_main_view_container)
+        old_main_view_container = main_window.replace_view_container(
+            new_main_view_container
+        )
         new_main_view_container.show()
         for sub_window in hidden_layout.sub_windows:
             sub_window.show()
@@ -297,8 +312,7 @@ def _setup_layout(new_layout_container: LayoutContainer) -> None:
     else:
         old_main_view_container.hide()
         old_layout_container.hidden_layout = HiddenLayout(
-            old_main_view_container,
-            tuple(old_sub_windows)
+            old_main_view_container, tuple(old_sub_windows)
         )
 
     _active_layout = new_layout_container
@@ -323,7 +337,9 @@ def reset_layout_config(layout_id: str) -> None:
     """Reset the layout to its default configuration.
     If the layout is active this will update the display.
     """
-    assert current_thread() is main_thread(), "This can only be called from the main thread."
+    assert (
+        current_thread() is main_thread()
+    ), "This can only be called from the main thread."
     with lock:
         layout_container = _get_layout_container(layout_id)
         layout_container.layout_config = layout_container.default_config

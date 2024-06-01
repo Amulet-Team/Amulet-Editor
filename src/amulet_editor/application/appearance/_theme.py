@@ -130,7 +130,7 @@ class LegacyTheme(AbstractBaseTheme):
                 color
                 for color in re.findall("{(.+?)}", style_sheet)
                 if color not in theme_json["material_colors"]
-                   and color.rsplit(".", 2)[0] in theme_json["material_colors"]
+                and color.rsplit(".", 2)[0] in theme_json["material_colors"]
             ]
         )
         for modified_color in modified_colors:

@@ -245,7 +245,9 @@ class AbstractTabContainerWidget(QWidget):
         tuple[AbstractTabContainerWidget, DragTabRenderer],
     ]
 
-    def __init__(self, parent: QWidget | None = None, f: Qt.WindowType = Qt.WindowType.Widget) -> None:
+    def __init__(
+        self, parent: QWidget | None = None, f: Qt.WindowType = Qt.WindowType.Widget
+    ) -> None:
         super().__init__(parent, f)
         self.setAcceptDrops(True)
         self.drag_start_pos = QPoint()
@@ -256,7 +258,7 @@ class AbstractTabContainerWidget(QWidget):
         self.dragged_widget = None
         self.highlight_widget = None
 
-    def add_tab(self, label: str, icon: QIcon | None = None)  -> None:
+    def add_tab(self, label: str, icon: QIcon | None = None) -> None:
         tab = TabButton(label, icon)
         if self.active_button is None:
             self.active_button = tab
@@ -521,7 +523,9 @@ class AbstractTabBar(QWidget):
     tab_changed = Signal(int)
     add_clicked = Signal()
 
-    def __init__(self, parent: QWidget | None = None, f: Qt.WindowType = Qt.WindowType.Widget) -> None:
+    def __init__(
+        self, parent: QWidget | None = None, f: Qt.WindowType = Qt.WindowType.Widget
+    ) -> None:
         super().__init__(parent, f)
         self.layout_ = QHBoxLayout(self)
         self.layout_.setSpacing(0)
@@ -609,7 +613,9 @@ class AbstractTabBar(QWidget):
 class AbstractStackedTabWidget(QWidget):
     """A custom class that behaves like a QTabWidget"""
 
-    def __init__(self, parent: QWidget | None = None, f: Qt.WindowType = Qt.WindowType.Widget) -> None:
+    def __init__(
+        self, parent: QWidget | None = None, f: Qt.WindowType = Qt.WindowType.Widget
+    ) -> None:
         super().__init__(parent, f)
         self.setAcceptDrops(True)
         self._layout = QVBoxLayout()
@@ -634,9 +640,7 @@ class AbstractStackedTabWidget(QWidget):
         # self.add_tab(QLabel(f"Test Widget {i}"), "test" + "a"*random.randint(0, 20) + str(i))
         pass
 
-    def _validate_page(
-        self, page: TabWidget
-    ) -> tuple[str, Optional[QIcon]]:
+    def _validate_page(self, page: TabWidget) -> tuple[str, Optional[QIcon]]:
         with DisplayException(f"Error in {page.__class__}"):
             if not isinstance(page, TabWidget):
                 raise TypeError(
@@ -754,11 +758,11 @@ class AbstractStackedTabWidget(QWidget):
 
 class RecursiveSplitter(QSplitter):
     @overload
-    def __init__(self, orientation: Qt.Orientation, parent: QWidget | None = None) -> None:
-        ...
+    def __init__(
+        self, orientation: Qt.Orientation, parent: QWidget | None = None
+    ) -> None: ...
     @overload
-    def __init__(self, parent: QWidget | None = None) -> None:
-        ...
+    def __init__(self, parent: QWidget | None = None) -> None: ...
     def __init__(self, *args: Any, **kwargs: Any) -> None:
         super().__init__(*args, **kwargs)
         self.setChildrenCollapsible(False)

@@ -7,7 +7,9 @@ from ._cls import _AmuletTracebackDialog
 main_logger = logging.getLogger()
 
 
-def display_exception_blocking(title: str = "", error: str = "", traceback: str = "") -> None:
+def display_exception_blocking(
+    title: str = "", error: str = "", traceback: str = ""
+) -> None:
     """
     Display an exception window.
     This must be called from the main thread.
@@ -44,7 +46,13 @@ class DisplayException:
     It will also log the exception to the logging module and optionally suppress the exception.
     """
 
-    def __init__(self, msg: str, *, suppress: bool = False, log: logging.Logger = logging.getLogger()) -> None:
+    def __init__(
+        self,
+        msg: str,
+        *,
+        suppress: bool = False,
+        log: logging.Logger = logging.getLogger()
+    ) -> None:
         self._msg = msg
         self._suppress = suppress
         self._log = log
@@ -52,7 +60,12 @@ class DisplayException:
     def __enter__(self) -> None:
         pass
 
-    def __exit__(self, exc_type: type[BaseException] | None, exc_val: BaseException | None, exc_tb: TracebackType | None) -> bool:
+    def __exit__(
+        self,
+        exc_type: type[BaseException] | None,
+        exc_val: BaseException | None,
+        exc_tb: TracebackType | None,
+    ) -> bool:
         if exc_type and isinstance(exc_val, Exception):
             self._log.exception(exc_val)
             display_exception(
@@ -73,7 +86,12 @@ class CatchException:
     def __enter__(self) -> None:
         pass
 
-    def __exit__(self, exc_type: type[BaseException] | None, exc_val: BaseException | None, exc_tb: TracebackType | None) -> bool:
+    def __exit__(
+        self,
+        exc_type: type[BaseException] | None,
+        exc_val: BaseException | None,
+        exc_tb: TracebackType | None,
+    ) -> bool:
         if isinstance(exc_val, Exception):
             main_logger.exception(exc_val)
             display_exception(

@@ -99,9 +99,11 @@ class Camera(QObject):
 
     def _clamp_rotation(self, rotation: Rotation) -> Rotation:
         return Rotation(
-            rotation.azimuth
-            if -180 <= rotation.azimuth < 180
-            else ((rotation.azimuth + 180) % 360) - 180,
+            (
+                rotation.azimuth
+                if -180 <= rotation.azimuth < 180
+                else ((rotation.azimuth + 180) % 360) - 180
+            ),
             min(max(-90.0, rotation.elevation), 90.0),
         )
 

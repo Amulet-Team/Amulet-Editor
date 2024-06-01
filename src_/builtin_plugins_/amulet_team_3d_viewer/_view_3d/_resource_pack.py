@@ -278,9 +278,9 @@ class RenderResourcePackContainer(QObject):
 
 
 _lock = Lock()
-_level_data: WeakKeyDictionary[
-    BaseLevel, RenderResourcePackContainer
-] = WeakKeyDictionary()
+_level_data: WeakKeyDictionary[BaseLevel, RenderResourcePackContainer] = (
+    WeakKeyDictionary()
+)
 
 
 def get_gl_resource_pack_container(level: BaseLevel) -> RenderResourcePackContainer:

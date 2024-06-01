@@ -99,9 +99,15 @@ class AmuletMainWindow(Ui_AmuletMainWindow):
     #     else:
     #         raise RuntimeError
 
-    def replace_view_container(self, new_view_container: RecursiveSplitter) -> RecursiveSplitter:
+    def replace_view_container(
+        self, new_view_container: RecursiveSplitter
+    ) -> RecursiveSplitter:
         old_view_container = self.view_container
-        layout_item = self._main_layout.replaceWidget(old_view_container, new_view_container, options=Qt.FindChildOption.FindDirectChildrenOnly)
+        layout_item = self._main_layout.replaceWidget(
+            old_view_container,
+            new_view_container,
+            options=Qt.FindChildOption.FindDirectChildrenOnly,
+        )
         assert old_view_container is layout_item.widget()
         self.view_container = new_view_container
         return old_view_container
