@@ -50,9 +50,11 @@ class InvokeMethod(QObject, Generic[T]):
         # Connect slot
         self.start_signal.connect(
             self.execute,
-            Qt.ConnectionType.DirectConnection
-            if thread is QThread.currentThread()
-            else Qt.ConnectionType.BlockingQueuedConnection,
+            (
+                Qt.ConnectionType.DirectConnection
+                if thread is QThread.currentThread()
+                else Qt.ConnectionType.BlockingQueuedConnection
+            ),
         )
 
         # Start execute. This will block execution of this function until it is finished.

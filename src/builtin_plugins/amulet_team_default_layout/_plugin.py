@@ -2,7 +2,16 @@ from __future__ import annotations
 
 from amulet_editor.data.level import get_level
 from amulet_editor.models.plugin import PluginV1
-from amulet_team_main_window import register_layout, unregister_layout, WidgetConfig, WidgetStackConfig, WindowConfig, LayoutConfig, ButtonProxy, create_layout_button
+from amulet_team_main_window import (
+    register_layout,
+    unregister_layout,
+    WidgetConfig,
+    WidgetStackConfig,
+    WindowConfig,
+    LayoutConfig,
+    ButtonProxy,
+    create_layout_button,
+)
 from amulet_team_home_page import HomeWidget
 
 import tablericons

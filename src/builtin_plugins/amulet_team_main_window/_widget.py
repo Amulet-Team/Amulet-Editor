@@ -1,4 +1,5 @@
 """A module to manage widget class registration and access."""
+
 from threading import Lock
 
 from PySide6.QtWidgets import QVBoxLayout, QLabel
@@ -28,7 +29,9 @@ def register_widget(widget_cls: type[TabWidget]) -> None:
         if not issubclass(widget_cls, TabWidget):
             raise TypeError("widget must be a subclass of TabWidget")
         if widget_cls.__qualname__ in _widget_classes:
-            raise ValueError(f"TabWidget type {widget_cls} has already been registered.")
+            raise ValueError(
+                f"TabWidget type {widget_cls} has already been registered."
+            )
         _widget_classes[widget_cls.__qualname__] = widget_cls
         layout.populate_widgets(widget_cls)
 

@@ -3,7 +3,15 @@ from typing import Optional
 from amulet_editor.resources import get_resource
 from amulet_editor.models.widgets._label import QHoverLabel
 from PySide6.QtCore import QEvent, QSize, Qt
-from PySide6.QtGui import QColor, QEnterEvent, QPainter, QPaintEvent, QImage, QPixmap, QIcon
+from PySide6.QtGui import (
+    QColor,
+    QEnterEvent,
+    QPainter,
+    QPaintEvent,
+    QImage,
+    QPixmap,
+    QIcon,
+)
 from PySide6.QtWidgets import QWidget, QStyleOption, QStyle, QVBoxLayout, QPushButton
 from PySide6.QtSvgWidgets import QSvgWidget
 
