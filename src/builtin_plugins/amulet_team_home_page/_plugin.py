@@ -8,7 +8,7 @@ from amulet_editor.models.plugin import PluginV1
 
 import amulet_team_locale
 import amulet_team_main_window
-from amulet_team_main_window import register_widget
+from amulet_team_main_window import register_widget, unregister_widget
 
 import amulet_team_home_page
 from .home import HomeWidget
@@ -38,7 +38,7 @@ def _locale_changed() -> None:
 
 
 def unload_plugin() -> None:
-    amulet_team_main_window.unregister_widget(HomeWidget)
+    unregister_widget(HomeWidget)
     if _translator is not None:
         QCoreApplication.removeTranslator(_translator)
 
