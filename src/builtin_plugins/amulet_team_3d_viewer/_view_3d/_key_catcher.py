@@ -39,7 +39,7 @@ class TimerData(QObject):
 
     delta_timeout = Signal(float)
 
-    def __init__(self, msec: int):
+    def __init__(self, msec: int) -> None:
         super().__init__()
         self.receivers = set()
         self.interval = msec / 1000
@@ -63,7 +63,7 @@ class TimerData(QObject):
 class EventStorage(QObject):
     one_shot = Signal()
 
-    def __init__(self, key: KeyT, modifiers: frozenset[KeyT]):
+    def __init__(self, key: KeyT, modifiers: frozenset[KeyT]) -> None:
         super().__init__()
         self.key = key
         self.modifiers = modifiers
@@ -266,7 +266,7 @@ class KeyCatcher(QObject):
             self._clean_storage(key, modifiers)
 
 
-def _demo():
+def _demo() -> None:
     from PySide6.QtWidgets import (
         QApplication,
         QLabel,
@@ -296,22 +296,22 @@ def _demo():
     b = 0
     c = 0
 
-    def update_a():
+    def update_a() -> None:
         nonlocal a
         a += 1
         label_a.setText(str(a))
 
-    def update_b():
+    def update_b() -> None:
         nonlocal b
         b += 1
         label_b.setText(str(b))
 
-    def update_c():
+    def update_c() -> None:
         nonlocal c
         c += 1
         label_c.setText(str(c))
 
-    def connect():
+    def connect() -> None:
         key_catcher.connect_repeating(
             update_a, (KeySrc.Keyboard, Qt.Key.Key_A), frozenset(), 100
         )
@@ -324,7 +324,7 @@ def _demo():
 
     connect()
 
-    def disconnect():
+    def disconnect() -> None:
         key_catcher.disconnect_repeating(
             update_a, (KeySrc.Keyboard, Qt.Key.Key_A), frozenset(), 100
         )

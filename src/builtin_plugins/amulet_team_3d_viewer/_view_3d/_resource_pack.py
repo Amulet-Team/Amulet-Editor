@@ -66,7 +66,7 @@ class OpenGLResourcePack:
         self._context = None
         self._surface = None
 
-    def __del__(self):
+    def __del__(self) -> None:
         if self._texture is not None:
             self._context.makeCurrent(self._surface)
             self._texture.destroy()
@@ -77,7 +77,7 @@ class OpenGLResourcePack:
         Create the atlas texture.
         """
 
-        def func(promise_data: Promise.Data):
+        def func(promise_data: Promise.Data) -> None:
             with self._lock:
                 if self._texture is None:
                     cache_id = struct.unpack(
@@ -131,7 +131,7 @@ class OpenGLResourcePack:
 
                     self._texture_bounds = bounds
 
-                    def init_gl():
+                    def init_gl() -> None:
                         self._context = QOpenGLContext()
                         self._context.setShareContext(
                             QOpenGLContext.globalShareContext()
@@ -177,7 +177,7 @@ class OpenGLResourcePack:
                 raise RuntimeError("The OpenGLResourcePack has not been initialised.")
             return self._texture
 
-    def get_texture_path(self, namespace: Optional[str], relative_path: str):
+    def get_texture_path(self, namespace: Optional[str], relative_path: str) -> str:
         """Get the absolute path of the image from the relative components.
         Useful for getting the id of textures for hard coded textures not connected to a resource pack.
         """
@@ -215,7 +215,7 @@ class RenderResourcePackContainer(QObject):
     # Emitted when the resource pack has changed.
     changed = Signal()
 
-    def __init__(self, level: Level):
+    def __init__(self, level: Level) -> None:
         super().__init__()
         self._level = ref(level)
         self._lock = RLock()
@@ -242,8 +242,8 @@ class RenderResourcePackContainer(QObject):
             )
         return rp
 
-    def _reload(self):
-        def func(promise_data: Promise.Data):
+    def _reload(self) -> None:
+        def func(promise_data: Promise.Data) -> None:
             with self._lock, DisplayException(
                 "Error initialising the OpenGL resource pack."
             ):

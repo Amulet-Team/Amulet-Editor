@@ -43,7 +43,7 @@ class AtlasTooSmall(Exception):
 class Packable:
     """A two-dimensional object with position information."""
 
-    def __init__(self, width: int, height: int):
+    def __init__(self, width: int, height: int) -> None:
         self._x = 0
         self._y = 0
         self._width = width
@@ -251,7 +251,7 @@ class TextureAtlas(PackRegion):
 def create_atlas(
     texture_tuple: Collection[str],
 ) -> Promise[Tuple[Image.Image, Dict[str, Tuple[float, float, float, float]]]]:
-    def func(promise_data: Promise.Data):
+    def func(promise_data: Promise.Data) -> Tuple[Image.Image, Dict[str, Tuple[float, float, float, float]]]:
         log.info("Creating texture atlas")
         # Parse texture names
         textures = []
