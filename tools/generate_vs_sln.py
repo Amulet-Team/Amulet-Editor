@@ -453,15 +453,18 @@ def main() -> None:
             root_dir=os.path.dirname(amulet.__path__[0]),
             ext="hpp",
             root_dir_suffix="amulet",
-            exclude_exts=(".py.hpp",),
         ),
         source_files=get_files(
             root_dir=os.path.dirname(amulet.__path__[0]),
             ext="cpp",
             root_dir_suffix="amulet",
-            exclude_exts=(".py.cpp",),
         ),
-        include_dirs=[amulet_nbt.get_include(), os.path.dirname(amulet.__path__[0])],
+        include_dirs=[
+            PythonIncludeDir,
+            pybind11.get_include(),
+            amulet_nbt.get_include(),
+            os.path.dirname(amulet.__path__[0]),
+        ],
     )
     view_3d_path = os.path.join(
         SrcDir, "builtin_plugins", "amulet_team_3d_viewer", "_view_3d"
