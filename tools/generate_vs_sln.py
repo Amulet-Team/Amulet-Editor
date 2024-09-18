@@ -429,9 +429,9 @@ def get_files(
     for path in glob.iglob(
         os.path.join(glob.escape(search_path), "**", f"*.{ext}"), recursive=True
     ):
-        if any(path.startswith(d) for d in exclude_dirs) or any(
-            path.endswith(ext) for ext in exclude_exts
-        ):
+        if any(map(path.startswith, exclude_dirs)):
+            continue
+        if any(map(path.endswith, exclude_exts)):
             continue
         rel_path = os.path.relpath(path, root_dir)
         paths.append((root_dir, os.path.dirname(rel_path), os.path.basename(rel_path)))
@@ -453,13 +453,13 @@ def main() -> None:
             root_dir=os.path.dirname(amulet.__path__[0]),
             ext="hpp",
             root_dir_suffix="amulet",
-            exclude_exts=(".py.hpp"),
+            exclude_exts=(".py.hpp",),
         ),
         source_files=get_files(
             root_dir=os.path.dirname(amulet.__path__[0]),
             ext="cpp",
             root_dir_suffix="amulet",
-            exclude_exts=(".py.cpp"),
+            exclude_exts=(".py.cpp",),
         ),
         include_dirs=[amulet_nbt.get_include(), os.path.dirname(amulet.__path__[0])],
     )
