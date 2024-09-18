@@ -247,7 +247,7 @@ class RenderResourcePackContainer(QObject):
             with self._lock, DisplayException(
                 "Error initialising the OpenGL resource pack."
             ):
-                level: BaseLevel = self._level()
+                level: Level = self._level()
                 log.debug(f"Loading OpenGL resource pack for level {level.level_path}")
                 resource_pack = self._resource_pack_container.resource_pack
                 # TODO: modify the resource pack library to expose the desired translator
@@ -278,12 +278,10 @@ class RenderResourcePackContainer(QObject):
 
 
 _lock = Lock()
-_level_data: WeakKeyDictionary[BaseLevel, RenderResourcePackContainer] = (
-    WeakKeyDictionary()
-)
+_level_data: WeakKeyDictionary[Level, RenderResourcePackContainer] = WeakKeyDictionary()
 
 
-def get_gl_resource_pack_container(level: BaseLevel) -> RenderResourcePackContainer:
+def get_gl_resource_pack_container(level: Level) -> RenderResourcePackContainer:
     with _lock:
         if level not in _level_data:
             _level_data[level] = invoke(lambda: RenderResourcePackContainer(level))

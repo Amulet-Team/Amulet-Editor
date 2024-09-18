@@ -564,7 +564,7 @@ class WidgetLevelGeometry(QObject, Drawable):
     # The geometry has changed and needs repainting.
     geometry_changed = Signal()
 
-    def __init__(self, level: BaseLevel) -> None:
+    def __init__(self, level: Level) -> None:
         super().__init__()
         self._shared = SharedLevelGeometry.instance(level)
 
