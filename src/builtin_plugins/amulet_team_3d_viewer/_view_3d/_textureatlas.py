@@ -251,7 +251,9 @@ class TextureAtlas(PackRegion):
 def create_atlas(
     texture_tuple: Collection[str],
 ) -> Promise[Tuple[Image.Image, Dict[str, Tuple[float, float, float, float]]]]:
-    def func(promise_data: Promise.Data) -> Tuple[Image.Image, Dict[str, Tuple[float, float, float, float]]]:
+    def func(
+        promise_data: Promise.Data,
+    ) -> Tuple[Image.Image, Dict[str, Tuple[float, float, float, float]]]:
         log.info("Creating texture atlas")
         # Parse texture names
         textures = []

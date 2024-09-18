@@ -1,6 +1,7 @@
 import glob
 import os
 import sys
+
 # import subprocess
 # import logging
 import re
@@ -131,7 +132,7 @@ AmuletCoreLib = (
             get_python_inc(),
             pybind11.get_include(),
             amulet_nbt.get_include(),
-            os.path.dirname(amulet.__path__[0])
+            os.path.dirname(amulet.__path__[0]),
         ],
         cflags=CompileArgs,
     ),
