@@ -116,6 +116,7 @@ venv.bak/
 *.user
 *.pyproj
 *.sln
+src/sln/
 
 # Visual Studio Code extensions
 .qt_for_python
