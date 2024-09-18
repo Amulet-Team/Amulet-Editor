@@ -11,7 +11,6 @@
     "hidden_imports": [
         "amulet",
         "amulet_nbt",
-        "PyMCTranslate",
         "minecraft_model_reader",
         "PySide6",
         "pkg_resources",
