@@ -47,12 +47,7 @@ from ._resource_pack import (
 from amulet_editor.application._invoke import invoke
 from amulet_editor.models.widgets.traceback_dialog import CatchException
 
-try:
-    from .chunk_builder_cy import create_lod0_chunk
-except:
-    raise ImportError(
-        "Could not import cython chunk mesher. The cython code must be compiled first."
-    )
+from ._chunk_builder import create_lod0_chunk
 
 FloatSize = ctypes.sizeof(ctypes.c_float)
 
