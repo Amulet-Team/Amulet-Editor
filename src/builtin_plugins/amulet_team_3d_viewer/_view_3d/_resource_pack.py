@@ -15,10 +15,13 @@ from PySide6.QtCore import QObject, Signal
 from PySide6.QtGui import QImage, QOpenGLContext, QOffscreenSurface
 from PySide6.QtOpenGL import QOpenGLTexture
 
-from amulet.block import Block
-from amulet.level.abc import Level
+from amulet.version import VersionNumber
+from amulet.block import Block, BlockStack
+from amulet.level.abc import Level, DiskLevel
 from amulet.game.abc import GameVersion
+from amulet.game import get_game_version
 from amulet.mesh.block import BlockMesh
+from amulet.mesh.block.missing_block import get_missing_block
 from amulet.resource_pack.abc import BaseResourcePackManager
 
 from ._textureatlas import create_atlas
@@ -43,9 +46,9 @@ class OpenGLResourcePack:
     _lock = Lock()
     _resource_pack: BaseResourcePackManager
     # The translator to look up the version block
-    _translator: GameVersion
+    _game_version: GameVersion
     # Loaded block models
-    _block_models: Dict[Block, BlockMesh]
+    _block_models: Dict[BlockStack, BlockMesh]
     # Texture coordinates
     _texture_bounds: Dict[str, Tuple[float, float, float, float]]
 
@@ -59,7 +62,7 @@ class OpenGLResourcePack:
     ):
         self._lock = Lock()
         self._resource_pack = resource_pack
-        self._translator = translator
+        self._game_version = translator
         self._block_models = {}
         self._texture_bounds = {}
         self._texture = None
@@ -67,7 +70,7 @@ class OpenGLResourcePack:
         self._surface = None
 
     def __del__(self) -> None:
-        if self._texture is not None:
+        if self._context is not None and self._surface is not None and self._texture is not None:
             self._context.makeCurrent(self._surface)
             self._texture.destroy()
             self._context.doneCurrent()
@@ -190,23 +193,30 @@ class OpenGLResourcePack:
         else:
             return self._texture_bounds[self._resource_pack.missing_no]
 
-    def get_block_model(self, universal_block: Block) -> BlockMesh:
-        """Get the BlockMesh class for a given universal Block.
+    def get_block_model(self, block_stack: BlockStack) -> BlockMesh:
+        """Get the BlockMesh class for a given BlockStack.
         The Block will be translated to the version format using the
         previously specified translator."""
-        if universal_block not in self._block_models:
-            version_block = self._translator.block.from_universal(
-                universal_block.base_block
-            )[0]
-            if universal_block.extra_blocks:
-                for block_ in universal_block.extra_blocks:
-                    version_block += self._translator.block.from_universal(block_)[0]
+        if block_stack not in self._block_models:
+            blocks = list[Block]()
+            for block in block_stack:
+                if self._game_version.supports_version(block.platform, block.version):
+                    blocks.append(block)
+                else:
+                    # Translate to the required format.
+                    converted_block, _, _ = get_game_version(block.platform, block.version).block.translate(
+                        self._game_version.platform, self._game_version.max_version, block
+                    )
+                    if isinstance(converted_block, Block):
+                        blocks.append(converted_block)
+            if blocks:
+                self._block_models[block_stack] = self._resource_pack.get_block_model(
+                    BlockStack(*blocks)
+                )
+            else:
+                self._block_models[block_stack] = get_missing_block(self._resource_pack)
 
-            self._block_models[universal_block] = self._resource_pack.get_block_model(
-                version_block
-            )
-
-        return self._block_models[universal_block]
+        return self._block_models[block_stack]
 
 
 class RenderResourcePackContainer(QObject):
@@ -217,7 +227,7 @@ class RenderResourcePackContainer(QObject):
 
     def __init__(self, level: Level) -> None:
         super().__init__()
-        self._level = ref(level)
+        self._level = ref[Level](level)
         self._lock = RLock()
         self._resource_pack: Optional[OpenGLResourcePack] = None
         self._loader: Optional[Promise[None]] = None
@@ -247,11 +257,16 @@ class RenderResourcePackContainer(QObject):
             with self._lock, DisplayException(
                 "Error initialising the OpenGL resource pack."
             ):
-                level: Level = self._level()
-                log.debug(f"Loading OpenGL resource pack for level {level.level_path}")
+                level = self._level()
+                if level is None:
+                    raise Exception("Level is None")
+                if isinstance(level, DiskLevel):
+                    log.debug(f"Loading OpenGL resource pack for level {level.path}")
+                else:
+                    log.debug(f"Loading OpenGL resource pack.")
                 resource_pack = self._resource_pack_container.resource_pack
                 # TODO: modify the resource pack library to expose the desired translator
-                translator = level.translation_manager.get_version("java", (999, 0, 0))
+                translator = get_game_version("java", VersionNumber(999, 0, 0))
 
                 rp = OpenGLResourcePack(resource_pack, translator)
                 promise = rp.initialise()
