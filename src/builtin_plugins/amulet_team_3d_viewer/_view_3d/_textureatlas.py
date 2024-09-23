@@ -25,7 +25,6 @@
 import logging
 from PIL import Image
 import math
-from typing import Dict, Tuple, List
 from collections.abc import Collection
 from amulet_editor.models.generic._promise import Promise
 
@@ -78,7 +77,7 @@ class Packable:
         return 2 * self._width + 2 * self._height
 
 
-class PackRegion(object):
+class PackRegion:
     """A region that two-dimensional Packable objects can be packed into."""
 
     def __init__(self, x: int, y: int, width: int, height: int) -> None:
@@ -187,19 +186,19 @@ class Frame(Packable):
         image.paste(self._image, (self.x, self.y))
 
 
-class Texture(object):
+class Texture:
     """A collection of one or more frames."""
 
-    def __init__(self, name: str, frames: List[Frame]) -> None:
+    def __init__(self, name: str, frames: list[Frame]) -> None:
         self._name = name
-        self._frames: List[Frame] = frames
+        self._frames: list[Frame] = frames
 
     @property
     def name(self) -> str:
         return self._name
 
     @property
-    def frames(self) -> List[Frame]:
+    def frames(self) -> list[Frame]:
         return self._frames
 
 
@@ -208,21 +207,21 @@ class TextureAtlas(PackRegion):
 
     def __init__(self, width: int, height: int, border: int = 0) -> None:
         super(TextureAtlas, self).__init__(0, 0, width, height)
-        self._textures: List[Texture] = []
+        self._textures: list[Texture] = []
         self._border = border
 
     @property
-    def textures(self) -> List[Texture]:
+    def textures(self) -> list[Texture]:
         return self._textures
 
-    def pack(self, texture: Texture) -> None:
+    def pack_texture(self, texture: Texture) -> None:
         """Pack a Texture into this atlas."""
         self._textures.append(texture)
         for frame in texture.frames:
-            if not super(TextureAtlas, self).pack(frame, self._border):
+            if not self.pack(frame, self._border):
                 raise AtlasTooSmall("Failed to pack frame %s" % frame.filename)
 
-    def to_dict(self) -> Dict[str, Tuple[int, int, int, int]]:
+    def to_dict(self) -> dict[str, tuple[float, float, float, float]]:
         return {
             tex.name: (
                 tex.frames[0].x / self.width,
@@ -250,26 +249,24 @@ class TextureAtlas(PackRegion):
 
 def create_atlas(
     texture_tuple: Collection[str],
-) -> Promise[Tuple[Image.Image, Dict[str, Tuple[float, float, float, float]]]]:
+) -> Promise[tuple[Image.Image, dict[str, tuple[float, float, float, float]]]]:
     def func(
         promise_data: Promise.Data,
-    ) -> Tuple[Image.Image, Dict[str, Tuple[float, float, float, float]]]:
+    ) -> tuple[Image.Image, dict[str, tuple[float, float, float, float]]]:
         log.info("Creating texture atlas")
         # Parse texture names
         textures = []
-        for texture_index, texture in enumerate(texture_tuple):
+        for texture_index, texture_path in enumerate(texture_tuple):
             if not texture_index % 100:
                 promise_data.progress_change.emit(
                     0.5 * texture_index / (len(texture_tuple))
                 )
-            # Look for a texture name
-            name, frames = texture, [texture]
 
             # Build frame objects
-            frames = [Frame(f) for f in frames]
+            frames = [Frame(texture_path)]
 
             # Add frames to texture object list
-            textures.append(Texture(name, frames))
+            textures.append(Texture(texture_path, frames))
 
         # Sort textures by perimeter size in non-increasing order
         textures = sorted(textures, key=lambda i: i.frames[0].perimeter, reverse=True)
@@ -285,9 +282,7 @@ def create_atlas(
 
         size = max(height, width, 1 << (math.ceil(pixels**0.5) - 1).bit_length())
 
-        atlas_created = False
-        atlas = None
-        while not atlas_created:
+        while True:
             try:
                 # Create the atlas and pack textures in
                 log.info(f"Trying to pack textures into image of size {size}x{size}")
@@ -298,8 +293,8 @@ def create_atlas(
                         promise_data.progress_change.emit(
                             0.5 + 0.5 * texture_index / len(textures)
                         )
-                    atlas.pack(texture)
-                atlas_created = True
+                    atlas.pack_texture(texture)
+                break
             except AtlasTooSmall:
                 log.info(f"Image was too small. Trying with a larger area")
                 size *= 2
