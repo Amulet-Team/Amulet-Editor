@@ -57,9 +57,7 @@ class OpenGLResourcePack:
     _context: Optional[QOpenGLContext]
     _surface: Optional[QOffscreenSurface]
 
-    def __init__(
-        self, resource_pack: BaseResourcePackManager, translator: GameVersion
-    ):
+    def __init__(self, resource_pack: BaseResourcePackManager, translator: GameVersion):
         self._lock = Lock()
         self._resource_pack = resource_pack
         self._game_version = translator
@@ -70,7 +68,11 @@ class OpenGLResourcePack:
         self._surface = None
 
     def __del__(self) -> None:
-        if self._context is not None and self._surface is not None and self._texture is not None:
+        if (
+            self._context is not None
+            and self._surface is not None
+            and self._texture is not None
+        ):
             self._context.makeCurrent(self._surface)
             self._texture.destroy()
             self._context.doneCurrent()
@@ -204,8 +206,12 @@ class OpenGLResourcePack:
                     blocks.append(block)
                 else:
                     # Translate to the required format.
-                    converted_block, _, _ = get_game_version(block.platform, block.version).block.translate(
-                        self._game_version.platform, self._game_version.max_version, block
+                    converted_block, _, _ = get_game_version(
+                        block.platform, block.version
+                    ).block.translate(
+                        self._game_version.platform,
+                        self._game_version.max_version,
+                        block,
                     )
                     if isinstance(converted_block, Block):
                         blocks.append(converted_block)
