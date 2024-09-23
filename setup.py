@@ -17,7 +17,6 @@ import pybind11
 
 import amulet_nbt
 import amulet
-import minecraft_model_reader
 
 
 def get_compile_args() -> list[str]:
@@ -87,7 +86,6 @@ class BDistWheel(BDistWheelOriginal):
         frozen_requirements = {
             "amulet_nbt": amulet_nbt.__version__,
             "amulet_core": amulet.__version__,
-            "minecraft_resource_pack": minecraft_model_reader.__version__,
         }
         install_requires = list(self.distribution.install_requires)
         for i, requirement in enumerate(self.distribution.install_requires):

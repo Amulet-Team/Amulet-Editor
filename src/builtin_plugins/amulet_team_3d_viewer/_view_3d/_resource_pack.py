@@ -15,11 +15,11 @@ from PySide6.QtCore import QObject, Signal
 from PySide6.QtGui import QImage, QOpenGLContext, QOffscreenSurface
 from PySide6.QtOpenGL import QOpenGLTexture
 
-from minecraft_model_reader.api.resource_pack.base import BaseResourcePackManager
-from minecraft_model_reader import BlockMesh
-import PyMCTranslate
 from amulet.block import Block
 from amulet.level.abc import Level
+from amulet.game.abc import GameVersion
+from amulet.mesh.block import BlockMesh
+from amulet.resource_pack.abc import BaseResourcePackManager
 
 from ._textureatlas import create_atlas
 
@@ -35,7 +35,7 @@ log = logging.getLogger(__name__)
 
 class OpenGLResourcePack:
     """
-    This class will take a minecraft_model_reader resource pack and load the textures into a texture atlas.
+    This class will take a resource pack and load the textures into a texture atlas.
     After creating an instance, initialise must be called.
 
     """
@@ -43,7 +43,7 @@ class OpenGLResourcePack:
     _lock = Lock()
     _resource_pack: BaseResourcePackManager
     # The translator to look up the version block
-    _translator: PyMCTranslate.Version
+    _translator: GameVersion
     # Loaded block models
     _block_models: Dict[Block, BlockMesh]
     # Texture coordinates
@@ -55,7 +55,7 @@ class OpenGLResourcePack:
     _surface: Optional[QOffscreenSurface]
 
     def __init__(
-        self, resource_pack: BaseResourcePackManager, translator: PyMCTranslate.Version
+        self, resource_pack: BaseResourcePackManager, translator: GameVersion
     ):
         self._lock = Lock()
         self._resource_pack = resource_pack

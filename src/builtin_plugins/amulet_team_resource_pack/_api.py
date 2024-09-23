@@ -13,11 +13,9 @@ from amulet.level.abc import Level
 from amulet_editor.models.generic._promise import Promise
 from amulet_editor.models.widgets.traceback_dialog import DisplayException
 
-from minecraft_model_reader import BaseResourcePackManager
-from minecraft_model_reader.api.resource_pack import (
-    load_resource_pack_manager,
-)
-from minecraft_model_reader.api.resource_pack.java.download_resources import (
+from amulet.resource_pack.abc import BaseResourcePackManager
+from amulet.resource_pack import load_resource_pack_manager
+from amulet.resource_pack.java.download_resources import (
     get_java_vanilla_latest_iter,
     get_java_vanilla_fix,
 )
