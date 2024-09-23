@@ -116,6 +116,7 @@ src/sln/
 *.exp
 *.lib
 *.pdb
+*.ilk
 
 # Visual Studio Code extensions
 .qt_for_python
