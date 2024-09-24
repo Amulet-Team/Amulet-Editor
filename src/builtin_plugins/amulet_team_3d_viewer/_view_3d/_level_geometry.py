@@ -320,7 +320,9 @@ class ChunkGeneratorWorker(QObject):
         neighbour_chunks = {}
         for dx, dz in ((-1, 0), (1, 0), (0, -1), (0, 1)):
             try:
-                chunk_handle = level.get_dimension(dimension).get_chunk_handle(cx + dx, cz + dz)
+                chunk_handle = level.get_dimension(dimension).get_chunk_handle(
+                    cx + dx, cz + dz
+                )
                 chunk = chunk_handle.get([BlockComponent.ComponentID])
                 if isinstance(chunk, BlockComponent):
                     neighbour_chunks[(dx, dz)] = chunk.block
@@ -351,21 +353,13 @@ class ChunkGeneratorWorker(QObject):
                 if cy not in neighbour_sections:
                     continue
                 if chunk_offset == (-1, 0):
-                    larger_blocks[0, 1:-1, 1:-1] = neighbour_sections[cy][
-                        -1, :, :
-                    ]
+                    larger_blocks[0, 1:-1, 1:-1] = neighbour_sections[cy][-1, :, :]
                 elif chunk_offset == (1, 0):
-                    larger_blocks[-1, 1:-1, 1:-1] = neighbour_sections[cy][
-                        0, :, :
-                    ]
+                    larger_blocks[-1, 1:-1, 1:-1] = neighbour_sections[cy][0, :, :]
                 elif chunk_offset == (0, -1):
-                    larger_blocks[1:-1, 1:-1, 0] = neighbour_sections[cy][
-                        :, :, -1
-                    ]
+                    larger_blocks[1:-1, 1:-1, 0] = neighbour_sections[cy][:, :, -1]
                 elif chunk_offset == (0, 1):
-                    larger_blocks[1:-1, 1:-1, -1] = neighbour_sections[cy][
-                        :, :, 0
-                    ]
+                    larger_blocks[1:-1, 1:-1, -1] = neighbour_sections[cy][:, :, 0]
             if cy - 1 in sections:
                 larger_blocks[1:-1, 0, 1:-1] = sections[cy - 1][:, -1, :]
             if cy + 1 in sections:
@@ -717,10 +711,7 @@ class WidgetLevelGeometry(QObject, Drawable):
         program.release()
 
         self._gl_data_ = LevelGeometryGLData(
-            context,
-            program,
-            matrix_location,
-            texture_location
+            context, program, matrix_location, texture_location
         )
         self._init_geometry_no_context()
         self._update_chunk_finder()
