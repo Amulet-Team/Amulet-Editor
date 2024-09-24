@@ -1,15 +1,14 @@
 from __future__ import annotations
 import logging
-from typing import Optional, Generator, Callable, Iterator, Any
+from typing import Optional, Generator, Callable, Iterator, Any, TypeVar
 import ctypes
 from threading import Lock
-from weakref import WeakKeyDictionary, WeakValueDictionary, ref, proxy
+from weakref import WeakKeyDictionary, WeakValueDictionary, ref
 from collections.abc import MutableMapping
 import bisect
-from contextlib import contextmanager
 import numpy
 
-from PySide6.QtCore import QThread, Signal, QObject, Slot, QTimer, QCoreApplication, Qt
+from PySide6.QtCore import QThread, Signal, QObject, Slot, QTimer, QCoreApplication
 from PySide6.QtGui import QMatrix4x4, QOpenGLContext, QOffscreenSurface
 from PySide6.QtOpenGL import (
     QOpenGLVertexArrayObject,
@@ -19,23 +18,25 @@ from PySide6.QtOpenGL import (
     QOpenGLTexture,
 )
 from shiboken6 import VoidPtr, isValid
+from OpenGL.constant import IntConstant
 from OpenGL.GL import (
-    GL_FLOAT,
-    GL_FALSE,
-    GL_TRIANGLES,
-    GL_CULL_FACE,
-    GL_BACK,
-    GL_DEPTH_TEST,
-    GL_LEQUAL,
-    GL_BLEND,
-    GL_SRC_ALPHA,
-    GL_ONE_MINUS_SRC_ALPHA,
+    GL_FLOAT as _GL_FLOAT,
+    GL_FALSE as _GL_FALSE,
+    GL_TRIANGLES as _GL_TRIANGLES,
+    GL_CULL_FACE as _GL_CULL_FACE,
+    GL_BACK as _GL_BACK,
+    GL_DEPTH_TEST as _GL_DEPTH_TEST,
+    GL_LEQUAL as _GL_LEQUAL,
+    GL_BLEND as _GL_BLEND,
+    GL_SRC_ALPHA as _GL_SRC_ALPHA,
+    GL_ONE_MINUS_SRC_ALPHA as _GL_ONE_MINUS_SRC_ALPHA,
 )
 
 from amulet.data_types import DimensionId
 from amulet.level.abc import Level
 from amulet.errors import ChunkLoadError, ChunkDoesNotExist
 from amulet.chunk import Chunk
+from amulet.chunk_components import BlockComponent
 
 import thread_manager
 
@@ -48,6 +49,27 @@ from amulet_editor.application._invoke import invoke
 from amulet_editor.models.widgets.traceback_dialog import CatchException
 
 from ._chunk_builder import create_lod0_chunk
+
+T = TypeVar("T")
+
+
+def dynamic_cast(obj: Any, new_type: type[T]) -> T:
+    if not isinstance(obj, new_type):
+        raise TypeError(f"{obj} is not an instance of {new_type}")
+    return obj
+
+
+# This should really be typed better in PyOpenGL
+GL_FLOAT = dynamic_cast(_GL_FLOAT, IntConstant)
+GL_FALSE = dynamic_cast(_GL_FALSE, IntConstant)
+GL_TRIANGLES = dynamic_cast(_GL_TRIANGLES, IntConstant)
+GL_CULL_FACE = dynamic_cast(_GL_CULL_FACE, IntConstant)
+GL_BACK = dynamic_cast(_GL_BACK, IntConstant)
+GL_DEPTH_TEST = dynamic_cast(_GL_DEPTH_TEST, IntConstant)
+GL_LEQUAL = dynamic_cast(_GL_LEQUAL, IntConstant)
+GL_BLEND = dynamic_cast(_GL_BLEND, IntConstant)
+GL_SRC_ALPHA = dynamic_cast(_GL_SRC_ALPHA, IntConstant)
+GL_ONE_MINUS_SRC_ALPHA = dynamic_cast(_GL_ONE_MINUS_SRC_ALPHA, IntConstant)
 
 FloatSize = ctypes.sizeof(ctypes.c_float)
 
@@ -73,7 +95,10 @@ class SharedVBOManager(QObject):
 
     def __init__(self) -> None:
         """Use new class method"""
-        if QThread.currentThread() is not QCoreApplication.instance().thread():
+        app_instance = QCoreApplication.instance()
+        if app_instance is None:
+            raise RuntimeError("Qt App does not exist.")
+        if QThread.currentThread() is not app_instance.thread():
             raise RuntimeError(
                 "SharedVBOManager must be constructed on the main thread."
             )
@@ -237,7 +262,8 @@ class ChunkGeneratorWorker(QObject):
 
             buffer = b""
             try:
-                chunk = level.get_chunk(cx, cz, dimension)
+                chunk_handle = level.get_dimension(dimension).get_chunk_handle(cx, cz)
+                chunk = chunk_handle.get([BlockComponent.ComponentID])
             except ChunkDoesNotExist:
                 # TODO: Add void geometry
                 pass
@@ -287,19 +313,21 @@ class ChunkGeneratorWorker(QObject):
         :param chunk: The chunk object
         :return: A list of tuples containing the larger block array and the location of the sub-chunk
         """
-        blocks = chunk.blocks
+        if not isinstance(chunk, BlockComponent):
+            return []
+        sections = chunk.block.sections
         sub_chunks = []
         neighbour_chunks = {}
         for dx, dz in ((-1, 0), (1, 0), (0, -1), (0, 1)):
             try:
-                neighbour_chunks[(dx, dz)] = level.get_chunk(
-                    cx + dx, cz + dz, dimension
-                ).blocks
+                chunk_handle = level.get_dimension(dimension).get_chunk_handle(cx + dx, cz + dz)
+                chunk = chunk_handle.get([BlockComponent.ComponentID])
+                if isinstance(chunk, BlockComponent):
+                    neighbour_chunks[(dx, dz)] = chunk.block
             except ChunkLoadError:
                 continue
 
-        for cy in blocks.sub_chunks:
-            sub_chunk = blocks.get_sub_chunk(cy)
+        for cy, sub_chunk in sections.items():
             larger_blocks = numpy.zeros(
                 sub_chunk.shape + numpy.array((2, 2, 2)), sub_chunk.dtype
             )
@@ -319,28 +347,29 @@ class ChunkGeneratorWorker(QObject):
             #     larger_blocks[1:-1, 1:-1, 1:-1] = sub_chunk
             larger_blocks[1:-1, 1:-1, 1:-1] = sub_chunk
             for chunk_offset, neighbour_blocks in neighbour_chunks.items():
-                if cy not in neighbour_blocks:
+                neighbour_sections = neighbour_blocks.sections
+                if cy not in neighbour_sections:
                     continue
                 if chunk_offset == (-1, 0):
-                    larger_blocks[0, 1:-1, 1:-1] = neighbour_blocks.get_sub_chunk(cy)[
+                    larger_blocks[0, 1:-1, 1:-1] = neighbour_sections[cy][
                         -1, :, :
                     ]
                 elif chunk_offset == (1, 0):
-                    larger_blocks[-1, 1:-1, 1:-1] = neighbour_blocks.get_sub_chunk(cy)[
+                    larger_blocks[-1, 1:-1, 1:-1] = neighbour_sections[cy][
                         0, :, :
                     ]
                 elif chunk_offset == (0, -1):
-                    larger_blocks[1:-1, 1:-1, 0] = neighbour_blocks.get_sub_chunk(cy)[
+                    larger_blocks[1:-1, 1:-1, 0] = neighbour_sections[cy][
                         :, :, -1
                     ]
                 elif chunk_offset == (0, 1):
-                    larger_blocks[1:-1, 1:-1, -1] = neighbour_blocks.get_sub_chunk(cy)[
+                    larger_blocks[1:-1, 1:-1, -1] = neighbour_sections[cy][
                         :, :, 0
                     ]
-            if cy - 1 in blocks:
-                larger_blocks[1:-1, 0, 1:-1] = blocks.get_sub_chunk(cy - 1)[:, -1, :]
-            if cy + 1 in blocks:
-                larger_blocks[1:-1, -1, 1:-1] = blocks.get_sub_chunk(cy + 1)[:, 0, :]
+            if cy - 1 in sections:
+                larger_blocks[1:-1, 0, 1:-1] = sections[cy - 1][:, -1, :]
+            if cy + 1 in sections:
+                larger_blocks[1:-1, -1, 1:-1] = sections[cy + 1][:, 0, :]
             sub_chunks.append((larger_blocks, cy * 16))
         return sub_chunks
 
@@ -363,7 +392,10 @@ class ChunkGenerator(QObject):
                 thread.quit()
 
         self.destroyed.connect(destroy)
-        QCoreApplication.instance().aboutToQuit.connect(self.deleteLater)
+        app_instance = QCoreApplication.instance()
+        if app_instance is None:
+            raise RuntimeError("Qt App is None")
+        app_instance.aboutToQuit.connect(self.deleteLater)
 
     def generate_chunk(
         self,
@@ -392,7 +424,7 @@ class SharedLevelGeometry(QObject):
 
     # Class variables
     _instances_lock = Lock()
-    _instances: WeakKeyDictionary[Level, SharedLevelGeometry] = {}
+    _instances = WeakKeyDictionary[Level, "SharedLevelGeometry"]()
 
     # Instance variables
     _level: Callable[[], Optional[Level]]
@@ -423,7 +455,16 @@ class SharedLevelGeometry(QObject):
         self._resource_pack_container = get_gl_resource_pack_container(level)
         self._resource_pack_container.changed.connect(self._resource_pack_changed)
 
-        QCoreApplication.instance().aboutToQuit.connect(self.deleteLater)
+        app_instance = QCoreApplication.instance()
+        if app_instance is None:
+            raise RuntimeError("Qt App is None")
+        app_instance.aboutToQuit.connect(self.deleteLater)
+
+    def _get_level(self) -> Level:
+        level = self._level()
+        if level is None:
+            raise RuntimeError("Level does not exist.")
+        return level
 
     def get_chunk(self, chunk_key: ChunkKey) -> SharedChunkData:
         """Get the geometry for a chunk."""
@@ -435,7 +476,7 @@ class SharedLevelGeometry(QObject):
                 transform.translate(cx * 16, 0, cz * 16)
                 chunk = self._chunks[chunk_key] = SharedChunkData(transform)
                 self._chunk_generator.generate_chunk(
-                    self._level(), self._vbo_manager, chunk_key, chunk
+                    self._get_level(), self._vbo_manager, chunk_key, chunk
                 )
             return chunk
 
@@ -444,7 +485,7 @@ class SharedLevelGeometry(QObject):
         with CatchException(), self._chunks_lock:
             for chunk_key, chunk in self._chunks.items():
                 self._chunk_generator.generate_chunk(
-                    self._level(), self._vbo_manager, chunk_key, chunk
+                    self._get_level(), self._vbo_manager, chunk_key, chunk
                 )
 
 
@@ -492,15 +533,15 @@ class ChunkContainer(MutableMapping[ChunkKey, WidgetChunkData]):
     def __init__(self) -> None:
         self._chunks: dict[ChunkKey, WidgetChunkData] = {}
         self._order: list[ChunkKey] = []
-        self._x = 0
-        self._z = 0
+        self._x: int = 0
+        self._z: int = 0
 
-    def set_position(self, cx, cz) -> None:
+    def set_position(self, cx: int, cz: int) -> None:
         self._x = cx
         self._z = cz
         self._order = sorted(self._order, key=self._dist)
 
-    def __contains__(self, k: ChunkKey) -> bool:
+    def __contains__(self, k: ChunkKey | Any) -> bool:
         return k in self._chunks
 
     def _dist(self, k: ChunkKey) -> int:
@@ -527,6 +568,25 @@ class ChunkContainer(MutableMapping[ChunkKey, WidgetChunkData]):
         yield from self._order
 
 
+class LevelGeometryGLData:
+    context: QOpenGLContext
+    program: QOpenGLShaderProgram
+    matrix_location: int
+    texture_location: int
+
+    def __init__(
+        self,
+        context: QOpenGLContext,
+        program: QOpenGLShaderProgram,
+        matrix_location: int,
+        texture_location: int,
+    ):
+        self.context = context
+        self.program = program
+        self.matrix_location = matrix_location
+        self.texture_location = texture_location
+
+
 class WidgetLevelGeometry(QObject, Drawable):
     """
     A class holding the level geometry data relating to one widget.
@@ -546,13 +606,8 @@ class WidgetLevelGeometry(QObject, Drawable):
     _generation_count: int
 
     # OpenGL attributes
-    _context: Optional[
-        QOpenGLContext
-    ]  # The presence of a context dictates that the state is active
     _surface: QOffscreenSurface
-    _program: Optional[QOpenGLShaderProgram]
-    _matrix_location: Optional[int]
-    _texture_location: Optional[int]
+    _gl_data_: Optional[LevelGeometryGLData]
     _chunks: ChunkContainer
     _pending_chunks: dict[ChunkKey, WidgetChunkData]
 
@@ -570,16 +625,19 @@ class WidgetLevelGeometry(QObject, Drawable):
         self._chunk_finder = empty_iterator()
         self._generation_count = 0
 
-        self._context = None
+        self._gl_data_ = None
         self._surface = QOffscreenSurface()
         self._surface.create()
-        self._program = None
-        self._matrix_location = None
-        self._texture_location = None
         self._chunks = ChunkContainer()
         self._pending_chunks = {}
 
         self._queue_chunk.connect(self._process_chunk)
+
+    @property
+    def _gl_data(self) -> LevelGeometryGLData:
+        if self._gl_data_ is None:
+            raise RuntimeError("GL state has not been initialised.")
+        return self._gl_data_
 
     def initializeGL(self) -> None:
         """
@@ -593,14 +651,14 @@ class WidgetLevelGeometry(QObject, Drawable):
                 "The widget context is not sharing with the global context."
             )
 
-        if self._context is not None:
+        if self._gl_data_ is not None:
             raise RuntimeError(
                 "This has been initialised before without being destroyed."
             )
 
         # Initialise the shader
-        self._program = QOpenGLShaderProgram()
-        self._program.addShaderFromSourceCode(
+        program = QOpenGLShaderProgram()
+        program.addShaderFromSourceCode(
             QOpenGLShader.ShaderTypeBit.Vertex,
             """#version 150
             in vec3 position;
@@ -622,7 +680,7 @@ class WidgetLevelGeometry(QObject, Drawable):
             }""",
         )
 
-        self._program.addShaderFromSourceCode(
+        program.addShaderFromSourceCode(
             QOpenGLShader.ShaderTypeBit.Fragment,
             """#version 150
             in vec2 fTexCoord;
@@ -648,17 +706,22 @@ class WidgetLevelGeometry(QObject, Drawable):
             }""",
         )
 
-        self._program.bindAttributeLocation("position", 0)
-        self._program.bindAttributeLocation("vTexCoord", 1)
-        self._program.bindAttributeLocation("vTexOffset", 2)
-        self._program.bindAttributeLocation("vTint", 3)
-        self._program.link()
-        self._program.bind()
-        self._matrix_location = self._program.uniformLocation("transformation_matrix")
-        self._texture_location = self._program.uniformLocation("image")
-        self._program.release()
+        program.bindAttributeLocation("position", 0)
+        program.bindAttributeLocation("vTexCoord", 1)
+        program.bindAttributeLocation("vTexOffset", 2)
+        program.bindAttributeLocation("vTint", 3)
+        program.link()
+        program.bind()
+        matrix_location = program.uniformLocation("transformation_matrix")
+        texture_location = program.uniformLocation("image")
+        program.release()
 
-        self._context = context
+        self._gl_data_ = LevelGeometryGLData(
+            context,
+            program,
+            matrix_location,
+            texture_location
+        )
         self._init_geometry_no_context()
         self._update_chunk_finder()
 
@@ -670,10 +733,7 @@ class WidgetLevelGeometry(QObject, Drawable):
         The caller must activate the context.
         """
         with CatchException():
-            self._context = None
-            self._program = None
-            self._matrix_location = None
-            self._texture_location = None
+            self._gl_data_ = None
             self._destroy_geometry_no_context()
 
     def __del__(self) -> None:
@@ -687,9 +747,10 @@ class WidgetLevelGeometry(QObject, Drawable):
         :param projection_matrix: The camera internal projection matrix.
         :param view_matrix: The camera external matrix.
         """
-        if self._context is None:
+        gl_data = self._gl_data_
+        if gl_data is None:
             return
-        if QOpenGLContext.currentContext() is not self._context:
+        if QOpenGLContext.currentContext() is not gl_data.context:
             raise ContextException("Context is not valid")
 
         f = QOpenGLContext.currentContext().functions()
@@ -701,22 +762,26 @@ class WidgetLevelGeometry(QObject, Drawable):
         f.glCullFace(GL_BACK)
 
         # Draw the geometry
-        self._program.bind()
+        gl_data.program.bind()
 
         # Init the texture
-        self._program.setUniformValue1i(self._texture_location, 0)
+        gl_data.program.setUniformValue1i(gl_data.texture_location, 0)
 
         transform = projection_matrix * view_matrix
         for chunk_data in self._chunks.values():
-            self._program.setUniformValue(
-                self._matrix_location, transform * chunk_data.shared.model_transform
+            gl_data.program.setUniformValue(
+                gl_data.matrix_location, transform * chunk_data.shared.model_transform
             )
-            chunk_data.geometry.texture.bind(0)
-            chunk_data.vao.bind()
-            f.glDrawArrays(GL_TRIANGLES, 0, chunk_data.geometry.vertex_count)
-            chunk_data.vao.release()
+            geometry = chunk_data.geometry
+            vao = chunk_data.vao
+            if geometry is None or vao is None:
+                raise RuntimeError
+            geometry.texture.bind(0)
+            vao.bind()
+            f.glDrawArrays(GL_TRIANGLES, 0, geometry.vertex_count)
+            vao.release()
 
-        self._program.release()
+        gl_data.program.release()
 
     def _update_chunk_finder(self) -> None:
         if self._dimension is None or self._camera_chunk is None:
@@ -771,22 +836,24 @@ class WidgetLevelGeometry(QObject, Drawable):
 
     def _clear_chunks(self) -> None:
         """Unload all chunk data. It is the job of the caller to handle the chunk generator."""
-        if self._context is None:
+        gl_data = self._gl_data_
+        if gl_data is None:
             return
-        if not self._context.makeCurrent(self._surface):
+        if not gl_data.context.makeCurrent(self._surface):
             raise ContextException("Could not make context current.")
         self._clear_chunks_no_context()
-        self._context.doneCurrent()
+        gl_data.context.doneCurrent()
 
     def _clear_far_chunks(self) -> None:
         """
         Unload all chunk data outside the unload render distance.
         It is the job of the caller to handle the chunk generator.
         """
-        if self._context is None or self._camera_chunk is None:
+        gl_data = self._gl_data_
+        if gl_data is None or self._camera_chunk is None:
             return
 
-        if not self._context.makeCurrent(self._surface):
+        if not gl_data.context.makeCurrent(self._surface):
             raise ContextException("Could not make context current.")
 
         camera_cx, camera_cz = self._camera_chunk
@@ -812,7 +879,7 @@ class WidgetLevelGeometry(QObject, Drawable):
             for chunk_key in remove_chunk_keys:
                 del container[chunk_key]
 
-        self._context.doneCurrent()
+        gl_data.context.doneCurrent()
 
     def set_dimension(self, dimension: DimensionId) -> None:
         if dimension != self._dimension:
@@ -852,15 +919,16 @@ class WidgetLevelGeometry(QObject, Drawable):
         self._update_chunk_finder()
 
     def _queue_next_chunk(self) -> None:
-        if self._context and self._generation_count == 0:
+        if self._gl_data_ and self._generation_count == 0:
             # The instance is running and there are no existing generation calls running.
             self._generation_count += 1
             self._queue_chunk.emit()
 
     _queue_chunk = Signal()
 
-    def _create_vao(self, chunk: WidgetChunkData, signal=True) -> None:
-        if self._context is None or not self._context.makeCurrent(self._surface):
+    def _create_vao(self, chunk: WidgetChunkData, signal: bool = True) -> None:
+        gl_data = self._gl_data_
+        if gl_data is None or not gl_data.context.makeCurrent(self._surface):
             raise ContextException("Could not make context current.")
 
         f = QOpenGLContext.currentContext().functions()
@@ -873,6 +941,8 @@ class WidgetLevelGeometry(QObject, Drawable):
 
         # Associate the vbo with the vao
         vbo_container = chunk.shared.geometry
+        if vbo_container is None:
+            raise RuntimeError
         vbo_container.vbo.bind()
 
         # vertex coord
@@ -896,7 +966,7 @@ class WidgetLevelGeometry(QObject, Drawable):
 
         chunk.vao.release()
         vbo_container.vbo.release()
-        self._context.doneCurrent()
+        gl_data.context.doneCurrent()
 
         # Update the vbo attribute.
         # If a VBO was previously stored it will get automatically deleted when the last reference is lost.
@@ -908,7 +978,7 @@ class WidgetLevelGeometry(QObject, Drawable):
     def _process_chunk(self) -> None:
         """Generate a chunk. This must not be called directly."""
         with CatchException():
-            if self._context is None:
+            if self._gl_data_ is None:
                 return
             while True:
                 # Find a chunk key to process
@@ -953,7 +1023,7 @@ class WidgetLevelGeometry(QObject, Drawable):
         def on_change() -> None:
             with CatchException():
                 self_: Optional[WidgetLevelGeometry] = weak_self()
-                if self_ is None or self_._context is None:
+                if self_ is None or self_._gl_data_ is None:
                     return
                 self_._generation_count += 1
                 if chunk_key in self_._pending_chunks:
