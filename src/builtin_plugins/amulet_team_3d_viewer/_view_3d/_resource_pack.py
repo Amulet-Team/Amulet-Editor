@@ -272,7 +272,7 @@ class RenderResourcePackContainer(QObject):
                     log.debug(f"Loading OpenGL resource pack.")
                 resource_pack = self._resource_pack_container.resource_pack
                 # TODO: modify the resource pack library to expose the desired translator
-                translator = get_game_version("java", VersionNumber(999, 0, 0))
+                translator = get_game_version("java", VersionNumber(2, -1, 0))
 
                 rp = OpenGLResourcePack(resource_pack, translator)
                 promise = rp.initialise()
