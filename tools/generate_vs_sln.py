@@ -12,9 +12,7 @@ import glob
 import sysconfig
 from collections.abc import Iterable
 from hashlib import md5
-
-import amulet_nbt
-import amulet
+import importlib.util
 
 SrcDir = os.path.join(os.path.dirname(os.path.dirname(__file__)), "src")
 
@@ -232,6 +230,7 @@ class ProjectData:
     library_dirs: list[str] = field(default_factory=list)
     dependencies: list[ProjectData] = field(default_factory=list)
     py_package: str | None = None
+    package_dir: str | None = None
 
     def project_guid(self) -> str:
         encoded_name = self.name.encode()
@@ -270,10 +269,10 @@ def write(
             library_type = CompileMode.DynamicLibrary
             if project.py_package:
                 module_path = project.py_package.replace(".", "\\")
-                out_dir = f"{src_dir}\\{module_path}\\"
+                out_dir = f"{project.package_dir or src_dir}\\{module_path}\\"
                 project_name = f"{project.py_package}.{project_name}"
             else:
-                out_dir = f"{src_dir}\\"
+                out_dir = f"{project.package_dir or src_dir}\\"
         elif library_type == CompileMode.StaticLibrary:
             extension = ".lib"
             out_dir = (
@@ -438,38 +437,106 @@ def get_files(
     return paths
 
 
+def get_package_path(name: str) -> str:
+    spec = importlib.util.find_spec(name)
+    if spec is None:
+        raise RuntimeError(f"Could not find {name}")
+    search_path = spec.submodule_search_locations
+    if search_path is None:
+        raise RuntimeError(f"{name} search path is None")
+    return search_path[0]
+
+
 def main() -> None:
-    amulet_nbt_project = ProjectData(
+    amulet_nbt_path = get_package_path("amulet_nbt")
+    amulet_nbt_lib = ProjectData(
         name="amulet_nbt",
         compile_mode=CompileMode.StaticLibrary,
-        include_files=get_files(root_dir=amulet_nbt.get_include(), ext="hpp"),
-        source_files=get_files(root_dir=amulet_nbt.get_source(), ext="cpp"),
-        include_dirs=[amulet_nbt.get_include()],
-    )
-    amulet_core_project = ProjectData(
-        name="amulet_core",
-        compile_mode=CompileMode.StaticLibrary,
         include_files=get_files(
-            root_dir=os.path.dirname(amulet.__path__[0]),
-            ext="hpp",
-            root_dir_suffix="amulet",
+            root_dir=amulet_nbt_path, root_dir_suffix="include", ext="hpp"
         ),
         source_files=get_files(
-            root_dir=os.path.dirname(amulet.__path__[0]),
+            root_dir=amulet_nbt_path, root_dir_suffix="cpp", ext="cpp"
+        ),
+        include_dirs=[os.path.join(amulet_nbt_path, "include")],
+    )
+    amulet_nbt_py = ProjectData(
+        name="__init__",
+        compile_mode=CompileMode.PythonExtension,
+        source_files=get_files(
+            root_dir=amulet_nbt_path,
+            root_dir_suffix="pybind",
             ext="cpp",
-            root_dir_suffix="amulet",
         ),
         include_dirs=[
             PythonIncludeDir,
             pybind11.get_include(),
-            amulet_nbt.get_include(),
-            os.path.dirname(amulet.__path__[0]),
+            os.path.join(amulet_nbt_path, "include"),
+        ],
+        library_dirs=[
+            PythonLibraryDir,
+        ],
+        dependencies=[
+            amulet_nbt_lib,
+        ],
+        py_package="amulet_nbt",
+        package_dir=os.path.dirname(amulet_nbt_path),
+    )
+
+    amulet_core_path = get_package_path("amulet")
+    amulet_core_lib = ProjectData(
+        name="amulet",
+        compile_mode=CompileMode.StaticLibrary,
+        include_files=get_files(
+            root_dir=os.path.dirname(amulet_core_path),
+            root_dir_suffix="amulet",
+            ext="hpp",
+            exclude_exts=[".py.hpp"],
+        ),
+        source_files=get_files(
+            root_dir=os.path.dirname(amulet_core_path),
+            root_dir_suffix="amulet",
+            ext="cpp",
+            exclude_exts=[".py.cpp"],
+        ),
+        include_dirs=[
+            PythonIncludeDir,
+            pybind11.get_include(),
+            os.path.join(amulet_nbt_path, "include"),
+            os.path.dirname(amulet_core_path),
         ],
     )
+    amulet_core_py = ProjectData(
+        name="__init__",
+        compile_mode=CompileMode.PythonExtension,
+        include_files=get_files(
+            root_dir=os.path.dirname(amulet_core_path),
+            root_dir_suffix="amulet",
+            ext="py.hpp",
+        ),
+        source_files=get_files(
+            root_dir=os.path.dirname(amulet_core_path),
+            root_dir_suffix="amulet",
+            ext="py.cpp",
+        ),
+        include_dirs=[
+            PythonIncludeDir,
+            pybind11.get_include(),
+            os.path.join(amulet_nbt_path, "include"),
+            os.path.dirname(amulet_core_path),
+        ],
+        library_dirs=[
+            PythonLibraryDir,
+        ],
+        dependencies=[amulet_nbt_lib, amulet_core_lib],
+        py_package="amulet",
+        package_dir=os.path.dirname(amulet_core_path),
+    )
+
     view_3d_path = os.path.join(
         SrcDir, "builtin_plugins", "amulet_team_3d_viewer", "_view_3d"
     )
-    amulet_py_project = ProjectData(
+    chunk_builder_py = ProjectData(
         name="_chunk_builder",
         compile_mode=CompileMode.PythonExtension,
         include_files=get_files(root_dir=view_3d_path, ext="hpp"),
@@ -480,20 +547,22 @@ def main() -> None:
         include_dirs=[
             PythonIncludeDir,
             pybind11.get_include(),
-            amulet_nbt.get_include(),
-            os.path.dirname(amulet.__path__[0]),
+            os.path.join(amulet_nbt_path, "include"),
+            os.path.dirname(amulet_core_path),
             view_3d_path,
         ],
         library_dirs=[
             PythonLibraryDir,
         ],
-        dependencies=[amulet_nbt_project, amulet_core_project],
+        dependencies=[amulet_nbt_lib, amulet_core_lib],
         py_package="builtin_plugins.amulet_team_3d_viewer._view_3d",
     )
     projects = [
-        amulet_nbt_project,
-        amulet_core_project,
-        amulet_py_project,
+        amulet_nbt_lib,
+        amulet_nbt_py,
+        amulet_core_lib,
+        amulet_core_py,
+        chunk_builder_py,
     ]
 
     write(
