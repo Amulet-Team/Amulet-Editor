@@ -6,10 +6,6 @@ __pycache__/
 # C extensions
 *.so
 
-# Cython
-*.c
-*.html
-
 # Distribution / packaging
 .Python
 /build/
@@ -116,6 +112,11 @@ venv.bak/
 *.user
 *.pyproj
 *.sln
+src/sln/
+*.exp
+*.lib
+*.pdb
+*.ilk
 
 # Visual Studio Code extensions
 .qt_for_python

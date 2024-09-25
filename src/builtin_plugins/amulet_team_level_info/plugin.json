@@ -1,7 +1,7 @@
 {
-	"identifier": "amulet_team_home_page",
+	"identifier": "amulet_team_level_info",
 	"version": "1.0.0",
-	"name": "Amulet Home Page",
+	"name": "Amulet Level Info Page",
 	"depends": {
 		"python": "~=3.11",
 		"library": [

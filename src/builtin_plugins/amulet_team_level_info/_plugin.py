@@ -8,10 +8,10 @@ from amulet_editor.models.plugin import PluginV1
 
 import amulet_team_locale
 import amulet_team_main_window
-from amulet_team_main_window import register_widget, unregister_widget
+from amulet_team_main_window import register_widget
 
-import amulet_team_home_page
-from .home import HomeWidget
+import amulet_team_level_info
+from .level_info import LevelInfoWidget
 
 
 # Qt only weekly references this. We must hold a strong reference to stop it getting garbage collected
@@ -25,7 +25,7 @@ def load_plugin() -> None:
     QCoreApplication.installTranslator(_translator)
     amulet_team_locale.locale_changed.connect(_locale_changed)
 
-    register_widget(HomeWidget)
+    register_widget(LevelInfoWidget)
 
 
 def _locale_changed() -> None:
@@ -33,12 +33,12 @@ def _locale_changed() -> None:
     _translator.load_lang(
         QLocale(),
         "",
-        directory=os.path.join(*amulet_team_home_page.__path__, "resources", "lang"),
+        directory=os.path.join(*amulet_team_level_info.__path__, "resources", "lang"),
     )
 
 
 def unload_plugin() -> None:
-    unregister_widget(HomeWidget)
+    amulet_team_main_window.unregister_widget(LevelInfoWidget)
     if _translator is not None:
         QCoreApplication.removeTranslator(_translator)
 

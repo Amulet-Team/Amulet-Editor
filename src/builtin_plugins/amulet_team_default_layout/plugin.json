@@ -3,13 +3,14 @@
 	"version": "1.0.0",
 	"name": "Amulet Default Layout",
 	"depends": {
-		"python": "~=3.9",
+		"python": "~=3.11",
 		"library": [
 			"amulet_editor~=1.0a0"
 		],
 		"plugin": [
 			"amulet_team_main_window~=1.0",
 			"amulet_team_home_page~=1.0",
+			"amulet_team_level_info~=1.0",
 			"tablericons~=1.0"
 		]
 	},

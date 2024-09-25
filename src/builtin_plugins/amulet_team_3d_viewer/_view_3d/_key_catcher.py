@@ -27,11 +27,11 @@ KeyT = Union[
 ]
 ModifierT = frozenset[KeyT]
 Number = Union[float, int]
-ReceiverT = Union[Slot, Signal, Callable[[], None], WeakMethod]
+ReceiverType = Union[Slot, Signal, Callable[[float], None], WeakMethod]
 
 
 class TimerData(QObject):
-    receivers: set[ReceiverT]
+    event_receivers: set[ReceiverType]
     interval: float
 
     _timer: QTimer
@@ -39,9 +39,9 @@ class TimerData(QObject):
 
     delta_timeout = Signal(float)
 
-    def __init__(self, msec: int):
+    def __init__(self, msec: int) -> None:
         super().__init__()
-        self.receivers = set()
+        self.event_receivers = set()
         self.interval = msec / 1000
         self._last_timeout = 0.0
         self._timer = QTimer()
@@ -63,7 +63,7 @@ class TimerData(QObject):
 class EventStorage(QObject):
     one_shot = Signal()
 
-    def __init__(self, key: KeyT, modifiers: frozenset[KeyT]):
+    def __init__(self, key: KeyT, modifiers: frozenset[KeyT]) -> None:
         super().__init__()
         self.key = key
         self.modifiers = modifiers
@@ -132,7 +132,7 @@ class KeyCatcher(QObject):
                                 for timer_data in storage.timers.values():
                                     timer_data.stop()
                     for interval, timer_data in list(best_storage.timers.items()):
-                        if timer_data.receivers:
+                        if timer_data.event_receivers:
                             timer_data.delta_timeout.emit(interval // 1000)
                             timer_data.start()
                         else:
@@ -163,7 +163,7 @@ class KeyCatcher(QObject):
         storage = self._get_storage(key, modifiers)
         # Remove all unused timers.
         for interval in list(storage.timers.keys()):
-            if not storage.timers[interval].receivers:
+            if not storage.timers[interval].event_receivers:
                 del storage.timers[interval]
         # Remove storage if there are no bound receivers
         if not storage.bound_one_shot and not storage.timers:
@@ -234,9 +234,9 @@ class KeyCatcher(QObject):
             timer_data.delta_timeout.connect(receiver)
             if ismethod(receiver):
                 # If this class strongly stores references to methods they can't get garbage collected
-                timer_data.receivers.add(WeakMethod(receiver))
+                timer_data.event_receivers.add(WeakMethod(receiver))
             else:
-                timer_data.receivers.add(receiver)
+                timer_data.event_receivers.add(receiver)
 
     def disconnect_repeating(
         self,
@@ -260,13 +260,13 @@ class KeyCatcher(QObject):
             if timer_data is not None:
                 timer_data.delta_timeout.disconnect(receiver)
                 if ismethod(receiver):
-                    timer_data.receivers.remove(WeakMethod(receiver))
+                    timer_data.event_receivers.remove(WeakMethod(receiver))
                 else:
-                    timer_data.receivers.remove(receiver)
+                    timer_data.event_receivers.remove(receiver)
             self._clean_storage(key, modifiers)
 
 
-def _demo():
+def _demo() -> None:
     from PySide6.QtWidgets import (
         QApplication,
         QLabel,
@@ -296,22 +296,22 @@ def _demo():
     b = 0
     c = 0
 
-    def update_a():
+    def update_a(dt: float) -> None:
         nonlocal a
         a += 1
         label_a.setText(str(a))
 
-    def update_b():
+    def update_b(dt: float) -> None:
         nonlocal b
         b += 1
         label_b.setText(str(b))
 
-    def update_c():
+    def update_c() -> None:
         nonlocal c
         c += 1
         label_c.setText(str(c))
 
-    def connect():
+    def connect() -> None:
         key_catcher.connect_repeating(
             update_a, (KeySrc.Keyboard, Qt.Key.Key_A), frozenset(), 100
         )
@@ -324,7 +324,7 @@ def _demo():
 
     connect()
 
-    def disconnect():
+    def disconnect() -> None:
         key_catcher.disconnect_repeating(
             update_a, (KeySrc.Keyboard, Qt.Key.Key_A), frozenset(), 100
         )

@@ -1,6 +1,2 @@
-# Python files
-recursive-include src/amulet_editor *.py *.pyi *.pyx *.pxd
-# Images
-recursive-include src/amulet_editor *.jpg *.png *.svg *.ico
-# Misc
-recursive-include src/amulet_editor *.mcmeta *.lang *.json *.qss
+recursive-include src/amulet_editor *.pyi py.typed *.py *.cpp *.hpp *.jpg *.png *.svg *.ico *.lang *.json *.qss
+recursive-include src/builtin_plugins *.pyi py.typed *.py *.cpp *.hpp *.jpg *.png *.svg *.ico *.lang *.json *.qss

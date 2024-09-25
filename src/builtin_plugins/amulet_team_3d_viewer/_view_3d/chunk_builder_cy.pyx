@@ -14,7 +14,7 @@ from libc.stdint cimport (
 )
 
 cdef extern from "stdlib.h":
-    void *memcpy(void *dest, void *src, size_t n) nogil
+    void *memcpy(void *dest, void *src, size_t n) noexcept nogil
 
 from cpython cimport array
 import array
@@ -72,7 +72,7 @@ cdef struct BlockArray:
     int32_t dy # the displacement in the y axis
     int32_t dz # the displacement in the z axis
 
-cdef BlockArray* BlockArray_new(int32_t sx, int32_t sy, int32_t sz) nogil:
+cdef BlockArray* BlockArray_new(int32_t sx, int32_t sy, int32_t sz) noexcept nogil:
     self = <BlockArray*>calloc(1, sizeof(BlockArray))
     self.arr = <uint32_t*>malloc(sx * sy * sz * sizeof(uint32_t))
     self.sx = sx
@@ -91,7 +91,7 @@ cdef BlockArray* BlockArray_init(
         int32_t dx,
         int32_t dy,
         int32_t dz,
-) nogil:
+) noexcept nogil:
     self = BlockArray_new(sx, sy, sz)
     memcpy(self.arr, arr, sx * sy * sz * sizeof(uint32_t))
     self.dx = dx
@@ -99,7 +99,7 @@ cdef BlockArray* BlockArray_init(
     self.dz = dz
     return self
 
-cdef void BlockArray_free(BlockArray* self) nogil:
+cdef void BlockArray_free(BlockArray* self) noexcept nogil:
     free(self.arr)
     free(self)
 
@@ -108,19 +108,19 @@ cdef struct VertArray:
     float* arr  # pointer to the array
     int32_t size  # the number of floats in the array
 
-cdef VertArray* VertArray_new(uint32_t size) nogil:
+cdef VertArray* VertArray_new(uint32_t size) noexcept nogil:
     # assert size and size % (ATTR_COUNT*3) == 0, "arr must have a multiple of 36 values"
     vert_array = <VertArray*>calloc(1, sizeof(VertArray))
     vert_array.arr = <float*>malloc(size * sizeof(float))
     vert_array.size = size
     return vert_array
 
-cdef VertArray* VertArray_init(float* arr, uint32_t size) nogil:
+cdef VertArray* VertArray_init(float* arr, uint32_t size) noexcept nogil:
     vert_array = VertArray_new(size)
     memcpy(vert_array.arr, arr, size * sizeof(float))
     return vert_array
 
-cdef void VertArray_free(VertArray* vert_array) nogil:
+cdef void VertArray_free(VertArray* vert_array) noexcept nogil:
     free(vert_array.arr)
     free(vert_array)
 
@@ -148,7 +148,7 @@ cdef BlockModel* BlockModel_init(dict face_data, int8_t is_transparent):
             block_model.faces[index] = NULL
     return block_model
 
-cdef void BlockModel_free(BlockModel* block_model) nogil:
+cdef void BlockModel_free(BlockModel* block_model) noexcept nogil:
     cdef Py_ssize_t i
     for i in range(7):
         if block_model.faces[i]:
@@ -197,27 +197,27 @@ cdef struct VertArrayContainer:
     int32_t size  # The current size of the array
     int32_t used  # The number of elements of the array that are used
 
-cdef VertArrayContainer* VertArrayContainer_init() nogil:
+cdef VertArrayContainer* VertArrayContainer_init() noexcept nogil:
     self = <VertArrayContainer*>calloc(1, sizeof(VertArrayContainer))
     self.arrays = <VertArray**>calloc(10, sizeof(VertArray*))
     self.size = 0
     self.used = 0
     return self
 
-cdef void VertArrayContainer_free(VertArrayContainer* self) nogil:
+cdef void VertArrayContainer_free(VertArrayContainer* self) noexcept nogil:
     cdef int32_t i
     for i in range(self.used):
         VertArray_free(self.arrays[i])
     free(self.arrays)
     free(self)
 
-cdef void VertArrayContainer_append(VertArrayContainer* self, VertArray* vert_array) nogil:
+cdef void VertArrayContainer_append(VertArrayContainer* self, VertArray* vert_array) noexcept nogil:
     if self.used == self.size:
         _VertArrayContainer_extend(self)
     self.arrays[self.used] = vert_array
     self.used += 1
 
-cdef void _VertArrayContainer_extend(VertArrayContainer* self) nogil:
+cdef void _VertArrayContainer_extend(VertArrayContainer* self) noexcept nogil:
     arr = <VertArray**>calloc(self.size + 5, sizeof(VertArray*))
     memcpy(arr, self.arrays, self.size * sizeof(VertArray*))
     free(self.arrays)
@@ -229,13 +229,13 @@ cdef struct VertArrayContainerTuple:
     VertArrayContainer* verts
     VertArrayContainer* verts_translucent
 
-cdef VertArrayContainerTuple* VertArrayContainerTuple_init() nogil:
+cdef VertArrayContainerTuple* VertArrayContainerTuple_init() noexcept nogil:
     self = <VertArrayContainerTuple*>calloc(1, sizeof(VertArrayContainerTuple))
     self.verts = VertArrayContainer_init()
     self.verts_translucent = VertArrayContainer_init()
     return self
 
-cdef void VertArrayContainerTuple_free(VertArrayContainerTuple* self) nogil:
+cdef void VertArrayContainerTuple_free(VertArrayContainerTuple* self) noexcept nogil:
     VertArrayContainer_free(self.verts)
     VertArrayContainer_free(self.verts_translucent)
     free(self)
@@ -245,13 +245,13 @@ cdef uint32_t get_block(
     int32_t x,
     int32_t y,
     int32_t z
-) nogil:
+) noexcept nogil:
     return block_array.arr[x * block_array.sz * block_array.sy + y * block_array.sz + z]
 
 cdef VertArrayContainerTuple* create_lod0_sub_chunk(
     BlockArray* block_array,
     BlockModelManager block_model_manager,
-) nogil:
+) noexcept nogil:
     cdef int32_t x, y, z, x_, y_, z_, dx, dy, dz  # location variables
 
     # float counters
