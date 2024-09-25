@@ -143,7 +143,8 @@ def app_main() -> None:
         else:
             log.debug("Loading level.")
             with DisplayException(f"Failed loading level at path {level_path}"):
-                _level.level = get_level(level_path)
+                _level.level = level = get_level(level_path)
+                level.open()
 
     rpc.init_rpc(is_broker)
 
