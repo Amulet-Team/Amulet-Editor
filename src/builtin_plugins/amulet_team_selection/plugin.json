@@ -6,7 +6,7 @@
 		"python": "~=3.9",
 		"plugin": [],
 		"library": [
-			"amulet_core~=1.9"
+			"amulet_core~=2.0a7"
 		]
 	},
 	"locked": "true"

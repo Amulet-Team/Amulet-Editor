@@ -7,11 +7,11 @@
 		"library": [
 			"PySide6_Essentials~=6.2",
 			"shiboken6~=6.2",
-			"numpy~=1.17",
+			"numpy~=2.0",
 			"PyOpenGL~=3.0",
 			"Pillow",
 			"amulet_editor~=1.0a0",
-			"amulet_core~=1.9"
+			"amulet_core~=2.0a7"
 		],
 		"plugin": [
 			"amulet_team_locale~=1.0",
