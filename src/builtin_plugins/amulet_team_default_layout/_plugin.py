@@ -14,6 +14,7 @@ from amulet_team_main_window import (
 )
 from amulet_team_home_page import HomeWidget
 from amulet_team_level_info import LevelInfoWidget
+from amulet_team_3d_viewer import View3D
 
 import tablericons
 
@@ -21,10 +22,12 @@ HomeLayoutID = "073bfd20-249e-4e0c-ad41-0bcb0c9db89f"
 home_button: ButtonProxy | None = None
 LevelInfoLayoutID = "4de0ebcd-f789-440f-9526-e6cc5d77caff"
 level_info_button: ButtonProxy | None = None
+View3DID = "68817e4c-32e3-43f8-ac61-9d7352c6329d"
+view_3d_button: ButtonProxy | None = None
 
 
 def load_plugin() -> None:
-    global home_button, level_info_button
+    global home_button, level_info_button, view_3d_button
 
     register_layout(
         HomeLayoutID,
@@ -62,8 +65,23 @@ def load_plugin() -> None:
         level_info_button.set_icon(tablericons.file_info)
         level_info_button.set_name("Level Info")
         level_info_button.click()
-        # register_view(View3D, tablericons.three_d_cube_sphere, "3D Editor")
-        # get_active_window().activate_view(View3D)
+
+        register_layout(
+            View3DID,
+            LayoutConfig(
+                WindowConfig(
+                    None,
+                    None,
+                    WidgetStackConfig((WidgetConfig(View3D.__qualname__),)),
+                ),
+                (),
+            ),
+        )
+
+        # Set up the 3D View button
+        view_3d_button = create_layout_button(View3DID)
+        view_3d_button.set_icon(tablericons.three_d_cube_sphere)
+        view_3d_button.set_name("3D Editor")
 
 
 def unload_plugin() -> None:
@@ -73,6 +91,9 @@ def unload_plugin() -> None:
     if level_info_button is not None:
         level_info_button.delete()
         unregister_layout(LevelInfoLayoutID)
+    if view_3d_button is not None:
+        view_3d_button.delete()
+        unregister_layout(View3DID)
 
 
 plugin = PluginV1(load=load_plugin, unload=unload_plugin)
