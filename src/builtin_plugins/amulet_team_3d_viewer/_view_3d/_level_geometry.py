@@ -695,7 +695,7 @@ class LevelGeometryGLData:
         self.texture_location = texture_location
 
 
-class WidgetLevelGeometry(QObject, Drawable):
+class LevelGeometry(QObject, Drawable):
     """
     A class holding the level geometry data relating to one widget.
     This holds all non-shared data and references to the shared data.

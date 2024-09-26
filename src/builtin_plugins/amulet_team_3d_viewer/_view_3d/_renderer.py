@@ -30,7 +30,7 @@ from amulet_team_resource_pack._api import get_resource_pack_container
 
 from ._camera import Camera, Location, Rotation
 from ._key_catcher import KeySrc, KeyCatcher
-from ._level_geometry import WidgetLevelGeometry
+from ._level_geometry import LevelGeometry
 from ._resource_pack import get_gl_resource_pack_container
 
 log = logging.getLogger(__name__)
@@ -62,9 +62,9 @@ I suggest defining a functon in initGL and bind that. Make sure you don't have c
 class GlData:
     context_valid: bool
     data_valid: bool
-    render_level: WidgetLevelGeometry
+    render_level: LevelGeometry
 
-    def __init__(self, render_level: WidgetLevelGeometry) -> None:
+    def __init__(self, render_level: LevelGeometry) -> None:
         self.context_valid = False
         self.data_valid = False
         self.render_level = render_level
@@ -141,7 +141,7 @@ class FirstPersonCanvas(QOpenGLWidget, QOpenGLFunctions):
                 "FirstPersonCanvas cannot be constructed when a level does not exist."
             )
         self._level = level
-        self._gl_data = GlData(WidgetLevelGeometry(self._level))
+        self._gl_data = CanvasGlData(LevelGeometry(self._level))
         self._gl_data.render_level.geometry_changed.connect(self.update)
 
         self._camera = Camera()
