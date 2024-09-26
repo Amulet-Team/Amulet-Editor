@@ -1,6 +1,6 @@
 from __future__ import annotations
 import logging
-from typing import Optional, Generator, Callable, Iterator, Any, TypeVar
+from typing import Generator, Callable, Iterator, Any, TypeVar
 import ctypes
 from threading import Lock
 from weakref import WeakKeyDictionary, WeakValueDictionary, ref
@@ -212,7 +212,7 @@ class SharedChunkData(QObject):
     # The shared OpenGL data.
     # This variable can get modified, you must hold a strong reference to this object and access it from there.
     # It may be None initially until geometry_changed is emitted.
-    geometry: Optional[SharedChunkGeometry]
+    geometry: SharedChunkGeometry | None
 
     # Signals
     # Emitted when the geometry has been modified.
@@ -421,7 +421,7 @@ class SharedLevelGeometry(QObject):
     _instances = WeakKeyDictionary[Level, "SharedLevelGeometry"]()
 
     # Instance variables
-    _level: Callable[[], Optional[Level]]
+    _level: Callable[[], Level | None]
     _chunks_lock: Lock
     # Store the chunk data weakly so that it gets automatically deallocated
     _chunks: WeakValueDictionary[ChunkKey, SharedChunkData]
@@ -485,8 +485,8 @@ class SharedLevelGeometry(QObject):
 
 class WidgetChunkData(QObject):
     shared: SharedChunkData
-    geometry: Optional[SharedChunkGeometry]
-    vao: Optional[QOpenGLVertexArrayObject]
+    geometry: SharedChunkGeometry | None
+    vao: QOpenGLVertexArrayObject | None
 
     geometry_changed = Signal()
 
@@ -594,14 +594,14 @@ class WidgetLevelGeometry(QObject, Drawable):
 
     _load_radius: int
     _unload_radius: int
-    _dimension: Optional[DimensionId]
-    _camera_chunk: Optional[tuple[int, int]]
+    _dimension: DimensionId | None
+    _camera_chunk: tuple[int, int] | None
     _chunk_finder: Iterator[ChunkKey]
     _generation_count: int
 
     # OpenGL attributes
     _surface: QOffscreenSurface
-    _gl_data_: Optional[LevelGeometryGLData]
+    _gl_data_: LevelGeometryGLData | None
     _chunks: ChunkContainer
     _pending_chunks: dict[ChunkKey, WidgetChunkData]
 
@@ -1009,11 +1009,11 @@ class WidgetLevelGeometry(QObject, Drawable):
 
     @staticmethod
     def get_on_change_callback(
-        weak_self: Callable[[], Optional[WidgetLevelGeometry]], chunk_key: ChunkKey
+        weak_self: Callable[[], LevelGeometry | None], chunk_key: ChunkKey
     ) -> Callable[[], None]:
         def on_change() -> None:
             with CatchException():
-                self_: Optional[WidgetLevelGeometry] = weak_self()
+                self_ = weak_self()
                 if self_ is None or self_._gl_data_ is None:
                     return
                 self_._generation_count += 1
