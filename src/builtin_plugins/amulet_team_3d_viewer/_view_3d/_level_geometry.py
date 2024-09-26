@@ -597,7 +597,7 @@ class SharedLevelGeometry(QObject):
                 )
 
 
-class WidgetChunkData(QObject):
+class ChunkData(QObject):
     shared: SharedChunkData
     geometry: SharedChunkGeometry | None
     vao: QOpenGLVertexArrayObject | None
@@ -637,9 +637,9 @@ def get_grid_spiral(
         length += 1
 
 
-class ChunkContainer(MutableMapping[ChunkKey, WidgetChunkData]):
+class ChunkContainer(MutableMapping[ChunkKey, ChunkData]):
     def __init__(self) -> None:
-        self._chunks: dict[ChunkKey, WidgetChunkData] = {}
+        self._chunks: dict[ChunkKey, ChunkData] = {}
         self._order: list[ChunkKey] = []
         self._x: int = 0
         self._z: int = 0
@@ -655,7 +655,7 @@ class ChunkContainer(MutableMapping[ChunkKey, WidgetChunkData]):
     def _dist(self, k: ChunkKey) -> int:
         return -abs(k[1] - self._x) - abs(k[2] - self._z)
 
-    def __setitem__(self, k: ChunkKey, v: WidgetChunkData) -> None:
+    def __setitem__(self, k: ChunkKey, v: ChunkData) -> None:
         if k not in self._chunks:
             self._order.insert(
                 bisect.bisect_left(self._order, self._dist(k), key=self._dist), k
@@ -666,7 +666,7 @@ class ChunkContainer(MutableMapping[ChunkKey, WidgetChunkData]):
         del self._chunks[v]
         self._order.remove(v)
 
-    def __getitem__(self, k: ChunkKey) -> WidgetChunkData:
+    def __getitem__(self, k: ChunkKey) -> ChunkData:
         return self._chunks[k]
 
     def __len__(self) -> int:
@@ -717,7 +717,7 @@ class LevelGeometry(QObject, Drawable):
     _surface: QOffscreenSurface
     _gl_data_: LevelGeometryGLData | None
     _chunks: ChunkContainer
-    _pending_chunks: dict[ChunkKey, WidgetChunkData]
+    _pending_chunks: dict[ChunkKey, ChunkData]
 
     # The geometry has changed and needs repainting.
     geometry_changed = Signal()
@@ -1039,7 +1039,7 @@ class LevelGeometry(QObject, Drawable):
 
     _queue_chunk = Signal()
 
-    def _create_vao(self, chunk: WidgetChunkData, signal: bool = True) -> None:
+    def _create_vao(self, chunk: ChunkData, signal: bool = True) -> None:
         gl_data = self._gl_data_
         if gl_data is None or not gl_data.context.makeCurrent(self._surface):
             raise ContextException("Could not make context current.")
@@ -1105,7 +1105,7 @@ class LevelGeometry(QObject, Drawable):
                     break
 
             shared_chunk_data = self._shared.get_chunk(chunk_key)
-            widget_chunk_data = WidgetChunkData(shared_chunk_data)
+            widget_chunk_data = ChunkData(shared_chunk_data)
             shared_geometry = shared_chunk_data.geometry
 
             if shared_geometry is None:
