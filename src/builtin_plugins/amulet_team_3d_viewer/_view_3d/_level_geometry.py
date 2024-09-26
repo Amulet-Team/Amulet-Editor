@@ -6,7 +6,9 @@ from threading import Lock
 from weakref import WeakKeyDictionary, WeakValueDictionary, ref
 from collections.abc import MutableMapping
 import bisect
+import itertools
 import numpy
+import numpy.typing
 
 from PySide6.QtCore import QThread, Signal, QObject, Slot, QTimer, QCoreApplication
 from PySide6.QtGui import QMatrix4x4, QOpenGLContext, QOffscreenSurface
@@ -37,6 +39,7 @@ from amulet.level.abc import Level
 from amulet.errors import ChunkLoadError, ChunkDoesNotExist
 from amulet.chunk import Chunk
 from amulet.chunk_components import BlockComponent
+from amulet.selection import SelectionGroup
 
 import thread_manager
 
@@ -258,30 +261,40 @@ class ChunkGeneratorWorker(QObject):
 
             resource_pack = resource_pack_container.resource_pack
 
-            dimension, cx, cz = chunk_key
+            dimension_id, cx, cz = chunk_key
+            dimension = level.get_dimension(dimension_id)
 
             buffer = b""
             try:
-                chunk_handle = level.get_dimension(dimension).get_chunk_handle(cx, cz)
-                chunk = chunk_handle.get([BlockComponent.ComponentID])
+                chunk = dimension.get_chunk_handle(cx, cz).get([BlockComponent.ComponentID])
             except ChunkDoesNotExist:
                 # TODO: Add void geometry
-                pass
+                log.debug(f"Chunk {chunk_key} does not exist")
+                buffer = self._get_empty_geometry(
+                    dimension.bounds(),
+                    resource_pack, cx, cz
+                )
             except ChunkLoadError:
                 # TODO: Add error geometry
                 log.exception(f"Error loading chunk {chunk_key}", exc_info=True)
-                pass
+                buffer = self._get_error_geometry(
+                    dimension.bounds(),
+                    resource_pack, cx, cz
+                )
                 # self._create_error_geometry()
             else:
-                chunk_verts, chunk_verts_translucent = create_lod0_chunk(
-                    resource_pack,
-                    numpy.zeros(3, dtype=numpy.int32),
-                    self._sub_chunks(level, dimension, cx, cz, chunk),
-                    chunk.block_palette,
-                )
-                verts = chunk_verts + chunk_verts_translucent
-                if verts:
-                    buffer = numpy.concatenate(verts).tobytes()
+                if isinstance(chunk, BlockComponent):
+                    log.debug(f"Creating geometry for chunk {chunk_key}")
+                    # chunk_verts, chunk_verts_translucent = create_lod0_chunk(
+                    #     resource_pack,
+                    #     self._sub_chunks(level, dimension, cx, cz, chunk),
+                    #     chunk.block.palette,
+                    # )
+                    # verts = chunk_verts + chunk_verts_translucent
+                    # if verts:
+                    #     buffer = numpy.concatenate(verts).tobytes()
+                else:
+                    log.debug(f"Chunk {chunk_key} does not implement BlockComponent.")
 
             log.debug(f"Generated array for {chunk_key}")
 
@@ -290,12 +303,12 @@ class ChunkGeneratorWorker(QObject):
             vertex_count = len(buffer) // (12 * FloatSize)
 
             chunk_data.geometry = SharedChunkGeometry(vbo, vertex_count, resource_pack)
-            # When the container gets garbage collected, destroy the vbo
 
             def destroy_vbo() -> None:
                 with CatchException():
                     vbo_manager.destroy_vbo(vbo)
 
+            # When the container gets garbage collected, destroy the vbo
             chunk_data.geometry.destroyed.connect(destroy_vbo)
             chunk_data.geometry_changed.emit()
 
@@ -366,6 +379,107 @@ class ChunkGeneratorWorker(QObject):
                 larger_blocks[1:-1, -1, 1:-1] = sections[cy + 1][:, 0, :]
             sub_chunks.append((larger_blocks, cy * 16))
         return sub_chunks
+
+    def _create_chunk_plane(
+        self, height: float
+    ) -> tuple[numpy.ndarray, numpy.ndarray]:
+        box = numpy.array([(0, height, 0), (16, height, 16)])
+        _box_coordinates = numpy.array(list(itertools.product(*box.T.tolist())))
+        _cube_face_lut = numpy.array(
+            [  # This maps to the verticies used (defined in cube_vert_lut)
+                0,
+                4,
+                5,
+                1,
+                3,
+                7,
+                6,
+                2,
+            ]
+        )
+        box = box.ravel()
+        _texture_index = numpy.array([0, 2, 3, 5, 0, 2, 3, 5], numpy.uint32)
+        _uv_slice = numpy.array(
+            [0, 1, 2, 1, 2, 3, 0, 3] * 2, dtype=numpy.uint32
+        ).reshape((-1, 8)) + numpy.arange(0, 8, 4).reshape((-1, 1))
+
+        _tri_face = numpy.array([0, 1, 2, 0, 2, 3] * 2, numpy.uint32).reshape(
+            (-1, 6)
+        ) + numpy.arange(0, 8, 4).reshape((-1, 1))
+        return (
+            _box_coordinates[_cube_face_lut[_tri_face]].reshape((-1, 3)),
+            box[_texture_index[_uv_slice]]
+            .reshape(-1, 2)[_tri_face, :]
+            .reshape((-1, 2)),
+        )
+
+    def _create_grid(
+        self,
+        level_bounds: SelectionGroup,
+        resource_pack: OpenGLResourcePack,
+        texture_namespace: str,
+        texture_path: str,
+        draw_floor: bool,
+        draw_ceil: bool,
+        tint: tuple[float, float, float],
+    ) -> numpy.typing.NDArray[numpy.float32]:
+        vert_len = 12
+        plane: numpy.ndarray = numpy.ones(
+            (vert_len * 12 * (draw_floor + draw_ceil)),
+            dtype=numpy.float32,
+        ).reshape((-1, vert_len))
+        if draw_floor:
+            plane[:12, :3], plane[:12, 3:5] = self._create_chunk_plane(
+                level_bounds.min_y - 0.01
+            )
+            if draw_ceil:
+                plane[12:, :3], plane[12:, 3:5] = self._create_chunk_plane(
+                    level_bounds.max_y + 0.01
+                )
+        elif draw_ceil:
+            plane[:12, :3], plane[:12, 3:5] = self._create_chunk_plane(
+                level_bounds.max_y + 0.01
+            )
+
+        plane[:, 5:9] = resource_pack.texture_bounds(
+            resource_pack.get_texture_path(texture_namespace, texture_path)
+        )
+        plane[:, 9:12] = tint
+        return plane
+
+    def _get_empty_geometry(
+        self,
+        level_bounds: SelectionGroup,
+        resource_pack: OpenGLResourcePack,
+        cx: int,
+        cz: int
+    ) -> bytes:
+        return self._create_grid(
+            level_bounds,
+            resource_pack,
+            "amulet",
+            "amulet_ui/chunk_grid_null",
+            True,
+            True,
+            (1, 1, 1) if (cx + cz) % 2 else (0.8, 0.8, 0.8),
+        ).ravel().tobytes()
+
+    def _get_error_geometry(
+        self,
+        level_bounds: SelectionGroup,
+        resource_pack: OpenGLResourcePack,
+        cx: int,
+        cz: int
+    ) -> bytes:
+        return self._create_grid(
+            level_bounds,
+            resource_pack,
+            "amulet",
+            "amulet_ui/chunk_grid_error",
+            True,
+            True,
+            (1, 1, 1) if (cx + cz) % 2 else (0.8, 0.8, 0.8),
+        ).ravel().tobytes()
 
 
 class ChunkGenerator(QObject):
