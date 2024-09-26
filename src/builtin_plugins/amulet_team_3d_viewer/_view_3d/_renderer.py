@@ -60,6 +60,7 @@ I suggest defining a functon in initGL and bind that. Make sure you don't have c
 
 
 class CanvasGlData:
+    """A container for all canvas data."""
     context_valid: bool
     data_valid: bool
     render_level: LevelGeometry
@@ -92,9 +93,10 @@ class CanvasGlData:
         if not self.context_valid or self.is_valid():
             # If the context has not been initialised or if it is already full set up then skip
             return
-        log.debug("Init context data")
+        log.debug("CanvasGlData.init_context_data start")
         self.data_valid = True
         self._init_context_data()
+        log.debug("CanvasGlData.init_context_data end")
 
     def _init_context_data(self) -> None:
         self.render_level.initializeGL()
@@ -106,22 +108,23 @@ class CanvasGlData:
         """
         if not self.is_valid():
             return
+        log.debug("CanvasGlData.destroy_context_data start")
         self.data_valid = False
-        log.debug("Destroying context data")
         self._destroy_context_data()
-        log.debug("Destroyed GL")
+        log.debug("CanvasGlData.destroy_context_data end")
 
     def _destroy_context_data(self) -> None:
         self.render_level.destroyGL()
 
     def __del__(self) -> None:
         with CatchException():
-            log.debug("__del__ GlData")
+            log.debug("CanvasGlData.__del__")
             if self.data_valid:
                 raise RuntimeError("Context data was not destroyed.")
 
 
 class FirstPersonCanvas(QOpenGLWidget, QOpenGLFunctions):
+    """An OpenGL canvas implementing basic controls and rendering."""
     background_colour = (0.61, 0.70, 0.85)
 
     _start_pos: QPoint
@@ -132,6 +135,7 @@ class FirstPersonCanvas(QOpenGLWidget, QOpenGLFunctions):
     _gl_data: CanvasGlData
 
     def __init__(self, parent: QWidget | None = None) -> None:
+        log.debug("FirstPersonCanvas.__init__ start")
         QOpenGLWidget.__init__(self, parent)
         QOpenGLFunctions.__init__(self)
 
@@ -142,6 +146,7 @@ class FirstPersonCanvas(QOpenGLWidget, QOpenGLFunctions):
             )
         self._level = level
         self._gl_data = CanvasGlData(LevelGeometry(self._level))
+        # Repaint every time the geometry changes
         self._gl_data.render_level.geometry_changed.connect(self.update)
 
         self._camera = Camera()
@@ -186,20 +191,21 @@ class FirstPersonCanvas(QOpenGLWidget, QOpenGLFunctions):
             )
         )
         self._resource_pack_container.init()
+        log.debug("FirstPersonCanvas.__init__ end")
 
     def initializeGL(self) -> None:
         """Private initialisation method called by the QOpenGLWidget"""
         # You must only put calls that do not need destructing here.
         # Normal initialisation must go in the showEvent and destruction in the hideEvent
         with CatchException():
-            log.debug(f"Initialising GL for {self}")
+            log.debug("FirstPersonCanvas.initializeGL start")
             gl_data = self._gl_data
             gl_data.init_context()
 
             def destroy_context() -> None:
                 nonlocal gl_data  # This is required for gl_data to be garbage collected
                 with CatchException():
-                    log.debug("Context aboutToBeDestroyed")
+                    log.debug("FirstPersonCanvas.context.aboutToBeDestroyed")
                     gl_data.destroy_context()
 
             # This doesn't work if bound to a method. It must be a function
@@ -215,9 +221,10 @@ class FirstPersonCanvas(QOpenGLWidget, QOpenGLFunctions):
             # Set the start position after OpenGL has been initialised
             gl_data.render_level.set_dimension(next(iter(self._level.dimension_ids())))
             self.camera.location = Location(0, 0, 0)
+            log.debug("FirstPersonCanvas.initializeGL end")
 
     def __del__(self) -> None:
-        log.debug("__del__ FirstPersonCanvas")
+        log.debug("FirstPersonCanvas.__del__")
 
     @property
     def camera(self) -> Camera:
@@ -225,21 +232,24 @@ class FirstPersonCanvas(QOpenGLWidget, QOpenGLFunctions):
 
     def showEvent(self, event: QShowEvent) -> None:
         with CatchException():
-            log.debug("show")
+            log.debug("FirstPersonCanvas.showEvent start")
             self.makeCurrent()
             self._gl_data.init_context_data()
             self.doneCurrent()
+            log.debug("FirstPersonCanvas.showEvent end")
 
     def hideEvent(self, event: QHideEvent) -> None:
         with CatchException():
-            log.debug("hide")
+            log.debug("FirstPersonCanvas.hideEvent start")
             self.makeCurrent()
             self._gl_data.destroy_context_data()
             self.doneCurrent()
+            log.debug("FirstPersonCanvas.hideEvent end")
 
     def paintGL(self) -> None:
         """Private paint method called by the QOpenGLWidget"""
         with CatchException():
+            log.debug("FirstPersonCanvas.paintGL start")
             if (
                 not self._gl_data.is_valid()
                 or not self.isVisible()
@@ -256,9 +266,11 @@ class FirstPersonCanvas(QOpenGLWidget, QOpenGLFunctions):
             self._gl_data.render_level.paintGL(
                 self.camera.intrinsic_matrix, self.camera.extrinsic_matrix
             )
+            log.debug("FirstPersonCanvas.paintGL end")
 
     def resizeGL(self, width: float, height: float) -> None:
         """Private resize method called by the QOpenGLWidget"""
+        log.debug("FirstPersonCanvas.resizeGL")
         self.camera.set_perspective_projection(45, width / height, 0.01, 10_000)
 
     def mousePressEvent(self, event: QMouseEvent) -> None:

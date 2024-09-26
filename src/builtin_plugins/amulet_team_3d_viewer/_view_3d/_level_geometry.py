@@ -723,6 +723,7 @@ class LevelGeometry(QObject, Drawable):
     geometry_changed = Signal()
 
     def __init__(self, level: Level) -> None:
+        log.debug("LevelGeometry.__init__ start")
         super().__init__()
         self._shared = SharedLevelGeometry.instance(level)
 
@@ -740,6 +741,7 @@ class LevelGeometry(QObject, Drawable):
         self._pending_chunks = {}
 
         self._queue_chunk.connect(self._process_chunk)
+        log.debug("LevelGeometry.__init__ end")
 
     @property
     def _gl_data(self) -> LevelGeometryGLData:
@@ -753,6 +755,7 @@ class LevelGeometry(QObject, Drawable):
         The widget context must be current before calling this.
         This must only be called from the QOpenGLWidget that this instance is associated with.
         """
+        log.debug("LevelGeometry.initializeGL start")
         context = QOpenGLContext.currentContext()
         if not QOpenGLContext.areSharing(context, QOpenGLContext.globalShareContext()):
             raise ContextException(
@@ -829,6 +832,7 @@ class LevelGeometry(QObject, Drawable):
         )
         self._init_geometry_no_context()
         self._update_chunk_finder()
+        log.debug("LevelGeometry.initializeGL end")
 
     def destroyGL(self) -> None:
         """
@@ -838,11 +842,13 @@ class LevelGeometry(QObject, Drawable):
         The caller must activate the context.
         """
         with CatchException():
+            log.debug("LevelGeometry.destroyGL start")
             self._gl_data_ = None
             self._destroy_geometry_no_context()
+            log.debug("LevelGeometry.destroyGL end")
 
     def __del__(self) -> None:
-        log.debug("__del__ WidgetLevelGeometry")
+        log.debug("LevelGeometry.__del__")
 
     def paintGL(self, projection_matrix: QMatrix4x4, view_matrix: QMatrix4x4) -> None:
         """
@@ -852,6 +858,7 @@ class LevelGeometry(QObject, Drawable):
         :param projection_matrix: The camera internal projection matrix.
         :param view_matrix: The camera external matrix.
         """
+        log.debug("LevelGeometry.paintGL start")
         gl_data = self._gl_data_
         if gl_data is None:
             return
@@ -887,6 +894,7 @@ class LevelGeometry(QObject, Drawable):
             vao.release()
 
         gl_data.program.release()
+        log.debug("LevelGeometry.paintGL end")
 
     def _update_chunk_finder(self) -> None:
         if self._dimension is None or self._camera_chunk is None:
