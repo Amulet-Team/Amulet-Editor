@@ -59,7 +59,7 @@ I suggest defining a functon in initGL and bind that. Make sure you don't have c
 """
 
 
-class GlData:
+class CanvasGlData:
     context_valid: bool
     data_valid: bool
     render_level: LevelGeometry
@@ -129,7 +129,7 @@ class FirstPersonCanvas(QOpenGLWidget, QOpenGLFunctions):
     # All the OpenGL data owned by this context must be stored in this instance.
     # This allows the destructor to have access to the data without needing a pointer to self.
     # Having a pointer to self would stop self being garbage collected.
-    _gl_data: GlData
+    _gl_data: CanvasGlData
 
     def __init__(self, parent: QWidget | None = None) -> None:
         QOpenGLWidget.__init__(self, parent)
