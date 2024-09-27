@@ -23,7 +23,7 @@ from amulet_team_main_window import (
 )
 
 import amulet_team_home_page
-from .home import HomeWidget
+from ._widget import HomeWidget
 
 
 # Qt only weekly references this. We must hold a strong reference to stop it getting garbage collected
