@@ -75,6 +75,10 @@ class MissingWidget(TabWidget):
         self.setLayout(layout_)
 
     @property
+    def qual_name(self) -> str:
+        return self._qualname
+
+    @property
     def name(self) -> str:
         # TODO: convert this to a translation key
         return self._qualname
