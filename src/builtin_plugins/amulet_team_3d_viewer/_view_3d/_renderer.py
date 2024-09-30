@@ -61,6 +61,7 @@ I suggest defining a functon in initGL and bind that. Make sure you don't have c
 
 class CanvasGlData:
     """A container for all canvas data."""
+
     context_valid: bool
     data_valid: bool
     render_level: LevelGeometry
@@ -125,6 +126,7 @@ class CanvasGlData:
 
 class FirstPersonCanvas(QOpenGLWidget, QOpenGLFunctions):
     """An OpenGL canvas implementing basic controls and rendering."""
+
     background_colour = (0.61, 0.70, 0.85)
 
     _start_pos: QPoint

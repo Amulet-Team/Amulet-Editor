@@ -193,12 +193,17 @@ def create_layout_button(layout_id: str) -> ButtonProxy:
         return ButtonProxy(button)
 
 
-def _populate_widgets_of_type(view_container: RecursiveSplitter, widget_cls: type[TabWidget]) -> None:
+def _populate_widgets_of_type(
+    view_container: RecursiveSplitter, widget_cls: type[TabWidget]
+) -> None:
     for child in view_container.children():
         if isinstance(child, AbstractStackedTabWidget):
             for i in range(child.count()):
                 widget = child.get_page(i)
-                if isinstance(widget, MissingWidget) and widget.qual_name == widget_cls.__qualname__:
+                if (
+                    isinstance(widget, MissingWidget)
+                    and widget.qual_name == widget_cls.__qualname__
+                ):
                     child.remove_page(i)
                     widget.deleteLater()
                     child.add_page(widget_cls())
@@ -219,7 +224,9 @@ def populate_widgets(widget_cls: type[TabWidget]) -> None:
         _populate_widgets_of_type(sub_window.view_container, widget_cls)
 
 
-def _remove_widgets_of_type(view_container: RecursiveSplitter, widget_cls: type[TabWidget]) -> None:
+def _remove_widgets_of_type(
+    view_container: RecursiveSplitter, widget_cls: type[TabWidget]
+) -> None:
     for child in view_container.children():
         if isinstance(child, AbstractStackedTabWidget):
             for i in range(child.count()):

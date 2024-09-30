@@ -117,6 +117,7 @@ class AmuletMainWindow(Ui_AmuletMainWindow):
 class DeletedType(Enum):
     Deleted = 1
 
+
 Deleted = DeletedType.Deleted
 
 
