@@ -43,7 +43,6 @@ from amulet.selection import SelectionGroup
 
 import thread_manager
 
-from ._drawable import Drawable
 from ._resource_pack import (
     OpenGLResourcePack,
     get_gl_resource_pack_container,
@@ -695,7 +694,7 @@ class LevelGeometryGLData:
         self.texture_location = texture_location
 
 
-class LevelGeometry(QObject, Drawable):
+class LevelGeometry(QObject):
     """
     A class holding the level geometry data relating to one widget.
     This holds all non-shared data and references to the shared data.
