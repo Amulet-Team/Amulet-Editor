@@ -1,6 +1,7 @@
 from __future__ import annotations
 from typing import TypeAlias
 from threading import Lock
+from enum import Enum
 
 from PySide6.QtGui import QShortcut
 from PySide6.QtCore import Qt
@@ -113,9 +114,15 @@ class AmuletMainWindow(Ui_AmuletMainWindow):
         return old_view_container
 
 
+class DeletedType(Enum):
+    Deleted = 1
+
+Deleted = DeletedType.Deleted
+
+
 # The lock must be acquired before reading/writing the objects below.
 _lock = Lock()
-_main_window: AmuletMainWindow | None = None
+_main_window: None | AmuletMainWindow | DeletedType = None
 
 
 def get_main_window() -> AmuletMainWindow:
@@ -125,4 +132,14 @@ def get_main_window() -> AmuletMainWindow:
     with _lock:
         if _main_window is None:
             _main_window = AmuletMainWindow()
+        elif isinstance(_main_window, DeletedType):
+            raise RuntimeError("AmuletMainWindow has been deleted.")
         return _main_window
+
+
+def destroy_main_window() -> None:
+    global _main_window
+    with _lock:
+        if isinstance(_main_window, AmuletMainWindow):
+            _main_window.deleteLater()
+            _main_window = Deleted
