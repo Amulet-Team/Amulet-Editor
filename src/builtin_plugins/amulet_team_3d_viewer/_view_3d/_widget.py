@@ -7,7 +7,7 @@ from PySide6.QtWidgets import QWidget, QVBoxLayout
 
 from amulet_team_main_window import TabWidget
 
-from ._renderer import FirstPersonCanvas
+from ._canvas import FirstPersonCanvas
 
 
 class View3D(TabWidget):

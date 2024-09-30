@@ -221,7 +221,8 @@ class FirstPersonCanvas(QOpenGLWidget, QOpenGLFunctions):
             gl_data.init_context_data()
             # TODO: pull this data from somewhere
             # Set the start position after OpenGL has been initialised
-            gl_data.render_level.set_dimension(next(iter(self._level.dimension_ids())))
+            # gl_data.render_level.set_dimension(next(iter(self._level.dimension_ids())))
+            gl_data.render_level.set_dimension("minecraft:overworld")
             self.camera.location = Location(0, 0, 0)
             log.debug("FirstPersonCanvas.initializeGL end")
 

@@ -1,1 +1,1 @@
-from ._view import View3D
+from ._widget import View3D
