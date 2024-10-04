@@ -16,7 +16,7 @@ PYBIND11_MODULE(_chunk_builder, m) {
 	m.def(
 		"create_lod0_chunk",
 		[](
-			Amulet::pybind11::type_hints::PyObjectStr<"amulet_team_3d_viewer._view_3d._resource_pack"> resource_pack,
+			Amulet::pybind11::type_hints::PyObjectStr<"amulet_team_3d_viewer._view_3d._resource_pack.OpenGLResourcePack"> resource_pack,
 			std::shared_ptr<Amulet::IndexArray3D> arr,
 			std::shared_ptr<Amulet::BlockPalette> palette
 		) {

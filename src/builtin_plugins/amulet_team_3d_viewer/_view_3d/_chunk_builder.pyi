@@ -7,7 +7,7 @@ import amulet_team_3d_viewer._view_3d
 __all__ = ["create_lod0_chunk"]
 
 def create_lod0_chunk(
-    arg0: amulet_team_3d_viewer._view_3d._resource_pack,
+    arg0: amulet_team_3d_viewer._view_3d._resource_pack.OpenGLResourcePack,
     arg1: amulet.chunk_components.IndexArray3D,
     arg2: amulet.palette.block_palette.BlockPalette,
 ) -> None: ...
