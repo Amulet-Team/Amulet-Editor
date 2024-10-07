@@ -184,7 +184,8 @@ class LevelGeometryGLData:
         log.debug("LevelGeometryGLData.__del__")
 
 
-MaxThreadCount = QThread.idealThreadCount() * 4
+# MaxThreadCount = QThread.idealThreadCount() * 4
+MaxThreadCount = 4
 
 
 class LevelGeometry(QObject):
