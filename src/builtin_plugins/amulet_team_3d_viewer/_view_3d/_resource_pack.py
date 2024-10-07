@@ -225,7 +225,7 @@ class OpenGLResourcePack:
         return self._block_models[block_stack]
 
 
-class RenderResourcePackContainer(QObject):
+class OpenGLResourcePackHandle(QObject):
     # Emitted with a promise object when a resource pack change is started.
     changing = Signal(object)  # Promise[None]
     # Emitted when the resource pack has changed.
@@ -299,11 +299,11 @@ class RenderResourcePackContainer(QObject):
 
 
 _lock = Lock()
-_level_data: WeakKeyDictionary[Level, RenderResourcePackContainer] = WeakKeyDictionary()
+_level_data: WeakKeyDictionary[Level, OpenGLResourcePackHandle] = WeakKeyDictionary()
 
 
-def get_gl_resource_pack_container(level: Level) -> RenderResourcePackContainer:
+def get_gl_resource_pack_container(level: Level) -> OpenGLResourcePackHandle:
     with _lock:
         if level not in _level_data:
-            _level_data[level] = invoke(lambda: RenderResourcePackContainer(level))
+            _level_data[level] = invoke(lambda: OpenGLResourcePackHandle(level))
         return _level_data[level]
