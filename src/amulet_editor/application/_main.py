@@ -146,7 +146,7 @@ def app_main() -> None:
                 _level.level = level = get_level(level_path)
                 level.open()
 
-    rpc.init_rpc(is_broker)
+    # rpc.init_rpc(is_broker)
 
     log.debug("Entering main loop.")
     exit_code = app.exec()
