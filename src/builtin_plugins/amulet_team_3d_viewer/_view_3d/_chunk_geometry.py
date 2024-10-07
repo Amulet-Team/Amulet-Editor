@@ -9,6 +9,7 @@ from ._resource_pack import OpenGLResourcePack
 
 class ChunkGLData:
     """Class storing all the OpenGL data for a chunk mesh."""
+
     _resource_pack: OpenGLResourcePack
     texture: QOpenGLTexture
     vbo: QOpenGLBuffer
@@ -20,7 +21,7 @@ class ChunkGLData:
         resource_pack: OpenGLResourcePack,
         vbo: QOpenGLBuffer,
         vertex_count: int,
-        vao: QOpenGLVertexArrayObject
+        vao: QOpenGLVertexArrayObject,
     ):
         super().__init__()
         self._resource_pack = resource_pack
@@ -68,7 +69,9 @@ class ChunkData:
         with self._lock:
             self.chunk_state += 1
 
-    def set_geometry(self, geometry_state: int, geometry: ChunkGLData) -> ChunkGLData | None:
+    def set_geometry(
+        self, geometry_state: int, geometry: ChunkGLData
+    ) -> ChunkGLData | None:
         """
         Set the geometry and update the geometry state.
         Returns the old geometry data. The caller must destroy this.

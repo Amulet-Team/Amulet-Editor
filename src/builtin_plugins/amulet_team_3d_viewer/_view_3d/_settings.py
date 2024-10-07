@@ -25,4 +25,5 @@ class RenderSettings(QObject):
         self._chunk_unload_distance = unload_distance
         self.render_distance_changed.emit()
 
+
 render_settings = RenderSettings()

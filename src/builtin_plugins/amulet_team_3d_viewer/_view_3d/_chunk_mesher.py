@@ -89,6 +89,7 @@ def _get_sub_chunks(
         sub_chunks.append((larger_blocks, cy * 16))
     return sub_chunks
 
+
 def _create_chunk_plane(height: float) -> tuple[numpy.ndarray, numpy.ndarray]:
     box = numpy.array([(0, height, 0), (16, height, 16)])
     _box_coordinates = numpy.array(list(itertools.product(*box.T.tolist())))
@@ -106,19 +107,18 @@ def _create_chunk_plane(height: float) -> tuple[numpy.ndarray, numpy.ndarray]:
     )
     box = box.ravel()
     _texture_index = numpy.array([0, 2, 3, 5, 0, 2, 3, 5], numpy.uint32)
-    _uv_slice = numpy.array(
-        [0, 1, 2, 1, 2, 3, 0, 3] * 2, dtype=numpy.uint32
-    ).reshape((-1, 8)) + numpy.arange(0, 8, 4).reshape((-1, 1))
+    _uv_slice = numpy.array([0, 1, 2, 1, 2, 3, 0, 3] * 2, dtype=numpy.uint32).reshape(
+        (-1, 8)
+    ) + numpy.arange(0, 8, 4).reshape((-1, 1))
 
     _tri_face = numpy.array([0, 1, 2, 0, 2, 3] * 2, numpy.uint32).reshape(
         (-1, 6)
     ) + numpy.arange(0, 8, 4).reshape((-1, 1))
     return (
         _box_coordinates[_cube_face_lut[_tri_face]].reshape((-1, 3)),
-        box[_texture_index[_uv_slice]]
-        .reshape(-1, 2)[_tri_face, :]
-        .reshape((-1, 2)),
+        box[_texture_index[_uv_slice]].reshape(-1, 2)[_tri_face, :].reshape((-1, 2)),
     )
+
 
 def _create_grid(
     level_bounds: SelectionGroup,
@@ -135,23 +135,20 @@ def _create_grid(
         dtype=numpy.float32,
     ).reshape((-1, vert_len))
     if draw_floor:
-        plane[:12, :3], plane[:12, 3:5] = _create_chunk_plane(
-            level_bounds.min_y - 0.01
-        )
+        plane[:12, :3], plane[:12, 3:5] = _create_chunk_plane(level_bounds.min_y - 0.01)
         if draw_ceil:
             plane[12:, :3], plane[12:, 3:5] = _create_chunk_plane(
                 level_bounds.max_y + 0.01
             )
     elif draw_ceil:
-        plane[:12, :3], plane[:12, 3:5] = _create_chunk_plane(
-            level_bounds.max_y + 0.01
-        )
+        plane[:12, :3], plane[:12, 3:5] = _create_chunk_plane(level_bounds.max_y + 0.01)
 
     plane[:, 5:9] = resource_pack.texture_bounds(
         resource_pack.get_texture_path(texture_namespace, texture_path)
     )
     plane[:, 9:12] = tint
     return plane
+
 
 def _get_empty_geometry(
     level_bounds: SelectionGroup,
@@ -174,6 +171,7 @@ def _get_empty_geometry(
         .tobytes()
     )
 
+
 def _get_error_geometry(
     level_bounds: SelectionGroup,
     resource_pack: OpenGLResourcePack,
@@ -194,6 +192,7 @@ def _get_error_geometry(
         .ravel()
         .tobytes()
     )
+
 
 def _get_temp_geometry(
     level_bounds: SelectionGroup,
@@ -230,21 +229,17 @@ def mesh_chunk(
 
         buffer = b""
         try:
-            chunk = dimension.get_chunk_handle(cx, cz).get(
-                [BlockComponent.ComponentID]
-            )
+            chunk = dimension.get_chunk_handle(cx, cz).get([BlockComponent.ComponentID])
         except ChunkDoesNotExist:
             # TODO: Add void geometry
             log.debug(f"Chunk {dimension_id}, {cx}, {cz} does not exist")
-            buffer = _get_empty_geometry(
-                dimension.bounds(), resource_pack, cx, cz
-            )
+            buffer = _get_empty_geometry(dimension.bounds(), resource_pack, cx, cz)
         except ChunkLoadError:
             # TODO: Add error geometry
-            log.exception(f"Error loading chunk {dimension_id}, {cx}, {cz}", exc_info=True)
-            buffer = _get_error_geometry(
-                dimension.bounds(), resource_pack, cx, cz
+            log.exception(
+                f"Error loading chunk {dimension_id}, {cx}, {cz}", exc_info=True
             )
+            buffer = _get_error_geometry(dimension.bounds(), resource_pack, cx, cz)
             # create_error_geometry()
         else:
             if isinstance(chunk, BlockComponent):
@@ -258,10 +253,10 @@ def mesh_chunk(
                 # if verts:
                 #     buffer = numpy.concatenate(verts).tobytes()
             else:
-                log.debug(f"Chunk {dimension_id}, {cx}, {cz} does not implement BlockComponent.")
-            buffer = _get_temp_geometry(
-                dimension.bounds(), resource_pack, cx, cz
-            )
+                log.debug(
+                    f"Chunk {dimension_id}, {cx}, {cz} does not implement BlockComponent."
+                )
+            buffer = _get_temp_geometry(dimension.bounds(), resource_pack, cx, cz)
 
         log.debug(f"Generated array for {dimension_id}, {cx}, {cz}")
 

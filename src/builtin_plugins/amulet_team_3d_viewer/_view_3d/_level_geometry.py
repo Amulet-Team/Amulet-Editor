@@ -9,7 +9,12 @@ import ctypes
 from shiboken6 import VoidPtr
 from PySide6.QtCore import QObject, Signal, QThreadPool, QThread
 from PySide6.QtGui import QMatrix4x4, QOpenGLContext, QOffscreenSurface
-from PySide6.QtOpenGL import QOpenGLShaderProgram, QOpenGLShader, QOpenGLVertexArrayObject, QOpenGLBuffer
+from PySide6.QtOpenGL import (
+    QOpenGLShaderProgram,
+    QOpenGLShader,
+    QOpenGLVertexArrayObject,
+    QOpenGLBuffer,
+)
 
 from OpenGL.constant import IntConstant
 from OpenGL.GL import (
@@ -28,7 +33,10 @@ from OpenGL.GL import (
 from amulet.data_types import DimensionId
 from amulet.level.abc import Level
 
-from amulet_editor.models.widgets.traceback_dialog import DisplayException, display_exception
+from amulet_editor.models.widgets.traceback_dialog import (
+    DisplayException,
+    display_exception,
+)
 from ._settings import render_settings
 from ._chunk_mesher import mesh_chunk
 from ._resource_pack import OpenGLResourcePack, get_gl_resource_pack_container
@@ -73,6 +81,7 @@ class Thread(QThread):
 
 class ChunkContainer(MutableMapping[ChunkKey, ChunkData]):
     """A container which orders chunks based on distance from the camera."""
+
     def __init__(self) -> None:
         self._chunks: dict[ChunkKey, ChunkData] = {}
         self._order: list[ChunkKey] = []
@@ -144,6 +153,7 @@ class LevelGeometryGLData:
     All data that only exists after OpenGL initialisation.
     This is grouped together so there is only one "is not None" check.
     """
+
     # Immutable data
     context: QOpenGLContext
     program: QOpenGLShaderProgram
@@ -182,6 +192,7 @@ class LevelGeometry(QObject):
     A class to render a level.
     This must exist on the main thread.
     """
+
     _dimension: DimensionId | None
     _camera_chunk: tuple[int, int] | None
     _chunk_finder: Iterator[ChunkKey]
@@ -204,7 +215,7 @@ class LevelGeometry(QObject):
     _init_chunk_gl_signal = Signal(
         LevelGeometryGLData,
         OpenGLResourcePack,
-        tuple, # ChunkKey,
+        tuple,  # ChunkKey,
         ChunkData,
         int,
         bytes,
@@ -543,7 +554,10 @@ class LevelGeometry(QObject):
 
             # The resource pack may initially be None. Wait until it is loaded.
             with self._lock:
-                while not QThread.currentThread().isInterruptionRequested() and not self._resource_pack_holder.loaded:
+                while (
+                    not QThread.currentThread().isInterruptionRequested()
+                    and not self._resource_pack_holder.loaded
+                ):
                     self._manager_condition.wait()
 
             # The number of chunks we have processed.
@@ -553,7 +567,10 @@ class LevelGeometry(QObject):
             # Loop until thread interruption is requested.
             while not QThread.currentThread().isInterruptionRequested():
                 with self._lock:
-                    if self._worker_threads.maxThreadCount() <= self._worker_threads.activeThreadCount():
+                    if (
+                        self._worker_threads.maxThreadCount()
+                        <= self._worker_threads.activeThreadCount()
+                    ):
                         # All the threads in the pool are running. Sleep until woken.
                         self._manager_condition.wait()
                         continue
@@ -591,8 +608,10 @@ class LevelGeometry(QObject):
                         transform = QMatrix4x4()
                         transform.translate(cx * 16, 0, cz * 16)
                         chunk_data = ChunkData(
-                            self._level.get_dimension(dimension).get_chunk_handle(cx, cz),
-                            transform
+                            self._level.get_dimension(dimension).get_chunk_handle(
+                                cx, cz
+                            ),
+                            transform,
                         )
                         gl_data.chunks[chunk_key] = chunk_data
                     # Add the chunk meshing job.
@@ -611,7 +630,9 @@ class LevelGeometry(QObject):
         chunk_data: ChunkData,
     ) -> None:
         """Needed so that the variables in the lambda don't change."""
-        self._worker_threads.start(lambda: self._chunk_mesher(chunk_key, level_gl_data, chunk_data))
+        self._worker_threads.start(
+            lambda: self._chunk_mesher(chunk_key, level_gl_data, chunk_data)
+        )
 
     def _chunk_mesher(
         self,
@@ -631,11 +652,7 @@ class LevelGeometry(QObject):
             # Do the chunk meshing
             dimension, cx, cz = chunk_key
             buffer, vertex_count = mesh_chunk(
-                self._level,
-                resource_pack,
-                dimension,
-                cx,
-                cz
+                self._level, resource_pack, dimension, cx, cz
             )
 
         except Exception as e:
@@ -659,7 +676,7 @@ class LevelGeometry(QObject):
                 chunk_data,
                 chunk_state,
                 buffer,
-                vertex_count
+                vertex_count,
             )
 
     def _init_chunk_gl(
@@ -699,7 +716,9 @@ class LevelGeometry(QObject):
 
                 # vertex coord
                 f.glEnableVertexAttribArray(0)
-                f.glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 12 * FloatSize, VoidPtr(0))
+                f.glVertexAttribPointer(
+                    0, 3, GL_FLOAT, GL_FALSE, 12 * FloatSize, VoidPtr(0)
+                )
                 # texture coord
                 f.glEnableVertexAttribArray(1)
                 f.glVertexAttribPointer(
