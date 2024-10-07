@@ -633,6 +633,17 @@ class LevelGeometry(QObject):
             lambda: self._chunk_mesher(chunk_key, level_gl_data, chunk_data)
         )
 
+    def _finish_chunk_mesher(
+            self,
+            level_gl_data: LevelGeometryGLData,
+            chunk_key: ChunkKey
+    ) -> None:
+        with self._lock:
+            # Remove the chunk key from the processing set.
+            level_gl_data.processing_chunks.remove(chunk_key)
+            # Wake up the manager thread to submit new jobs.
+            self._wake_chunk_thread()
+
     def _chunk_mesher(
         self,
         chunk_key: ChunkKey,
@@ -655,11 +666,7 @@ class LevelGeometry(QObject):
             )
 
         except Exception as e:
-            with self._lock:
-                # Remove the chunk key from the processing set.
-                level_gl_data.processing_chunks.remove(chunk_key)
-                # Wake up the manager thread to submit new jobs.
-                self._wake_chunk_thread()
+            self._finish_chunk_mesher(level_gl_data, chunk_key)
             display_exception(
                 f"Error meshing chunk {chunk_key}.",
                 error=str(e),
@@ -758,10 +765,5 @@ class LevelGeometry(QObject):
                 traceback=traceback.format_exc(),
             )
         finally:
-            with self._lock:
-                # Remove the chunk key from the processing set.
-                level_gl_data.processing_chunks.remove(chunk_key)
-
-                # Wake up the manager thread to submit new jobs.
-                self._wake_chunk_thread()
-                log.debug(f"Finished creating OpenGL data for chunk {chunk_key}")
+            self._finish_chunk_mesher(level_gl_data, chunk_key)
+            log.debug(f"Finished creating OpenGL data for chunk {chunk_key}")
