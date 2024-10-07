@@ -23,7 +23,6 @@ from OpenGL.GL import (
     GL_COLOR_BUFFER_BIT as _GL_COLOR_BUFFER_BIT,
     GL_DEPTH_BUFFER_BIT as _GL_DEPTH_BUFFER_BIT,
     GL_DEPTH_TEST as _GL_DEPTH_TEST,
-    GL_MULTISAMPLE as _GL_MULTISAMPLE
 )
 
 from amulet_editor.data.level import get_level
@@ -49,7 +48,6 @@ def dynamic_cast(obj: Any, new_type: type[T]) -> T:
 GL_COLOR_BUFFER_BIT = dynamic_cast(_GL_COLOR_BUFFER_BIT, IntConstant)
 GL_DEPTH_BUFFER_BIT = dynamic_cast(_GL_DEPTH_BUFFER_BIT, IntConstant)
 GL_DEPTH_TEST = dynamic_cast(_GL_DEPTH_TEST, IntConstant)
-GL_MULTISAMPLE = dynamic_cast(_GL_MULTISAMPLE, IntConstant)
 
 
 """
