@@ -243,7 +243,7 @@ class LevelGeometry(QObject):
         self._manager_condition = Condition(self._lock)
 
         self._worker_threads: QThreadPool = QThreadPool()
-        self._worker_threads.setThreadPriority(QThread.Priority.LowPriority)
+        self._worker_threads.setThreadPriority(QThread.Priority.IdlePriority)
         self._worker_threads.setMaxThreadCount(MaxThreadCount)
 
         render_settings.render_distance_changed.connect(self._on_render_distance_change)
