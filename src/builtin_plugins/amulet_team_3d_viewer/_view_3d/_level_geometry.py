@@ -338,10 +338,9 @@ class LevelGeometry(QObject):
         Call this on canvas.showEvent
         """
         # Create and start the manager thread.
-        if self._manager_thread is not None:
-            raise RuntimeError("Manager thread is not None.")
-        self._manager_thread = Thread(self._chunk_thread)
-        self._manager_thread.start()
+        if self._manager_thread is None:
+            self._manager_thread = Thread(self._chunk_thread)
+            self._manager_thread.start(QThread.Priority.IdlePriority)
 
     def stop(self) -> None:
         """
@@ -350,15 +349,14 @@ class LevelGeometry(QObject):
         This must be called by the main thread.
         Call this on canvas.hideEvent
         """
-        if self._manager_thread is None:
-            raise RuntimeError("Manager thread is None.")
-        # Set the interruption flag.
-        self._manager_thread.requestInterruption()
-        # Wake the manager thread if it is sleeping.
-        self._wake_chunk_thread()
-        # Wait for the thread to finish.
-        self._manager_thread.wait()
-        self._manager_thread = None
+        if self._manager_thread is not None:
+            # Set the interruption flag.
+            self._manager_thread.requestInterruption()
+            # Wake the manager thread if it is sleeping.
+            self._wake_chunk_thread()
+            # Wait for the thread to finish.
+            self._manager_thread.wait()
+            self._manager_thread = None
 
     def destroy_gl(self) -> None:
         """
