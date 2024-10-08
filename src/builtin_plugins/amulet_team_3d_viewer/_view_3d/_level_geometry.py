@@ -159,7 +159,6 @@ class LevelGeometryGLData:
     context: QOpenGLContext
     program: QOpenGLShaderProgram
     matrix_location: int
-    texture_location: int
 
     # Mutable data. All read and writes must be done with the lock.
     # Chunk data.
@@ -172,12 +171,10 @@ class LevelGeometryGLData:
         context: QOpenGLContext,
         program: QOpenGLShaderProgram,
         matrix_location: int,
-        texture_location: int,
     ):
         self.context = context
         self.program = program
         self.matrix_location = matrix_location
-        self.texture_location = texture_location
         self.chunks = ChunkContainer()
         self.processing_chunks = set()
 
@@ -326,11 +323,13 @@ class LevelGeometry(QObject):
         program.link()
         program.bind()
         matrix_location = program.uniformLocation("transformation_matrix")
+        # Init the texture location
         texture_location = program.uniformLocation("image")
+        program.setUniformValue1i(texture_location, 0)
         program.release()
 
         self._gl_data = LevelGeometryGLData(
-            context, program, matrix_location, texture_location
+            context, program, matrix_location
         )
         log.debug("LevelGeometry.initializeGL end")
 
@@ -409,9 +408,6 @@ class LevelGeometry(QObject):
         # Bind the shader program
         program = gl_data.program
         program.bind()
-
-        # Init the texture location
-        program.setUniformValue1i(gl_data.texture_location, 0)
 
         transform = projection_matrix * view_matrix
         # Lock so that other threads can't write to chunks
