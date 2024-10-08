@@ -10,22 +10,17 @@ from ._resource_pack import OpenGLResourcePack
 class ChunkGLData:
     """Class storing all the OpenGL data for a chunk mesh."""
 
-    _resource_pack: OpenGLResourcePack
-    texture: QOpenGLTexture
     vbo: QOpenGLBuffer
     vertex_count: int
     vao: QOpenGLVertexArrayObject
 
     def __init__(
         self,
-        resource_pack: OpenGLResourcePack,
         vbo: QOpenGLBuffer,
         vertex_count: int,
         vao: QOpenGLVertexArrayObject,
     ):
         super().__init__()
-        self._resource_pack = resource_pack
-        self.texture = self._resource_pack.get_texture()
         self.vbo = vbo
         self.vertex_count = vertex_count
         self.vao = vao

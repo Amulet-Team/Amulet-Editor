@@ -14,6 +14,7 @@ from PySide6.QtOpenGL import (
     QOpenGLShader,
     QOpenGLVertexArrayObject,
     QOpenGLBuffer,
+    QOpenGLTexture,
 )
 
 from OpenGL.constant import IntConstant
@@ -215,7 +216,6 @@ class LevelGeometry(QObject):
     # Signal to call OpenGL chunk data initialisation in the main thread.
     _init_chunk_gl_signal = Signal(
         LevelGeometryGLData,
-        OpenGLResourcePack,
         tuple,  # ChunkKey,
         ChunkData,
         int,
@@ -228,6 +228,8 @@ class LevelGeometry(QObject):
         super().__init__()
         self._level = level
         self._resource_pack_holder = get_gl_resource_pack_container(level)
+        self._resource_pack: OpenGLResourcePack | None = None
+        self._texture: QOpenGLTexture | None = None
 
         self._lock = RLock()
         self._dimension = None
@@ -365,7 +367,8 @@ class LevelGeometry(QObject):
         This must be called by the main thread.
         This must be called by the context.aboutToBeDestroyed signal.
         """
-        if self._gl_data is None:
+        gl_data = self._gl_data
+        if gl_data is None:
             raise RuntimeError("gl_data is None.")
         # Cancel all pending chunk meshing jobs.
         self._worker_threads.clear()
@@ -386,12 +389,16 @@ class LevelGeometry(QObject):
         :param view_matrix: The camera external matrix.
         """
         gl_data = self._gl_data
-        if gl_data is None:
+        texture = self._texture
+        if gl_data is None or texture is None:
             return
+
         if QOpenGLContext.currentContext() is not gl_data.context:
             raise RuntimeError("Context is different.")
 
         f = QOpenGLContext.currentContext().functions()
+
+        # Set OpenGL attributes.
         f.glEnable(GL_DEPTH_TEST)
         f.glDepthFunc(GL_LEQUAL)
         f.glEnable(GL_BLEND)
@@ -399,27 +406,29 @@ class LevelGeometry(QObject):
         f.glEnable(GL_CULL_FACE)
         f.glCullFace(GL_BACK)
 
-        # Draw the geometry
-        gl_data.program.bind()
+        # Bind the shader program
+        program = gl_data.program
+        program.bind()
 
-        # Init the texture
-        gl_data.program.setUniformValue1i(gl_data.texture_location, 0)
+        # Init the texture location
+        program.setUniformValue1i(gl_data.texture_location, 0)
 
         transform = projection_matrix * view_matrix
+        # Lock so that other threads can't write to chunks
         with self._lock:
+            texture.bind(0)
             for chunk_data in gl_data.chunks.values():
                 geometry = chunk_data.geometry
                 if geometry is None:
                     continue
-                gl_data.program.setUniformValue(
+                program.setUniformValue(
                     gl_data.matrix_location, transform * chunk_data.model_transform
                 )
-                geometry.texture.bind(0)
                 geometry.vao.bind()
                 f.glDrawArrays(GL_TRIANGLES, 0, geometry.vertex_count)
                 geometry.vao.release()
 
-        gl_data.program.release()
+        program.release()
 
     def set_dimension(self, dimension: DimensionId) -> None:
         """
@@ -457,9 +466,10 @@ class LevelGeometry(QObject):
             gl_data = self._gl_data
             if gl_data is None:
                 return
-            for chunk in gl_data.chunks.values():
-                chunk.mark_changed()
+            self._clear_chunks()
             self._reset_chunk_finder()
+            self._resource_pack = self._resource_pack_holder.resource_pack
+            self._texture = self._resource_pack.get_texture()
 
     def _clear_chunks(self) -> None:
         """
@@ -654,10 +664,12 @@ class LevelGeometry(QObject):
         The chunk mesher function submitted by :meth:`_queue_chunks`
         This must be thread safe.
         """
-
         try:
             chunk_state = chunk_data.chunk_state
-            resource_pack = self._resource_pack_holder.resource_pack
+            resource_pack = self._resource_pack
+            if resource_pack is None:
+                self._finish_chunk_mesher(level_gl_data, chunk_key)
+                return
 
             # Do the chunk meshing
             dimension, cx, cz = chunk_key
@@ -677,7 +689,6 @@ class LevelGeometry(QObject):
             log.debug(f"Mesh generated for {chunk_key}")
             self._init_chunk_gl_signal.emit(
                 level_gl_data,
-                resource_pack,
                 chunk_key,
                 chunk_data,
                 chunk_state,
@@ -688,7 +699,6 @@ class LevelGeometry(QObject):
     def _init_chunk_gl(
         self,
         level_gl_data: LevelGeometryGLData,
-        resource_pack: OpenGLResourcePack,
         chunk_key: ChunkKey,
         chunk_data: ChunkData,
         chunk_state: int,
@@ -745,7 +755,6 @@ class LevelGeometry(QObject):
                 vbo.release()
 
                 geometry = ChunkGLData(
-                    resource_pack,
                     vbo,
                     vertex_count,
                     vao,
@@ -756,6 +765,7 @@ class LevelGeometry(QObject):
                     # destroy the old data.
                     old_geometry.vao.destroy()
                     old_geometry.vbo.destroy()
+
                 level_gl_data.context.doneCurrent()
                 self.geometry_changed.emit()
         except Exception as e:
