@@ -143,10 +143,9 @@ setup(
     libraries=[AmuletNBTLib, AmuletCoreLib],
     ext_modules=[
         Extension(
-            name="builtin_plugins.amulet_team_3d_viewer._view_3d._chunk_builder",
+            name="builtin_plugins.amulet_team_3d_viewer._view_3d._chunk_mesher_lod0",
             sources=[
-                "src/builtin_plugins/amulet_team_3d_viewer/_view_3d/_chunk_builder.cpp",
-                "src/builtin_plugins/amulet_team_3d_viewer/_view_3d/_chunk_builder.py.cpp",
+                "src/builtin_plugins/amulet_team_3d_viewer/_view_3d/_chunk_mesher_lod0.py.cpp",
             ],
             include_dirs=[
                 pybind11.get_include(),

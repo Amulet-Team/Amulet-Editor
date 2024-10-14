@@ -13,7 +13,7 @@ from amulet.chunk import Chunk
 from amulet.chunk_components import BlockComponent
 from amulet.selection import SelectionGroup
 
-from ._chunk_builder import create_lod0_chunk
+from ._chunk_mesher_lod0 import create_lod0_chunk
 
 if TYPE_CHECKING:
     from ._resource_pack import OpenGLResourcePack
@@ -227,36 +227,30 @@ def mesh_chunk(
             raise RuntimeError("The level has been closed.")
         dimension = level.get_dimension(dimension_id)
 
-        buffer = b""
         try:
             chunk = dimension.get_chunk_handle(cx, cz).get([BlockComponent.ComponentID])
         except ChunkDoesNotExist:
-            # TODO: Add void geometry
             log.debug(f"Chunk {dimension_id}, {cx}, {cz} does not exist")
             buffer = _get_empty_geometry(dimension.bounds(), resource_pack, cx, cz)
         except ChunkLoadError:
-            # TODO: Add error geometry
             log.exception(
                 f"Error loading chunk {dimension_id}, {cx}, {cz}", exc_info=True
             )
             buffer = _get_error_geometry(dimension.bounds(), resource_pack, cx, cz)
-            # create_error_geometry()
         else:
             if isinstance(chunk, BlockComponent):
                 log.debug(f"Creating geometry for chunk {dimension_id}, {cx}, {cz}")
-                # chunk_verts, chunk_verts_translucent = create_lod0_chunk(
-                #     resource_pack,
-                #     sub_chunks(level, dimension, cx, cz, chunk),
-                #     chunk.block.palette,
-                # )
-                # verts = chunk_verts + chunk_verts_translucent
-                # if verts:
-                #     buffer = numpy.concatenate(verts).tobytes()
+                opaque_buffer, translucent_buffer = create_lod0_chunk(
+                    resource_pack,
+                    chunk.block.sections,
+                    chunk.block.palette,
+                )
+                buffer = opaque_buffer + translucent_buffer
             else:
                 log.debug(
                     f"Chunk {dimension_id}, {cx}, {cz} does not implement BlockComponent."
                 )
-            buffer = _get_temp_geometry(dimension.bounds(), resource_pack, cx, cz)
+                buffer = b""
 
         log.debug(f"Generated array for {dimension_id}, {cx}, {cz}")
 
