@@ -328,9 +328,7 @@ class LevelGeometry(QObject):
         program.setUniformValue1i(texture_location, 0)
         program.release()
 
-        self._gl_data = LevelGeometryGLData(
-            context, program, matrix_location
-        )
+        self._gl_data = LevelGeometryGLData(context, program, matrix_location)
         log.debug("LevelGeometry.initializeGL end")
 
     def start(self) -> None:
@@ -640,9 +638,7 @@ class LevelGeometry(QObject):
         )
 
     def _finish_chunk_mesher(
-            self,
-            level_gl_data: LevelGeometryGLData,
-            chunk_key: ChunkKey
+        self, level_gl_data: LevelGeometryGLData, chunk_key: ChunkKey
     ) -> None:
         with self._lock:
             # Remove the chunk key from the processing set.
