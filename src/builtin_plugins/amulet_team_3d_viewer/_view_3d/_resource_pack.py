@@ -21,7 +21,7 @@ from amulet.level.abc import Level, DiskLevel
 from amulet.game.abc import GameVersion
 from amulet.game import get_game_version
 from amulet.mesh.block import BlockMesh
-from amulet.mesh.block.missing_block import get_missing_block
+from amulet.mesh.block import get_missing_block
 from amulet.resource_pack.abc import BaseResourcePackManager
 
 from ._textureatlas import create_atlas

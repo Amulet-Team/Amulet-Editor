@@ -121,7 +121,7 @@ def main() -> None:
     sys.argv = [
         "pybind11_stubgen",
         f"--output-dir={os.path.join(src_path, 'builtin_plugins')}",
-        "amulet_team_3d_viewer._view_3d._chunk_builder",
+        "amulet_team_3d_viewer._view_3d._chunk_mesher_lod0",
     ]
     pybind11_stubgen.main()
     # If pybind11_stubgen adds args to main
