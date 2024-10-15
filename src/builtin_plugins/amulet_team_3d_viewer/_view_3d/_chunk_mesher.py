@@ -242,6 +242,8 @@ def mesh_chunk(
                 log.debug(f"Creating geometry for chunk {dimension_id}, {cx}, {cz}")
                 opaque_buffer, translucent_buffer = create_lod0_chunk(
                     resource_pack,
+                    cx,
+                    cz,
                     chunk.block.sections,
                     chunk.block.palette,
                 )
