@@ -3,13 +3,13 @@
 namespace Amulet {
 
 static void create_lod0_subchunk(
-    Amulet::AbstractOpenGLResourcePack& resource_pack,
-    std::function<const Amulet::BlockMesh&(const std::uint32_t)> get_block_mesh,
+    AbstractOpenGLResourcePack& resource_pack,
+    std::function<const BlockMesh&(const std::uint32_t)> get_block_mesh,
     const std::int64_t cx,
     const std::int64_t cy,
     const std::int64_t cz,
-    const Amulet::IndexArray3D& section,
-    const Amulet::BlockPalette& palette,
+    const IndexArray3D& section,
+    const BlockPalette& palette,
     std::string& opaque_buffer,
     std::string& translucent_buffer)
 {
@@ -26,7 +26,7 @@ static void create_lod0_subchunk(
                 const auto& block_id = section_buffer[x * x_span + y * z_shape + z];
                 const auto& mesh = get_block_mesh(block_id);
 
-                auto add_part = [&](const Amulet::BlockMeshPart& part) {
+                auto add_part = [&](const BlockMeshPart& part) {
                     auto add_vert = [&](size_t index, const std::tuple<float, float, float, float>& bounds) {
                         const auto& vert = part.verts[index];
                         size_t buffer_size = opaque_buffer.size();
@@ -53,7 +53,7 @@ static void create_lod0_subchunk(
                     }
                 };
 
-                auto add_part_conditional = [&](const std::optional<Amulet::BlockMeshPart>& part, std::int32_t dx, std::int32_t dy, std::int32_t dz) {
+                auto add_part_conditional = [&](const std::optional<BlockMeshPart>& part, std::int32_t dx, std::int32_t dy, std::int32_t dz) {
                     if (!part) {
                         return;
                     }
@@ -75,7 +75,7 @@ static void create_lod0_subchunk(
                         // TODO
                     } else {
                         const auto& mesh2 = get_block_mesh(section_buffer[x2 * x_span + y2 * z_shape + z2]);
-                        if (mesh2.transparency == Amulet::BlockMeshTransparency::FullOpaque) {
+                        if (mesh2.transparency == BlockMeshTransparency::FullOpaque) {
                             return;
                         }
                     }
@@ -84,22 +84,22 @@ static void create_lod0_subchunk(
                 };
 
                 const auto& parts = mesh.parts;
-                if (parts[Amulet::BlockMeshCullDirection::BlockMeshCullNone]) {
-                    add_part(*parts[Amulet::BlockMeshCullDirection::BlockMeshCullNone]);
+                if (parts[BlockMeshCullDirection::BlockMeshCullNone]) {
+                    add_part(*parts[BlockMeshCullDirection::BlockMeshCullNone]);
                 }
-                add_part_conditional(parts[Amulet::BlockMeshCullDirection::BlockMeshCullUp], 0, 1, 0);
-                add_part_conditional(parts[Amulet::BlockMeshCullDirection::BlockMeshCullDown], 0, -1, 0);
-                add_part_conditional(parts[Amulet::BlockMeshCullDirection::BlockMeshCullNorth], 0, 0, -1);
-                add_part_conditional(parts[Amulet::BlockMeshCullDirection::BlockMeshCullSouth], 0, 0, 1);
-                add_part_conditional(parts[Amulet::BlockMeshCullDirection::BlockMeshCullEast], 1, 0, 0);
-                add_part_conditional(parts[Amulet::BlockMeshCullDirection::BlockMeshCullWest], -1, 0, 0);
+                add_part_conditional(parts[BlockMeshCullDirection::BlockMeshCullUp], 0, 1, 0);
+                add_part_conditional(parts[BlockMeshCullDirection::BlockMeshCullDown], 0, -1, 0);
+                add_part_conditional(parts[BlockMeshCullDirection::BlockMeshCullNorth], 0, 0, -1);
+                add_part_conditional(parts[BlockMeshCullDirection::BlockMeshCullSouth], 0, 0, 1);
+                add_part_conditional(parts[BlockMeshCullDirection::BlockMeshCullEast], 1, 0, 0);
+                add_part_conditional(parts[BlockMeshCullDirection::BlockMeshCullWest], -1, 0, 0);
             }
         }
     }
 }
 
 void create_lod0_chunk(
-    Amulet::AbstractOpenGLResourcePack& resource_pack,
+    AbstractOpenGLResourcePack& resource_pack,
     const std::int64_t cx,
     const std::int64_t cz,
     const Amulet::SectionArrayMap& sections,
@@ -107,13 +107,13 @@ void create_lod0_chunk(
     std::string& opaque_buffer,
     std::string& translucent_buffer)
 {
-    std::map<std::uint32_t, Amulet::BlockMesh> block_meshes;
+    std::map<std::uint32_t, BlockMesh> block_meshes;
 
-    auto get_block_mesh = [&](const std::uint32_t block_id) -> const Amulet::BlockMesh& {
+    auto get_block_mesh = [&](const std::uint32_t block_id) -> const BlockMesh& {
         const auto& it = block_meshes.find(block_id);
         if (it == block_meshes.end()) {
             const auto& block_stack = *palette.index_to_block_stack(block_id);
-            const Amulet::BlockMesh& mesh = resource_pack.get_block_model(block_stack);
+            const BlockMesh& mesh = resource_pack.get_block_model(block_stack);
             return block_meshes.emplace(block_id, mesh).first->second;
         } else {
             return it->second;
