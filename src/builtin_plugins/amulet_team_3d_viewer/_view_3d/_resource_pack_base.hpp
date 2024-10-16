@@ -1,3 +1,4 @@
+#pragma once
 #include <amulet/block.hpp>
 #include <amulet/mesh/block/block_mesh.hpp>
 #include <map>
