@@ -22,6 +22,7 @@ void create_lod0_chunk(
         }
     }
 
+    // Function to get the block mesh.
     auto get_block_mesh = [&](const std::int8_t dcx, const std::int8_t dcz, const std::uint32_t block_id) -> const BlockMesh& {
         const std::int8_t chunk_index = 2 + dcx + 2 * dcz;
         auto& block_meshes = all_block_meshes[chunk_index];
@@ -38,9 +39,8 @@ void create_lod0_chunk(
         }
     };
 
+    // For each section in the chunk.
     for (const auto& it : all_chunk_data[2]->get_sections()->get_arrays()) {
-        //create_lod0_subchunk(resource_pack, get_block_mesh, cx, section.first, cz, *section.second, palette, opaque_buffer, translucent_buffer);
-
         const std::int64_t& cy = it.first;
         const IndexArray3D& section = *it.second;
         
@@ -48,13 +48,36 @@ void create_lod0_chunk(
         const std::int32_t x_shape = std::get<0>(section_shape);
         const std::int32_t y_shape = std::get<1>(section_shape);
         const std::int32_t z_shape = std::get<2>(section_shape);
-        const auto x_span = y_shape * z_shape;
+        const auto x_stride = y_shape * z_shape;
+        const auto y_stride = z_shape;
         const auto& section_buffer = section.get_buffer();
+
+        // Make a transparency 3D array two elements larger than one section in each direction
+        const std::int32_t padded_x_shape = x_shape + 2;
+        const std::int32_t padded_y_shape = y_shape + 2;
+        const std::int32_t padded_z_shape = z_shape + 2;
+        const auto padded_x_stride = padded_y_shape * padded_z_shape;
+        const auto padded_y_stride = padded_z_shape;
+        std::vector<BlockMeshTransparency> transparency_array(
+            padded_x_shape * padded_y_shape * padded_z_shape,
+            BlockMeshTransparency::Partial
+        );
+
+        // Populate the transparency array with values from the block models.
+        for (std::int32_t x = 0; x < x_shape; x++) {
+            for (std::int32_t y = 0; y < y_shape; y++) {
+                for (std::int32_t z = 0; z < z_shape; z++) {
+                    const auto& block_id = section_buffer[x * x_stride + y * y_stride + z];
+                    const auto& mesh = get_block_mesh(0, 0, block_id);
+                    transparency_array[(x + 1) * x_stride + (y + 1) * y_stride + z + 1] = mesh.transparency;
+                }
+            }
+        }
 
         for (std::int32_t x = 0; x < x_shape; x++) {
             for (std::int32_t y = 0; y < y_shape; y++) {
                 for (std::int32_t z = 0; z < z_shape; z++) {
-                    const auto& block_id = section_buffer[x * x_span + y * z_shape + z];
+                    const auto& block_id = section_buffer[x * x_stride + y * y_stride + z];
                     const auto& mesh = get_block_mesh(0, 0, block_id);
 
                     auto add_part = [&](const BlockMeshPart& part) {
@@ -88,31 +111,17 @@ void create_lod0_chunk(
                         if (!part) {
                             return;
                         }
-                        std::int32_t x2 = x + dx;
-                        std::int32_t y2 = y + dy;
-                        std::int32_t z2 = z + dz;
+                        std::int32_t x2 = x + dx + 1;
+                        std::int32_t y2 = y + dy + 1;
+                        std::int32_t z2 = z + dz + 1;
 
-                        if (x2 < 0) {
-                            // TODO
-                        }
-                        else if (y2 < 0) {
-                            // TODO
-                        }
-                        else if (z2 < 0) {
-                            // TODO
-                        }
-                        else if (x_shape <= x2) {
-                            // TODO
-                        }
-                        else if (y_shape <= y2) {
-                            // TODO
-                        }
-                        else if (z_shape <= z2) {
-                            // TODO
-                        }
-                        else {
-                            const auto& mesh2 = get_block_mesh(0, 0, section_buffer[x2 * x_span + y2 * z_shape + z2]);
-                            if (mesh2.transparency == BlockMeshTransparency::FullOpaque) {
+                        switch (transparency_array[x2 * padded_x_stride + y2 * padded_y_stride + z2]) {
+                        case BlockMeshTransparency::FullOpaque:
+                            // If neighbour block is full and opque then skip.
+                            return;
+                        case BlockMeshTransparency::FullTranslucent:
+                            if (mesh.transparency == BlockMeshTransparency::FullTranslucent) {
+                                // If both blocks are full translucent then skip.
                                 return;
                             }
                         }
