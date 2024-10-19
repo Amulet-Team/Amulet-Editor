@@ -7,10 +7,10 @@ import numpy
 import numpy.typing
 
 from amulet.data_types import DimensionId
-from amulet.level.abc import Level
+from amulet.level.abc import Level, Dimension
 from amulet.errors import ChunkLoadError, ChunkDoesNotExist
 from amulet.chunk import Chunk
-from amulet.chunk_components import BlockComponent
+from amulet.chunk_components import BlockComponent, BlockComponentData
 from amulet.selection import SelectionGroup
 
 from ._chunk_mesher_lod0 import create_lod0_chunk
@@ -215,6 +215,18 @@ def _get_temp_geometry(
     )
 
 
+def get_block_component(dimension: Dimension, cx: int, cz: int) -> BlockComponentData | None:
+    try:
+        chunk = dimension.get_chunk_handle(cx, cz).get([BlockComponent.ComponentID])
+    except ChunkLoadError:
+        return None
+    else:
+        if isinstance(chunk, BlockComponent):
+            return chunk.block
+        else:
+            return None
+
+
 def mesh_chunk(
     level: Level,
     resource_pack: OpenGLResourcePack,
@@ -249,6 +261,10 @@ def mesh_chunk(
                     None,
                     None,
                     None,
+                    # get_block_component(dimension, cx, cz - 1),
+                    # get_block_component(dimension, cx + 1, cz),
+                    # get_block_component(dimension, cx, cz + 1),
+                    # get_block_component(dimension, cx - 1, cz),
                 )
                 buffer = opaque_buffer + translucent_buffer
             else:
