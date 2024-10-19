@@ -25,13 +25,12 @@ static void _create_lod0_chunk(
     Amulet::AbstractOpenGLResourcePack& resource_pack,
     const std::int64_t cx,
     const std::int64_t cz,
-    const Amulet::SectionArrayMap& sections,
-    const Amulet::BlockPalette& palette,
+    const Amulet::ChunkData& all_chunk_data,
     std::string& opaque_buffer,
     std::string& translucent_buffer)
 {
     py::gil_scoped_release gil;
-    Amulet::create_lod0_chunk(resource_pack, cx, cz, sections, palette, opaque_buffer, translucent_buffer);
+    Amulet::create_lod0_chunk(resource_pack, cx, cz, all_chunk_data, opaque_buffer, translucent_buffer);
 } 
 
 
@@ -45,12 +44,11 @@ void init_chunk_mesher(py::module m_parent)
             Amulet::AbstractOpenGLResourcePack& resource_pack,
             const std::int64_t cx,
             const std::int64_t cz,
-            const Amulet::SectionArrayMap& sections,
-            const Amulet::BlockPalette& palette) -> std::pair<py::bytes, py::bytes> {
+            const Amulet::ChunkData& all_chunk_data) -> std::pair<py::bytes, py::bytes> {
             std::string opaque_buffer;
             std::string translucent_buffer;
 
-            _create_lod0_chunk(resource_pack, cx, cz, sections, palette, opaque_buffer, translucent_buffer);
+            _create_lod0_chunk(resource_pack, cx, cz, all_chunk_data, opaque_buffer, translucent_buffer);
 
             return std::make_pair(py::bytes(opaque_buffer), py::bytes(translucent_buffer));
         }
