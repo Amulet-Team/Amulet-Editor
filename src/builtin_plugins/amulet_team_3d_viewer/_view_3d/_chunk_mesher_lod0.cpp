@@ -40,7 +40,8 @@ void create_lod0_chunk(
     };
 
     // For each section in the chunk.
-    for (const auto& it : all_chunk_data[2]->get_sections()->get_arrays()) {
+    const auto& block_arrays = all_chunk_data[2]->get_sections()->get_arrays();
+    for (const auto& it : block_arrays) {
         const std::int64_t& cy = it.first;
         const IndexArray3D& section = *it.second;
         
@@ -74,6 +75,32 @@ void create_lod0_chunk(
             }
         }
 
+        // Up
+        auto up_it = block_arrays.find(cy + 1);
+        if (up_it != block_arrays.end()) {
+            const auto& up_buffer = up_it->second->get_buffer();
+            for (std::int32_t x = 0; x < x_shape; x++) {
+                for (std::int32_t z = 0; z < z_shape; z++) {
+                    const auto& block_id = up_buffer[x * x_stride + 0 * y_stride + z];
+                    const auto& mesh = get_block_mesh(0, 0, block_id);
+                    transparency_array[(x + 1) * padded_x_stride + (padded_y_shape - 1) * padded_y_stride + z + 1] = mesh.transparency;
+                }
+            }
+        }
+
+        // Down
+        auto down_it = block_arrays.find(cy - 1);
+        if (down_it != block_arrays.end()) {
+            const auto& up_buffer = down_it->second->get_buffer();
+            for (std::int32_t x = 0; x < x_shape; x++) {
+                for (std::int32_t z = 0; z < z_shape; z++) {
+                    const auto& block_id = up_buffer[x * x_stride + (y_shape - 1) * y_stride + z];
+                    const auto& mesh = get_block_mesh(0, 0, block_id);
+                    transparency_array[(x + 1) * padded_x_stride + 0 * padded_y_stride + z + 1] = mesh.transparency;
+                }
+            }
+        }
+        
         for (std::int32_t x = 0; x < x_shape; x++) {
             for (std::int32_t y = 0; y < y_shape; y++) {
                 for (std::int32_t z = 0; z < z_shape; z++) {
