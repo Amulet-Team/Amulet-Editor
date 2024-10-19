@@ -80,24 +80,26 @@ void create_lod0_chunk(
                     const auto& block_id = section_buffer[x * x_stride + y * y_stride + z];
                     const auto& mesh = get_block_mesh(0, 0, block_id);
 
+                    auto& buffer = mesh.transparency == BlockMeshTransparency::FullOpaque ? opaque_buffer : translucent_buffer;
+
                     auto add_part = [&](const BlockMeshPart& part) {
                         auto add_vert = [&](size_t index, const std::tuple<float, float, float, float>& bounds) {
                             const auto& vert = part.verts[index];
-                            size_t buffer_size = opaque_buffer.size();
-                            opaque_buffer.resize(buffer_size + sizeof(float) * 12);
-                            float* buffer = reinterpret_cast<float*>(&opaque_buffer[buffer_size]);
-                            buffer[0] = vert.coord.x + x;
-                            buffer[1] = cy * y_shape + y + vert.coord.y;
-                            buffer[2] = vert.coord.z + z;
-                            buffer[3] = vert.texture_coord.x;
-                            buffer[4] = vert.texture_coord.y;
-                            buffer[5] = std::get<0>(bounds);
-                            buffer[6] = std::get<1>(bounds);
-                            buffer[7] = std::get<2>(bounds);
-                            buffer[8] = std::get<3>(bounds);
-                            buffer[9] = vert.tint.x;
-                            buffer[10] = vert.tint.y;
-                            buffer[11] = vert.tint.z;
+                            size_t buffer_size = buffer.size();
+                            buffer.resize(buffer_size + sizeof(float) * 12);
+                            float* float_arr = reinterpret_cast<float*>(&buffer[buffer_size]);
+                            float_arr[0] = vert.coord.x + x;
+                            float_arr[1] = cy * y_shape + y + vert.coord.y;
+                            float_arr[2] = vert.coord.z + z;
+                            float_arr[3] = vert.texture_coord.x;
+                            float_arr[4] = vert.texture_coord.y;
+                            float_arr[5] = std::get<0>(bounds);
+                            float_arr[6] = std::get<1>(bounds);
+                            float_arr[7] = std::get<2>(bounds);
+                            float_arr[8] = std::get<3>(bounds);
+                            float_arr[9] = vert.tint.x;
+                            float_arr[10] = vert.tint.y;
+                            float_arr[11] = vert.tint.z;
                             };
                         for (const auto& triangle : part.triangles) {
                             const auto& bounds = resource_pack.texture_bounds(mesh.textures[triangle.texture_index]);
