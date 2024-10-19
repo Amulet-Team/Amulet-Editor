@@ -244,8 +244,11 @@ def mesh_chunk(
                     resource_pack,
                     cx,
                     cz,
-                    chunk.block.sections,
-                    chunk.block.palette,
+                    chunk.block,
+                    None,
+                    None,
+                    None,
+                    None,
                 )
                 buffer = opaque_buffer + translucent_buffer
             else:
