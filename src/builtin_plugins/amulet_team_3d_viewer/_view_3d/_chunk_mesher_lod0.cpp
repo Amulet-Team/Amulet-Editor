@@ -69,7 +69,7 @@ void create_lod0_chunk(
                 for (std::int32_t z = 0; z < z_shape; z++) {
                     const auto& block_id = section_buffer[x * x_stride + y * y_stride + z];
                     const auto& mesh = get_block_mesh(0, 0, block_id);
-                    transparency_array[(x + 1) * x_stride + (y + 1) * y_stride + z + 1] = mesh.transparency;
+                    transparency_array[(x + 1) * padded_x_stride + (y + 1) * padded_y_stride + z + 1] = mesh.transparency;
                 }
             }
         }
