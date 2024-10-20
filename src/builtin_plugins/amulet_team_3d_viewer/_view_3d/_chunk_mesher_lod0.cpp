@@ -39,18 +39,21 @@ void create_lod0_chunk(
         }
     };
 
+    // Get array shape info
+    const auto& sections = *all_chunk_data[2]->get_sections();
+    const auto& section_shape = sections.get_array_shape();
+    const std::int32_t x_shape = std::get<0>(section_shape);
+    const std::int32_t y_shape = std::get<1>(section_shape);
+    const std::int32_t z_shape = std::get<2>(section_shape);
+    const auto x_stride = y_shape * z_shape;
+    const auto y_stride = z_shape;
+
+    const auto& block_arrays = sections.get_arrays();
     // For each section in the chunk.
-    const auto& block_arrays = all_chunk_data[2]->get_sections()->get_arrays();
     for (const auto& it : block_arrays) {
         const std::int64_t& cy = it.first;
         const IndexArray3D& section = *it.second;
         
-        const auto& section_shape = section.get_shape();
-        const std::int32_t x_shape = std::get<0>(section_shape);
-        const std::int32_t y_shape = std::get<1>(section_shape);
-        const std::int32_t z_shape = std::get<2>(section_shape);
-        const auto x_stride = y_shape * z_shape;
-        const auto y_stride = z_shape;
         const auto& section_buffer = section.get_buffer();
 
         // Make a transparency 3D array two elements larger than one section in each direction
@@ -101,6 +104,94 @@ void create_lod0_chunk(
             }
         }
         
+        // North
+        if (all_chunk_data[0]) {
+            const auto& neighbour_block_component = *all_chunk_data[0];
+            const auto& neighbour_sections = *neighbour_block_component.get_sections();
+            if (neighbour_sections.get_array_shape() != section_shape) {
+                throw std::invalid_argument("North section shape does not match.");
+            }
+            const auto& neighbour_block_arrays = neighbour_sections.get_arrays();
+            auto it = neighbour_block_arrays.find(cy);
+            if (it != neighbour_block_arrays.end()) {
+                const auto& arr = it->second->get_buffer();
+                const auto& palette = neighbour_block_component.get_palette();
+                for (std::int32_t x = 0; x < x_shape; x++) {
+                    for (std::int32_t y = 0; y < y_shape; y++) {
+                        const auto& block_id = arr[x * x_stride + y * y_stride + (z_shape - 1)];
+                        const auto& mesh = get_block_mesh(0, -1, block_id);
+                        transparency_array[(x + 1) * padded_x_stride + (y + 1) * padded_y_stride + 0] = mesh.transparency;
+                    }
+                }
+            }
+        }
+
+        // West
+        if (all_chunk_data[3]) {
+            const auto& neighbour_block_component = *all_chunk_data[3];
+            const auto& neighbour_sections = *neighbour_block_component.get_sections();
+            if (neighbour_sections.get_array_shape() != section_shape) {
+                throw std::invalid_argument("East section shape does not match.");
+            }
+            const auto& neighbour_block_arrays = neighbour_sections.get_arrays();
+            auto it = neighbour_block_arrays.find(cy);
+            if (it != neighbour_block_arrays.end()) {
+                const auto& arr = it->second->get_buffer();
+                const auto& palette = neighbour_block_component.get_palette();
+                for (std::int32_t y = 0; y < y_shape; y++) {
+                    for (std::int32_t z = 0; z < z_shape; z++) {
+                        const auto& block_id = arr[0 * x_stride + y * y_stride + z];
+                        const auto& mesh = get_block_mesh(1, 0, block_id);
+                        transparency_array[(padded_x_shape - 1) * padded_x_stride + (y + 1) * padded_y_stride + z + 1] = mesh.transparency;
+                    }
+                }
+            }
+        }
+
+        // South
+        if (all_chunk_data[4]) {
+            const auto& neighbour_block_component = *all_chunk_data[4];
+            const auto& neighbour_sections = *neighbour_block_component.get_sections();
+            if (neighbour_sections.get_array_shape() != section_shape) {
+                throw std::invalid_argument("South section shape does not match.");
+            }
+            const auto& neighbour_block_arrays = neighbour_sections.get_arrays();
+            auto it = neighbour_block_arrays.find(cy);
+            if (it != neighbour_block_arrays.end()) {
+                const auto& arr = it->second->get_buffer();
+                const auto& palette = neighbour_block_component.get_palette();
+                for (std::int32_t x = 0; x < x_shape; x++) {
+                    for (std::int32_t y = 0; y < y_shape; y++) {
+                        const auto& block_id = arr[x * x_stride + y * y_stride + 0];
+                        const auto& mesh = get_block_mesh(0, 1, block_id);
+                        transparency_array[(x + 1) * padded_x_stride + (y + 1) * padded_y_stride + padded_z_shape - 1] = mesh.transparency;
+                    }
+                }
+            }
+        }
+
+        // West
+        if (all_chunk_data[1]) {
+            const auto& neighbour_block_component = *all_chunk_data[1];
+            const auto& neighbour_sections = *neighbour_block_component.get_sections();
+            if (neighbour_sections.get_array_shape() != section_shape) {
+                throw std::invalid_argument("West section shape does not match.");
+            }
+            const auto& neighbour_block_arrays = neighbour_sections.get_arrays();
+            auto it = neighbour_block_arrays.find(cy);
+            if (it != neighbour_block_arrays.end()) {
+                const auto& arr = it->second->get_buffer();
+                const auto& palette = neighbour_block_component.get_palette();
+                for (std::int32_t y = 0; y < y_shape; y++) {
+                    for (std::int32_t z = 0; z < z_shape; z++) {
+                        const auto& block_id = arr[(x_shape - 1) * x_stride + y * y_stride + z];
+                        const auto& mesh = get_block_mesh(-1, 0, block_id);
+                        transparency_array[0 * padded_x_stride + (y + 1) * padded_y_stride + z + 1] = mesh.transparency;
+                    }
+                }
+            }
+        }
+
         for (std::int32_t x = 0; x < x_shape; x++) {
             for (std::int32_t y = 0; y < y_shape; y++) {
                 for (std::int32_t z = 0; z < z_shape; z++) {
