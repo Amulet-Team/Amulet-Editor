@@ -200,7 +200,7 @@ void create_lod0_chunk(
 
                     auto& buffer = mesh.transparency == BlockMeshTransparency::FullOpaque ? opaque_buffer : translucent_buffer;
 
-                    auto add_part = [&](const BlockMeshPart& part) {
+                    auto add_part = [&](const BlockMeshPart& part, float shading) {
                         auto add_vert = [&](size_t index, const std::tuple<float, float, float, float>& bounds) {
                             const auto& vert = part.verts[index];
                             size_t buffer_size = buffer.size();
@@ -215,9 +215,9 @@ void create_lod0_chunk(
                             float_arr[6] = std::get<1>(bounds);
                             float_arr[7] = std::get<2>(bounds);
                             float_arr[8] = std::get<3>(bounds);
-                            float_arr[9] = vert.tint.x;
-                            float_arr[10] = vert.tint.y;
-                            float_arr[11] = vert.tint.z;
+                            float_arr[9] = vert.tint.x * shading;
+                            float_arr[10] = vert.tint.y * shading;
+                            float_arr[11] = vert.tint.z * shading;
                             };
                         for (const auto& triangle : part.triangles) {
                             const auto& bounds = resource_pack.texture_bounds(mesh.textures[triangle.texture_index]);
@@ -227,7 +227,13 @@ void create_lod0_chunk(
                         }
                         };
 
-                    auto add_part_conditional = [&](const std::optional<BlockMeshPart>& part, std::int32_t dx, std::int32_t dy, std::int32_t dz) {
+                    auto add_part_conditional = [&](
+                        const std::optional<BlockMeshPart>& part, 
+                        std::int32_t dx, 
+                        std::int32_t dy, 
+                        std::int32_t dz,
+                        float shading
+                    ) {
                         if (!part) {
                             return;
                         }
@@ -246,19 +252,19 @@ void create_lod0_chunk(
                             }
                         }
 
-                        add_part(*part);
+                        add_part(*part, shading);
                         };
 
                     const auto& parts = mesh.parts;
                     if (parts[BlockMeshCullDirection::BlockMeshCullNone]) {
-                        add_part(*parts[BlockMeshCullDirection::BlockMeshCullNone]);
+                        add_part(*parts[BlockMeshCullDirection::BlockMeshCullNone], 1.0);
                     }
-                    add_part_conditional(parts[BlockMeshCullDirection::BlockMeshCullUp], 0, 1, 0);
-                    add_part_conditional(parts[BlockMeshCullDirection::BlockMeshCullDown], 0, -1, 0);
-                    add_part_conditional(parts[BlockMeshCullDirection::BlockMeshCullNorth], 0, 0, -1);
-                    add_part_conditional(parts[BlockMeshCullDirection::BlockMeshCullSouth], 0, 0, 1);
-                    add_part_conditional(parts[BlockMeshCullDirection::BlockMeshCullEast], 1, 0, 0);
-                    add_part_conditional(parts[BlockMeshCullDirection::BlockMeshCullWest], -1, 0, 0);
+                    add_part_conditional(parts[BlockMeshCullDirection::BlockMeshCullUp], 0, 1, 0, 1.0);
+                    add_part_conditional(parts[BlockMeshCullDirection::BlockMeshCullDown], 0, -1, 0, 0.55);
+                    add_part_conditional(parts[BlockMeshCullDirection::BlockMeshCullNorth], 0, 0, -1, 0.85);
+                    add_part_conditional(parts[BlockMeshCullDirection::BlockMeshCullSouth], 0, 0, 1, 0.85);
+                    add_part_conditional(parts[BlockMeshCullDirection::BlockMeshCullEast], 1, 0, 0, 0.7);
+                    add_part_conditional(parts[BlockMeshCullDirection::BlockMeshCullWest], -1, 0, 0, 0.7);
                 }
             }
         }
