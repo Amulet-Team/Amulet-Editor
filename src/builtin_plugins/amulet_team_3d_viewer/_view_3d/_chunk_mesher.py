@@ -257,14 +257,10 @@ def mesh_chunk(
                     cx,
                     cz,
                     chunk.block,
-                    None,
-                    None,
-                    None,
-                    None,
-                    # get_block_component(dimension, cx, cz - 1),
-                    # get_block_component(dimension, cx + 1, cz),
-                    # get_block_component(dimension, cx, cz + 1),
-                    # get_block_component(dimension, cx - 1, cz),
+                    get_block_component(dimension, cx, cz - 1),
+                    get_block_component(dimension, cx + 1, cz),
+                    get_block_component(dimension, cx, cz + 1),
+                    get_block_component(dimension, cx - 1, cz),
                 )
                 buffer = opaque_buffer + translucent_buffer
             else:
