@@ -35,6 +35,9 @@ class ResourcePackContainer(QObject):
         self._resource_pack: Optional[BaseResourcePackManager] = None
         self._loader: Optional[Promise[bool]] = None
 
+    def __del__(self) -> None:
+        log.debug("ResourcePackContainer.__del__")
+
     @property
     def loader(self) -> Optional[Promise[bool]]:
         """

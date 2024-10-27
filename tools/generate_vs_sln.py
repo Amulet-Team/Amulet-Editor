@@ -537,7 +537,7 @@ def main() -> None:
         SrcDir, "builtin_plugins", "amulet_team_3d_viewer", "_view_3d"
     )
     chunk_builder_py = ProjectData(
-        name="_chunk_builder",
+        name="__init__",
         compile_mode=CompileMode.PythonExtension,
         include_files=get_files(root_dir=view_3d_path, ext="hpp"),
         source_files=get_files(

@@ -2,7 +2,7 @@
 ################################################################################
 ## Form generated from reading UI file '_splash.ui'
 ##
-## Created by: Qt User Interface Compiler version 6.7.0
+## Created by: Qt User Interface Compiler version 6.8.0
 ##
 ## WARNING! All changes made in this file will be lost when recompiling UI file!
 ################################################################################
@@ -44,4 +44,4 @@ class Ui_Splash(QDialog):
             self._localise()
 
     def _localise(self) -> None:
-        self.setWindowTitle(QCoreApplication.translate("Splash", "Form", None))
+        self.setWindowTitle(QCoreApplication.translate("Splash", "Amulet Editor", None))

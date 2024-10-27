@@ -46,7 +46,6 @@ from PySide6.QtCore import (
 from amulet_editor.models.widgets.traceback_dialog import DisplayException
 import tablericons
 
-
 _button_size: Optional[QSize] = None
 
 
@@ -663,6 +662,11 @@ class AbstractStackedTabWidget(QWidget):
         name, icon = self._validate_page(page)
         self.tab_bar.insert_tab(index, name, icon)
         self.stacked_widget.insertWidget(index, page)
+
+    def get_page(self, index: int) -> TabWidget:
+        widget = self.stacked_widget.widget(index)
+        assert isinstance(widget, TabWidget)
+        return widget
 
     def remove_page(self, index: int) -> TabWidget:
         self.tab_bar.remove_tab(index)

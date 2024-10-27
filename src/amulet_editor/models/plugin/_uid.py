@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import re
+from typing import Any
 
 from packaging.version import Version
 from runtime_final import final
@@ -19,6 +20,14 @@ class LibraryUID:
 
     def __str__(self) -> str:
         return f"{self._identifier} {self._version}"
+
+    def __hash__(self) -> int:
+        return hash((self._identifier, self._version))
+
+    def __eq__(self, other: Any) -> bool:
+        if not isinstance(other, LibraryUID):
+            return NotImplemented
+        return self._identifier == other._identifier and self._version == other._version
 
     @property
     def identifier(self) -> str:

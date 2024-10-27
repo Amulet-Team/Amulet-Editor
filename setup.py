@@ -143,11 +143,15 @@ setup(
     libraries=[AmuletNBTLib, AmuletCoreLib],
     ext_modules=[
         Extension(
-            name="builtin_plugins.amulet_team_3d_viewer._view_3d._chunk_builder",
-            sources=[
-                "src/builtin_plugins/amulet_team_3d_viewer/_view_3d/_chunk_builder.cpp",
-                "src/builtin_plugins/amulet_team_3d_viewer/_view_3d/_chunk_builder.py.cpp",
-            ],
+            name="builtin_plugins.amulet_team_3d_viewer._view_3d.__init__",
+            sources=glob.glob(
+                os.path.join(
+                    glob.escape("src/builtin_plugins/amulet_team_3d_viewer/_view_3d"),
+                    "**",
+                    "*.cpp",
+                ),
+                recursive=True,
+            ),
             include_dirs=[
                 pybind11.get_include(),
                 amulet_nbt.get_include(),

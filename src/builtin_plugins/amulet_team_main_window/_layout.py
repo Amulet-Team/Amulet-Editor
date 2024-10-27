@@ -17,7 +17,7 @@ from ._sub_window import AmuletSubWindow, sub_windows, create_sub_window
 from ._tab_engine import TabWidget
 from ._toolbar import ButtonProxy
 from ._widget import get_widget_cls, MissingWidget
-from ._tab_engine import RecursiveSplitter
+from ._tab_engine import RecursiveSplitter, AbstractStackedTabWidget
 from ._tab_engine_imp import StackedTabWidget
 
 
@@ -90,8 +90,6 @@ lock = Lock()
 layouts = dict[str, LayoutContainer]()
 # The id for the currently active layout
 _active_layout: LayoutContainer | None = None
-# Widgets where the class does not exist yet.
-_missing_widgets = WeakValueDictionary[str, TabWidget]()
 
 
 def _get_layout_container(layout_id: str) -> LayoutContainer:
@@ -195,6 +193,24 @@ def create_layout_button(layout_id: str) -> ButtonProxy:
         return ButtonProxy(button)
 
 
+def _populate_widgets_of_type(
+    view_container: RecursiveSplitter, widget_cls: type[TabWidget]
+) -> None:
+    for child in view_container.children():
+        if isinstance(child, AbstractStackedTabWidget):
+            for i in range(child.count()):
+                widget = child.get_page(i)
+                if (
+                    isinstance(widget, MissingWidget)
+                    and widget.qual_name == widget_cls.__qualname__
+                ):
+                    child.remove_page(i)
+                    widget.deleteLater()
+                    child.add_page(widget_cls())
+        elif isinstance(child, RecursiveSplitter):
+            _populate_widgets_of_type(child, widget_cls)
+
+
 def populate_widgets(widget_cls: type[TabWidget]) -> None:
     """Populate all missing widgets of this type.
 
@@ -203,10 +219,35 @@ def populate_widgets(widget_cls: type[TabWidget]) -> None:
     assert (
         current_thread() is main_thread()
     ), "This can only be called from the main thread."
+    _populate_widgets_of_type(get_main_window().view_container, widget_cls)
+    for sub_window in sub_windows:
+        _populate_widgets_of_type(sub_window.view_container, widget_cls)
+
+
+def _remove_widgets_of_type(
+    view_container: RecursiveSplitter, widget_cls: type[TabWidget]
+) -> None:
+    for child in view_container.children():
+        if isinstance(child, AbstractStackedTabWidget):
+            for i in range(child.count()):
+                widget = child.get_page(i)
+                if isinstance(widget, widget_cls):
+                    child.remove_page(i)
+                    widget.deleteLater()
+                    child.add_page(MissingWidget(widget_cls.__qualname__))
+        elif isinstance(child, RecursiveSplitter):
+            _remove_widgets_of_type(child, widget_cls)
 
 
 def remove_widgets(widget_cls: type[TabWidget]) -> None:
     """Remove all widgets of this type and replace with a missing widget."""
+    for layout in layouts.values():
+        hidden_layout = layout.hidden_layout
+        if hidden_layout is not None:
+            _remove_widgets_of_type(hidden_layout.main_window_splitter, widget_cls)
+            for sub_window in hidden_layout.sub_windows:
+                _remove_widgets_of_type(sub_window.view_container, widget_cls)
+    _remove_widgets_of_type(get_main_window().view_container, widget_cls)
 
 
 def _init_layout(

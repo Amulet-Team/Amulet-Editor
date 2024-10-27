@@ -1,4 +1,4 @@
-from typing import Tuple, Dict, Optional
+from typing import Optional
 import struct
 import hashlib
 import os
@@ -21,7 +21,7 @@ from amulet.level.abc import Level, DiskLevel
 from amulet.game.abc import GameVersion
 from amulet.game import get_game_version
 from amulet.mesh.block import BlockMesh
-from amulet.mesh.block.missing_block import get_missing_block
+from amulet.mesh.block import get_missing_block
 from amulet.resource_pack.abc import BaseResourcePackManager
 
 from ._textureatlas import create_atlas
@@ -32,11 +32,12 @@ from amulet_editor.models.generic._promise import Promise
 from amulet_editor.data.paths._application import cache_directory
 
 from amulet_team_resource_pack._api import get_resource_pack_container
+from ._resource_pack_base import AbstractOpenGLResourcePack
 
 log = logging.getLogger(__name__)
 
 
-class OpenGLResourcePack:
+class OpenGLResourcePack(AbstractOpenGLResourcePack):
     """
     This class will take a resource pack and load the textures into a texture atlas.
     After creating an instance, initialise must be called.
@@ -47,10 +48,6 @@ class OpenGLResourcePack:
     _resource_pack: BaseResourcePackManager
     # The translator to look up the version block
     _game_version: GameVersion
-    # Loaded block models
-    _block_models: Dict[BlockStack, BlockMesh]
-    # Texture coordinates
-    _texture_bounds: Dict[str, Tuple[float, float, float, float]]
 
     # Image on GPU
     _texture: Optional[QOpenGLTexture]
@@ -58,11 +55,10 @@ class OpenGLResourcePack:
     _surface: Optional[QOffscreenSurface]
 
     def __init__(self, resource_pack: BaseResourcePackManager, translator: GameVersion):
+        super().__init__()
         self._lock = Lock()
         self._resource_pack = resource_pack
         self._game_version = translator
-        self._block_models = {}
-        self._texture_bounds = {}
         self._texture = None
         self._context = None
         self._surface = None
@@ -135,6 +131,9 @@ class OpenGLResourcePack:
                         _atlas = ImageQt(atlas)
 
                     self._texture_bounds = bounds
+                    self._default_texture_bounds = self._texture_bounds[
+                        self._resource_pack.missing_no
+                    ]
 
                     def init_gl() -> None:
                         self._context = QOpenGLContext()
@@ -188,44 +187,29 @@ class OpenGLResourcePack:
         """
         return self._resource_pack.get_texture_path(namespace, relative_path)
 
-    def texture_bounds(self, texture_path: str) -> Tuple[float, float, float, float]:
-        """Get the bounding box of a given texture path."""
-        if texture_path in self._texture_bounds:
-            return self._texture_bounds[texture_path]
-        else:
-            return self._texture_bounds[self._resource_pack.missing_no]
-
-    def get_block_model(self, block_stack: BlockStack) -> BlockMesh:
-        """Get the BlockMesh class for a given BlockStack.
-        The Block will be translated to the version format using the
-        previously specified translator."""
-        if block_stack not in self._block_models:
-            blocks = list[Block]()
-            for block in block_stack:
-                if self._game_version.supports_version(block.platform, block.version):
-                    blocks.append(block)
-                else:
-                    # Translate to the required format.
-                    converted_block, _, _ = get_game_version(
-                        block.platform, block.version
-                    ).block.translate(
-                        self._game_version.platform,
-                        self._game_version.max_version,
-                        block,
-                    )
-                    if isinstance(converted_block, Block):
-                        blocks.append(converted_block)
-            if blocks:
-                self._block_models[block_stack] = self._resource_pack.get_block_model(
-                    BlockStack(*blocks)
-                )
+    def _get_block_model(self, block_stack: BlockStack) -> BlockMesh:
+        blocks = list[Block]()
+        for block in block_stack:
+            if self._game_version.supports_version(block.platform, block.version):
+                blocks.append(block)
             else:
-                self._block_models[block_stack] = get_missing_block(self._resource_pack)
+                # Translate to the required format.
+                converted_block, _, _ = get_game_version(
+                    block.platform, block.version
+                ).block.translate(
+                    self._game_version.platform,
+                    self._game_version.max_version,
+                    block,
+                )
+                if isinstance(converted_block, Block):
+                    blocks.append(converted_block)
+        if blocks:
+            return self._resource_pack.get_block_model(BlockStack(*blocks))
+        else:
+            return get_missing_block(self._resource_pack)
 
-        return self._block_models[block_stack]
 
-
-class RenderResourcePackContainer(QObject):
+class OpenGLResourcePackHandle(QObject):
     # Emitted with a promise object when a resource pack change is started.
     changing = Signal(object)  # Promise[None]
     # Emitted when the resource pack has changed.
@@ -272,7 +256,7 @@ class RenderResourcePackContainer(QObject):
                     log.debug(f"Loading OpenGL resource pack.")
                 resource_pack = self._resource_pack_container.resource_pack
                 # TODO: modify the resource pack library to expose the desired translator
-                translator = get_game_version("java", VersionNumber(999, 0, 0))
+                translator = get_game_version("java", VersionNumber(2, -1, 0))
 
                 rp = OpenGLResourcePack(resource_pack, translator)
                 promise = rp.initialise()
@@ -299,11 +283,11 @@ class RenderResourcePackContainer(QObject):
 
 
 _lock = Lock()
-_level_data: WeakKeyDictionary[Level, RenderResourcePackContainer] = WeakKeyDictionary()
+_level_data: WeakKeyDictionary[Level, OpenGLResourcePackHandle] = WeakKeyDictionary()
 
 
-def get_gl_resource_pack_container(level: Level) -> RenderResourcePackContainer:
+def get_gl_resource_pack_container(level: Level) -> OpenGLResourcePackHandle:
     with _lock:
         if level not in _level_data:
-            _level_data[level] = invoke(lambda: RenderResourcePackContainer(level))
+            _level_data[level] = invoke(lambda: OpenGLResourcePackHandle(level))
         return _level_data[level]
