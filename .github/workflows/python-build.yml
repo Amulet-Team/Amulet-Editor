@@ -23,6 +23,9 @@ jobs:
         - {os: ubuntu-latest, python-version: '3.12', architecture: x64}
 
     steps:
+    - name: Configure Git
+      run: |
+        git config --global core.longpaths true
     - uses: actions/checkout@v3
     - name: Set up Python ${{ matrix.cfg.python-version }} ${{ matrix.cfg.architecture }}
       uses: actions/setup-python@v4
@@ -52,6 +55,11 @@ jobs:
 
     - name: Create Installer
       run: |
+        if [ "$RUNNER_OS" == "Windows" ]; then
+          export TMPDIR="C:\temp"
+          export TMP="C:\temp"
+          export TEMP="C:\temp"
+        fi
         pip install git+https://github.com/Amulet-Team/python-build-tool.git
         pip install --upgrade --upgrade-strategy eager -e .
         pbt freeze --debug
