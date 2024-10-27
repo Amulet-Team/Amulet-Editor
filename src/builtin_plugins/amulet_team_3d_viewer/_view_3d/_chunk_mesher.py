@@ -215,7 +215,9 @@ def _get_temp_geometry(
     )
 
 
-def get_block_component(dimension: Dimension, cx: int, cz: int) -> BlockComponentData | None:
+def get_block_component(
+    dimension: Dimension, cx: int, cz: int
+) -> BlockComponentData | None:
     try:
         chunk = dimension.get_chunk_handle(cx, cz).get([BlockComponent.ComponentID])
     except ChunkLoadError:
