@@ -1,11 +1,13 @@
 #pragma once
-#include <amulet/block.hpp>
-#include <amulet/mesh/block/block_mesh.hpp>
 #include <map>
+#include <mutex>
 #include <shared_mutex>
 #include <string>
 #include <tuple>
 #include <unordered_map>
+
+#include <amulet/block.hpp>
+#include <amulet/mesh/block/block_mesh.hpp>
 
 namespace Amulet {
 
