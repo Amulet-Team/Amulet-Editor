@@ -2,7 +2,7 @@
 ################################################################################
 ## Form generated from reading UI file '_inspector.ui'
 ##
-## Created by: Qt User Interface Compiler version 6.7.0
+## Created by: Qt User Interface Compiler version 6.8.0
 ##
 ## WARNING! All changes made in this file will be lost when recompiling UI file!
 ################################################################################
@@ -83,7 +83,9 @@ class Ui_InspectionTool(QWidget):
             self._localise()
 
     def _localise(self) -> None:
-        self.setWindowTitle(QCoreApplication.translate("InspectionTool", "Form", None))
+        self.setWindowTitle(
+            QCoreApplication.translate("InspectionTool", "Inspector", None)
+        )
         self.inspect_button.setText("")
         self.reload_button.setText("")
         self.run_button.setText(

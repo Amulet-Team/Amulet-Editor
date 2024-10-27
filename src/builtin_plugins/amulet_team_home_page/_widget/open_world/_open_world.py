@@ -2,7 +2,7 @@
 ################################################################################
 ## Form generated from reading UI file '_open_world.ui'
 ##
-## Created by: Qt User Interface Compiler version 6.7.0
+## Created by: Qt User Interface Compiler version 6.8.0
 ##
 ## WARNING! All changes made in this file will be lost when recompiling UI file!
 ################################################################################
@@ -90,7 +90,9 @@ class Ui_OpenWorldPage(QWidget):
             self._localise()
 
     def _localise(self) -> None:
-        self.setWindowTitle(QCoreApplication.translate("OpenWorldPage", "Form", None))
+        self.setWindowTitle(
+            QCoreApplication.translate("OpenWorldPage", "Open World", None)
+        )
         self.btn_back.setText("")
         self._lbl_title.setText(
             QCoreApplication.translate("OpenWorldPage", "open_level", None)
