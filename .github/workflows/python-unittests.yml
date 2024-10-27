@@ -21,6 +21,10 @@ jobs:
         python-version: ['3.11', '3.12']
         os: [windows-latest, macos-latest, ubuntu-latest]
     steps:
+    - name: Configure Git
+      shell: bash
+      run: |
+        git config --global core.longpaths true
     - uses: actions/checkout@v2
     - name: Set up Python ${{ matrix.python-version }}
       uses: actions/setup-python@v4

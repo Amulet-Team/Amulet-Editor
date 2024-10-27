@@ -23,6 +23,10 @@ jobs:
         - {os: ubuntu-latest, python-version: '3.12', architecture: x64}
 
     steps:
+    - name: Configure Git
+      shell: bash
+      run: |
+        git config --global core.longpaths true
     - uses: actions/checkout@v3
     - name: Set up Python ${{ matrix.cfg.python-version }} ${{ matrix.cfg.architecture }}
       uses: actions/setup-python@v4
