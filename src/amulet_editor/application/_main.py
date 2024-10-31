@@ -9,6 +9,7 @@ import logging
 from datetime import datetime
 import faulthandler
 from io import TextIOWrapper
+import atexit
 
 from PySide6.QtCore import (
     Qt,
@@ -93,6 +94,11 @@ def app_main() -> None:
 
     # Handle the qt output in a more useful way
     qInstallMessageHandler(_qt_log)
+
+    # If qt calls the message handler after the python interpreter has shut down it will crash.
+    # Uninstall the message handler at interpreter shutdown so it can't get called.
+    # This means that any errors after interpreter shutdown are not logged. TODO is there a way to handle this?
+    atexit.register(lambda: qInstallMessageHandler(None))
 
     # When running via pythonw the stderr is None so log directly to the log file
     faulthandler.enable(sys.__stderr__ or log_file)
