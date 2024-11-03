@@ -3,7 +3,7 @@
 	"version": "1.0.0",
 	"name": "Amulet Selection",
 	"depends": {
-		"python": "~=3.9",
+		"python": "~=3.11",
 		"plugin": [],
 		"library": [
 			"amulet_core~=2.0a8"
