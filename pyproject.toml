@@ -4,6 +4,7 @@ requires = [
     "wheel",
     "versioneer",
     "pybind11 ~= 2.12",
+    "Amulet-pybind11-extensions @ git+https://github.com/Amulet-Team/Amulet-pybind11-extensions.git@4d7292f3090bb739a55f8377c8f096d134910720",
     "amulet_nbt ~= 4.0a2",
     "amulet_core @ git+https://github.com/Amulet-Team/Amulet-Core.git@7844bec50b93c8711ae703840b1a0e43b8283df6"
 ]
