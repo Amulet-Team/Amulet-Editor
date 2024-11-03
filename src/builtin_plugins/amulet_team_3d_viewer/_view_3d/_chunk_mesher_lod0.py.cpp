@@ -34,10 +34,10 @@ void init_chunk_mesher(py::module m_parent)
 			const std::int64_t cx,
 			const std::int64_t cz,
 			const Amulet::BlockComponentData& py_chunk_component,
-			pybind11_extensions::builtins::PyObjectCpp<std::optional<Amulet::BlockComponentData>> py_north_chunk_component,
-            pybind11_extensions::builtins::PyObjectCpp<std::optional<Amulet::BlockComponentData>> py_east_chunk_component,
-            pybind11_extensions::builtins::PyObjectCpp<std::optional<Amulet::BlockComponentData>> py_south_chunk_component,
-            pybind11_extensions::builtins::PyObjectCpp<std::optional<Amulet::BlockComponentData>> py_west_chunk_component
+			pybind11_extensions::PyObjectCpp<std::optional<Amulet::BlockComponentData>> py_north_chunk_component,
+            pybind11_extensions::PyObjectCpp<std::optional<Amulet::BlockComponentData>> py_east_chunk_component,
+            pybind11_extensions::PyObjectCpp<std::optional<Amulet::BlockComponentData>> py_south_chunk_component,
+            pybind11_extensions::PyObjectCpp<std::optional<Amulet::BlockComponentData>> py_west_chunk_component
 			) -> std::pair<py::bytes, py::bytes> {
 				std::string opaque_buffer;
 				std::string translucent_buffer;
