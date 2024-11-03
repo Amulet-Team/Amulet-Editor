@@ -14,6 +14,7 @@ from wheel.bdist_wheel import bdist_wheel
 
 import versioneer
 import pybind11
+import pybind11_extensions
 
 import amulet_nbt
 import amulet
@@ -129,6 +130,7 @@ AmuletCoreLib = (
         include_dirs=[
             get_python_inc(),
             pybind11.get_include(),
+            pybind11_extensions.get_include(),
             amulet_nbt.get_include(),
             os.path.dirname(amulet.__path__[0]),
         ],
@@ -154,6 +156,7 @@ setup(
             ),
             include_dirs=[
                 pybind11.get_include(),
+                pybind11_extensions.get_include(),
                 amulet_nbt.get_include(),
                 os.path.dirname(amulet.__path__[0]),
                 "src",
