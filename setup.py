@@ -28,7 +28,7 @@ def get_compile_args() -> list[str]:
         compile_args.append("-std=c++20")
 
     if sys.platform == "darwin":
-        compile_args.append("-mmacosx-version-min=10.13")
+        compile_args.append("-mmacosx-version-min=10.15")
     return compile_args
 
 
