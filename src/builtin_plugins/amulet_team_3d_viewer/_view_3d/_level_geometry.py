@@ -618,7 +618,9 @@ class LevelGeometry(QObject):
                             ),
                             transform,
                         )
-                        chunk_data.chunk_handle.changed.connect(self._reset_chunk_finder)
+                        chunk_data.chunk_handle.changed.connect(
+                            self._reset_chunk_finder
+                        )
                         gl_data.chunks[chunk_key] = chunk_data
                     # Add the chunk meshing job.
                     self._start_chunk_mesher(chunk_key, gl_data, chunk_data)
