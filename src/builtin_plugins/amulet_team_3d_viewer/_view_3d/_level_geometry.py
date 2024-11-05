@@ -479,6 +479,7 @@ class LevelGeometry(QObject):
                 raise RuntimeError("Could not make context current.")
             # unload the OpenGL data.
             for chunk in gl_data.chunks.values():
+                chunk.chunk_handle.changed.disconnect(self._reset_chunk_finder)
                 geometry = chunk.geometry
                 if geometry is not None:
                     geometry.vao.destroy()
@@ -515,6 +516,7 @@ class LevelGeometry(QObject):
                 )
                 if unload_distance <= distance or camera_dimension != dimension_id:
                     # Unload the chunk
+                    chunk_data.chunk_handle.changed.disconnect(self._reset_chunk_finder)
                     geometry = chunk_data.geometry
                     if geometry is not None:
                         geometry.vao.destroy()
@@ -615,6 +617,9 @@ class LevelGeometry(QObject):
                                 cx, cz
                             ),
                             transform,
+                        )
+                        chunk_data.chunk_handle.changed.connect(
+                            self._reset_chunk_finder
                         )
                         gl_data.chunks[chunk_key] = chunk_data
                     # Add the chunk meshing job.
