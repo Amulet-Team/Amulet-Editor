@@ -4,9 +4,3 @@
 [submodule "submodules/Amulet-Core"]
 	path = submodules/Amulet-Core
 	url = https://github.com/Amulet-Team/Amulet-Core
-[submodule "submodules/Amulet-NBT"]
-	path = submodules/Amulet-NBT
-	url = https://github.com/Amulet-Team/Amulet-NBT
-[submodule "submodules/Amulet-LevelDB"]
-	path = submodules/Amulet-LevelDB
-	url = https://github.com/Amulet-Team/Amulet-LevelDB
