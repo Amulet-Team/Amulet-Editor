@@ -51,7 +51,7 @@ class DisplayException:
         msg: str,
         *,
         suppress: bool = False,
-        log: logging.Logger = logging.getLogger()
+        log: logging.Logger = logging.getLogger(),
     ) -> None:
         self._msg = msg
         self._suppress = suppress

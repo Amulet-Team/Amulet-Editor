@@ -150,7 +150,9 @@ def app_main() -> None:
         else:
             log.debug("Loading level.")
             with DisplayException(f"Failed loading level at path {level_path}"):
-                _level.level = level = get_level(LevelLoaderPathToken(level_path)) # TODO: make this generic
+                _level.level = level = get_level(
+                    LevelLoaderPathToken(level_path)
+                )  # TODO: make this generic
                 level.open()
 
     # rpc.init_rpc(is_broker)
