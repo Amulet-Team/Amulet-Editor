@@ -23,6 +23,7 @@ from PySide6.QtWidgets import QApplication
 from PySide6.QtGui import QSurfaceFormat
 
 from amulet.level import get_level
+from amulet.level.loader import LevelLoaderPathToken
 import amulet_editor
 from amulet_editor.models.widgets.traceback_dialog import DisplayException
 from amulet_editor.data.level import _level
@@ -149,7 +150,7 @@ def app_main() -> None:
         else:
             log.debug("Loading level.")
             with DisplayException(f"Failed loading level at path {level_path}"):
-                _level.level = level = get_level(level_path)
+                _level.level = level = get_level(LevelLoaderPathToken(level_path)) # TODO: make this generic
                 level.open()
 
     # rpc.init_rpc(is_broker)
