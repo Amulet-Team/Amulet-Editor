@@ -1,170 +1,131 @@
-import glob
 import os
+import subprocess
 import sys
+from pathlib import Path
+import platform
+import datetime
 
-# import subprocess
-# import logging
-import re
-import sysconfig
+from setuptools import setup, Extension, Command
+from setuptools.command.build_ext import build_ext
 
-from setuptools import setup, Extension
-from distutils import ccompiler
-from distutils.sysconfig import get_python_inc
-from wheel.bdist_wheel import bdist_wheel
+from packaging.version import Version
 
 import versioneer
-import pybind11
-import pybind11_extensions
 
-import amulet_nbt
-import amulet
+import requirements
 
-
-def get_compile_args() -> list[str]:
-    compiler = sysconfig.get_config_var("CXX") or ccompiler.get_default_compiler()
-    compile_args = []
-    if compiler.split()[0] == "msvc":
-        compile_args.append("/std:c++20")
-    else:
-        compile_args.append("-std=c++20")
-
-    if sys.platform == "darwin":
-        compile_args.append("-mmacosx-version-min=10.15")
-    return compile_args
+if (
+    os.environ.get("AMULET_FREEZE_COMPILER", None)
+    and sys.platform == "darwin"
+    and platform.machine() != "arm64"
+):
+    raise Exception("The MacOS frozen build must be created on arm64")
 
 
-CompileArgs = get_compile_args()
+def fix_path(path: str) -> str:
+    return os.path.realpath(path).replace(os.sep, "/")
 
 
-# def get_openmp_args() -> tuple[list[str], list[str], list[str], list[str]]:
-#     # This has been lifted from here https://github.com/cython/cython/blob/606bd8cf235149c3be6876d0f5ae60032c8aab6c/runtests.py
-#     import sysconfig
-#     from distutils import ccompiler
-#     GCCPattern = re.compile(r"gcc version (?P<major>\d+)\.(?P<minor>\d+)")
-#     ClangPattern = re.compile(r"clang(?:-|\s+version\s+)(?P<major>\d+)\.(?P<minor>\d+)")
-#
-#     def get_openmp_args_for(arg: str) -> tuple[list[str], list[str]]:
-#         """arg == 'CC' or 'CXX'"""
-#         cc = (
-#             sysconfig.get_config_var(arg) or ccompiler.get_default_compiler()
-#         ).split()[0]
-#         if cc == "msvc":
-#             # Microsoft Visual C
-#             return ["/openmp"], []
-#         elif cc:
-#             # Try GCC and Clang
-#             try:
-#                 out = subprocess.check_output([cc, "-v"]).decode()
-#             except ChildProcessError:
-#                 logging.exception(f"Could not resolve unknown compiler {cc}")
-#             else:
-#                 gcc_match = GCCPattern.search(out)
-#                 if gcc_match:
-#                     if (gcc_match.group("major"), gcc_match.group("minor")) >= (4, 2):
-#                         return ["-fopenmp"], ["-fopenmp"]
-#                     return [], []
-#                 clang_match = ClangPattern.search(out)
-#                 if clang_match:
-#                     # if (clang_match.group("major"), clang_match.group("minor")) >= (3, 7):
-#                     #     return ['-fopenmp'], ['-fopenmp']
-#                     return [], []
-#         # If all else fails disable openmp
-#         return [], []
-#
-#     omp_ccargs, omp_clargs = get_openmp_args_for("CC")
-#     omp_cppcargs, omp_cpplargs = get_openmp_args_for("CXX")
-#
-#     return omp_ccargs, omp_clargs, omp_cppcargs, omp_cpplargs
+cmdclass: dict[str, type[Command]] = versioneer.get_cmdclass()
 
 
-cmdclass = versioneer.get_cmdclass()
-BDistWheelOriginal: type[bdist_wheel] = cmdclass.get("bdist_wheel", bdist_wheel)
+class CMakeBuild(cmdclass.get("build_ext", build_ext)):
+    def build_extension(self, ext):
+        import pybind11
+        import amulet.pybind11_extensions
+        import amulet.io
+        import amulet.nbt
+        import amulet.core
+        import amulet.game
+        import amulet.utils
+        import amulet.anvil
+        import amulet.zlib
+        import amulet.leveldb
+        import amulet.level
+
+        ext_dir = (Path.cwd() / self.get_ext_fullpath("")).parent.resolve()
+        src_dir = Path.cwd() / "src" if self.editable_mode else ext_dir
+
+        platform_args = []
+        if sys.platform == "win32":
+            platform_args.extend(["-G", "Visual Studio 17 2022"])
+            if sys.maxsize > 2**32:
+                platform_args.extend(["-A", "x64"])
+            else:
+                platform_args.extend(["-A", "Win32"])
+            platform_args.extend(["-T", "v143"])
+        elif sys.platform == "darwin":
+            if platform.machine() == "arm64":
+                platform_args.append("-DCMAKE_OSX_ARCHITECTURES=x86_64;arm64")
+
+        if subprocess.run(
+            [
+                "cmake",
+                *platform_args,
+                f"-DPYTHON_EXECUTABLE={sys.executable}",
+                f"-Dpybind11_DIR={pybind11.get_cmake_dir().replace(os.sep, '/')}",
+                f"-Damulet_pybind11_extensions_DIR={fix_path(amulet.pybind11_extensions.__path__[0])}",
+                f"-Damulet_io_DIR={fix_path(amulet.io.__path__[0])}",
+                f"-Dleveldb_mcpe_DIR={fix_path(amulet.leveldb.__path__[0])}",
+                f"-Damulet_utils_DIR={fix_path(amulet.utils.__path__[0])}",
+                f"-Damulet_zlib_DIR={fix_path(amulet.zlib.__path__[0])}",
+                f"-Damulet_nbt_DIR={fix_path(amulet.nbt.__path__[0])}",
+                f"-Damulet_core_DIR={fix_path(amulet.core.__path__[0])}",
+                f"-Damulet_game_DIR={fix_path(amulet.game.__path__[0])}",
+                f"-Damulet_anvil_DIR={fix_path(amulet.anvil.__path__[0])}",
+                f"-DAMULET_EDITOR_SRC_DIR={fix_path(src_dir)}",
+                f"-DAMULET_EDITOR_EXT_SRC_DIR={fix_path(ext_dir)}",
+                f"-DCMAKE_INSTALL_PREFIX=install",
+                "-B",
+                "build",
+            ]
+        ).returncode:
+            raise RuntimeError("Error configuring amulet_editor")
+        if subprocess.run(
+            ["cmake", "--build", "build", "--config", "Release"]
+        ).returncode:
+            raise RuntimeError("Error installing amulet_editor")
+        if subprocess.run(
+            ["cmake", "--install", "build", "--config", "Release"]
+        ).returncode:
+            raise RuntimeError("Error installing amulet_editor")
 
 
-class BDistWheel(BDistWheelOriginal):
-    def finalize_options(self) -> None:
-        # Freeze requirements so that the same version is installed as was compiled against.
-        frozen_requirements = {
-            "amulet_nbt": amulet_nbt.__version__,
-            "amulet_core": amulet.__version__,
-        }
-        install_requires = list(self.distribution.install_requires)
-        for i, requirement in enumerate(self.distribution.install_requires):
-            match = re.match(r"[a-zA-Z0-9_-]+", requirement)
-            if match is None:
-                continue
-            name = match.group().lower().replace("-", "_")
-            if name not in frozen_requirements:
-                continue
-            install_requires[i] = f"{name}=={frozen_requirements.pop(name)}"
-
-        if frozen_requirements:
-            raise RuntimeError(f"{frozen_requirements} {install_requires}")
-
-        self.distribution.install_requires = install_requires
-        super().finalize_options()
+cmdclass["build_ext"] = CMakeBuild
 
 
-cmdclass["bdist_wheel"] = BDistWheel
+def _get_version() -> str:
+    version_str: str = versioneer.get_version()
 
+    if os.environ.get("AMULET_FREEZE_COMPILER", None):
+        date_format = "%y%m%d%H%M%S"
+        try:
+            with open("build/timestamp.txt", "r") as f:
+                timestamp = datetime.datetime.strptime(f.read(), date_format)
+        except Exception:
+            timestamp = datetime.datetime(1, 1, 1)
+        if datetime.timedelta(minutes=10) < datetime.datetime.now() - timestamp:
+            timestamp = datetime.datetime.now()
+            os.makedirs("build", exist_ok=True)
+            with open("build/timestamp.txt", "w") as f:
+                f.write(timestamp.strftime(date_format))
 
-AmuletNBTLib = (
-    "amulet_nbt",
-    dict(
-        sources=glob.glob(
-            os.path.join(glob.escape(amulet_nbt.get_source()), "**", "*.cpp"),
-            recursive=True,
-        ),
-        include_dirs=[amulet_nbt.get_include()],
-        cflags=CompileArgs,
-    ),
-)
+        version = Version(version_str)
+        epoch = f"{version.epoch}!" if version.epoch else ""
+        release = ".".join(map(str, version.release))
+        pre = "".join(map(str, version.pre)) if version.is_prerelease else ""
+        post = f".post{timestamp.strftime(date_format)}"
+        local = f"+{version.local}" if version.local else ""
+        version_str = f"{epoch}{release}{pre}{post}{local}"
 
-AmuletCoreLib = (
-    "amulet_core",
-    dict(
-        sources=glob.glob(
-            os.path.join(glob.escape(amulet.__path__[0]), "**", "*.cpp"),
-            recursive=True,
-        ),
-        include_dirs=[
-            get_python_inc(),
-            pybind11.get_include(),
-            pybind11_extensions.get_include(),
-            amulet_nbt.get_include(),
-            os.path.dirname(amulet.__path__[0]),
-        ],
-        cflags=CompileArgs,
-    ),
-)
+    return version_str
 
 
 setup(
-    version=versioneer.get_version(),
+    version=_get_version(),
     cmdclass=cmdclass,
-    libraries=[AmuletNBTLib, AmuletCoreLib],
     ext_modules=[
-        Extension(
-            name="builtin_plugins.amulet_team_3d_viewer._view_3d.__init__",
-            sources=glob.glob(
-                os.path.join(
-                    glob.escape("src/builtin_plugins/amulet_team_3d_viewer/_view_3d"),
-                    "**",
-                    "*.cpp",
-                ),
-                recursive=True,
-            ),
-            include_dirs=[
-                pybind11.get_include(),
-                pybind11_extensions.get_include(),
-                amulet_nbt.get_include(),
-                os.path.dirname(amulet.__path__[0]),
-                "src",
-                "src/builtin_plugins",
-            ],
-            libraries=["amulet_nbt", "amulet_core"],
-            define_macros=[("PYBIND11_DETAILED_ERROR_MESSAGES", None)],
-            extra_compile_args=CompileArgs,
-        ),
+        Extension("builtin_plugins.amulet_team_3d_viewer._view_3d._view_3d", [])
     ],
+    install_requires=requirements.get_runtime_dependencies(),
 )
