@@ -10,11 +10,12 @@
 #include <utility>
 #include <vector>
 
-#include <amulet/block.hpp>
-#include <amulet/chunk_components/block_component.hpp>
-#include <amulet/chunk_components/section_array_map.hpp>
+#include <amulet/core/block/block.hpp>
+#include <amulet/core/chunk/component/block_component.hpp>
+#include <amulet/core/chunk/component/section_array_map.hpp>
+#include <amulet/core/palette/block_palette.hpp>
+
 #include <amulet/mesh/block/block_mesh.hpp>
-#include <amulet/palette/block_palette.hpp>
 
 #include "_resource_pack_base.hpp"
 

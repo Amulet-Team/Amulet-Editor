@@ -6,7 +6,8 @@
 #include <tuple>
 #include <unordered_map>
 
-#include <amulet/block.hpp>
+#include <amulet/core/block/block.hpp>
+
 #include <amulet/mesh/block/block_mesh.hpp>
 
 namespace Amulet {

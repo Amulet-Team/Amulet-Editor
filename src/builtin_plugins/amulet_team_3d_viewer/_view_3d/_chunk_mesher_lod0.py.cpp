@@ -11,12 +11,14 @@
 #include <pybind11/pybind11.h>
 #include <pybind11/stl.h>
 #include <pybind11/typing.h>
-#include <pybind11_extensions/builtins.hpp>
+#include <amulet/pybind11_extensions/builtins.hpp>
 
-#include <amulet/block.hpp>
-#include <amulet/chunk_components/section_array_map.hpp>
+#include <amulet/core/block/block.hpp>
+#include <amulet/core/chunk/component/section_array_map.hpp>
+#include <amulet/core/palette/block_palette.hpp>
+
 #include <amulet/mesh/block/block_mesh.hpp>
-#include <amulet/palette/block_palette.hpp>
+
 #include "_resource_pack_base.hpp"
 #include "_chunk_mesher_lod0.hpp"
 
