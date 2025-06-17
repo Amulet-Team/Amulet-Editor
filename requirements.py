@@ -26,6 +26,8 @@ AMULET_GAME_REQUIREMENT = "~=1.0.0.0a1"
 AMULET_ANVIL_REQUIREMENT = "~=1.0.0.0a0"
 # AMULET_LEVEL_REQUIREMENT = "~=1.0"
 AMULET_LEVEL_REQUIREMENT = "~=1.0.0.0a0"
+# AMULET_RESOURCE_PACK_REQUIREMENT = "~=1.0"
+AMULET_RESOURCE_PACK_REQUIREMENT = "~=1.0.0.0a0"
 
 
 if os.environ.get("AMULET_PYBIND11_EXTENSIONS_REQUIREMENT", None):
@@ -76,6 +78,10 @@ if os.environ.get("AMULET_LEVEL_REQUIREMENT", None):
         f"{AMULET_LEVEL_REQUIREMENT},{os.environ['AMULET_LEVEL_REQUIREMENT']}"
     )
 
+if os.environ.get("AMULET_RESOURCE_PACK_REQUIREMENT", None):
+    AMULET_RESOURCE_PACK_REQUIREMENT = (
+        f"{AMULET_RESOURCE_PACK_REQUIREMENT},{os.environ['AMULET_RESOURCE_PACK_REQUIREMENT']}"
+    )
 
 def get_specifier_set(version_str: str) -> str:
     """
@@ -163,6 +169,13 @@ if os.environ.get("AMULET_FREEZE_COMPILER", None):
     else:
         AMULET_LEVEL_REQUIREMENT = get_specifier_set(amulet.level.__version__)
 
+    try:
+        import amulet.resource_pack
+    except ImportError:
+        pass
+    else:
+        AMULET_RESOURCE_PACK_REQUIREMENT = get_specifier_set(amulet.resource_pack.__version__)
+
 
 def get_build_dependencies() -> list:
     return [
@@ -178,6 +191,7 @@ def get_build_dependencies() -> list:
         f"amulet-game{AMULET_GAME_REQUIREMENT}",
         f"amulet-anvil{AMULET_ANVIL_REQUIREMENT}",
         f"amulet-level{AMULET_LEVEL_REQUIREMENT}",
+        f"amulet-resource-pack{AMULET_RESOURCE_PACK_REQUIREMENT}",
     ]
 
 
@@ -196,6 +210,7 @@ def get_runtime_dependencies() -> list[str]:
         f"amulet-game{AMULET_GAME_REQUIREMENT}",
         f"amulet-anvil{AMULET_ANVIL_REQUIREMENT}",
         f"amulet-level{AMULET_LEVEL_REQUIREMENT}",
+        f"amulet-resource-pack{AMULET_RESOURCE_PACK_REQUIREMENT}",
         "amulet_runtime_final~=1.1",
         "PySide6_Essentials~=6.5",
         "numpy~=2.0",
