@@ -259,12 +259,12 @@ void create_lod0_chunk(
                     if (parts[BlockMeshCullDirection::BlockMeshCullNone]) {
                         add_part(*parts[BlockMeshCullDirection::BlockMeshCullNone], 1.0);
                     }
-                    add_part_conditional(parts[BlockMeshCullDirection::BlockMeshCullUp], 0, 1, 0, 1.0);
-                    add_part_conditional(parts[BlockMeshCullDirection::BlockMeshCullDown], 0, -1, 0, 0.55);
-                    add_part_conditional(parts[BlockMeshCullDirection::BlockMeshCullNorth], 0, 0, -1, 0.85);
-                    add_part_conditional(parts[BlockMeshCullDirection::BlockMeshCullSouth], 0, 0, 1, 0.85);
-                    add_part_conditional(parts[BlockMeshCullDirection::BlockMeshCullEast], 1, 0, 0, 0.7);
-                    add_part_conditional(parts[BlockMeshCullDirection::BlockMeshCullWest], -1, 0, 0, 0.7);
+                    add_part_conditional(parts[BlockMeshCullDirection::BlockMeshCullUp], 0, 1, 0, 1.0f);
+                    add_part_conditional(parts[BlockMeshCullDirection::BlockMeshCullDown], 0, -1, 0, 0.55f);
+                    add_part_conditional(parts[BlockMeshCullDirection::BlockMeshCullNorth], 0, 0, -1, 0.85f);
+                    add_part_conditional(parts[BlockMeshCullDirection::BlockMeshCullSouth], 0, 0, 1, 0.85f);
+                    add_part_conditional(parts[BlockMeshCullDirection::BlockMeshCullEast], 1, 0, 0, 0.7f);
+                    add_part_conditional(parts[BlockMeshCullDirection::BlockMeshCullWest], -1, 0, 0, 0.7f);
                 }
             }
         }
