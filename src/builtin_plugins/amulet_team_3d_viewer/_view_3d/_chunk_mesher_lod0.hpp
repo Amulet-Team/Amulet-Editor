@@ -15,7 +15,7 @@
 #include <amulet/core/chunk/component/section_array_map.hpp>
 #include <amulet/core/palette/block_palette.hpp>
 
-#include <amulet/mesh/block/block_mesh.hpp>
+#include <amulet/resource_pack/mesh/block/block_mesh.hpp>
 
 #include "_resource_pack_base.hpp"
 

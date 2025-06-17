@@ -8,6 +8,7 @@ find_package(pybind11 CONFIG REQUIRED)
 # Add Amulet libraries
 find_package(amulet_pybind11_extensions CONFIG REQUIRED)
 find_package(amulet_core CONFIG REQUIRED)
+find_package(amulet_resource_pack CONFIG REQUIRED)
 
 # Find C++ files
 file(GLOB_RECURSE SOURCES LIST_DIRECTORIES false ${CMAKE_CURRENT_LIST_DIR}/*.cpp)
@@ -17,6 +18,7 @@ file(GLOB_RECURSE HEADERS LIST_DIRECTORIES false ${CMAKE_CURRENT_LIST_DIR}/*.hpp
 pybind11_add_module(_view_3d)
 target_link_libraries( _view_3d PRIVATE amulet_pybind11_extensions )
 target_link_libraries( _view_3d PRIVATE amulet_core )
+target_link_libraries( _view_3d PRIVATE amulet_resource_pack )
 target_compile_definitions(_view_3d PRIVATE PYBIND11_DETAILED_ERROR_MESSAGES)
 target_compile_definitions(_view_3d PRIVATE PYBIND11_VERSION="${pybind11_VERSION}")
 target_compile_definitions(_view_3d PRIVATE COMPILER_ID="${CMAKE_CXX_COMPILER_ID}")

@@ -8,7 +8,7 @@
 
 #include <amulet/core/block/block.hpp>
 
-#include <amulet/mesh/block/block_mesh.hpp>
+#include <amulet/resource_pack/mesh/block/block_mesh.hpp>
 
 namespace Amulet {
 

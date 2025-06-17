@@ -6,14 +6,15 @@ import shutil
 import pybind11
 import amulet.pybind11_extensions
 import amulet.io
+import amulet.leveldb
+import amulet.utils
+import amulet.zlib
 import amulet.nbt
 import amulet.core
 import amulet.game
-import amulet.utils
 import amulet.anvil
-import amulet.leveldb
-import amulet.zlib
 import amulet.level
+import amulet.resource_pack
 import amulet.test_utils
 
 
@@ -53,6 +54,7 @@ def main():
             f"-Damulet_game_DIR={fix_path(amulet.game.__path__[0])}",
             f"-Damulet_anvil_DIR={fix_path(amulet.anvil.__path__[0])}",
             f"-Damulet_level_DIR={fix_path(amulet.level.__path__[0])}",
+            f"-Damulet_resource_pack_DIR={fix_path(amulet.resource_pack.__path__[0])}",
             f"-DAMULET_EDITOR_SRC_DIR={fix_path(os.path.join(RootDir, 'src'))}",
             f"-Damulet_test_utils_DIR={fix_path(amulet.test_utils.__path__[0])}",
             f"-DCMAKE_INSTALL_PREFIX=install",
@@ -61,7 +63,7 @@ def main():
             "build",
         ]
     ).returncode:
-        raise RuntimeError("Error configuring amulet_level")
+        raise RuntimeError("Error configuring amulet_editor")
 
 
 if __name__ == "__main__":
