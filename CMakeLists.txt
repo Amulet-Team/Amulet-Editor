@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 3.13)
 
-project(_view_3d LANGUAGES CXX)
+project(amulet_editor LANGUAGES CXX)
 
 # Set C++20
 set(CMAKE_CXX_STANDARD 20)
