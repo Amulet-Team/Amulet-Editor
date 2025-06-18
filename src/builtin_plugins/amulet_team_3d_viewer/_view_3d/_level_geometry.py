@@ -479,7 +479,7 @@ class LevelGeometry(QObject):
                 raise RuntimeError("Could not make context current.")
             # unload the OpenGL data.
             for chunk in gl_data.chunks.values():
-                chunk.chunk_handle.changed.disconnect(self._reset_chunk_finder)
+                chunk.changed.disconnect(self._reset_chunk_finder)
                 geometry = chunk.geometry
                 if geometry is not None:
                     geometry.vao.destroy()
@@ -516,7 +516,7 @@ class LevelGeometry(QObject):
                 )
                 if unload_distance <= distance or camera_dimension != dimension_id:
                     # Unload the chunk
-                    chunk_data.chunk_handle.changed.disconnect(self._reset_chunk_finder)
+                    chunk_data.changed.disconnect(self._reset_chunk_finder)
                     geometry = chunk_data.geometry
                     if geometry is not None:
                         geometry.vao.destroy()
@@ -612,15 +612,14 @@ class LevelGeometry(QObject):
                         dimension, cx, cz = chunk_key
                         transform = QMatrix4x4()
                         transform.translate(cx * 16, 0, cz * 16)
+                        chunk_handle = self._level.get_dimension(dimension).get_chunk_handle(
+                            cx, cz
+                        )
                         chunk_data = ChunkData(
-                            self._level.get_dimension(dimension).get_chunk_handle(
-                                cx, cz
-                            ),
+                            chunk_handle,
                             transform,
                         )
-                        chunk_data.chunk_handle.changed.connect(
-                            self._reset_chunk_finder
-                        )
+                        chunk_data.changed.connect(self._reset_chunk_finder)
                         gl_data.chunks[chunk_key] = chunk_data
                     # Add the chunk meshing job.
                     self._start_chunk_mesher(chunk_key, gl_data, chunk_data)
