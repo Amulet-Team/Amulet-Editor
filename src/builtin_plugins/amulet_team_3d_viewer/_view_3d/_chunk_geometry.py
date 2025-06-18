@@ -1,5 +1,6 @@
 from threading import RLock
 from weakref import WeakMethod, finalize
+from PySide6.QtCore import QObject, Signal
 from PySide6.QtGui import QMatrix4x4
 from PySide6.QtOpenGL import QOpenGLBuffer, QOpenGLTexture, QOpenGLVertexArrayObject
 
@@ -26,7 +27,7 @@ class ChunkGLData:
         self.vao = vao
 
 
-class ChunkData:
+class ChunkData(QObject):
     # Constant data
     # The chunk handle. Used to get notified when the chunk changed.
     chunk_handle: ChunkHandle
@@ -36,7 +37,11 @@ class ChunkData:
     # The OpenGL data.
     geometry: ChunkGLData | None
 
+    # Signal emitted when the chunk has changed.
+    changed = Signal()
+
     def __init__(self, chunk_handle: ChunkHandle, transform: QMatrix4x4) -> None:
+        super().__init__()
         self.chunk_handle = chunk_handle
         self.model_transform = transform
 
@@ -69,6 +74,7 @@ class ChunkData:
         """Mark the chunk as needing meshing."""
         with self._lock:
             self.chunk_state += 1
+        self.changed.emit()
 
     def set_geometry(
         self, geometry_state: int, geometry: ChunkGLData
