@@ -1,9 +1,9 @@
 from threading import RLock
+from weakref import WeakMethod, finalize
 from PySide6.QtGui import QMatrix4x4
 from PySide6.QtOpenGL import QOpenGLBuffer, QOpenGLTexture, QOpenGLVertexArrayObject
 
 from amulet.level.abc import ChunkHandle
-from amulet.utils.weakref import CallableWeakMethod
 from ._resource_pack import OpenGLResourcePack
 
 
@@ -49,11 +49,17 @@ class ChunkData:
         self.geometry = None
 
         # Schedule meshing when the chunk changes.
-        self._on_chunk_change = CallableWeakMethod(self.mark_changed)
-        self.chunk_handle.changed.connect(self._on_chunk_change)
+        on_chunk_change = WeakMethod(self.mark_changed)
+        self._on_change_token = self.chunk_handle.changed.connect(lambda: (func := on_chunk_change()) and func())
+
+        weak_finalise = WeakMethod(self._del)
+        self._finalise = finalize(self, lambda: (destroy := weak_finalise()) and destroy())
+
+    def _del(self) -> None:
+        self.chunk_handle.changed.disconnect(self._on_change_token)
 
     def __del__(self) -> None:
-        self.chunk_handle.changed.disconnect(self._on_chunk_change)
+        self._finalise()
 
     def has_changed(self) -> bool:
         """Does the geometry need rebuilding."""
