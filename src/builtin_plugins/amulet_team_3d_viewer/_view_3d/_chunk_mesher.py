@@ -6,12 +6,12 @@ import ctypes
 import numpy
 import numpy.typing
 
-from amulet.data_types import DimensionId
+from amulet.level.abc.dimension import DimensionId
 from amulet.level.abc import Level, Dimension
-from amulet.errors import ChunkLoadError, ChunkDoesNotExist
-from amulet.chunk import Chunk
-from amulet.chunk_components import BlockComponent, BlockComponentData
-from amulet.selection import SelectionGroup
+from amulet.core.chunk import Chunk, ChunkLoadError, ChunkDoesNotExist
+from amulet.core.chunk.component import BlockComponent, BlockComponentData
+from amulet.core.selection import SelectionGroup
+from amulet.utils.lock import ThreadAccessMode, ThreadShareMode
 
 from ._chunk_mesher_lod0 import create_lod0_chunk
 
@@ -45,7 +45,7 @@ def _get_sub_chunks(
             chunk_handle = level.get_dimension(dimension).get_chunk_handle(
                 cx + dx, cz + dz
             )
-            chunk = chunk_handle.get([BlockComponent.ComponentID])
+            chunk = chunk_handle.get_chunk([BlockComponent.ComponentID])
             if isinstance(chunk, BlockComponent):
                 neighbour_chunks[(dx, dz)] = chunk.block
         except ChunkLoadError:
@@ -219,7 +219,7 @@ def get_block_component(
     dimension: Dimension, cx: int, cz: int
 ) -> BlockComponentData | None:
     try:
-        chunk = dimension.get_chunk_handle(cx, cz).get([BlockComponent.ComponentID])
+        chunk = dimension.get_chunk_handle(cx, cz).get_chunk([BlockComponent.ComponentID])
     except ChunkLoadError:
         return None
     else:
@@ -236,21 +236,21 @@ def mesh_chunk(
     cx: int,
     cz: int,
 ) -> tuple[bytes, int]:
-    with level.lock_shared():
+    with level.lock(thread_mode=(ThreadAccessMode.Read, ThreadShareMode.SharedReadWrite)):
         if not level.is_open():
             raise RuntimeError("The level has been closed.")
         dimension = level.get_dimension(dimension_id)
 
         try:
-            chunk = dimension.get_chunk_handle(cx, cz).get([BlockComponent.ComponentID])
+            chunk = dimension.get_chunk_handle(cx, cz).get_chunk([BlockComponent.ComponentID])
         except ChunkDoesNotExist:
             log.debug(f"Chunk {dimension_id}, {cx}, {cz} does not exist")
-            buffer = _get_empty_geometry(dimension.bounds(), resource_pack, cx, cz)
+            buffer = _get_empty_geometry(dimension.bounds, resource_pack, cx, cz)
         except ChunkLoadError:
             log.exception(
                 f"Error loading chunk {dimension_id}, {cx}, {cz}", exc_info=True
             )
-            buffer = _get_error_geometry(dimension.bounds(), resource_pack, cx, cz)
+            buffer = _get_error_geometry(dimension.bounds, resource_pack, cx, cz)
         else:
             if isinstance(chunk, BlockComponent):
                 log.debug(f"Creating geometry for chunk {dimension_id}, {cx}, {cz}")

@@ -31,7 +31,7 @@ from OpenGL.GL import (
     GL_ONE_MINUS_SRC_ALPHA as _GL_ONE_MINUS_SRC_ALPHA,
 )
 
-from amulet.data_types import DimensionId
+from amulet.level.abc.dimension import DimensionId
 from amulet.level.abc import Level
 
 from amulet_editor.models.widgets.traceback_dialog import (
