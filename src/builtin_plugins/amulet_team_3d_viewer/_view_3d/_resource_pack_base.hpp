@@ -22,6 +22,7 @@ public:
     std::map<Amulet::BlockStack, const Amulet::BlockMesh> _block_models;
 
     AbstractOpenGLResourcePack() { }
+    virtual ~AbstractOpenGLResourcePack() { }
 
     const std::tuple<float, float, float, float>& texture_bounds(const std::string& texture_path)
     {
