@@ -1,3 +1,0 @@
-[submodule "tools/shared"]
-	path = tools/shared
-	url = https://github.com/Amulet-Team/cpp-tools

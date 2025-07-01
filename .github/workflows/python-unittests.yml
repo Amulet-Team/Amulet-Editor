@@ -13,34 +13,95 @@ on:
   pull_request:
 
 jobs:
-  unittests:
+  unittests-first:
+    if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository
+  
+    strategy:
+      fail-fast: false
+      matrix:
+        python-version: [ '3.11', '3.12' ]
+        os: [ macos-latest, windows-latest ]
+
     runs-on: ${{ matrix.os }}
+    timeout-minutes: 30
     defaults:
       run:
         shell: bash
 
+    steps:
+    - name: Clone
+      uses: actions/checkout@v4
+
+    - name: Install dependencies
+      uses: ./.github/actions/install-dependencies
+      with:
+        python-version: ${{ matrix.python-version }}
+        username: ${{ secrets.PYPI_USERNAME }}
+        compiler-version-password: ${{ secrets.AMULET_COMPILER_VERSION_PYPI_PASSWORD }}
+        leveldb-password: ${{ secrets.AMULET_LEVELDB_PYPI_PASSWORD }}
+        utils-password: ${{ secrets.AMULET_UTILS_PYPI_PASSWORD }}
+        zlib-password: ${{ secrets.AMULET_ZLIB_PYPI_PASSWORD }}
+        nbt-password: ${{ secrets.AMULET_NBT_PYPI_PASSWORD }}
+        core-password: ${{ secrets.AMULET_CORE_PYPI_PASSWORD }}
+        game-password: ${{ secrets.AMULET_GAME_PYPI_PASSWORD }}
+        anvil-password: ${{ secrets.AMULET_ANVIL_PYPI_PASSWORD }}
+        level-password: ${{ secrets.AMULET_LEVEL_PYPI_PASSWORD }}
+        resource-pack-password: ${{ secrets.AMULET_RESOURCE_PACK_PYPI_PASSWORD }}
+        rest-token: ${{ secrets.GITHUB_TOKEN }}
+
+    - name: Install
+      env:
+        AMULET_FREEZE_COMPILER: 1
+      run: |
+        pip install --only-binary amulet-compiler-version,amulet-leveldb,amulet-utils,amulet-zlib,amulet-nbt,amulet-core,amulet-game,amulet-anvil,amulet-level,amulet-resource-pack -v .[dev]
+
+    - name: Test with unittest
+      run: python -m unittest discover -v -s tests
+
+  unittests-first-ubuntu:
+    if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository
+
     strategy:
       fail-fast: false
       matrix:
-        python-version: ['3.11', '3.12']
-        os: [windows-latest, macos-latest, ubuntu-latest]
+        python-version: [ '3.11', '3.12' ]
+        os: [ ubuntu-latest ]
+
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 30
+    defaults:
+      run:
+        shell: bash
+
     steps:
-    - name: Configure Git
-      run: |
-        git config --global core.longpaths true
-    - uses: actions/checkout@v2
-    - name: Set up Python ${{ matrix.python-version }}
-      uses: actions/setup-python@v4
-      with:
-        python-version: ${{ matrix.python-version }}
-    - name: Install dependencies
-      run: |
-        if [ "$RUNNER_OS" == "Windows" ]; then
-          export TMPDIR="C:\temp"
-          export TMP="C:\temp"
-          export TEMP="C:\temp"
-        fi
-        python -m pip install --upgrade pip
-        pip install -e .
-    - name: Test with unittest
-      run: python -m unittest discover -v -s tests
+      - name: Clone
+        uses: actions/checkout@v4
+
+      - name: Build and run unittests
+        uses: ./.github/actions/unittests-src
+        with:
+          python-version: ${{ matrix.python-version }}
+
+  unittests-third:
+    if: github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name != github.repository
+
+    strategy:
+      fail-fast: false
+      matrix:
+        python-version: [ '3.11', '3.12' ]
+        os: [ windows-latest, macos-latest, ubuntu-latest ]
+
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 30
+    defaults:
+      run:
+        shell: bash
+
+    steps:
+      - name: Clone
+        uses: actions/checkout@v4
+
+      - name: Build and run unittests
+        uses: ./.github/actions/unittests-src
+        with:
+          python-version: ${{ matrix.python-version }}

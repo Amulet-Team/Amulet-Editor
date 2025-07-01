@@ -18,7 +18,7 @@ void create_lod0_chunk(
     for (size_t i = 0; i < 5; i++) {
         const Amulet::BlockComponentData* block_component = all_chunk_data[i];
         if (block_component) {
-            all_block_meshes[i].resize(block_component->get_palette()->size());
+            all_block_meshes[i].resize(block_component->get_palette().size());
         }
     }
 
@@ -32,7 +32,7 @@ void create_lod0_chunk(
         }
         else {
             const auto& chunk_data = all_chunk_data[chunk_index];
-            const auto& block_stack = *chunk_data->get_palette()->index_to_block_stack(block_id);
+            const auto& block_stack = chunk_data->get_palette().index_to_block_stack(block_id);
             const BlockMesh* mesh_ptr = &resource_pack.get_block_model(block_stack);
             block_meshes[block_id] = mesh_ptr;
             return *mesh_ptr;
@@ -40,7 +40,7 @@ void create_lod0_chunk(
     };
 
     // Get array shape info
-    const auto& sections = *all_chunk_data[2]->get_sections();
+    const auto& sections = all_chunk_data[2]->get_sections();
     const auto& section_shape = sections.get_array_shape();
     const std::int32_t x_shape = std::get<0>(section_shape);
     const std::int32_t y_shape = std::get<1>(section_shape);
@@ -107,7 +107,7 @@ void create_lod0_chunk(
         // North
         if (all_chunk_data[0]) {
             const auto& neighbour_block_component = *all_chunk_data[0];
-            const auto& neighbour_sections = *neighbour_block_component.get_sections();
+            const auto& neighbour_sections = neighbour_block_component.get_sections();
             if (neighbour_sections.get_array_shape() != section_shape) {
                 throw std::invalid_argument("North section shape does not match.");
             }
@@ -129,7 +129,7 @@ void create_lod0_chunk(
         // West
         if (all_chunk_data[3]) {
             const auto& neighbour_block_component = *all_chunk_data[3];
-            const auto& neighbour_sections = *neighbour_block_component.get_sections();
+            const auto& neighbour_sections = neighbour_block_component.get_sections();
             if (neighbour_sections.get_array_shape() != section_shape) {
                 throw std::invalid_argument("East section shape does not match.");
             }
@@ -151,7 +151,7 @@ void create_lod0_chunk(
         // South
         if (all_chunk_data[4]) {
             const auto& neighbour_block_component = *all_chunk_data[4];
-            const auto& neighbour_sections = *neighbour_block_component.get_sections();
+            const auto& neighbour_sections = neighbour_block_component.get_sections();
             if (neighbour_sections.get_array_shape() != section_shape) {
                 throw std::invalid_argument("South section shape does not match.");
             }
@@ -173,7 +173,7 @@ void create_lod0_chunk(
         // West
         if (all_chunk_data[1]) {
             const auto& neighbour_block_component = *all_chunk_data[1];
-            const auto& neighbour_sections = *neighbour_block_component.get_sections();
+            const auto& neighbour_sections = neighbour_block_component.get_sections();
             if (neighbour_sections.get_array_shape() != section_shape) {
                 throw std::invalid_argument("West section shape does not match.");
             }
@@ -250,6 +250,8 @@ void create_lod0_chunk(
                                 // If both blocks are full translucent then skip.
                                 return;
                             }
+                        default:
+                            break;
                         }
 
                         add_part(*part, shading);
@@ -259,12 +261,12 @@ void create_lod0_chunk(
                     if (parts[BlockMeshCullDirection::BlockMeshCullNone]) {
                         add_part(*parts[BlockMeshCullDirection::BlockMeshCullNone], 1.0);
                     }
-                    add_part_conditional(parts[BlockMeshCullDirection::BlockMeshCullUp], 0, 1, 0, 1.0);
-                    add_part_conditional(parts[BlockMeshCullDirection::BlockMeshCullDown], 0, -1, 0, 0.55);
-                    add_part_conditional(parts[BlockMeshCullDirection::BlockMeshCullNorth], 0, 0, -1, 0.85);
-                    add_part_conditional(parts[BlockMeshCullDirection::BlockMeshCullSouth], 0, 0, 1, 0.85);
-                    add_part_conditional(parts[BlockMeshCullDirection::BlockMeshCullEast], 1, 0, 0, 0.7);
-                    add_part_conditional(parts[BlockMeshCullDirection::BlockMeshCullWest], -1, 0, 0, 0.7);
+                    add_part_conditional(parts[BlockMeshCullDirection::BlockMeshCullUp], 0, 1, 0, 1.0f);
+                    add_part_conditional(parts[BlockMeshCullDirection::BlockMeshCullDown], 0, -1, 0, 0.55f);
+                    add_part_conditional(parts[BlockMeshCullDirection::BlockMeshCullNorth], 0, 0, -1, 0.85f);
+                    add_part_conditional(parts[BlockMeshCullDirection::BlockMeshCullSouth], 0, 0, 1, 0.85f);
+                    add_part_conditional(parts[BlockMeshCullDirection::BlockMeshCullEast], 1, 0, 0, 0.7f);
+                    add_part_conditional(parts[BlockMeshCullDirection::BlockMeshCullWest], -1, 0, 0, 0.7f);
                 }
             }
         }

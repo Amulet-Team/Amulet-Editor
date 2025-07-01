@@ -1,0 +1,389 @@
+name: 'Install dependencies'
+description: 'Build if needed and install the library dependencies'
+inputs:
+  python-version:
+    description: 'The version of Python to install'
+    required: true
+  username:
+    description: 'The pypi username'
+    required: true
+  compiler-version-password:
+    description: 'The password for the compiler-version library'
+    required: true
+  leveldb-password:
+    description: 'The password for the leveldb library'
+    required: true
+  utils-password:
+    description: 'The password for the utils library'
+    required: true
+  zlib-password:
+    description: 'The password for the zlib library'
+    required: true
+  nbt-password:
+    description: 'The password for the nbt library'
+    required: true
+  core-password:
+    description: 'The password for the core library'
+    required: true
+  game-password:
+    description: 'The password for the game library'
+    required: true
+  anvil-password:
+    description: 'The password for the anvil library'
+    required: true
+  level-password:
+    description: 'The password for the level library'
+    required: true
+  resource-pack-password:
+    description: 'The password for the resource-pack library'
+    required: true
+  rest-token:
+    description: 'The Github authentication token to use to access the REST API.'
+    required: true
+runs:
+  using: "composite"
+  steps:
+    - name: Validate Inputs
+      shell: bash
+      run: |
+        if [ -z "${{ inputs.python-version }}" ]; then
+          echo "python-version is empty"
+          exit 1
+        fi
+
+        if [ -z "${{ inputs.username }}" ]; then
+          echo "username is empty"
+          exit 1
+        fi
+
+        if [ -z "${{ inputs.compiler-version-password }}" ]; then
+          echo "compiler-version-password is empty"
+          exit 1
+        fi
+
+        if [ -z "${{ inputs.leveldb-password }}" ]; then
+          echo "leveldb-password is empty"
+          exit 1
+        fi
+
+        if [ -z "${{ inputs.utils-password }}" ]; then
+          echo "utils-password is empty"
+          exit 1
+        fi
+
+        if [ -z "${{ inputs.zlib-password }}" ]; then
+          echo "zlib-password is empty"
+          exit 1
+        fi
+
+        if [ -z "${{ inputs.nbt-password }}" ]; then
+          echo "nbt-password is empty"
+          exit 1
+        fi
+
+        if [ -z "${{ inputs.core-password }}" ]; then
+          echo "core-password is empty"
+          exit 1
+        fi
+
+        if [ -z "${{ inputs.game-password }}" ]; then
+          echo "game-password is empty"
+          exit 1
+        fi
+
+        if [ -z "${{ inputs.anvil-password }}" ]; then
+          echo "anvil-password is empty"
+          exit 1
+        fi
+
+        if [ -z "${{ inputs.level-password }}" ]; then
+          echo "level-password is empty"
+          exit 1
+        fi
+
+        if [ -z "${{ inputs.resource-pack-password }}" ]; then
+          echo "resource-pack-password is empty"
+          exit 1
+        fi
+
+        if [ -z "${{ inputs.rest-token }}" ]; then
+          echo "rest-token is empty"
+          exit 1
+        fi
+
+    - name: Set up Python
+      uses: actions/setup-python@v5
+      with:
+        python-version: ${{ inputs.python-version }}
+
+    - name: Install dependencies
+      shell: bash
+      run: |
+        pip install build twine packaging
+
+    - name: Clone Amulet-Compiler-Version
+      uses: actions/checkout@v4
+      with:
+        repository: 'Amulet-Team/Amulet-Compiler-Version'
+        ref: '3.0'
+        path: 'build/pylib/Amulet-Compiler-Version'
+
+    - name: Install Amulet-Compiler-Version
+      id: compiler
+      uses: ./build/pylib/Amulet-Compiler-Version/.github/actions/install
+      with:
+        twine-username: ${{ inputs.username }}
+        twine-password: ${{ inputs.compiler-version-password }}
+
+    - name: Get Dependencies
+      id: dep
+      shell: bash
+      env:
+        REST_TOKEN: ${{ inputs.rest-token }}
+      run: |
+        python -c "import sys; sys.path.append(r'${{ github.action_path }}'); import dependency_resolver; import requirements; dependency_resolver.find_and_save_compatible_libraries([('amulet-resource-pack', 'Amulet-Team/Amulet-Resource-Pack'), ('amulet-level', 'Amulet-Team/Amulet-Level'), ('amulet-anvil', 'Amulet-Team/Amulet-Anvil'), ('amulet-game', 'Amulet-Team/Amulet-Game'), ('amulet-core', 'Amulet-Team/Amulet-Core'), ('amulet-nbt', 'Amulet-Team/Amulet-NBT'), ('amulet-zlib', 'Amulet-Team/Amulet-zlib'), ('amulet-utils', 'Amulet-Team/Amulet-Utils'), ('amulet-leveldb', 'Amulet-Team/Amulet-LevelDB')], requirements.get_runtime_dependencies())"
+        pybind11=$(python -c "import os; f = open(os.path.join(r'${{ github.action_path }}', 'libraries.json'), encoding='utf-8'); import json; print(json.load(f)['pybind11'])")
+        echo "pybind11=$pybind11" >> "$GITHUB_OUTPUT"
+        pybind11_extensions=$(python -c "import os; f = open(os.path.join(r'${{ github.action_path }}', 'libraries.json'), encoding='utf-8'); import json; print(json.load(f)['amulet-pybind11-extensions'])")
+        echo "pybind11_extensions=$pybind11_extensions" >> "$GITHUB_OUTPUT"
+        io=$(python -c "import os; f = open(os.path.join(r'${{ github.action_path }}', 'libraries.json'), encoding='utf-8'); import json; print(json.load(f)['amulet-io'])")
+        echo "io=$io" >> "$GITHUB_OUTPUT"
+        leveldb=$(python -c "import os; f = open(os.path.join(r'${{ github.action_path }}', 'libraries.json'), encoding='utf-8'); import json; print(json.load(f)['amulet-leveldb'])")
+        echo "leveldb=$leveldb" >> "$GITHUB_OUTPUT"
+        utils=$(python -c "import os; f = open(os.path.join(r'${{ github.action_path }}', 'libraries.json'), encoding='utf-8'); import json; print(json.load(f)['amulet-utils'])")
+        echo "utils=$utils" >> "$GITHUB_OUTPUT"
+        zlib=$(python -c "import os; f = open(os.path.join(r'${{ github.action_path }}', 'libraries.json'), encoding='utf-8'); import json; print(json.load(f)['amulet-zlib'])")
+        echo "zlib=$zlib" >> "$GITHUB_OUTPUT"
+        nbt=$(python -c "import os; f = open(os.path.join(r'${{ github.action_path }}', 'libraries.json'), encoding='utf-8'); import json; print(json.load(f)['amulet-nbt'])")
+        echo "nbt=$nbt" >> "$GITHUB_OUTPUT"
+        core=$(python -c "import os; f = open(os.path.join(r'${{ github.action_path }}', 'libraries.json'), encoding='utf-8'); import json; print(json.load(f)['amulet-core'])")
+        echo "core=$core" >> "$GITHUB_OUTPUT"
+        game=$(python -c "import os; f = open(os.path.join(r'${{ github.action_path }}', 'libraries.json'), encoding='utf-8'); import json; print(json.load(f)['amulet-game'])")
+        echo "game=$game" >> "$GITHUB_OUTPUT"
+        anvil=$(python -c "import os; f = open(os.path.join(r'${{ github.action_path }}', 'libraries.json'), encoding='utf-8'); import json; print(json.load(f)['amulet-anvil'])")
+        echo "anvil=$anvil" >> "$GITHUB_OUTPUT"
+        level=$(python -c "import os; f = open(os.path.join(r'${{ github.action_path }}', 'libraries.json'), encoding='utf-8'); import json; print(json.load(f)['amulet-level'])")
+        echo "level=$level" >> "$GITHUB_OUTPUT"
+        resource_pack=$(python -c "import os; f = open(os.path.join(r'${{ github.action_path }}', 'libraries.json'), encoding='utf-8'); import json; print(json.load(f)['amulet-resource-pack'])")
+        echo "resource_pack=$resource_pack" >> "$GITHUB_OUTPUT"
+
+    - name: Specialise Specifiers
+      id: dep2
+      shell: bash
+      run: |
+        pybind11=$(python -c "import requirements; print(requirements.get_specifier_set('${{ steps.dep.outputs.pybind11 }}'))")
+        echo "pybind11=$pybind11" >> "$GITHUB_OUTPUT"
+        pybind11_extensions=$(python -c "import requirements; print(requirements.get_specifier_set('${{ steps.dep.outputs.pybind11_extensions }}'))")
+        echo "pybind11_extensions=$pybind11_extensions" >> "$GITHUB_OUTPUT"
+        io=$(python -c "import requirements; print(requirements.get_specifier_set('${{ steps.dep.outputs.io }}'))")
+        echo "io=$io" >> "$GITHUB_OUTPUT"
+        leveldb=$(python -c "import requirements; print(requirements.get_specifier_set('${{ steps.dep.outputs.leveldb }}'))")
+        echo "leveldb=$leveldb" >> "$GITHUB_OUTPUT"
+        utils=$(python -c "import requirements; print(requirements.get_specifier_set('${{ steps.dep.outputs.utils }}'))")
+        echo "utils=$utils" >> "$GITHUB_OUTPUT"
+        zlib=$(python -c "import requirements; print(requirements.get_specifier_set('${{ steps.dep.outputs.zlib }}'))")
+        echo "zlib=$zlib" >> "$GITHUB_OUTPUT"
+        nbt=$(python -c "import requirements; print(requirements.get_specifier_set('${{ steps.dep.outputs.nbt }}'))")
+        echo "nbt=$nbt" >> "$GITHUB_OUTPUT"
+        core=$(python -c "import requirements; print(requirements.get_specifier_set('${{ steps.dep.outputs.core }}'))")
+        echo "core=$core" >> "$GITHUB_OUTPUT"
+        game=$(python -c "import requirements; print(requirements.get_specifier_set('${{ steps.dep.outputs.game }}'))")
+        echo "game=$game" >> "$GITHUB_OUTPUT"
+        anvil=$(python -c "import requirements; print(requirements.get_specifier_set('${{ steps.dep.outputs.anvil }}'))")
+        echo "anvil=$anvil" >> "$GITHUB_OUTPUT"
+        level=$(python -c "import requirements; print(requirements.get_specifier_set('${{ steps.dep.outputs.level }}'))")
+        echo "level=$level" >> "$GITHUB_OUTPUT"
+        resource_pack=$(python -c "import requirements; print(requirements.get_specifier_set('${{ steps.dep.outputs.resource_pack }}'))")
+        echo "resource_pack=$resource_pack" >> "$GITHUB_OUTPUT"
+
+
+    - name: Clone Amulet-LevelDB
+      uses: Amulet-Team/checkout-pep440@v2
+      with:
+        repository: 'Amulet-Team/Amulet-LevelDB'
+        specifier: '==${{ steps.dep.outputs.leveldb }}'
+        path: 'build/pylib/Amulet-LevelDB'
+        rest-token: ${{ inputs.rest-token }}
+
+    - name: Install Amulet-LevelDB
+      uses: ./build/pylib/Amulet-LevelDB/.github/actions/install
+      with:
+        twine-username: ${{ inputs.username }}
+        twine-password: ${{ inputs.leveldb-password }}
+        compiler-specifier: '==${{ steps.compiler.outputs.version }}'
+        pybind11-specifier: ${{ steps.dep2.outputs.pybind11 }}
+        pybind11-extensions-specifier: ${{ steps.dep2.outputs.pybind11_extensions }}
+        leveldb-specifier: ${{ steps.dep2.outputs.leveldb }}
+
+    - name: Clone Amulet-Utils
+      uses: Amulet-Team/checkout-pep440@v2
+      with:
+        repository: 'Amulet-Team/Amulet-Utils'
+        specifier: '==${{ steps.dep.outputs.utils }}'
+        path: 'build/pylib/Amulet-Utils'
+        rest-token: ${{ inputs.rest-token }}
+
+    - name: Install Amulet-Utils
+      uses: ./build/pylib/Amulet-Utils/.github/actions/install
+      with:
+        twine-username: ${{ inputs.username }}
+        twine-password: ${{ inputs.utils-password }}
+        compiler-specifier: '==${{ steps.compiler.outputs.version }}'
+        pybind11-specifier: ${{ steps.dep2.outputs.pybind11 }}
+        pybind11-extensions-specifier: ${{ steps.dep2.outputs.pybind11_extensions }}
+        utils-specifier: ${{ steps.dep2.outputs.utils }}
+
+    - name: Clone Amulet-zlib
+      uses: Amulet-Team/checkout-pep440@v2
+      with:
+        repository: 'Amulet-Team/Amulet-zlib'
+        specifier: '==${{ steps.dep.outputs.zlib }}'
+        path: 'build/pylib/Amulet-zlib'
+        rest-token: ${{ inputs.rest-token }}
+
+    - name: Install Amulet-zlib
+      uses: ./build/pylib/Amulet-zlib/.github/actions/install
+      with:
+        twine-username: ${{ inputs.username }}
+        twine-password: ${{ inputs.zlib-password }}
+        compiler-specifier: '==${{ steps.compiler.outputs.version }}'
+        pybind11-specifier: ${{ steps.dep2.outputs.pybind11 }}
+        pybind11-extensions-specifier: ${{ steps.dep2.outputs.pybind11_extensions }}
+        zlib-specifier: ${{ steps.dep2.outputs.zlib }}
+
+    - name: Clone Amulet-NBT
+      uses: Amulet-Team/checkout-pep440@v2
+      with:
+        repository: 'Amulet-Team/Amulet-NBT'
+        specifier: '==${{ steps.dep.outputs.nbt }}'
+        path: 'build/pylib/Amulet-NBT'
+        rest-token: ${{ inputs.rest-token }}
+
+    - name: Install Amulet-NBT
+      uses: ./build/pylib/Amulet-NBT/.github/actions/install
+      with:
+        twine-username: ${{ inputs.username }}
+        twine-password: ${{ inputs.nbt-password }}
+        compiler-specifier: '==${{ steps.compiler.outputs.version }}'
+        pybind11-specifier: ${{ steps.dep2.outputs.pybind11 }}
+        pybind11-extensions-specifier: ${{ steps.dep2.outputs.pybind11_extensions }}
+        io-specifier: ${{ steps.dep2.outputs.io }}
+        zlib-specifier: ${{ steps.dep2.outputs.zlib }}
+        nbt-specifier: ${{ steps.dep2.outputs.nbt }}
+
+    - name: Clone Amulet-Core
+      uses: Amulet-Team/checkout-pep440@v2
+      with:
+        repository: 'Amulet-Team/Amulet-Core'
+        specifier: '==${{ steps.dep.outputs.core }}'
+        path: 'build/pylib/Amulet-Core'
+        rest-token: ${{ inputs.rest-token }}
+
+    - name: Install Amulet-Core
+      uses: ./build/pylib/Amulet-Core/.github/actions/install
+      with:
+        twine-username: ${{ inputs.username }}
+        twine-password: ${{ inputs.core-password }}
+        compiler-specifier: '==${{ steps.compiler.outputs.version }}'
+        pybind11-specifier: ${{ steps.dep2.outputs.pybind11 }}
+        pybind11-extensions-specifier: ${{ steps.dep2.outputs.pybind11_extensions }}
+        io-specifier: ${{ steps.dep2.outputs.io }}
+        zlib-specifier: ${{ steps.dep2.outputs.zlib }}
+        nbt-specifier: ${{ steps.dep2.outputs.nbt }}
+        core-specifier: ${{ steps.dep2.outputs.core }}
+
+    - name: Clone Amulet-Game
+      uses: Amulet-Team/checkout-pep440@v2
+      with:
+        repository: 'Amulet-Team/Amulet-Game'
+        specifier: '==${{ steps.dep.outputs.game }}'
+        path: 'build/pylib/Amulet-Game'
+        rest-token: ${{ inputs.rest-token }}
+        submodules: 'recursive'
+
+    - name: Install Amulet-Game
+      uses: ./build/pylib/Amulet-Game/.github/actions/install
+      with:
+        twine-username: ${{ inputs.username }}
+        twine-password: ${{ inputs.game-password }}
+        compiler-specifier: '==${{ steps.compiler.outputs.version }}'
+        pybind11-specifier: ${{ steps.dep2.outputs.pybind11 }}
+        pybind11-extensions-specifier: ${{ steps.dep2.outputs.pybind11_extensions }}
+        io-specifier: ${{ steps.dep2.outputs.io }}
+        zlib-specifier: ${{ steps.dep2.outputs.zlib }}
+        nbt-specifier: ${{ steps.dep2.outputs.nbt }}
+        core-specifier: ${{ steps.dep2.outputs.core }}
+        game-specifier: ${{ steps.dep2.outputs.game }}
+
+    - name: Clone Amulet-Anvil
+      uses: Amulet-Team/checkout-pep440@v2
+      with:
+        repository: 'Amulet-Team/Amulet-Anvil'
+        specifier: '==${{ steps.dep.outputs.anvil }}'
+        path: 'build/pylib/Amulet-Anvil'
+        rest-token: ${{ inputs.rest-token }}
+
+    - name: Install Amulet-Anvil
+      uses: ./build/pylib/Amulet-Anvil/.github/actions/install
+      with:
+        twine-username: ${{ inputs.username }}
+        twine-password: ${{ inputs.anvil-password }}
+        compiler-specifier: '==${{ steps.compiler.outputs.version }}'
+        pybind11-specifier: ${{ steps.dep2.outputs.pybind11 }}
+        pybind11-extensions-specifier: ${{ steps.dep2.outputs.pybind11_extensions }}
+        io-specifier: ${{ steps.dep2.outputs.io }}
+        utils-specifier: ${{ steps.dep2.outputs.utils }}
+        zlib-specifier: ${{ steps.dep2.outputs.zlib }}
+        nbt-specifier: ${{ steps.dep2.outputs.nbt }}
+        core-specifier: ${{ steps.dep2.outputs.core }}
+        anvil-specifier: ${{ steps.dep2.outputs.anvil }}
+
+    - name: Clone Amulet-Level
+      uses: Amulet-Team/checkout-pep440@v2
+      with:
+        repository: 'Amulet-Team/Amulet-Level'
+        specifier: '==${{ steps.dep.outputs.level }}'
+        path: 'build/pylib/Amulet-Level'
+        rest-token: ${{ inputs.rest-token }}
+
+    - name: Install Amulet-Level
+      uses: ./build/pylib/Amulet-Level/.github/actions/install
+      with:
+        twine-username: ${{ inputs.username }}
+        twine-password: ${{ inputs.level-password }}
+        compiler-specifier: '==${{ steps.compiler.outputs.version }}'
+        pybind11-specifier: ${{ steps.dep2.outputs.pybind11 }}
+        pybind11-extensions-specifier: ${{ steps.dep2.outputs.pybind11_extensions }}
+        io-specifier: ${{ steps.dep2.outputs.io }}
+        leveldb-specifier: ${{ steps.dep2.outputs.leveldb }}
+        utils-specifier: ${{ steps.dep2.outputs.utils }}
+        zlib-specifier: ${{ steps.dep2.outputs.zlib }}
+        nbt-specifier: ${{ steps.dep2.outputs.nbt }}
+        core-specifier: ${{ steps.dep2.outputs.core }}
+        game-specifier: ${{ steps.dep2.outputs.game }}
+        anvil-specifier: ${{ steps.dep2.outputs.anvil }}
+        level-specifier: ${{ steps.dep2.outputs.level }}
+
+    - name: Clone Amulet-Resource-Pack
+      uses: Amulet-Team/checkout-pep440@v2
+      with:
+        repository: 'Amulet-Team/Amulet-Resource-Pack'
+        specifier: '==${{ steps.dep.outputs.resource_pack }}'
+        path: 'build/pylib/Amulet-Resource-Pack'
+        rest-token: ${{ inputs.rest-token }}
+
+    - name: Install Amulet-Resource-Pack
+      uses: ./build/pylib/Amulet-Resource-Pack/.github/actions/install
+      with:
+        twine-username: ${{ inputs.username }}
+        twine-password: ${{ inputs.resource-pack-password }}
+        compiler-specifier: '==${{ steps.compiler.outputs.version }}'
+        pybind11-specifier: ${{ steps.dep2.outputs.pybind11 }}
+        pybind11-extensions-specifier: ${{ steps.dep2.outputs.pybind11_extensions }}
+        io-specifier: ${{ steps.dep2.outputs.io }}
+        utils-specifier: ${{ steps.dep2.outputs.utils }}
+        zlib-specifier: ${{ steps.dep2.outputs.zlib }}
+        nbt-specifier: ${{ steps.dep2.outputs.nbt }}
+        core-specifier: ${{ steps.dep2.outputs.core }}
+        resource-pack-specifier: ${{ steps.dep2.outputs.resource_pack }}
+

@@ -6,7 +6,7 @@ class Motd:
         self.__text = text
         self.__plain_text = "".join(
             val[1:] if index > 0 else val
-            for index, val in enumerate(text.split("\u00A7"))
+            for index, val in enumerate(text.split("\u00a7"))
         )
 
     def __str__(self):
@@ -39,8 +39,8 @@ class Motd:
         motd_split = [
             sect
             for section in [
-                ("\u00A7" + val[:1], val[1:]) if index > 0 else (val,)
-                for index, val in enumerate(self.__text.split("\u00A7"))
+                ("\u00a7" + val[:1], val[1:]) if index > 0 else (val,)
+                for index, val in enumerate(self.__text.split("\u00a7"))
                 if not val == ""
             ]
             for sect in section
@@ -75,7 +75,7 @@ class Motd:
 
         rtf = ""
         for item in motd_split:
-            if "\u00A7" not in item:
+            if "\u00a7" not in item:
                 style = (
                     ""
                     if not any(value is None for value in style_definitions.values())

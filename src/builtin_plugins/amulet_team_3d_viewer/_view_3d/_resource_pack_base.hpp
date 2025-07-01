@@ -6,8 +6,9 @@
 #include <tuple>
 #include <unordered_map>
 
-#include <amulet/block.hpp>
-#include <amulet/mesh/block/block_mesh.hpp>
+#include <amulet/core/block/block.hpp>
+
+#include <amulet/resource_pack/mesh/block/block_mesh.hpp>
 
 namespace Amulet {
 
@@ -21,6 +22,7 @@ public:
     std::map<Amulet::BlockStack, const Amulet::BlockMesh> _block_models;
 
     AbstractOpenGLResourcePack() { }
+    virtual ~AbstractOpenGLResourcePack() { }
 
     const std::tuple<float, float, float, float>& texture_bounds(const std::string& texture_path)
     {

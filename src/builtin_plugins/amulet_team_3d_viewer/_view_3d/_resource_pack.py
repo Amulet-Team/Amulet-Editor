@@ -15,13 +15,12 @@ from PySide6.QtCore import QObject, Signal
 from PySide6.QtGui import QImage, QOpenGLContext, QOffscreenSurface
 from PySide6.QtOpenGL import QOpenGLTexture
 
-from amulet.version import VersionNumber
-from amulet.block import Block, BlockStack
+from amulet.core.version import VersionNumber
+from amulet.core.block import Block, BlockStack
 from amulet.level.abc import Level, DiskLevel
 from amulet.game.abc import GameVersion
 from amulet.game import get_game_version
-from amulet.mesh.block import BlockMesh
-from amulet.mesh.block import get_missing_block
+from amulet.resource_pack.mesh.block import BlockMesh
 from amulet.resource_pack.abc import BaseResourcePackManager
 
 from ._textureatlas import create_atlas
@@ -206,7 +205,7 @@ class OpenGLResourcePack(AbstractOpenGLResourcePack):
         if blocks:
             return self._resource_pack.get_block_model(BlockStack(*blocks))
         else:
-            return get_missing_block(self._resource_pack)
+            return self._resource_pack.missing_block
 
 
 class OpenGLResourcePackHandle(QObject):
@@ -244,8 +243,9 @@ class OpenGLResourcePackHandle(QObject):
 
     def _reload(self) -> None:
         def func(promise_data: Promise.Data) -> None:
-            with self._lock, DisplayException(
-                "Error initialising the OpenGL resource pack."
+            with (
+                self._lock,
+                DisplayException("Error initialising the OpenGL resource pack."),
             ):
                 level = self._level()
                 if level is None:

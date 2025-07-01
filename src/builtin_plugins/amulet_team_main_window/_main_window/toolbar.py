@@ -1,12 +1,10 @@
 from typing import Callable
 from threading import RLock
 import traceback
-from weakref import finalize
+from weakref import finalize, WeakMethod
 
 from PySide6.QtCore import QSize, Qt
 from PySide6.QtWidgets import QFrame, QWidget, QVBoxLayout, QHBoxLayout, QButtonGroup
-
-from amulet.utils.weakref import CallableWeakMethod
 
 from amulet_editor.models.widgets import ADragContainer, ATooltipIconButton
 from amulet_editor.models.widgets.traceback_dialog import display_exception
@@ -27,7 +25,10 @@ class ButtonProxy:
         """
         self._button: ATooltipIconButton | None = button
         self._on_click: Callable[[], None] | None = None
-        self._finalise = finalize(self, CallableWeakMethod(self._destroy))
+        weak_destroy = WeakMethod(self._destroy)
+        self._finalise = finalize(
+            self, lambda: (destroy := weak_destroy()) and destroy()
+        )
 
     def _get_button(self) -> ATooltipIconButton:
         if self._button is None:

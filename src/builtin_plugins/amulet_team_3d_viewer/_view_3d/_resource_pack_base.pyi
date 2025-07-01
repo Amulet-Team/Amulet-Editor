@@ -1,7 +1,7 @@
 from __future__ import annotations
 
-import amulet.block
-import amulet.mesh.block
+import amulet.core.block
+import amulet.resource_pack.mesh.block
 
 __all__ = ["AbstractOpenGLResourcePack"]
 
@@ -10,15 +10,15 @@ class AbstractOpenGLResourcePack:
     _texture_bounds: dict[str, tuple[float, float, float, float]]
     def __init__(self) -> None: ...
     def _get_block_model(
-        self, arg0: amulet.block.BlockStack
-    ) -> amulet.mesh.block.BlockMesh:
+        self, arg0: amulet.core.block.BlockStack
+    ) -> amulet.resource_pack.mesh.block.BlockMesh:
         """
         abstractmethod to load the BlockMesh. Must be implemented by the subclass.
         """
 
     def get_block_model(
-        self, arg0: amulet.block.BlockStack
-    ) -> amulet.mesh.block.BlockMesh:
+        self, arg0: amulet.core.block.BlockStack
+    ) -> amulet.resource_pack.mesh.block.BlockMesh:
         """
         Get the BlockMesh for the given BlockStack.
         The Block will be translated to the version format using the previously specified translator.

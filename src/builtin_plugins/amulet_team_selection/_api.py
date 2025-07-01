@@ -1,4 +1,4 @@
-from amulet.selection import SelectionGroup
+from amulet.core.selection import SelectionGroup
 from amulet_editor.models.generic._singleton_signal import SingletonSignal
 
 

@@ -11,7 +11,7 @@ import glob
 import logging
 from importlib import import_module
 from importlib.util import spec_from_file_location, module_from_spec
-from importlib.metadata import version, packages_distributions
+from importlib.metadata import version, packages_distributions, distributions
 from queue import Queue
 from enum import Enum
 import sys
@@ -48,7 +48,16 @@ from amulet_editor.models.widgets.traceback_dialog import display_exception
 
 log = logging.getLogger(__name__)
 PythonVersion = Version(".".join(map(str, sys.version_info[:3])))
-Packages = packages_distributions()
+
+_packages_distributions: Optional[dict[str, list[str]]] = None
+
+
+def _get_packages_distributions() -> dict[str, list[str]]:
+    global _packages_distributions
+    if _packages_distributions is None:
+        _packages_distributions = dict(packages_distributions())
+    return _packages_distributions
+
 
 """
 Notes:
@@ -114,42 +123,83 @@ def get_trace_paths() -> list[str]:
     return paths
 
 
-def _validate_import(imported_name: str, frame: FrameType) -> None:
+_amulet_modules = {
+    "amulet-io": ["amulet", "amulet.io"],
+    "amulet-leveldb": ["amulet", "amulet.leveldb"],
+    "amulet-utils": ["amulet", "amulet.utils"],
+    "amulet-zlib": ["amulet", "amulet.zlib"],
+    "amulet-nbt": ["amulet", "amulet.nbt"],
+    "amulet-core": ["amulet", "amulet.core"],
+    "amulet-game": ["amulet", "amulet.game"],
+    "amulet-anvil": ["amulet", "amulet.anvil"],
+    "amulet-level": ["amulet", "amulet.level"],
+    "amulet-resource-pack": ["amulet", "amulet.resource_pack"],
+}
+
+_module_to_libraries: Optional[dict[str, set[str]]] = None
+
+
+def _get_module_to_libraries() -> dict[str, set[str]]:
+    global _module_to_libraries
+    if _module_to_libraries is None:
+        log.debug("Loading distribution information.")
+        _module_to_libraries = {
+            k: set(v) for k, v in _get_packages_distributions().items()
+        }
+        # if a module is installed in editable mode, the above won't work
+        for dist_name, qualnames in _amulet_modules.items():
+            for qualname in qualnames:
+                _module_to_libraries.setdefault(qualname, set()).add(dist_name)
+        log.debug(f"Finished loading distribution information.")
+    return _module_to_libraries
+
+
+def _module_qualname_to_libraries(qualname: str) -> set[str]:
+    library_map = _get_module_to_libraries()
+    qualname_split = qualname.split(".")
+    libraries: set[str] = set()
+    for i in range(1, len(qualname_split) + 1):
+        new_libraries = library_map.get(".".join(qualname_split[:i]), set())
+        if len(new_libraries) == 1:
+            # module matches exactly one library. Return it.
+            return {l.lower().replace("-", "_") for l in new_libraries}
+        elif 1 < len(new_libraries):
+            # module matches more than one library
+            # try the nested module but fall back to this
+            libraries = new_libraries
+        else:
+            # no matching modules. Use the previously saved value.
+            break
+    if libraries:
+        return {l.lower().replace("-", "_") for l in libraries}
+    raise RuntimeError(f"Could not find library for {qualname}")
+
+
+def _validate_import(imported_name: str, frame: FrameType | None) -> None:
     # Plugins can only import libraries and plugins they have specified as a dependency.
     # Plugins can only be imported by other plugins.
     # We step back through the stack.
     # If we find a plugin that does not have the authority then we raise an error.
     # If we do not find a plugin in the stack we raise an error
 
-    # Get the root module name of the module being imported. Eg a.b.c => a
-    imported_root_name = imported_name.split(".")[0]
-
-    # Find what imported the module
-    frame_: FrameType | None = frame
+    # Skip importlib frames
     while (
-        frame_ is not None
-        and frame_.f_globals.get("__name__", "").split(".")[0] == "importlib"
+        frame is not None
+        and frame.f_globals.get("__name__", "").split(".")[0] == "importlib"
     ):
-        # Skip over the import mechanisms
-        frame_ = frame_.f_back
+        frame = frame.f_back
 
-    if (
-        frame_ is not None
-        and frame_.f_globals.get("__name__") == __name__
-        and frame_.f_code.co_name
-        in {
-            "_enable_plugin",
-            "wrap_importer_import",
-        }
-    ):
+    # Skip if the frame is None or the import was caused by this module.
+    if frame is None or frame.f_globals.get("__name__") == __name__:
         return
 
-    assert frame_ is not None
-    importer_name = frame_.f_globals.get("__name__")
+    importer_name = frame.f_globals.get("__name__")
     if importer_name is None:
-        raise RuntimeError(f"Could not find __name__ attribute for frame\n{frame_}")
+        raise RuntimeError(f"Could not find __name__ attribute for frame\n{frame}")
 
+    imported_root_name = imported_name.split(".")[0]
     importer_root_name = importer_name.split(".")[0]
+
     if importer_root_name in _enabled_plugins:
         # The module was imported by a plugin
         importer_uid = _enabled_plugins[importer_root_name]
@@ -166,27 +216,24 @@ def _validate_import(imported_name: str, frame: FrameType) -> None:
                     raise RuntimeError(
                         f"Plugin {importer_root_name} imported plugin {imported_root_name} which it does not have authority for.\nYou must list a plugin dependency in your plugin's metadata to be able to import it."
                     )
-        else:
+        elif (
+            imported_root_name in sys.builtin_module_names
+            or imported_root_name in sys.stdlib_module_names
+        ):
             # A plugin imported a normal module
-            if (
-                imported_root_name in sys.builtin_module_names
-                or imported_root_name in sys.stdlib_module_names
+            # Plugins don't need to specify native python libraries.
+            return
+        else:
+            package_names = _module_qualname_to_libraries(imported_name)
+            if not any(
+                dependency.identifier in package_names
+                for dependency in plugin_container.data.depends.library
             ):
-                # Plugins don't need to specify native python libraries.
-                pass
-            else:
-                if imported_root_name not in Packages:
-                    raise RuntimeError(f"Could not find library {imported_root_name}.")
-                package_name = Packages[imported_root_name][0].lower().replace("-", "_")
-                if not any(
-                    dependency.identifier == package_name
-                    for dependency in plugin_container.data.depends.library
-                ):
-                    raise RuntimeError(
-                        f"Plugin {importer_root_name} imported library {imported_root_name} which it does not have authority for.\nYou must list a dependency in your plugin's metadata to be able to import it."
-                    )
+                raise RuntimeError(
+                    f"Plugin {importer_root_name} imported library {imported_name} which it does not have authority for.\nYou must list a dependency in your plugin's metadata to be able to import it."
+                )
     elif imported_root_name in _enabled_plugins:
-        code = frame_.f_code
+        code = frame.f_code
         raise RuntimeError(
             f"Plugin module {imported_name} was imported by a non-plugin module {importer_name} {getattr(code, 'co_qualname', None) or getattr(code, 'co_name', 'could not resolve function name')}"
         )
@@ -213,8 +260,7 @@ class CustomSysModules(UserDict[str, ModuleType]):
                 "dataclasses",
             }:
                 frame = frame.f_back
-            if frame is not None:
-                _validate_import(imported_name, frame)
+            _validate_import(imported_name, frame)
 
         return super().__getitem__(imported_name)
 
