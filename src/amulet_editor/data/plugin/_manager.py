@@ -140,24 +140,6 @@ def _get_module_to_libraries() -> dict[str, set[str]]:
     if _module_to_libraries is None:
         log.debug("Loading distribution information.")
         _module_to_libraries = {k: set(v) for k, v in _get_packages_distributions().items()}
-        for dist in distributions():
-            dist_name = dist.name
-            for path in dist.files or ():
-                if path.suffix not in {".py", ".pyd", ".so", ".dylib"}:
-                    # must be a python module
-                    continue
-                qualname_split = list(path.parts)
-                # remove the suffix
-                qualname_split[-1] = qualname_split[-1][:-len(path.suffix)]
-                # remove __init__
-                if qualname_split[-1] == "__init__":
-                    qualname_split.pop()
-                if not all(name.isidentifier() for name in qualname_split):
-                    # ensure all names are importable
-                    continue
-
-                for i in range(1, len(qualname_split) + 1):
-                    _module_to_libraries.setdefault(".".join(qualname_split[:i]), set()).add(dist_name)
         # if a module is installed in editable mode, the above won't work
         for dist_name, qualnames in _amulet_modules.items():
             for qualname in qualnames:
