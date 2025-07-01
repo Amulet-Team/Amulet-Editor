@@ -44,12 +44,8 @@ class CMakeBuild(cmdclass.get("build_ext", build_ext)):
         import amulet.level
         import amulet.resource_pack
 
-        ext_dir = (
-            Path.cwd() / self.get_ext_fullpath("")
-        ).parent.resolve() / "amulet_editor"
-        editor_src_dir = (
-            Path.cwd() / "src" / "amulet_editor" if self.editable_mode else ext_dir
-        )
+        ext_dir = (Path.cwd() / self.get_ext_fullpath("")).parent.resolve()
+        src_dir = Path.cwd() / "src" if self.editable_mode else ext_dir
 
         platform_args = []
         if sys.platform == "win32":
@@ -82,8 +78,8 @@ class CMakeBuild(cmdclass.get("build_ext", build_ext)):
                     f"-Damulet_anvil_DIR={fix_path(amulet.anvil.__path__[0])}",
                     f"-Damulet_level_DIR={fix_path(amulet.level.__path__[0])}",
                     f"-Damulet_resource_pack_DIR={fix_path(amulet.resource_pack.__path__[0])}",
-                    f"-Damulet_editor_DIR={fix_path(editor_src_dir)}",
-                    f"-DAMULET_EDITOR_EXT_DIR={fix_path(ext_dir)}",
+                    f"-DAMULET_EDITOR_SRC_DIR={fix_path(src_dir)}",
+                    f"-DAMULET_EDITOR_EXT_SRC_DIR={fix_path(ext_dir)}",
                     f"-DCMAKE_INSTALL_PREFIX=install",
                     "-B",
                     tempdir,

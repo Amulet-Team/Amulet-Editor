@@ -54,7 +54,7 @@ def main():
             f"-Damulet_anvil_DIR={fix_path(amulet.anvil.__path__[0])}",
             f"-Damulet_level_DIR={fix_path(amulet.level.__path__[0])}",
             f"-Damulet_resource_pack_DIR={fix_path(amulet.resource_pack.__path__[0])}",
-            f"-Damulet_editor_DIR={fix_path(os.path.join(RootDir, 'src', 'amulet_editor'))}",
+            f"-DAMULET_EDITOR_SRC_DIR={fix_path(os.path.join(RootDir, 'src'))}",
             f"-DCMAKE_INSTALL_PREFIX=install",
             f"-DBUILD_AMULET_EDITOR_TESTS=",
             "-B",
