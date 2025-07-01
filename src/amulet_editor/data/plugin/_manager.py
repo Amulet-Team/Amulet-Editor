@@ -242,7 +242,7 @@ def _validate_import(imported_name: str, frame: FrameType | None) -> None:
                 for dependency in plugin_container.data.depends.library
             ):
                 raise RuntimeError(
-                    f"Plugin {importer_root_name} imported library {imported_root_name} which it does not have authority for.\nYou must list a dependency in your plugin's metadata to be able to import it."
+                    f"Plugin {importer_root_name} imported library {imported_name} which it does not have authority for.\nYou must list a dependency in your plugin's metadata to be able to import it."
                 )
     elif imported_root_name in _enabled_plugins:
         code = frame.f_code
