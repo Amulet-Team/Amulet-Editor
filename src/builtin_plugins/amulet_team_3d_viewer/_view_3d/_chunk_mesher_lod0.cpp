@@ -250,6 +250,8 @@ void create_lod0_chunk(
                                 // If both blocks are full translucent then skip.
                                 return;
                             }
+                        default:
+                            break;
                         }
 
                         add_part(*part, shading);
