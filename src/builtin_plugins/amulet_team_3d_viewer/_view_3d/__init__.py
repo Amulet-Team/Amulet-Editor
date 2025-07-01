@@ -1,6 +1,3 @@
-from ._widget import View3D
-
-
 def _init() -> None:
     import sys
 
@@ -10,3 +7,5 @@ def _init() -> None:
 
 
 _init()
+
+from ._widget import View3D
