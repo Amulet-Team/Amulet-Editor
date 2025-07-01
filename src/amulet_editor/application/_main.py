@@ -43,13 +43,13 @@ qt_log = logging.getLogger("Qt")
 def _qt_log(msg_type: QtMsgType, context: QMessageLogContext, msg: str) -> None:
     if msg_type == QtMsgType.QtDebugMsg:
         qt_log.debug(msg)
-    if msg_type == QtMsgType.QtInfoMsg:
+    elif msg_type == QtMsgType.QtInfoMsg:
         qt_log.info(msg)
-    if msg_type == QtMsgType.QtWarningMsg:
+    elif msg_type == QtMsgType.QtWarningMsg:
         qt_log.warning(msg)
-    if msg_type == QtMsgType.QtCriticalMsg:
+    elif msg_type == QtMsgType.QtCriticalMsg:
         qt_log.critical(msg)
-    if msg_type == QtMsgType.QtFatalMsg:
+    elif msg_type == QtMsgType.QtFatalMsg:
         qt_log.fatal(msg)
 
 
