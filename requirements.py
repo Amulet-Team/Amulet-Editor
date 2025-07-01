@@ -79,9 +79,8 @@ if os.environ.get("AMULET_LEVEL_REQUIREMENT", None):
     )
 
 if os.environ.get("AMULET_RESOURCE_PACK_REQUIREMENT", None):
-    AMULET_RESOURCE_PACK_REQUIREMENT = (
-        f"{AMULET_RESOURCE_PACK_REQUIREMENT},{os.environ['AMULET_RESOURCE_PACK_REQUIREMENT']}"
-    )
+    AMULET_RESOURCE_PACK_REQUIREMENT = f"{AMULET_RESOURCE_PACK_REQUIREMENT},{os.environ['AMULET_RESOURCE_PACK_REQUIREMENT']}"
+
 
 def get_specifier_set(version_str: str) -> str:
     """
@@ -174,7 +173,9 @@ if os.environ.get("AMULET_FREEZE_COMPILER", None):
     except ImportError:
         pass
     else:
-        AMULET_RESOURCE_PACK_REQUIREMENT = get_specifier_set(amulet.resource_pack.__version__)
+        AMULET_RESOURCE_PACK_REQUIREMENT = get_specifier_set(
+            amulet.resource_pack.__version__
+        )
 
 
 def get_build_dependencies() -> list:

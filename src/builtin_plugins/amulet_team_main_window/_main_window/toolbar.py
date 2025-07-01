@@ -26,7 +26,9 @@ class ButtonProxy:
         self._button: ATooltipIconButton | None = button
         self._on_click: Callable[[], None] | None = None
         weak_destroy = WeakMethod(self._destroy)
-        self._finalise = finalize(self, lambda: (destroy := weak_destroy()) and destroy())
+        self._finalise = finalize(
+            self, lambda: (destroy := weak_destroy()) and destroy()
+        )
 
     def _get_button(self) -> ATooltipIconButton:
         if self._button is None:

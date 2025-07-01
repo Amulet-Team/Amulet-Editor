@@ -219,7 +219,9 @@ def get_block_component(
     dimension: Dimension, cx: int, cz: int
 ) -> BlockComponentData | None:
     try:
-        chunk = dimension.get_chunk_handle(cx, cz).get_chunk([BlockComponent.ComponentID])
+        chunk = dimension.get_chunk_handle(cx, cz).get_chunk(
+            [BlockComponent.ComponentID]
+        )
     except ChunkLoadError:
         return None
     else:
@@ -236,13 +238,17 @@ def mesh_chunk(
     cx: int,
     cz: int,
 ) -> tuple[bytes, int]:
-    with level.lock(thread_mode=(ThreadAccessMode.Read, ThreadShareMode.SharedReadWrite)):
+    with level.lock(
+        thread_mode=(ThreadAccessMode.Read, ThreadShareMode.SharedReadWrite)
+    ):
         if not level.is_open():
             raise RuntimeError("The level has been closed.")
         dimension = level.get_dimension(dimension_id)
 
         try:
-            chunk = dimension.get_chunk_handle(cx, cz).get_chunk([BlockComponent.ComponentID])
+            chunk = dimension.get_chunk_handle(cx, cz).get_chunk(
+                [BlockComponent.ComponentID]
+            )
         except ChunkDoesNotExist:
             log.debug(f"Chunk {dimension_id}, {cx}, {cz} does not exist")
             buffer = _get_empty_geometry(dimension.bounds, resource_pack, cx, cz)

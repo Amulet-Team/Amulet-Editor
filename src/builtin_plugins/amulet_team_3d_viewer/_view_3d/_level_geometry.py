@@ -612,9 +612,9 @@ class LevelGeometry(QObject):
                         dimension, cx, cz = chunk_key
                         transform = QMatrix4x4()
                         transform.translate(cx * 16, 0, cz * 16)
-                        chunk_handle = self._level.get_dimension(dimension).get_chunk_handle(
-                            cx, cz
-                        )
+                        chunk_handle = self._level.get_dimension(
+                            dimension
+                        ).get_chunk_handle(cx, cz)
                         chunk_data = ChunkData(
                             chunk_handle,
                             transform,

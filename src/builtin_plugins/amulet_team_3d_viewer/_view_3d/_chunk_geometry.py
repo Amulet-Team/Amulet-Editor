@@ -55,10 +55,14 @@ class ChunkData(QObject):
 
         # Schedule meshing when the chunk changes.
         on_chunk_change = WeakMethod(self.mark_changed)
-        self._on_change_token = self.chunk_handle.changed.connect(lambda: (func := on_chunk_change()) and func())
+        self._on_change_token = self.chunk_handle.changed.connect(
+            lambda: (func := on_chunk_change()) and func()
+        )
 
         weak_finalise = WeakMethod(self._del)
-        self._finalise = finalize(self, lambda: (destroy := weak_finalise()) and destroy())
+        self._finalise = finalize(
+            self, lambda: (destroy := weak_finalise()) and destroy()
+        )
 
     def _del(self) -> None:
         self.chunk_handle.changed.disconnect(self._on_change_token)

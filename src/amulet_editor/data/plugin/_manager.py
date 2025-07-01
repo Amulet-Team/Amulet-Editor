@@ -51,11 +51,13 @@ PythonVersion = Version(".".join(map(str, sys.version_info[:3])))
 
 _packages_distributions: Optional[dict[str, list[str]]] = None
 
+
 def _get_packages_distributions() -> dict[str, list[str]]:
     global _packages_distributions
     if _packages_distributions is None:
         _packages_distributions = dict(packages_distributions())
     return _packages_distributions
+
 
 """
 Notes:
@@ -120,6 +122,7 @@ def get_trace_paths() -> list[str]:
             log.error(f"Could not parse traceback line {line!r}")
     return paths
 
+
 _amulet_modules = {
     "amulet-io": ["amulet", "amulet.io"],
     "amulet-leveldb": ["amulet", "amulet.leveldb"],
@@ -135,11 +138,14 @@ _amulet_modules = {
 
 _module_to_libraries: Optional[dict[str, set[str]]] = None
 
+
 def _get_module_to_libraries() -> dict[str, set[str]]:
     global _module_to_libraries
     if _module_to_libraries is None:
         log.debug("Loading distribution information.")
-        _module_to_libraries = {k: set(v) for k, v in _get_packages_distributions().items()}
+        _module_to_libraries = {
+            k: set(v) for k, v in _get_packages_distributions().items()
+        }
         # if a module is installed in editable mode, the above won't work
         for dist_name, qualnames in _amulet_modules.items():
             for qualname in qualnames:
