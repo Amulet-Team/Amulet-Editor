@@ -5,9 +5,7 @@ from PyInstaller.utils.hooks import (
 )
 
 datas = [
-    *collect_data_files(
-        "amulet_editor", excludes=["**/*.ui", "**/*.cpp", "**/*.pyc"]
-    ),
+    *collect_data_files("amulet_editor", excludes=["**/*.ui", "**/*.cpp", "**/*.pyc"]),
     *collect_data_files(
         "builtin_plugins",
         include_py_files=True,
