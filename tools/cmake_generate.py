@@ -3,6 +3,18 @@ import subprocess
 import os
 import shutil
 
+import pybind11
+import amulet.pybind11_extensions
+import amulet.io
+import amulet.leveldb
+import amulet.utils
+import amulet.nbt
+import amulet.core
+import amulet.game
+import amulet.anvil
+import amulet.level
+import amulet.resource_pack
+
 
 def fix_path(path: str) -> str:
     return os.path.realpath(path).replace(os.sep, "/")
@@ -31,6 +43,17 @@ def main():
             "cmake",
             *platform_args,
             f"-DPYTHON_EXECUTABLE={sys.executable}",
+            f"-Dpybind11_DIR={fix_path(pybind11.get_cmake_dir())}",
+            f"-Damulet_pybind11_extensions_DIR={fix_path(amulet.pybind11_extensions.__path__[0])}",
+            f"-Damulet_io_DIR={fix_path(amulet.io.__path__[0])}",
+            f"-Damulet_leveldb_DIR={fix_path(amulet.leveldb.__path__[0])}",
+            f"-Damulet_utils_DIR={fix_path(amulet.utils.__path__[0])}",
+            f"-Damulet_nbt_DIR={fix_path(amulet.nbt.__path__[0])}",
+            f"-Damulet_core_DIR={fix_path(amulet.core.__path__[0])}",
+            f"-Damulet_game_DIR={fix_path(amulet.game.__path__[0])}",
+            f"-Damulet_anvil_DIR={fix_path(amulet.anvil.__path__[0])}",
+            f"-Damulet_level_DIR={fix_path(amulet.level.__path__[0])}",
+            f"-Damulet_resource_pack_DIR={fix_path(amulet.resource_pack.__path__[0])}",
             f"-Damulet_editor_DIR={fix_path(os.path.join(RootDir, 'src', 'amulet_editor'))}",
             f"-DCMAKE_INSTALL_PREFIX=install",
             f"-DBUILD_AMULET_EDITOR_TESTS=",

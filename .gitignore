@@ -118,6 +118,7 @@ venv*
 *.ilk
 
 /amulet_editor-*
+/.github/actions/install-dependencies/*.json
 
 # Visual Studio Code extensions
 .qt_for_python

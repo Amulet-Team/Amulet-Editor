@@ -10,6 +10,42 @@ inputs:
   compiler-specifier:
     description: 'The PEP 440 version specifier for the compiler library'
     required: true
+  pybind11-specifier:
+    description: 'The PEP 440 version specifier for the pybind11 library'
+    required: true
+  pybind11-extensions-specifier:
+    description: 'The PEP 440 version specifier for the Amulet-pybind11-extensions library'
+    required: true
+  io-specifier:
+    description: 'The PEP 440 version specifier for the Amulet-IO library'
+    required: true
+  leveldb-specifier:
+    description: 'The PEP 440 version specifier for the Amulet-LevelDB library'
+    required: true
+  utils-specifier:
+    description: 'The PEP 440 version specifier for the Amulet-Utils library'
+    required: true
+  zlib-specifier:
+    description: 'The PEP 440 version specifier for the Amulet-zlib library'
+    required: true
+  nbt-specifier:
+    description: 'The PEP 440 version specifier for the Amulet-NBT library'
+    required: true
+  core-specifier:
+    description: 'The PEP 440 version specifier for the Amulet-Core library'
+    required: true
+  game-specifier:
+    description: 'The PEP 440 version specifier for the Amulet-Game library'
+    required: true
+  anvil-specifier:
+    description: 'The PEP 440 version specifier for the Amulet-Anvil library'
+    required: true
+  level-specifier:
+    description: 'The PEP 440 version specifier for the Amulet-Level library'
+    required: true
+  resource-pack-specifier:
+    description: 'The PEP 440 version specifier for the Amulet-Resource-Pack library'
+    required: true
   editor-specifier:
     description: 'The PEP 440 version specifier for the Amulet-Editor library'
     required: true
@@ -38,23 +74,101 @@ runs:
           exit 1
         fi
 
+        if [ -z "${{ inputs.pybind11-specifier }}" ]; then
+          echo "pybind11-specifier is empty"
+          exit 1
+        fi
+
+        if [ -z "${{ inputs.pybind11-extensions-specifier }}" ]; then
+          echo "pybind11-extensions-specifier is empty"
+          exit 1
+        fi
+
+        if [ -z "${{ inputs.io-specifier }}" ]; then
+          echo "io-specifier is empty"
+          exit 1
+        fi
+
+        if [ -z "${{ inputs.leveldb-specifier }}" ]; then
+          echo "leveldb-specifier is empty"
+          exit 1
+        fi
+
+        if [ -z "${{ inputs.utils-specifier }}" ]; then
+          echo "utils-specifier is empty"
+          exit 1
+        fi
+
+        if [ -z "${{ inputs.zlib-specifier }}" ]; then
+          echo "zlib-specifier is empty"
+          exit 1
+        fi
+
+        if [ -z "${{ inputs.nbt-specifier }}" ]; then
+          echo "nbt-specifier is empty"
+          exit 1
+        fi
+
+        if [ -z "${{ inputs.core-specifier }}" ]; then
+          echo "core-specifier is empty"
+          exit 1
+        fi
+
+        if [ -z "${{ inputs.game-specifier }}" ]; then
+          echo "game-specifier is empty"
+          exit 1
+        fi
+
+        if [ -z "${{ inputs.anvil-specifier }}" ]; then
+          echo "anvil-specifier is empty"
+          exit 1
+        fi
+
+        if [ -z "${{ inputs.level-specifier }}" ]; then
+          echo "level-specifier is empty"
+          exit 1
+        fi
+
+        if [ -z "${{ inputs.resource-pack-specifier }}" ]; then
+          echo "resource-pack-specifier is empty"
+          exit 1
+        fi
+
         if [ -z "${{ inputs.editor-specifier }}" ]; then
           echo "editor-specifier is empty"
           exit 1
         fi
+
+    - name: Install Dependencies
+      shell: bash
+      run: |
+        python -m pip install --only-binary amulet-leveldb,amulet-utils,amulet-zlib,amulet-nbt,amulet-core,amulet-game,amulet-anvil,amulet-level,amulet-resource-pack amulet-compiler-version${{ inputs.compiler-specifier }} pybind11${{ inputs.pybind11-specifier }} amulet-pybind11-extensions${{ inputs.pybind11-extensions-specifier }} amulet-io${{ inputs.io-specifier }} amulet-leveldb${{ inputs.leveldb-specifier }} amulet-utils${{ inputs.utils-specifier }} amulet-zlib${{ inputs.zlib-specifier }} amulet-nbt${{ inputs.nbt-specifier }} amulet-core${{ inputs.core-specifier }} amulet-game${{ inputs.game-specifier }} amulet-anvil${{ inputs.anvil-specifier }} amulet-level${{ inputs.level-specifier }} amulet-resource-pack${{ inputs.resource-pack-specifier }}
+
 
     - name: Install Prebuilt
       id: install
       shell: bash
       continue-on-error: true
       run: |
-        python -m pip install --only-binary amulet-editor amulet-compiler-version${{ inputs.compiler-specifier }}  amulet-editor${{ inputs.editor-specifier }}
+        python -m pip install --only-binary amulet-editor,amulet-leveldb,amulet-utils,amulet-zlib,amulet-nbt,amulet-core,amulet-game,amulet-anvil,amulet-level,amulet-resource-pack amulet-compiler-version${{ inputs.compiler-specifier }} pybind11${{ inputs.pybind11-specifier }} amulet-pybind11-extensions${{ inputs.pybind11-extensions-specifier }} amulet-io${{ inputs.io-specifier }} amulet-leveldb${{ inputs.leveldb-specifier }} amulet-utils${{ inputs.utils-specifier }} amulet-zlib${{ inputs.zlib-specifier }} amulet-nbt${{ inputs.nbt-specifier }} amulet-core${{ inputs.core-specifier }} amulet-game${{ inputs.game-specifier }} amulet-anvil${{ inputs.anvil-specifier }} amulet-level${{ inputs.level-specifier }} amulet-resource-pack${{ inputs.resource-pack-specifier }} amulet-editor${{ inputs.editor-specifier }}
 
     - name: Build
       if: steps.install.outcome == 'failure'
       shell: bash
       env:
         AMULET_FREEZE_COMPILER: 1
+        PYBIND11_REQUIREMENT: ${{ inputs.pybind11-specifier }}
+        AMULET_PYBIND11_EXTENSIONS_REQUIREMENT: ${{ inputs.pybind11-extensions-specifier }}
+        AMULET_IO_REQUIREMENT: ${{ inputs.io-specifier }}
+        AMULET_LEVELDB_REQUIREMENT: ${{ inputs.leveldb-specifier }}
+        AMULET_UTILS_REQUIREMENT: ${{ inputs.utils-specifier }}
+        AMULET_ZLIB_REQUIREMENT: ${{ inputs.zlib-specifier }}
+        AMULET_NBT_REQUIREMENT: ${{ inputs.nbt-specifier }}
+        AMULET_CORE_REQUIREMENT: ${{ inputs.core-specifier }}
+        AMULET_GAME_REQUIREMENT: ${{ inputs.game-specifier }}
+        AMULET_ANVIL_REQUIREMENT: ${{ inputs.anvil-specifier }}
+        AMULET_LEVEL_REQUIREMENT: ${{ inputs.level-specifier }}
+        AMULET_RESOURCE_PACK_REQUIREMENT: ${{ inputs.resource-pack-specifier }}
       run: |
         python -m build --wheel "${{ github.action_path }}"/../../..
 
@@ -73,7 +187,7 @@ runs:
       run: |
         cache_dir=$(python -m pip cache dir)
         rm -rf "$cache_dir"/http*
-        python -m pip install --only-binary amulet-editor amulet-compiler-version${{ inputs.compiler-specifier }}  amulet-editor${{ inputs.editor-specifier }}
+        python -m pip install --only-binary amulet-editor,amulet-leveldb,amulet-utils,amulet-zlib,amulet-nbt,amulet-core,amulet-game,amulet-anvil,amulet-level,amulet-resource-pack amulet-compiler-version${{ inputs.compiler-specifier }} pybind11${{ inputs.pybind11-specifier }} amulet-pybind11-extensions${{ inputs.pybind11-extensions-specifier }} amulet-io${{ inputs.io-specifier }} amulet-leveldb${{ inputs.leveldb-specifier }} amulet-utils${{ inputs.utils-specifier }} amulet-zlib${{ inputs.zlib-specifier }} amulet-nbt${{ inputs.nbt-specifier }} amulet-core${{ inputs.core-specifier }} amulet-game${{ inputs.game-specifier }} amulet-anvil${{ inputs.anvil-specifier }} amulet-level${{ inputs.level-specifier }} amulet-resource-pack${{ inputs.resource-pack-specifier }} amulet-editor${{ inputs.editor-specifier }}
 
     - name: Get __version__
       id: get-version
