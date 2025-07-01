@@ -6,12 +6,12 @@ from PyInstaller.utils.hooks import (
 
 datas = [
     *collect_data_files(
-        "amulet_editor", excludes=["**/*.ui", "**/*.py.cpp", "**/*.pyc"]
+        "amulet_editor", excludes=["**/*.ui", "**/*.cpp", "**/*.pyc"]
     ),
     *collect_data_files(
         "builtin_plugins",
         include_py_files=True,
-        excludes=["**/*.ui", "**/*.py.cpp", "**/*.pyc"],
+        excludes=["**/*.ui", "**/*.cpp", "**/*.pyc"],
     ),
     *copy_metadata("amulet_editor", recursive=True),
 ]

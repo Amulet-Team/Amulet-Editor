@@ -1,2 +1,11 @@
-recursive-include src/amulet_editor *.pyi py.typed *.py *.cpp *.hpp *.jpg *.png *.svg *.ico *.lang *.json *.qss
-recursive-include src/builtin_plugins *.pyi py.typed *.py *.cpp *.hpp *.jpg *.png *.svg *.ico *.lang *.json *.qss
+include build_requires.py
+include requirements.py
+
+include get_compiler/CMakeLists.txt
+include get_compiler/__init__.py
+
+recursive-include src *.cpp *.hpp *Config.cmake CMakeLists.txt *.jpg *.png *.svg *.ico *.lang *.json *.qss
+
+include CMakeLists.txt
+
+prune tests

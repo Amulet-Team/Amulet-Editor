@@ -9,66 +9,41 @@ on:
 
 jobs:
   deploy:
-    runs-on: ${{ matrix.cfg.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        python-version: [ '3.11', '3.12' ]
+        os: [ macos-14, windows-latest ]
+
+    runs-on: ${{ matrix.os }}
     defaults:
       run:
         shell: bash
 
-    strategy:
-      fail-fast: false
-      matrix:
-        cfg:
-        - {os: windows-latest, python-version: '3.12', architecture: x64}
-        - {os: macos-latest, python-version: '3.12', architecture: x64}
-        - {os: ubuntu-latest, python-version: '3.12', architecture: x64}
-
     steps:
-    - name: Configure Git
-      run: |
-        git config --global core.longpaths true
-    - uses: actions/checkout@v3
-    - name: Set up Python ${{ matrix.cfg.python-version }} ${{ matrix.cfg.architecture }}
-      uses: actions/setup-python@v4
-      with:
-        python-version: ${{ matrix.cfg.python-version }}
-        architecture: ${{ matrix.cfg.architecture }}
+    - name: Clone
+      uses: actions/checkout@v4
 
     - name: Install dependencies
-      run: |
-        pip install --upgrade pip
-        pip install setuptools wheel twine pyinstaller~=5.6 build
+      uses: ./.github/actions/install-dependencies
+      with:
+        python-version: ${{ matrix.python-version }}
+        username: ${{ secrets.PYPI_USERNAME }}
+        compiler-version-password: ${{ secrets.AMULET_COMPILER_VERSION_PYPI_PASSWORD }}
 
-    - name: Build and publish to PyPi
-      if: matrix.cfg.os != 'ubuntu-latest'
+    - name: Build SDist
+      run: |
+        python -m build --sdist .
+
+    - name: Build Wheel
+      env:
+        AMULET_FREEZE_COMPILER: 1
+      run: |
+        python -m build --wheel .
+
+    - name: Publish
       env:
         TWINE_USERNAME: ${{ secrets.PYPI_USERNAME }}
         TWINE_PASSWORD: ${{ secrets.AMULET_EDITOR_PYPI_PASSWORD }}
       run: |
-        python -m build -C--build-option=--freeze-first=True
-        python -m twine upload dist/amulet[_-]editor* --skip-existing
-
-    - name: Install Ubuntu dependencies
-      if: matrix.cfg.os == 'ubuntu-latest'
-      run: |
-        sudo apt-get install ruby-dev build-essential libegl1-mesa libegl1-mesa-dev
-        sudo gem i fpm -f
-
-    - name: Create Installer
-      run: |
-        if [ "$RUNNER_OS" == "Windows" ]; then
-          export TMPDIR="C:\temp"
-          export TMP="C:\temp"
-          export TEMP="C:\temp"
-        fi
-        pip install git+https://github.com/Amulet-Team/python-build-tool.git
-        pip install --upgrade --upgrade-strategy eager -e .
-        pbt freeze --debug
-        pbt installer
-
-    - name: Upload Release Asset
-      uses: softprops/action-gh-release@v1
-      with:
-        files: |
-          target/*.exe
-          target/*.deb
-          target/*.dmg
+        twine upload dist/* --skip-existing
