@@ -24,7 +24,6 @@ runs:
       shell: bash
       run: |
         pip install -v .[dev]
-        python tools/compile_tests.py
 
     - name: Test with unittest
       shell: bash
