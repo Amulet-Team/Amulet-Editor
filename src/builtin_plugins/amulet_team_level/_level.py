@@ -17,7 +17,7 @@ def get_level() -> Level | None:
     """Get the active level."""
     with _lock:
         if _level is Unset:
-            return None
+            raise RuntimeError("Level has not been set yet.")
         return _level
 
 
