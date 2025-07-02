@@ -19,7 +19,8 @@ from amulet_editor.application.command import (
     register_command,
     unregister_command,
 )
-from amulet_editor.data.level import _level
+
+import amulet_team_level
 
 from ._main_window import get_main_window, destroy_main_window
 
@@ -38,15 +39,16 @@ def init_app():
 def main(args) -> None:
     init_app()
     if args.command is None:
-        _level.level = None
+        amulet_team_level.set_level(None)
     else:
         log.debug("Loading level.")
         level_path = args.level_path
         with DisplayException(f"Failed loading level at path {level_path}"):
-            _level.level = level = get_level(
+            level = get_level(
                 LevelLoaderPathToken(level_path)
             )  # TODO: make this generic
             level.open()
+            amulet_team_level.set_level(level)
     get_main_window().showMaximized()
 
 

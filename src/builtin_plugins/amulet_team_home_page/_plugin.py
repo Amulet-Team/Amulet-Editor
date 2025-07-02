@@ -3,9 +3,10 @@ import os
 
 from PySide6.QtCore import QLocale, QCoreApplication
 
-from amulet_editor.data.level import get_level
 from amulet_editor.models.localisation import ATranslator
 from amulet_editor.models.plugin import PluginV1
+
+from amulet_team_level import get_level
 
 import tablericons
 import amulet_team_locale

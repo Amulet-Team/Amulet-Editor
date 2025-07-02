@@ -5,12 +5,12 @@ from contextlib import suppress
 
 from PySide6.QtCore import QLocale, QCoreApplication
 
-from amulet_editor.data.level import get_level
 from amulet_editor.models.localisation import ATranslator
 from amulet_editor.models.plugin import PluginV1
 
 import tablericons
 import amulet_team_locale
+from amulet_team_level import get_level
 from amulet_team_main_window import (
     register_widget,
     unregister_widget,

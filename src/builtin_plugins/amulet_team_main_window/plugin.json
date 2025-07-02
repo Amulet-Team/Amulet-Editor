@@ -12,6 +12,7 @@
 		],
 		"plugin": [
 			"amulet_team_inspector~=1.0",
+			"amulet_team_level~=1.0",
 			"tablericons~=1.0"
 		]
 	},

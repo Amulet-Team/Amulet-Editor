@@ -1,0 +1,13 @@
+{
+	"identifier": "amulet_team_level",
+	"version": "1.0.0",
+	"name": "Main Level Storage",
+	"depends": {
+		"python": "~=3.11",
+		"library": [
+			"amulet_level~=1.0a0"
+		],
+		"plugin": []
+	},
+	"locked": "true"
+}
