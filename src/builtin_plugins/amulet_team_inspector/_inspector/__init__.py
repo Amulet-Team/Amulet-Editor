@@ -3,7 +3,7 @@ from weakref import ref
 
 from PySide6.QtWidgets import QTreeWidgetItem, QApplication, QWidget
 from PySide6.QtCore import QObject, QRect, QEvent, QPoint, Qt
-from PySide6.QtGui import QMouseEvent, QPainter, QColor, QIcon
+from PySide6.QtGui import QMouseEvent, QPainter, QColor, QIcon, QCloseEvent
 
 from amulet_editor.models.widgets.traceback_dialog import DisplayException
 import tablericons
@@ -48,6 +48,9 @@ class CustomDraw(QObject):
         return super().eventFilter(obj, event)
 
 
+_inspector = None
+
+
 class InspectorTool(Ui_InspectionTool):
     def __init__(
         self, parent: QWidget | None = None, f: Qt.WindowType = Qt.WindowType.Widget
@@ -63,6 +66,10 @@ class InspectorTool(Ui_InspectionTool):
         self.reload_button.clicked.connect(self.reload)
         self.run_button.clicked.connect(self.run_code)
         self.reload()
+
+    def closeEvent(self, event: QCloseEvent) -> None:
+        global _inspector
+        _inspector = None
 
     def reload(self) -> None:
         self.tree_widget.clear()
@@ -125,12 +132,9 @@ class InspectorTool(Ui_InspectionTool):
                 eval(self.code_editor.toPlainText(), {}, {"obj": obj})
 
 
-_inspector = None
-
-
-def show_inspector() -> None:
+def show_inspector(parent: QWidget | None = None) -> None:
     global _inspector
     if _inspector is None:
-        _inspector = InspectorTool()
+        _inspector = InspectorTool(parent)
         _inspector.show()
-    _inspector.raise_()
+    _inspector.activateWindow()

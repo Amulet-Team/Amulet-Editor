@@ -43,7 +43,7 @@ class AmuletMainWindow(Ui_AmuletMainWindow):
         # self._view_containers: list[ViewContainer] = [self._view_container]
         # self._active_view = self._view_container
         f12 = QShortcut(Qt.Key.Key_F12, self)
-        f12.activated.connect(show_inspector)
+        f12.activated.connect(lambda: show_inspector(self))
 
     # def activate_view(self, view_cls: type[View]):
     #     """
