@@ -3,19 +3,26 @@ Launch commands that can be executed through the CLI.
 Plugins can register their own launch commands.
 """
 
-from argparse import ArgumentParser, Namespace
-from typing import Any
+from __future__ import annotations
+from argparse import ArgumentParser
+from typing import Any, TYPE_CHECKING
 from weakref import WeakSet, WeakValueDictionary
 from collections.abc import Callable, Mapping, Sequence
 from dataclasses import dataclass
 from threading import Lock
 from types import MappingProxyType
 
+if TYPE_CHECKING:
+    from ._cli import FullArgs
+
+
+DefaultCommand = "main"
+
 
 @dataclass(frozen=True, kw_only=True)
 class Command:
     name: str
-    main_func: Callable[[Namespace], None]
+    main_func: Callable[[FullArgs], None]
     init_argparse: Callable[[ArgumentParser], None] | None = None
     add_parser_args: Sequence[Any] = ()
     add_parser_kwargs: Mapping[str, Any] = MappingProxyType({})
@@ -40,6 +47,7 @@ def register_command(command: Command) -> None:
         if command.name in _commands_map:
             raise RuntimeError(f"Command {command.name} has already been registered.")
         _commands_set.add(command)
+        _commands_map[command.name] = command
 
 
 def unregister_command(command: Command) -> None:
@@ -60,7 +68,7 @@ def _get_commands() -> list[Command]:
         return list(_commands_set)
 
 
-def _run_command(name: str, args: Namespace) -> None:
+def _run_command(name: str, args: FullArgs) -> None:
     with _lock:
         command = _commands_map.get(name)
     if command is None:
