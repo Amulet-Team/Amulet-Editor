@@ -137,4 +137,4 @@ def show_inspector(parent: QWidget | None = None) -> None:
     if _inspector is None:
         _inspector = InspectorTool(parent)
         _inspector.show()
-    _inspector.raise_()
+    _inspector.activateWindow()
