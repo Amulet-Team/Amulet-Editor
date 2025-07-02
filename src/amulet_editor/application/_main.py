@@ -60,7 +60,12 @@ def app_main(argv: Sequence[str] | None = None) -> None:
     # Set up global state.
     # Plugins have not been loaded at this point.
     global_args = parse_global_args(argv)
-    _init_paths(global_args.data_dir, global_args.config_dir, global_args.cache_dir, global_args.log_dir)
+    _init_paths(
+        global_args.data_dir,
+        global_args.config_dir,
+        global_args.cache_dir,
+        global_args.log_dir,
+    )
 
     log_file = open(
         os.path.join(
