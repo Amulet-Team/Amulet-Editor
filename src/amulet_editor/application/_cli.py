@@ -28,7 +28,6 @@ class GlobalArgs(Namespace):
 
 class FullArgs(GlobalArgs):
     command: str | None
-    # level_path: str | None
 
 
 def get_parser(full: bool) -> ArgumentParser:

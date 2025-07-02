@@ -1,12 +1,17 @@
 from __future__ import annotations
 
+import sys
 from argparse import ArgumentParser
 import logging
+
+from PySide6.QtWidgets import QApplication
+from PySide6.QtGui import QIcon
 
 from amulet.level import get_level
 from amulet.level.loader import LevelLoaderPathToken
 
-from ._main_window import get_main_window, destroy_main_window
+from amulet_editor import __version__
+from amulet_editor.resources import get_resource
 from amulet_editor.models.plugin import PluginV1
 from amulet_editor.models.widgets.traceback_dialog import DisplayException
 from amulet_editor.application.command import (
@@ -16,11 +21,22 @@ from amulet_editor.application.command import (
 )
 from amulet_editor.data.level import _level
 
+from ._main_window import get_main_window, destroy_main_window
+
 log = logging.getLogger(__name__)
 
 
-def main(args) -> None:
+def init_app():
+    app = QApplication.instance()
+    if not isinstance(app, QApplication):
+        raise RuntimeError("No QApplication instance")
+    app.setApplicationName("Amulet Editor")
+    app.setApplicationVersion(__version__)
+    app.setWindowIcon(QIcon(get_resource("icons/amulet/Icon.ico")))
 
+
+def main(args) -> None:
+    init_app()
     if args.command is None:
         _level.level = None
     else:
@@ -59,7 +75,7 @@ def load_plugin() -> None:
 
 
 def unload_plugin() -> None:
-    # destroy_main_window()
+    destroy_main_window()
     unregister_command(_editor_command)
 
 

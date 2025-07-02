@@ -24,12 +24,10 @@ from PySide6.QtCore import (
 from PySide6.QtWidgets import QApplication
 from PySide6.QtGui import QSurfaceFormat
 
-from amulet.level import get_level
-from amulet.level.loader import LevelLoaderPathToken
 import amulet_editor
 from amulet_editor.models.widgets.traceback_dialog import DisplayException
-from amulet_editor.data.level import _level
 from amulet_editor.models.localisation import ATranslator
+from amulet_editor.data._localisation import locale_changed
 import amulet_editor.data.plugin._manager as plugin_manager
 import amulet_editor.data._rpc as rpc
 
@@ -132,10 +130,10 @@ def app_main(argv: Sequence[str] | None = None) -> None:
     if QApplication.instance() is not None:
         raise RuntimeError("QApplication has already been initialized")
 
-    # # Allow context sharing between widgets that do not share the same top level window.
+    # Allow context sharing between widgets that do not share the same top level window.
     QCoreApplication.setAttribute(Qt.ApplicationAttribute.AA_ShareOpenGLContexts)
 
-    # # Set the default surface format. Apparently this is required for some platforms.
+    # Set the default surface format. Apparently this is required for some platforms.
     surface_format = QSurfaceFormat()
     surface_format.setDepthBufferSize(24)
     surface_format.setVersion(3, 2)
@@ -143,7 +141,25 @@ def app_main(argv: Sequence[str] | None = None) -> None:
     QSurfaceFormat.setDefaultFormat(surface_format)
     app = QApplication()
 
-    def launch():
+    translator = ATranslator()
+
+    def load_translations() -> None:
+        translator.load_lang(
+            QLocale(),
+            "",
+            directory=os.path.join(*amulet_editor.__path__, "resources", "lang"),
+        )
+
+    load_translations()
+    QApplication.installTranslator(translator)
+    locale_changed.connect(load_translations)
+
+    def shut_down() -> None:
+        plugin_manager.unload()
+
+    app.aboutToQuit.connect(shut_down)
+
+    def launch() -> None:
         with DisplayException("Failed to launch"):
             plugin_manager.load()
             full_args = parse_args(argv)
@@ -169,33 +185,5 @@ def app_main(argv: Sequence[str] | None = None) -> None:
     #         directory=os.path.join(*amulet_editor.__path__, "resources", "lang"),
     #     )
     #     QCoreApplication.installTranslator(translator)
-    # else:
-    #     # # Allow context sharing between widgets that do not share the same top level window.
-    #     QCoreApplication.setAttribute(Qt.ApplicationAttribute.AA_ShareOpenGLContexts)
-    #
-    #     # # Set the default surface format. Apparently this is required for some platforms.
-    #     surface_format = QSurfaceFormat()
-    #     surface_format.setDepthBufferSize(24)
-    #     surface_format.setVersion(3, 2)
-    #     surface_format.setProfile(QSurfaceFormat.OpenGLContextProfile.CoreProfile)
-    #     QSurfaceFormat.setDefaultFormat(surface_format)
-    #
-    #     app = AmuletApp()
-    #     # The broker cannot have a level
-    #     level_path: str | None = global_args.level_path
-    #     if level_path is None:
-    #         _level.level = None
-    #     else:
-    #         log.debug("Loading level.")
-    #         with DisplayException(f"Failed loading level at path {level_path}"):
-    #             _level.level = level = get_level(
-    #                 LevelLoaderPathToken(level_path)
-    #             )  # TODO: make this generic
-    #             level.open()
     #
     # # rpc.init_rpc(is_broker)
-    #
-    # log.debug("Entering main loop.")
-    # exit_code = app.exec()
-    # log.debug(f"Exiting with code {exit_code}")
-    # sys.exit(exit_code)
