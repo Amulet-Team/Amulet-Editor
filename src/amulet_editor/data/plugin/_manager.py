@@ -11,7 +11,7 @@ import glob
 import logging
 from importlib import import_module
 from importlib.util import spec_from_file_location, module_from_spec
-from importlib.metadata import version, packages_distributions, distributions
+from importlib.metadata import version, packages_distributions
 from queue import Queue
 from enum import Enum
 import sys
@@ -92,7 +92,7 @@ _plugins: dict[LibraryUID, PluginContainer] = {}
 
 # A queue of jobs to apply to the plugins.
 # Any function in this module can add jobs to this queue but only the job thread can remove items.
-_plugin_queue: Queue = Queue()
+# _plugin_queue: Queue = Queue()
 
 # A map from the package identifier to the UID.
 # Only plugins that are currently enabled will appear in this dictionary.
