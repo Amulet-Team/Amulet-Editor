@@ -7,15 +7,7 @@
 ## WARNING! All changes made in this file will be lost when recompiling UI file!
 ################################################################################
 from PySide6.QtCore import QCoreApplication, QMetaObject, Qt, QEvent
-from PySide6.QtWidgets import (
-    QComboBox,
-    QHBoxLayout,
-    QMainWindow,
-    QSizePolicy,
-    QSpacerItem,
-    QVBoxLayout,
-    QWidget,
-)
+from PySide6.QtWidgets import QHBoxLayout, QMainWindow, QWidget
 from .toolbar import ToolBar
 from amulet_team_main_window._tab_engine import RecursiveSplitter
 
@@ -27,44 +19,22 @@ class Ui_AmuletMainWindow(QMainWindow):
         super().__init__(parent, flags)
         if not self.objectName():
             self.setObjectName("AmuletMainWindow")
-        self.resize(1129, 792)
+        self.resize(1129, 780)
 
         self._widget = QWidget(self)
         self._widget.setObjectName("_widget")
 
-        self._widget_layout = QVBoxLayout(self._widget)
-        self._widget_layout.setSpacing(0)
-        self._widget_layout.setObjectName("_widget_layout")
-        self._widget_layout.setContentsMargins(0, 0, 0, 0)
-
-        self._header_layout = QHBoxLayout()
-        self._header_layout.setSpacing(0)
-        self._header_layout.setObjectName("_header_layout")
-
-        self.context_switch = QComboBox(self._widget)
-        self.context_switch.setObjectName("context_switch")
-        self._header_layout.addWidget(self.context_switch)
-
-        self._header_spacer = QSpacerItem(
-            40, 20, QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Minimum
-        )
-        self._header_layout.addItem(self._header_spacer)
-        self._widget_layout.addLayout(self._header_layout)
-
-        self._main_layout = QHBoxLayout()
-        self._main_layout.setObjectName("_main_layout")
+        self._layout = QHBoxLayout(self._widget)
+        self._layout.setObjectName("_layout")
 
         self.toolbar = ToolBar(self._widget)
         self.toolbar.setObjectName("toolbar")
         self.toolbar.setProperty("backgroundColor", "surface")
-        self._main_layout.addWidget(self.toolbar)
+        self._layout.addWidget(self.toolbar)
 
         self.view_container = RecursiveSplitter(self._widget)
         self.view_container.setObjectName("view_container")
-        self._main_layout.addWidget(self.view_container)
-        self._main_layout.setStretch(1, 1)
-        self._widget_layout.addLayout(self._main_layout)
-        self._widget_layout.setStretch(1, 1)
+        self._layout.addWidget(self.view_container)
         self.setCentralWidget(self._widget)
 
         self._localise()
