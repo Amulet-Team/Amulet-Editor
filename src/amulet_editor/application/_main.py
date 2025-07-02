@@ -1,8 +1,9 @@
 from __future__ import annotations
 
 import threading
-from typing import Optional, Callable, TypeAlias, Any, Union
+from typing import Callable, TypeAlias, Any, Union
 from types import FrameType
+from collections.abc import Sequence
 import sys
 import os
 import logging
@@ -18,6 +19,7 @@ from PySide6.QtCore import (
     QtMsgType,
     QLocale,
     QMessageLogContext,
+    QTimer,
 )
 from PySide6.QtWidgets import QApplication
 from PySide6.QtGui import QSurfaceFormat
@@ -28,10 +30,11 @@ import amulet_editor
 from amulet_editor.models.widgets.traceback_dialog import DisplayException
 from amulet_editor.data.level import _level
 from amulet_editor.models.localisation import ATranslator
+import amulet_editor.data.plugin._manager as plugin_manager
 import amulet_editor.data._rpc as rpc
 
-from ._cli import parse_args, BROKER
-from ._app import AmuletApp
+from ._cli import parse_global_args, parse_args, BROKER
+from .command import _run_command, DefaultCommand
 from amulet_editor.data.paths._application import _init_paths, logging_directory
 
 TraceFunction: TypeAlias = Callable[[FrameType, str, Any], Union["TraceFunction", None]]
@@ -53,9 +56,11 @@ def _qt_log(msg_type: QtMsgType, context: QMessageLogContext, msg: str) -> None:
         qt_log.fatal(msg)
 
 
-def app_main() -> None:
-    args = parse_args()
-    _init_paths(args.data_dir, args.config_dir, args.cache_dir, args.log_dir)
+def app_main(argv: Sequence[str] | None = None) -> None:
+    # Set up global state.
+    # Plugins have not been loaded at this point.
+    global_args = parse_global_args(argv)
+    _init_paths(global_args.data_dir, global_args.config_dir, global_args.cache_dir, global_args.log_dir)
 
     log_file = open(
         os.path.join(
@@ -66,8 +71,8 @@ def app_main() -> None:
     )
 
     logging.basicConfig(
-        level=args.logging_level,
-        format=args.logging_format,
+        level=global_args.logging_level,
+        format=global_args.logging_format,
         force=True,
         handlers=[
             logging.StreamHandler(sys.__stderr__),
@@ -104,7 +109,7 @@ def app_main() -> None:
     # When running via pythonw the stderr is None so log directly to the log file
     faulthandler.enable(sys.__stderr__ or log_file)
 
-    if args.trace:
+    if global_args.trace:
 
         def trace_calls(frame: FrameType, event: str, arg: Any) -> TraceFunction:
             if event == "call":
@@ -119,45 +124,73 @@ def app_main() -> None:
         sys.settrace(trace_calls)
         threading.settrace(trace_calls)
 
-    is_broker = args.level_path == BROKER
+    if QApplication.instance() is not None:
+        raise RuntimeError("QApplication has already been initialized")
 
-    if is_broker:
-        # Dummy application to get a main loop.
-        app = QApplication()
-        translator = ATranslator()
-        translator.load_lang(
-            QLocale(),
-            "",
-            directory=os.path.join(*amulet_editor.__path__, "resources", "lang"),
-        )
-        QCoreApplication.installTranslator(translator)
-    else:
-        # # Allow context sharing between widgets that do not share the same top level window.
-        QCoreApplication.setAttribute(Qt.ApplicationAttribute.AA_ShareOpenGLContexts)
+    # # Allow context sharing between widgets that do not share the same top level window.
+    QCoreApplication.setAttribute(Qt.ApplicationAttribute.AA_ShareOpenGLContexts)
 
-        # # Set the default surface format. Apparently this is required for some platforms.
-        surface_format = QSurfaceFormat()
-        surface_format.setDepthBufferSize(24)
-        surface_format.setVersion(3, 2)
-        surface_format.setProfile(QSurfaceFormat.OpenGLContextProfile.CoreProfile)
-        QSurfaceFormat.setDefaultFormat(surface_format)
+    # # Set the default surface format. Apparently this is required for some platforms.
+    surface_format = QSurfaceFormat()
+    surface_format.setDepthBufferSize(24)
+    surface_format.setVersion(3, 2)
+    surface_format.setProfile(QSurfaceFormat.OpenGLContextProfile.CoreProfile)
+    QSurfaceFormat.setDefaultFormat(surface_format)
+    app = QApplication()
 
-        app = AmuletApp()
-        # The broker cannot have a level
-        level_path: Optional[str] = args.level_path
-        if level_path is None:
-            _level.level = None
-        else:
-            log.debug("Loading level.")
-            with DisplayException(f"Failed loading level at path {level_path}"):
-                _level.level = level = get_level(
-                    LevelLoaderPathToken(level_path)
-                )  # TODO: make this generic
-                level.open()
+    def launch():
+        with DisplayException("Failed to launch"):
+            plugin_manager.load()
+            full_args = parse_args(argv)
+            _run_command(full_args.command or DefaultCommand, full_args)
 
-    # rpc.init_rpc(is_broker)
+    # This will be processed after the app starts
+    QTimer.singleShot(0, launch)
 
     log.debug("Entering main loop.")
     exit_code = app.exec()
     log.debug(f"Exiting with code {exit_code}")
     sys.exit(exit_code)
+
+    # is_broker = global_args.level_path == BROKER
+    #
+    # if is_broker:
+    #     # Dummy application to get a main loop.
+    #     app = QApplication()
+    #     translator = ATranslator()
+    #     translator.load_lang(
+    #         QLocale(),
+    #         "",
+    #         directory=os.path.join(*amulet_editor.__path__, "resources", "lang"),
+    #     )
+    #     QCoreApplication.installTranslator(translator)
+    # else:
+    #     # # Allow context sharing between widgets that do not share the same top level window.
+    #     QCoreApplication.setAttribute(Qt.ApplicationAttribute.AA_ShareOpenGLContexts)
+    #
+    #     # # Set the default surface format. Apparently this is required for some platforms.
+    #     surface_format = QSurfaceFormat()
+    #     surface_format.setDepthBufferSize(24)
+    #     surface_format.setVersion(3, 2)
+    #     surface_format.setProfile(QSurfaceFormat.OpenGLContextProfile.CoreProfile)
+    #     QSurfaceFormat.setDefaultFormat(surface_format)
+    #
+    #     app = AmuletApp()
+    #     # The broker cannot have a level
+    #     level_path: str | None = global_args.level_path
+    #     if level_path is None:
+    #         _level.level = None
+    #     else:
+    #         log.debug("Loading level.")
+    #         with DisplayException(f"Failed loading level at path {level_path}"):
+    #             _level.level = level = get_level(
+    #                 LevelLoaderPathToken(level_path)
+    #             )  # TODO: make this generic
+    #             level.open()
+    #
+    # # rpc.init_rpc(is_broker)
+    #
+    # log.debug("Entering main loop.")
+    # exit_code = app.exec()
+    # log.debug(f"Exiting with code {exit_code}")
+    # sys.exit(exit_code)
