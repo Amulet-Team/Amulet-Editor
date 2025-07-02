@@ -11,7 +11,6 @@
 			"amulet_core~=2.0a8"
 		],
 		"plugin": [
-			"amulet_team_app~=1.0",
 			"amulet_team_inspector~=1.0",
 			"tablericons~=1.0"
 		]
