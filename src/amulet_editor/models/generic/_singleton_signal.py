@@ -1,5 +1,6 @@
 """A helper module to create singleton signals"""
 
+from typing import Any
 from PySide6.QtCore import (
     Signal as _Signal,
     SignalInstance as _SignalInstance,
@@ -7,7 +8,7 @@ from PySide6.QtCore import (
 )
 
 
-def SingletonSignal(*args) -> tuple[_QObject, _SignalInstance]:
+def SingletonSignal(*args: Any) -> tuple[_QObject, _SignalInstance]:
     """
     Create a singleton signal.
 
