@@ -1,11 +1,11 @@
 import errno
 import os
 
-import amulet_editor
+import amulet.app
 
 
 def get_resource_path(*rel_path: str) -> str:
-    path = os.path.join(amulet_editor.__path__[0], "resource", *rel_path)
+    path = os.path.join(amulet.app.__path__[0], "resource", *rel_path)
     if os.path.exists(path):
         return os.path.realpath(path)
     else:

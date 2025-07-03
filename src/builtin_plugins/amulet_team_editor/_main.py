@@ -11,7 +11,7 @@ from PySide6.QtCore import QLocale
 from amulet.level import get_level
 from amulet.level.loader import LevelLoaderPathToken
 
-from amulet_editor import __version__
+from amulet.app import __version__
 from amulet_editor.application._cli import FullArgs
 from amulet.app.resource import get_resource_path
 from amulet_editor.models.widgets.traceback_dialog import DisplayException

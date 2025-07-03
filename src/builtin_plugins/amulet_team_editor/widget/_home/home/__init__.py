@@ -1,4 +1,4 @@
-from amulet_editor import __version__
+from amulet.app import __version__
 
 from PySide6.QtWidgets import QWidget
 from PySide6.QtCore import Qt, QLocale

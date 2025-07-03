@@ -193,5 +193,5 @@ runs:
       id: get-version
       shell: bash
       run: |
-        version=$(python -c "import amulet_editor; print(amulet_editor.__version__)")
+        version=$(python -c "import amulet.app; print(amulet.app.__version__)")
         echo "version=$version" >> "$GITHUB_OUTPUT"

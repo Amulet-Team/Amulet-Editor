@@ -166,7 +166,7 @@ def patch_stubgen():
 def main() -> None:
     root_path = os.path.dirname(os.path.dirname(__file__))
     src_path = os.path.join(root_path, "src")
-    amulet_editor_path = get_package_dir("amulet_editor")
+    amulet_editor_path = get_package_dir("amulet.app")
     tests_path = os.path.join(root_path, "tests")
     test_amulet_editor_path = os.path.join(tests_path, "test_amulet_editor")
 
@@ -175,7 +175,7 @@ def main() -> None:
 
     # out_dir, module_dir, module_name
     modules: list[tuple[str, str, str]] = [
-        (src_path, amulet_editor_path, "amulet_editor"),
+        (src_path, amulet_editor_path, "amulet.app"),
         (tests_path, test_amulet_editor_path, "test_amulet_editor"),
     ]
 
