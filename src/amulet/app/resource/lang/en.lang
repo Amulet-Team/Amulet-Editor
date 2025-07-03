@@ -1,2 +1,2 @@
-AmuletTracebackDialog.window_title=Exception Traceback
-AmuletTracebackDialog.copy_error=Copy Error
+TracebackDialog.window_title=Exception Traceback
+TracebackDialog.copy_error=Copy Error

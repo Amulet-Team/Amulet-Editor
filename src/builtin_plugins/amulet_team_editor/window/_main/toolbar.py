@@ -7,7 +7,7 @@ from PySide6.QtCore import QSize, Qt
 from PySide6.QtWidgets import QFrame, QWidget, QVBoxLayout, QHBoxLayout, QButtonGroup
 
 from amulet_editor.models.widgets import ADragContainer, ATooltipIconButton
-from amulet_editor.models.widgets.traceback_dialog import display_exception
+from amulet.app.exception import display_exception
 
 
 class ButtonProxy:

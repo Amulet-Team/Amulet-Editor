@@ -40,11 +40,11 @@ from PySide6.QtCore import QTimer
 from PySide6.QtWidgets import QApplication
 from PySide6.QtNetwork import QLocalSocket, QLocalServer
 
-from amulet_editor.models.widgets.traceback_dialog import (
+from amulet.app.exception import (
     DisplayException,
     display_exception,
 )
-from amulet_editor.application._cli import spawn_process, BROKER
+from amulet.app.cli import spawn_process, BROKER
 from amulet.app.path import logging_directory
 
 log = logging.getLogger(__name__)

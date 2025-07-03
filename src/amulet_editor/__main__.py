@@ -103,7 +103,7 @@ def main() -> None:
             # Try reporting the crash with a GUI
             import traceback
             from PySide6.QtWidgets import QApplication
-            from amulet_editor.models.widgets.traceback_dialog import (
+            from amulet.app.exception import (
                 display_exception_blocking,
             )
 

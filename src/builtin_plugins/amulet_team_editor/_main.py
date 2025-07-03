@@ -14,7 +14,7 @@ from amulet.level.loader import LevelLoaderPathToken
 from amulet.app import __version__
 from amulet_editor.application._cli import FullArgs
 from amulet.app.resource import get_resource_path
-from amulet_editor.models.widgets.traceback_dialog import DisplayException
+from amulet.app.exception import DisplayException
 from amulet_editor.application.command import Command
 from amulet.app.localisation import Translator, locale_changed
 

@@ -43,7 +43,7 @@ from PySide6.QtCore import (
     QSize,
 )
 
-from amulet_editor.models.widgets.traceback_dialog import DisplayException
+from amulet.app.exception import DisplayException
 import tablericons
 
 _button_size: Optional[QSize] = None

@@ -34,7 +34,7 @@ from OpenGL.GL import (
 from amulet.level.abc.dimension import DimensionId
 from amulet.level.abc import Level
 
-from amulet_editor.models.widgets.traceback_dialog import (
+from amulet.app.exception import (
     DisplayException,
     display_exception,
 )

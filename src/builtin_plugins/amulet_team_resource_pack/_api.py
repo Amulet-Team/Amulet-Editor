@@ -11,7 +11,7 @@ from PySide6.QtCore import QObject, QCoreApplication, Signal
 
 from amulet.level.abc import Level
 from amulet_editor.models.generic._promise import Promise
-from amulet_editor.models.widgets.traceback_dialog import DisplayException
+from amulet.app.exception import DisplayException
 
 from amulet.resource_pack.abc import BaseResourcePackManager
 from amulet.resource_pack import load_resource_pack_manager

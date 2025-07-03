@@ -43,7 +43,7 @@ from ._plugin import PluginV1
 from ._state import PluginState
 from ._container import PluginContainer
 from ._requirement import Requirement
-from amulet_editor.models.widgets.traceback_dialog import display_exception
+from amulet.app.exception import display_exception
 
 
 log = logging.getLogger(__name__)

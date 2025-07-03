@@ -2,7 +2,7 @@ from types import TracebackType
 import logging
 import traceback as tb
 from amulet_editor.application._invoke import invoke
-from ._cls import _AmuletTracebackDialog
+from ._traceback_dialog import TracebackDialog
 
 main_logger = logging.getLogger()
 
@@ -19,7 +19,7 @@ def display_exception_blocking(
     :param error: A user-readable description of the error context.
     :param traceback: The traceback to display in the dialog.
     """
-    dialog = _AmuletTracebackDialog(title=title, error=error, traceback=traceback)
+    dialog = TracebackDialog(title=title, error=error, traceback=traceback)
     dialog.exec()
 
 
