@@ -24,7 +24,7 @@ from PySide6.QtCore import (
 from PySide6.QtWidgets import QApplication
 from PySide6.QtGui import QSurfaceFormat
 
-import amulet_editor
+from amulet.app.resource import get_resource_path
 from amulet_editor.models.widgets.traceback_dialog import DisplayException
 from amulet.app.localisation import Translator, locale_changed
 import amulet.app.plugin._manager as plugin_manager
@@ -146,7 +146,7 @@ def app_main(argv: Sequence[str] | None = None) -> None:
         translator.load_lang(
             QLocale(),
             "",
-            directory=os.path.join(*amulet_editor.__path__, "resource", "lang"),
+            directory=get_resource_path("lang"),
         )
 
     load_translations()
@@ -181,7 +181,7 @@ def app_main(argv: Sequence[str] | None = None) -> None:
     #     translator.load_lang(
     #         QLocale(),
     #         "",
-    #         directory=os.path.join(*amulet_editor.__path__, "resource", "lang"),
+    #         directory=get_resource_path("lang"),
     #     )
     #     QCoreApplication.installTranslator(translator)
     #
