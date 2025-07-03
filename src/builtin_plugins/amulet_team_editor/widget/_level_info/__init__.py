@@ -5,7 +5,7 @@ from typing import Optional
 from PySide6.QtCore import Qt
 from PySide6.QtWidgets import QWidget, QVBoxLayout
 
-from amulet_team_main_window import TabWidget
+from amulet_team_editor.window import TabWidget
 
 
 class LevelInfoWidget(TabWidget):
