@@ -32,7 +32,7 @@ class FullArgs(GlobalArgs):
 
 def get_parser(full: bool) -> ArgumentParser:
     parser = ArgumentParser(
-        prog="amulet_editor",
+        prog="amulet",
         add_help=full,
         description="Amulet is a Minecraft world editing application.",
     )
