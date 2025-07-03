@@ -725,7 +725,7 @@ class AbstractStackedTabWidget(QWidget):
         # elif isinstance(tab_widget, RecursiveSplitter):
         #     parent = tab_widget.parent()
         #     if tab_widget.count() == 0:
-        #         if isinstance(parent, sub_window.AmuletSubWindow):
+        #         if isinstance(parent, sub_window.AmuletChildWindow):
         #             # widget.parent().hide()
         #             parent.deleteLater()
         #         else:

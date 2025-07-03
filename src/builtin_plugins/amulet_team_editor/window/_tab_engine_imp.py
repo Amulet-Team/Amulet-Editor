@@ -48,7 +48,7 @@ class StackedTabWidget(AbstractStackedTabWidget):
             # If this widget is the last AbstractStackedTabWidget in the AmuletMainWindow and has no tabs, open the default tab
             # TODO: add the default page
             print("add page")
-        elif isinstance(parent, _child_window.AmuletSubWindow):
+        elif isinstance(parent, _child_window.AmuletChildWindow):
             parent.deleteLater()
         else:
             raise RuntimeError

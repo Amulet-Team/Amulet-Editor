@@ -13,7 +13,7 @@ from PySide6.QtCore import Qt, QPoint, QSize
 from amulet_editor.models.widgets import ATooltipIconButton
 
 from amulet_team_editor.window._main import AmuletMainWindow, get_main_window, ButtonProxy
-from amulet_team_editor.window._child import AmuletSubWindow, sub_windows, create_sub_window
+from amulet_team_editor.window import _child as _child_window
 from amulet_team_editor.window._tab_engine import TabWidget
 from amulet_team_editor.widget import _widget
 from amulet_team_editor.window._tab_engine import RecursiveSplitter, AbstractStackedTabWidget
@@ -69,7 +69,7 @@ class HiddenLayout:
     """Storage for layout UI elements when not active."""
 
     main_window_splitter: RecursiveSplitter
-    sub_windows: tuple[AmuletSubWindow, ...]
+    sub_windows: tuple[_child_window.AmuletChildWindow, ...]
 
 
 @dataclass
@@ -219,7 +219,7 @@ def populate_widgets(widget_cls: type[TabWidget]) -> None:
         current_thread() is main_thread()
     ), "This can only be called from the main thread."
     _populate_widgets_of_type(get_main_window().view_container, widget_cls)
-    for sub_window in sub_windows:
+    for sub_window in _child_window.sub_windows:
         _populate_widgets_of_type(sub_window.view_container, widget_cls)
 
 
@@ -275,7 +275,7 @@ def _init_layout(
 
 
 def _init_window(
-    window: AmuletMainWindow | AmuletSubWindow, config: WindowConfig
+    window: AmuletMainWindow | _child_window.AmuletChildWindow, config: WindowConfig
 ) -> None:
     view_container = window.view_container
     # TODO: set window position and size
@@ -289,13 +289,13 @@ def _create_layout(layout_container: LayoutContainer) -> None:
     layout_config = layout_container.layout_config
     _init_window(get_main_window(), layout_config.main_window)
     for config in layout_config.sub_windows:
-        _init_window(create_sub_window(), config)
+        _init_window(_child_window.create_sub_window(), config)
 
 
 def _destroy_layout() -> None:
     """Destroy the existing layout.
     This is used when resetting the active layout."""
-    for sub_window in sub_windows:
+    for sub_window in _child_window.sub_windows:
         sub_window.close()
     main_view_container = get_main_window().view_container
     for index in range(main_view_container.count() - 1, -1, -1):
@@ -320,8 +320,8 @@ def _setup_layout(new_layout_container: LayoutContainer) -> None:
     old_sub_windows = []
     if old_layout_container is not None:
         # Pull down all the old sub-windows
-        old_sub_windows = list(sub_windows)
-        sub_windows.clear()
+        old_sub_windows = list(_child_window.sub_windows)
+        _child_window.sub_windows.clear()
         for sub_window in old_sub_windows:
             sub_window.hide()
 
@@ -342,7 +342,7 @@ def _setup_layout(new_layout_container: LayoutContainer) -> None:
         new_main_view_container.show()
         for sub_window in hidden_layout.sub_windows:
             sub_window.show()
-        sub_windows.update(hidden_layout.sub_windows)
+        _child_window.sub_windows.update(hidden_layout.sub_windows)
         new_layout_container.hidden_layout = None
     # Without this the last shown sub-window will be active.
     main_window.activateWindow()
