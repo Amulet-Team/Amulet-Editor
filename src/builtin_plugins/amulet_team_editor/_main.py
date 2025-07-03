@@ -16,7 +16,7 @@ from amulet_editor.application._cli import FullArgs
 from amulet.app.resource import get_resource_path
 from amulet_editor.models.widgets.traceback_dialog import DisplayException
 from amulet_editor.application.command import Command
-from amulet.app.localisation import ATranslator, locale_changed
+from amulet.app.localisation import Translator, locale_changed
 
 import tablericons
 import amulet_team_level
@@ -45,7 +45,7 @@ log = logging.getLogger(__name__)
 
 
 # Qt only weekly references this. We must hold a strong reference to stop it getting garbage collected
-_translator: ATranslator | None = None
+_translator: Translator | None = None
 
 HomeLayoutID = "073bfd20-249e-4e0c-ad41-0bcb0c9db89f"
 home_button: ButtonProxy | None = None
@@ -150,7 +150,7 @@ def _main(args: FullArgs) -> None:
             amulet_team_level.set_level(level)
 
     # Load the translations
-    _translator = ATranslator()
+    _translator = Translator()
     _load_translations()
     QApplication.installTranslator(_translator)
     locale_changed.connect(_load_translations)

@@ -5,7 +5,7 @@ from contextlib import suppress
 
 from PySide6.QtCore import QLocale, QCoreApplication
 
-from amulet.app.localisation import ATranslator, locale_changed
+from amulet.app.localisation import Translator, locale_changed
 from amulet.app.plugin import PluginV1
 
 import tablericons
@@ -30,7 +30,7 @@ from ._view_3d import View3D
 
 
 # Qt only weekly references this. We must hold a strong reference to stop it getting garbage collected
-_translator: Optional[ATranslator] = None
+_translator: Optional[Translator] = None
 
 View3DID = "68817e4c-32e3-43f8-ac61-9d7352c6329d"
 view_3d_button: ButtonProxy | None = None
@@ -49,7 +49,7 @@ def _load_translations() -> None:
 def _init_editor() -> None:
     global _translator, view_3d_button
     if get_level() is not None:
-        _translator = ATranslator()
+        _translator = Translator()
         _load_translations()
         QCoreApplication.installTranslator(_translator)
         locale_changed.connect(_load_translations)

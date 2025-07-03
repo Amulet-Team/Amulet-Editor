@@ -26,7 +26,7 @@ from PySide6.QtGui import QSurfaceFormat
 
 import amulet_editor
 from amulet_editor.models.widgets.traceback_dialog import DisplayException
-from amulet.app.localisation import ATranslator, locale_changed
+from amulet.app.localisation import Translator, locale_changed
 import amulet.app.plugin._manager as plugin_manager
 import amulet_editor.data._rpc as rpc
 
@@ -140,7 +140,7 @@ def app_main(argv: Sequence[str] | None = None) -> None:
     QSurfaceFormat.setDefaultFormat(surface_format)
     app = QApplication()
 
-    translator = ATranslator()
+    translator = Translator()
 
     def load_translations() -> None:
         translator.load_lang(
@@ -177,7 +177,7 @@ def app_main(argv: Sequence[str] | None = None) -> None:
     # if is_broker:
     #     # Dummy application to get a main loop.
     #     app = QApplication()
-    #     translator = ATranslator()
+    #     translator = Translator()
     #     translator.load_lang(
     #         QLocale(),
     #         "",

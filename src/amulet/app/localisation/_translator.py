@@ -3,7 +3,7 @@ import os
 from PySide6.QtCore import QTranslator, QLocale, QDir, QObject
 
 
-class ATranslator(QTranslator):
+class Translator(QTranslator):
     def __init__(self, parent: QObject | None = None) -> None:
         super().__init__(parent)
         self._translations: dict[str, str] = {}

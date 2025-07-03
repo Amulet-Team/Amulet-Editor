@@ -9,7 +9,7 @@ from PySide6.QtGui import QIcon
 
 import amulet_editor
 from amulet_editor import __version__
-from amulet.app.localisation import ATranslator, locale_changed
+from amulet.app.localisation import Translator, locale_changed
 from amulet.app.resource import get_resource_path
 import amulet.app.plugin._manager as plugin_manager
 
