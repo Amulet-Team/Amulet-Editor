@@ -3,6 +3,7 @@ from threading import Lock
 
 from amulet.level.abc import Level
 
+
 class UnsetType(Enum):
     Unset = 0
 

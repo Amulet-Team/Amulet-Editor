@@ -23,7 +23,11 @@ import amulet_team_locale
 import amulet_team_level
 
 import amulet_team_editor
-from amulet_team_editor.window._main import get_main_window, destroy_main_window, ButtonProxy
+from amulet_team_editor.window._main import (
+    get_main_window,
+    destroy_main_window,
+    ButtonProxy,
+)
 from amulet_team_editor.widget._home import HomeWidget
 from amulet_team_editor.widget._level_info import LevelInfoWidget
 from amulet_team_editor.widget import register_widget, unregister_widget

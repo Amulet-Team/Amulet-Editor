@@ -12,11 +12,18 @@ from PySide6.QtCore import Qt, QPoint, QSize
 
 from amulet_editor.models.widgets import ATooltipIconButton
 
-from amulet_team_editor.window._main import AmuletMainWindow, get_main_window, ButtonProxy
+from amulet_team_editor.window._main import (
+    AmuletMainWindow,
+    get_main_window,
+    ButtonProxy,
+)
 from amulet_team_editor.window import _child as _child_window
 from amulet_team_editor.window._tab_engine import TabWidget
 from amulet_team_editor.widget import _widget
-from amulet_team_editor.window._tab_engine import RecursiveSplitter, AbstractStackedTabWidget
+from amulet_team_editor.window._tab_engine import (
+    RecursiveSplitter,
+    AbstractStackedTabWidget,
+)
 from amulet_team_editor.window._tab_engine_imp import StackedTabWidget
 
 
