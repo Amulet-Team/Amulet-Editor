@@ -18,3 +18,4 @@ from .layout import (
     active_layout,
     create_layout_button,
 )
+from ._signal import init_editor, destroy_editor

@@ -180,7 +180,10 @@ class Frame(Packable):
         """Draw this frame into another Image."""
         if border:
             image.paste(
-                self._image.resize(tuple(s + border * 2 for s in self._image.size)),
+                self._image.resize((
+                    self._image.size[0] + border * 2,
+                    self._image.size[1] + border * 2,
+                )),
                 (self.x - border, self.y - border),
             )
         image.paste(self._image, (self.x, self.y))

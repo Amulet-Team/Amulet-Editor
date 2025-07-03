@@ -11,7 +11,7 @@ from amulet_editor.models.plugin import PluginV1
 import tablericons
 import amulet_team_locale
 from amulet_team_level import get_level
-from amulet_team_main_window import (
+from amulet_team_editor import (
     register_widget,
     unregister_widget,
     register_layout,
@@ -22,6 +22,8 @@ from amulet_team_main_window import (
     LayoutConfig,
     ButtonProxy,
     create_layout_button,
+    init_editor,
+    destroy_editor,
 )
 
 import amulet_team_3d_viewer
@@ -35,13 +37,23 @@ View3DID = "68817e4c-32e3-43f8-ac61-9d7352c6329d"
 view_3d_button: ButtonProxy | None = None
 
 
-def load_plugin() -> None:
+def _load_translations() -> None:
+    if _translator is None:
+        return
+    _translator.load_lang(
+        QLocale(),
+        "",
+        directory=os.path.join(*amulet_team_3d_viewer.__path__, "_resources", "lang"),
+    )
+
+
+def _init_editor() -> None:
     global _translator, view_3d_button
     if get_level() is not None:
         _translator = ATranslator()
-        _locale_changed()
+        _load_translations()
         QCoreApplication.installTranslator(_translator)
-        amulet_team_locale.locale_changed.connect(_locale_changed)
+        amulet_team_locale.locale_changed.connect(_load_translations)
 
         register_widget(View3D)
 
@@ -63,16 +75,7 @@ def load_plugin() -> None:
         view_3d_button.set_name("3D Editor")
 
 
-def _locale_changed() -> None:
-    assert _translator is not None
-    _translator.load_lang(
-        QLocale(),
-        "",
-        directory=os.path.join(*amulet_team_3d_viewer.__path__, "_resources", "lang"),
-    )
-
-
-def unload_plugin() -> None:
+def _destroy_editor() -> None:
     if view_3d_button is not None:
         view_3d_button.delete()
         unregister_layout(View3DID)
@@ -80,6 +83,16 @@ def unload_plugin() -> None:
         unregister_widget(View3D)
     if _translator is not None:
         QCoreApplication.removeTranslator(_translator)
+
+
+def load_plugin() -> None:
+    init_editor.connect(_init_editor)
+    destroy_editor.connect(_destroy_editor)
+
+
+def unload_plugin() -> None:
+    init_editor.disconnect(_init_editor)
+    destroy_editor.disconnect(_destroy_editor)
 
 
 plugin = PluginV1(load=load_plugin, unload=unload_plugin)
