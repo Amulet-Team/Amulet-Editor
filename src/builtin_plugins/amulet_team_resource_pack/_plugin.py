@@ -4,10 +4,8 @@ from typing import Optional
 
 from PySide6.QtCore import QLocale, QCoreApplication
 
-from amulet_editor.models.localisation import ATranslator
+from amulet.app.localisation import ATranslator, locale_changed
 from amulet.app.plugin import PluginV1
-
-import amulet_team_locale
 
 import amulet_team_resource_pack
 
@@ -21,7 +19,7 @@ def load_plugin() -> None:
     _translator = ATranslator()
     _locale_changed()
     QCoreApplication.installTranslator(_translator)
-    amulet_team_locale.locale_changed.connect(_locale_changed)
+    locale_changed.connect(_locale_changed)
 
 
 def _locale_changed() -> None:

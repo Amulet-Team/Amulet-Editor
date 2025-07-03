@@ -5,11 +5,10 @@ from contextlib import suppress
 
 from PySide6.QtCore import QLocale, QCoreApplication
 
-from amulet_editor.models.localisation import ATranslator
+from amulet.app.localisation import ATranslator, locale_changed
 from amulet.app.plugin import PluginV1
 
 import tablericons
-import amulet_team_locale
 from amulet_team_level import get_level
 from amulet_team_editor import (
     register_widget,
@@ -53,7 +52,7 @@ def _init_editor() -> None:
         _translator = ATranslator()
         _load_translations()
         QCoreApplication.installTranslator(_translator)
-        amulet_team_locale.locale_changed.connect(_load_translations)
+        locale_changed.connect(_load_translations)
 
         register_widget(View3D)
 

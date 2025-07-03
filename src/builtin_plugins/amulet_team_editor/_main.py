@@ -16,10 +16,9 @@ from amulet_editor.application._cli import FullArgs
 from amulet.app.resource import get_resource_path
 from amulet_editor.models.widgets.traceback_dialog import DisplayException
 from amulet_editor.application.command import Command
-from amulet_editor.models.localisation import ATranslator
+from amulet.app.localisation import ATranslator, locale_changed
 
 import tablericons
-import amulet_team_locale
 import amulet_team_level
 
 import amulet_team_editor
@@ -154,7 +153,7 @@ def _main(args: FullArgs) -> None:
     _translator = ATranslator()
     _load_translations()
     QApplication.installTranslator(_translator)
-    amulet_team_locale.locale_changed.connect(_load_translations)
+    locale_changed.connect(_load_translations)
 
     # Register widgets and layouts
     _init_editor()

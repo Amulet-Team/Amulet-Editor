@@ -9,7 +9,7 @@ from .home import HomePage
 from .open_world import OpenWorldPage
 
 from amulet_team_editor.window import TabWidget
-from amulet_team_locale import set_locale
+from amulet.app.localisation import set_locale
 
 
 class HomeWidget(TabWidget):

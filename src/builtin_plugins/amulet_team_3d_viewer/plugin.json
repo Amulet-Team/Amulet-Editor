@@ -15,7 +15,6 @@
 			"amulet_game~=1.0a2"
 		],
 		"plugin": [
-			"amulet_team_locale~=1.0",
 			"amulet_team_editor~=1.0",
 			"amulet_team_resource_pack~=1.0",
 			"tablericons~=1.0",
