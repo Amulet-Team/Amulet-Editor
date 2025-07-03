@@ -1,0 +1,17 @@
+{
+	"identifier": "amulet_team_editor",
+	"version": "1.0.0",
+	"name": "Amulet Editor",
+	"depends": {
+		"python": "~=3.11",
+		"library": [
+			"shiboken6~=6.2",
+			"PySide6_Essentials~=6.2"
+		],
+		"plugin": [
+			"amulet_team_level~=1.0",
+			"amulet_team_inspector~=1.0"
+		]
+	},
+	"locked": "true"
+}

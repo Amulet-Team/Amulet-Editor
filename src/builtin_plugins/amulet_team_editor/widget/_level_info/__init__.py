@@ -5,13 +5,11 @@ from typing import Optional
 from PySide6.QtCore import Qt
 from PySide6.QtWidgets import QWidget, QVBoxLayout
 
-from amulet_team_editor import TabWidget
-
-from ._canvas import FirstPersonCanvas
+from amulet_team_editor.window import TabWidget
 
 
-class View3D(TabWidget):
-    name = "3D View"
+class LevelInfoWidget(TabWidget):
+    name = "LevelInfo"
 
     def __init__(
         self, parent: Optional[QWidget] = None, f: Qt.WindowType = Qt.WindowType.Widget
@@ -19,4 +17,3 @@ class View3D(TabWidget):
         super().__init__(parent, f)
         self._layout = QVBoxLayout(self)
         self._layout.setContentsMargins(0, 0, 0, 0)
-        self._layout.addWidget(FirstPersonCanvas())

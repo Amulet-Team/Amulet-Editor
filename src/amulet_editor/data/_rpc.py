@@ -40,7 +40,6 @@ from PySide6.QtCore import QTimer
 from PySide6.QtWidgets import QApplication
 from PySide6.QtNetwork import QLocalSocket, QLocalServer
 
-from amulet_editor.data.level import get_level
 from amulet_editor.models.widgets.traceback_dialog import (
     DisplayException,
     display_exception,
@@ -97,7 +96,8 @@ def is_landing_process() -> Optional[bool]:
     """
     if _is_broker:
         return None
-    return get_level() is None
+    return False  # TODO
+    # return get_level() is None
 
 
 # @register_remote_procedure
