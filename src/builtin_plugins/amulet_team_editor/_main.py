@@ -12,6 +12,7 @@ from amulet.level import get_level
 from amulet.level.loader import LevelLoaderPathToken
 
 from amulet_editor import __version__
+from amulet_editor.application._cli import FullArgs
 from amulet_editor.resources import get_resource
 from amulet_editor.models.widgets.traceback_dialog import DisplayException
 from amulet_editor.application.command import Command
@@ -92,7 +93,7 @@ def _init_editor() -> None:
         pass
 
 
-def _main(args) -> None:
+def _main(args: FullArgs) -> None:
     global _translator
 
     # Initialise the application
