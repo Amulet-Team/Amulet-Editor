@@ -3,7 +3,7 @@ import logging
 import subprocess
 import sys
 from collections.abc import Sequence
-from amulet_editor.data.paths._application import (
+from amulet.app.path._application import (
     DefaultDataDir,
     DefaultConfigDir,
     DefaultCacheDir,

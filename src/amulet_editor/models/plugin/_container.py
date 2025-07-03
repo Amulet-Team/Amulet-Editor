@@ -7,7 +7,7 @@ from abc import ABC, abstractmethod
 from packaging.version import Version
 from packaging.specifiers import SpecifierSet
 
-from amulet_editor.data.paths._plugin import first_party_plugin_directory
+from amulet.app.path._plugin import first_party_plugin_directory
 from ._plugin import PluginV1
 from ._data import PluginData, PluginDataDepends
 from ._state import PluginState

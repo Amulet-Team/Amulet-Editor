@@ -45,7 +45,7 @@ from amulet_editor.models.widgets.traceback_dialog import (
     display_exception,
 )
 from amulet_editor.application._cli import spawn_process, BROKER
-from amulet_editor.data.paths._application import logging_directory
+from amulet.app.path import logging_directory
 
 log = logging.getLogger(__name__)
 

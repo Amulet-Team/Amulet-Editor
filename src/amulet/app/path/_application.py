@@ -29,7 +29,7 @@ DefaultLogDir = os.path.join(
 )
 
 
-def _init_paths(
+def init_paths(
     data_dir: str | None,
     config_dir: str | None,
     cache_dir: str | None,
@@ -92,34 +92,5 @@ def logging_directory() -> str:
     Generates appropriate directories if path does not already exist.
     """
     directory = os.environ["LOG_DIR"]
-    os.makedirs(directory, exist_ok=True)
-    return directory
-
-
-def user_directory() -> str:
-    directory = os.path.join(data_directory(), "user")
-    os.makedirs(directory, exist_ok=True)
-
-    return directory
-
-
-def project_directory(project_name: str | None = None) -> str:
-    """Returns a path to the default location for storing Amulet projects."""
-
-    documents = os.path.normpath(
-        QStandardPaths.writableLocation(
-            QStandardPaths.StandardLocation.DocumentsLocation
-        )
-    )
-
-    directory = os.path.join(
-        documents,
-        "Amulet",
-        "projects",
-    )
-
-    if project_name is not None:
-        directory = os.path.join(directory, project_name)
-
     os.makedirs(directory, exist_ok=True)
     return directory

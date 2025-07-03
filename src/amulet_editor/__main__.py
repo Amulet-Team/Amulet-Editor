@@ -15,9 +15,9 @@ def main() -> None:
         freeze_support()
 
         # Initialise default paths
-        from amulet_editor.data.paths._application import _init_paths
+        from amulet.app.path._application import init_paths
 
-        _init_paths(None, None, None, None)
+        init_paths(None, None, None, None)
 
         # Import and boot the app.
         from amulet_editor.application._main import app_main
@@ -41,7 +41,7 @@ def main() -> None:
                 # Set up a file handler if one does not exist
 
                 try:
-                    from amulet_editor.data.paths._application import logging_directory
+                    from amulet.app.path import logging_directory
 
                     log_dir = logging_directory()
                 except Exception:
@@ -84,7 +84,7 @@ def main() -> None:
                 import os
 
                 try:
-                    from amulet_editor.data.paths._application import logging_directory
+                    from amulet.app.path import logging_directory
 
                     log_dir = logging_directory()
                 except Exception:

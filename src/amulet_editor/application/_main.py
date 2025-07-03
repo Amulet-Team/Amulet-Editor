@@ -33,7 +33,7 @@ import amulet_editor.data._rpc as rpc
 
 from ._cli import parse_global_args, parse_args, BROKER
 from .command import _run_command, DefaultCommand
-from amulet_editor.data.paths._application import _init_paths, logging_directory
+from amulet.app.path._application import init_paths, logging_directory
 
 TraceFunction: TypeAlias = Callable[[FrameType, str, Any], Union["TraceFunction", None]]
 
@@ -58,7 +58,7 @@ def app_main(argv: Sequence[str] | None = None) -> None:
     # Set up global state.
     # Plugins have not been loaded at this point.
     global_args = parse_global_args(argv)
-    _init_paths(
+    init_paths(
         global_args.data_dir,
         global_args.config_dir,
         global_args.cache_dir,

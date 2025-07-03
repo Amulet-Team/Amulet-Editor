@@ -28,7 +28,7 @@ from ._textureatlas import create_atlas
 from amulet_editor.application._invoke import invoke
 from amulet_editor.models.widgets.traceback_dialog import DisplayException
 from amulet_editor.models.generic._promise import Promise
-from amulet_editor.data.paths._application import cache_directory
+from amulet.app.path import cache_directory
 
 from amulet_team_resource_pack._api import get_resource_pack_container
 from ._resource_pack_base import AbstractOpenGLResourcePack
