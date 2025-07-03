@@ -13,7 +13,7 @@ from amulet.level.loader import LevelLoaderPathToken
 
 from amulet_editor import __version__
 from amulet_editor.application._cli import FullArgs
-from amulet_editor.resources import get_resource
+from amulet.app.resource import get_resource_path
 from amulet_editor.models.widgets.traceback_dialog import DisplayException
 from amulet_editor.application.command import Command
 from amulet_editor.models.localisation import ATranslator
@@ -61,7 +61,7 @@ def _init_app() -> None:
         raise RuntimeError("No QApplication instance")
     app.setApplicationName("Amulet Editor")
     app.setApplicationVersion(__version__)
-    app.setWindowIcon(QIcon(get_resource("icons/amulet/Icon.ico")))
+    app.setWindowIcon(QIcon(get_resource_path("icons/amulet/Icon.ico")))
 
 
 def _load_translations() -> None:

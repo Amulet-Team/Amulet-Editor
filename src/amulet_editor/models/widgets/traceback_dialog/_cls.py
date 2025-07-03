@@ -3,7 +3,7 @@ from PySide6.QtGui import QGuiApplication, QIcon
 from PySide6.QtWidgets import QWidget
 
 from ._traceback_dialog import Ui_AmuletTracebackDialog
-from amulet_editor.resources import get_resource
+from amulet.app.resource import get_resource_path
 
 
 class _AmuletTracebackDialog(Ui_AmuletTracebackDialog):
@@ -19,7 +19,7 @@ class _AmuletTracebackDialog(Ui_AmuletTracebackDialog):
     ) -> None:
         super().__init__(parent, f)
         self._traceback = traceback
-        alert_icon = QIcon(get_resource("icons/tabler/alert-circle.svg")).pixmap(
+        alert_icon = QIcon(get_resource_path("icons/tabler/alert-circle.svg")).pixmap(
             QSize(32, 32)
         )
         self._alert_image.setPixmap(alert_icon)

@@ -5,7 +5,7 @@ from functools import partial
 from typing import Optional
 
 import amulet
-from amulet_editor.resources import get_resource
+from amulet.app.resource import get_resource_path
 from amulet_editor.data import minecraft
 from amulet_editor.models.minecraft import LevelData
 from amulet_editor.models.widgets import QPixCard, AIconButton
@@ -44,7 +44,7 @@ class LevelParser(QObject):
         parsed_level.icon_path = (
             level_data.icon_path
             if level_data.icon_path is not None
-            else get_resource("images/missing_world_icon.png")
+            else get_resource_path("images/missing_world_icon.png")
         )
         parsed_level.level_name = level_data.name.get_html(font_weight=600)
         parsed_level.file_name = pathlib.PurePath(level_data.path).name

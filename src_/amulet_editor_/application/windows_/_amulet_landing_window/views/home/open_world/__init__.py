@@ -2,13 +2,13 @@ from amulet_editor import __version__
 
 from PySide6.QtCore import Qt
 from PySide6.QtGui import QImage, QPixmap
-from amulet_editor.resources import get_resource
+from amulet.app.resource import get_resource_path
 from ._open_world import Ui_OpenWorldPage
 
 
 class OpenWorldPage(Ui_OpenWorldPage):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        back_icon = QPixmap(QImage(get_resource("icons/tabler/arrow-left.svg")))
+        back_icon = QPixmap(QImage(get_resource_path("icons/tabler/arrow-left.svg")))
         # back_icon = back_icon.scaledToHeight(30)
         self.btn_back.setIcon(back_icon)

@@ -9,7 +9,7 @@ T = TypeVar("T")
 class KeyLock(Generic[T]):
     """
     A map from weakly referenced keys to locks per key.
-    This is useful if you want to lock access to individual resources.
+    This is useful if you want to lock access to individual resource.
     """
 
     def __init__(self):

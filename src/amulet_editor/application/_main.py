@@ -147,7 +147,7 @@ def app_main(argv: Sequence[str] | None = None) -> None:
         translator.load_lang(
             QLocale(),
             "",
-            directory=os.path.join(*amulet_editor.__path__, "resources", "lang"),
+            directory=os.path.join(*amulet_editor.__path__, "resource", "lang"),
         )
 
     load_translations()
@@ -182,7 +182,7 @@ def app_main(argv: Sequence[str] | None = None) -> None:
     #     translator.load_lang(
     #         QLocale(),
     #         "",
-    #         directory=os.path.join(*amulet_editor.__path__, "resources", "lang"),
+    #         directory=os.path.join(*amulet_editor.__path__, "resource", "lang"),
     #     )
     #     QCoreApplication.installTranslator(translator)
     #

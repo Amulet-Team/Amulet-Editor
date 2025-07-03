@@ -4,8 +4,8 @@ import os
 import amulet_editor
 
 
-def get_resource(*rel_path: str) -> str:
-    path = os.path.join(amulet_editor.__path__[0], "resources", *rel_path)
+def get_resource_path(*rel_path: str) -> str:
+    path = os.path.join(amulet_editor.__path__[0], "resource", *rel_path)
     if os.path.exists(path):
         return os.path.realpath(path)
     else:

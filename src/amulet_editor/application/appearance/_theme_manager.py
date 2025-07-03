@@ -2,7 +2,7 @@ import os
 from typing import Optional
 
 from amulet_editor.application.appearance._theme import AbstractBaseTheme, LegacyTheme
-from amulet_editor.resources import get_resource
+from amulet.app.resource import get_resource_path
 from PySide6.QtCore import QObject, Signal
 
 
@@ -14,7 +14,7 @@ class ThemeManager(QObject):
         self._theme: Optional[AbstractBaseTheme] = None
 
         self._themes: list[AbstractBaseTheme] = []
-        theme_dir = get_resource("themes")
+        theme_dir = get_resource_path("themes")
         for theme_ in os.listdir(theme_dir):
             if theme_ != "_default":
                 self._themes.append(LegacyTheme(os.path.join(theme_dir, theme_)))

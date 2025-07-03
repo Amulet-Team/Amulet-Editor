@@ -7,7 +7,7 @@ from pathlib import Path
 from typing import Any, TypeVar
 from abc import ABC, abstractmethod
 
-from amulet_editor.resources import get_resource
+from amulet.app.resource import get_resource_path
 from PySide6.QtGui import QColor
 from PySide6.QtWidgets import QApplication
 
@@ -62,7 +62,7 @@ class LegacyTheme(AbstractBaseTheme):
         style_sheet_path = os.path.join(theme_dir, "style_sheets", "application.qss")
         if not os.path.isfile(style_sheet_path):
             # If no override is defined fall back to the default.
-            style_sheet_path = get_resource(
+            style_sheet_path = get_resource_path(
                 os.path.join("themes", "_default", "style_sheets", "application.qss")
             )
 
@@ -100,7 +100,7 @@ class LegacyTheme(AbstractBaseTheme):
             style_sheet = style_sheet.replace(
                 "url({})".format(icon),
                 "url({})".format(
-                    Path(get_resource(os.path.join("icons", icon))).as_posix()
+                    Path(get_resource_path(os.path.join("icons", icon))).as_posix()
                 ),
             )
 
