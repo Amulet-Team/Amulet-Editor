@@ -1,8 +1,7 @@
 """A module to manage adding buttons to the toolbar.
 To add layout buttons to the toolbar see the _layout module."""
 
-from ._main_window import get_main_window
-from ._main_window import ButtonProxy
+from amulet_team_editor.window._main import get_main_window, ButtonProxy
 
 
 def add_static_button() -> ButtonProxy:

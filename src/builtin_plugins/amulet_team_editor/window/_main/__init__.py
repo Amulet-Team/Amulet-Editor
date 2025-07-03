@@ -3,7 +3,7 @@ from typing import TypeAlias
 from threading import Lock
 from enum import Enum
 
-from PySide6.QtGui import QShortcut
+from PySide6.QtGui import QShortcut, QCloseEvent
 from PySide6.QtCore import Qt
 from PySide6.QtWidgets import QWidget
 
@@ -29,6 +29,18 @@ UID: TypeAlias = str
 UUID: TypeAlias = str
 
 
+class DeletedType(Enum):
+    Deleted = 1
+
+
+Deleted = DeletedType.Deleted
+
+
+# The lock must be acquired before reading/writing the objects below.
+_lock = Lock()
+_main_window: None | AmuletMainWindow | DeletedType = None
+
+
 class AmuletMainWindow(Ui_AmuletMainWindow):
     """The main window in the Amulet application.
     It contains a toolbar and a tab widget engine.
@@ -44,6 +56,10 @@ class AmuletMainWindow(Ui_AmuletMainWindow):
         # self._active_view = self._view_container
         f12 = QShortcut(Qt.Key.Key_F12, self)
         f12.activated.connect(lambda: show_inspector(self))
+
+    def closeEvent(self, event: QCloseEvent) -> None:
+        global _main_window
+        _main_window = Deleted
 
     # def activate_view(self, view_cls: type[View]):
     #     """
@@ -104,7 +120,7 @@ class AmuletMainWindow(Ui_AmuletMainWindow):
         self, new_view_container: RecursiveSplitter
     ) -> RecursiveSplitter:
         old_view_container = self.view_container
-        layout_item = self._main_layout.replaceWidget(
+        layout_item = self._layout.replaceWidget(
             old_view_container,
             new_view_container,
             options=Qt.FindChildOption.FindDirectChildrenOnly,
@@ -112,18 +128,6 @@ class AmuletMainWindow(Ui_AmuletMainWindow):
         assert old_view_container is layout_item.widget()
         self.view_container = new_view_container
         return old_view_container
-
-
-class DeletedType(Enum):
-    Deleted = 1
-
-
-Deleted = DeletedType.Deleted
-
-
-# The lock must be acquired before reading/writing the objects below.
-_lock = Lock()
-_main_window: None | AmuletMainWindow | DeletedType = None
 
 
 def get_main_window() -> AmuletMainWindow:

@@ -5,9 +5,8 @@ from threading import Lock
 from PySide6.QtWidgets import QVBoxLayout, QLabel
 from PySide6.QtCore import Qt
 
-from ._tab_engine import TabWidget
-from . import _layout as layout
-
+from amulet_team_editor.window._tab_engine import TabWidget
+from amulet_team_editor.layout import _layout
 
 # Maps the classes qualified name to the class.
 lock = Lock()
@@ -33,7 +32,7 @@ def register_widget(widget_cls: type[TabWidget]) -> None:
                 f"TabWidget type {widget_cls} has already been registered."
             )
         _widget_classes[widget_cls.__qualname__] = widget_cls
-        layout.populate_widgets(widget_cls)
+        _layout.populate_widgets(widget_cls)
 
 
 def unregister_widget(widget_cls: type[TabWidget]) -> None:
@@ -48,7 +47,7 @@ def unregister_widget(widget_cls: type[TabWidget]) -> None:
         if qualname not in _widget_classes:
             raise ValueError(f"TabWidget type {widget_cls} has not been registered.")
         del _widget_classes[qualname]
-        layout.remove_widgets(widget_cls)
+        _layout.remove_widgets(widget_cls)
 
 
 def get_widget_cls(widget_qualname: str) -> type[TabWidget]:

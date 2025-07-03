@@ -6,19 +6,18 @@ from typing import Callable, cast
 from threading import Lock, current_thread, main_thread
 from dataclasses import dataclass
 import re
-from weakref import WeakValueDictionary, ref
+from weakref import ref
 
 from PySide6.QtCore import Qt, QPoint, QSize
 
 from amulet_editor.models.widgets import ATooltipIconButton
 
-from ._main_window import AmuletMainWindow, get_main_window
-from ._sub_window import AmuletSubWindow, sub_windows, create_sub_window
-from ._tab_engine import TabWidget
-from ._toolbar import ButtonProxy
-from ._widget import get_widget_cls, MissingWidget
-from ._tab_engine import RecursiveSplitter, AbstractStackedTabWidget
-from ._tab_engine_imp import StackedTabWidget
+from amulet_team_editor.window._main import AmuletMainWindow, get_main_window, ButtonProxy
+from amulet_team_editor.window._child import AmuletSubWindow, sub_windows, create_sub_window
+from amulet_team_editor.window._tab_engine import TabWidget
+from amulet_team_editor.widget import _widget
+from amulet_team_editor.window._tab_engine import RecursiveSplitter, AbstractStackedTabWidget
+from amulet_team_editor.window._tab_engine_imp import StackedTabWidget
 
 
 UniqueIdPattern = re.compile(r"[a-z0-9-]+")
@@ -201,7 +200,7 @@ def _populate_widgets_of_type(
             for i in range(child.count()):
                 widget = child.get_page(i)
                 if (
-                    isinstance(widget, MissingWidget)
+                    isinstance(widget, _widget.MissingWidget)
                     and widget.qual_name == widget_cls.__qualname__
                 ):
                     child.remove_page(i)
@@ -234,7 +233,7 @@ def _remove_widgets_of_type(
                 if isinstance(widget, widget_cls):
                     child.remove_page(i)
                     widget.deleteLater()
-                    child.add_page(MissingWidget(widget_cls.__qualname__))
+                    child.add_page(_widget.MissingWidget(widget_cls.__qualname__))
         elif isinstance(child, RecursiveSplitter):
             _remove_widgets_of_type(child, widget_cls)
 
@@ -264,9 +263,9 @@ def _init_layout(
         for widget_config in layout.widgets:
             widget: TabWidget
             try:
-                widget_cls = get_widget_cls(widget_config.qualname)
+                widget_cls = _widget.get_widget_cls(widget_config.qualname)
             except KeyError:
-                widget = MissingWidget(widget_config.qualname)
+                widget = _widget.MissingWidget(widget_config.qualname)
             else:
                 widget = widget_cls()
 

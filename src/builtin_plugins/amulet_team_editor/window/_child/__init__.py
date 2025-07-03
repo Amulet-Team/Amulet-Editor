@@ -2,7 +2,7 @@ from PySide6.QtGui import QCloseEvent
 from weakref import WeakSet
 
 from .sub_window import Ui_AmuletSubWindow
-from .. import _main_window as main_window
+from amulet_team_editor.window import _main as _main_window
 
 
 class AmuletSubWindow(Ui_AmuletSubWindow):
@@ -23,6 +23,6 @@ def create_sub_window() -> AmuletSubWindow:
     """Create a new sub-window.
     The main window owns the sub-window and a weak reference is stored in sub_windows.
     """
-    window = AmuletSubWindow(main_window.get_main_window())
+    window = AmuletSubWindow(_main_window.get_main_window())
     sub_windows.add(window)
     return window
