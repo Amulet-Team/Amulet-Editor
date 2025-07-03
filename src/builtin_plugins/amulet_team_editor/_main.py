@@ -60,7 +60,7 @@ def _load_translations() -> None:
     _translator.load_lang(
         QLocale(),
         "",
-        directory=os.path.join(*amulet_team_editor.__path__, "resources", "lang"),
+        directory=os.path.join(*amulet_team_editor.__path__, "_resources", "lang"),
     )
 
 
