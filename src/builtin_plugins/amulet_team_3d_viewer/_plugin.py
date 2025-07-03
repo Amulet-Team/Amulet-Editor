@@ -6,7 +6,7 @@ from contextlib import suppress
 from PySide6.QtCore import QLocale, QCoreApplication
 
 from amulet_editor.models.localisation import ATranslator
-from amulet_editor.models.plugin import PluginV1
+from amulet.app.plugin import PluginV1
 
 import tablericons
 import amulet_team_locale

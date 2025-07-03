@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from amulet_editor.models.plugin import PluginV1
+from amulet.app.plugin import PluginV1
 from amulet_editor.application.command import register_command, unregister_command
 
 from ._main import get_command, unload

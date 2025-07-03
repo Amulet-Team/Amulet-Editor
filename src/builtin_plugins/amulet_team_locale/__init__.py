@@ -1,5 +1,5 @@
 from amulet_editor.data._localisation import set_locale, locale_changed  # noqa
-from amulet_editor.models.plugin import PluginV1
+from amulet.app.plugin import PluginV1
 
 
 def load_plugin() -> None:

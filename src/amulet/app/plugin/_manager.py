@@ -12,7 +12,7 @@ import logging
 from importlib import import_module
 from importlib.util import spec_from_file_location, module_from_spec
 from importlib.metadata import version, packages_distributions
-from queue import Queue
+# from queue import Queue
 from enum import Enum
 import sys
 from collections import UserDict
@@ -38,11 +38,11 @@ from amulet.app.path._plugin import (
 #     call_in_parent,
 #     call_in_children,
 # )
-from amulet_editor.models.plugin import LibraryUID
-from amulet_editor.models.plugin._plugin import PluginV1
-from amulet_editor.models.plugin._state import PluginState
-from amulet_editor.models.plugin._container import PluginContainer
-from amulet_editor.models.plugin._requirement import Requirement
+from ._uid import LibraryUID
+from ._plugin import PluginV1
+from ._state import PluginState
+from ._container import PluginContainer
+from ._requirement import Requirement
 from amulet_editor.models.widgets.traceback_dialog import display_exception
 
 
@@ -559,7 +559,7 @@ def _enable_plugin(plugin_uid: LibraryUID) -> None:
 
                         if not isinstance(plugin, PluginV1):
                             raise ValueError(
-                                "Plugin attribute must be an instance of amulet_editor.models.plugin.PluginV1"
+                                "Plugin attribute must be an instance of amulet.app.plugin.PluginV1"
                             )
                         plugin_container.plugin = plugin
                         # User code must be run from the main thread to avoid issues.

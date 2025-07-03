@@ -28,7 +28,7 @@ import amulet_editor
 from amulet_editor.models.widgets.traceback_dialog import DisplayException
 from amulet_editor.models.localisation import ATranslator
 from amulet_editor.data._localisation import locale_changed
-import amulet_editor.data.plugin._manager as plugin_manager
+import amulet.app.plugin._manager as plugin_manager
 import amulet_editor.data._rpc as rpc
 
 from ._cli import parse_global_args, parse_args, BROKER

@@ -12,7 +12,7 @@ from amulet_editor import __version__
 from amulet_editor.models.localisation import ATranslator
 from amulet.app.resource import get_resource_path
 from amulet_editor.data._localisation import locale_changed
-import amulet_editor.data.plugin._manager as plugin_manager
+import amulet.app.plugin._manager as plugin_manager
 
 from . import appearance
 

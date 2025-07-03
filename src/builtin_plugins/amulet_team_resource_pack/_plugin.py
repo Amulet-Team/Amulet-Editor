@@ -5,7 +5,7 @@ from typing import Optional
 from PySide6.QtCore import QLocale, QCoreApplication
 
 from amulet_editor.models.localisation import ATranslator
-from amulet_editor.models.plugin import PluginV1
+from amulet.app.plugin import PluginV1
 
 import amulet_team_locale
 
