@@ -9,6 +9,7 @@ from PySide6.QtWidgets import QWidget
 
 from amulet_team_inspector import show_inspector
 
+from amulet_team_editor._signal import destroy_editor
 from ._main_window_ui import Ui_AmuletMainWindow
 from .._tab_engine import RecursiveSplitter
 
@@ -58,6 +59,7 @@ class AmuletMainWindow(Ui_AmuletMainWindow):
 
     def closeEvent(self, event: QCloseEvent) -> None:
         global _main_window
+        destroy_editor.emit()
         _main_window = Deleted
 
     # def activate_view(self, view_cls: type[View]):

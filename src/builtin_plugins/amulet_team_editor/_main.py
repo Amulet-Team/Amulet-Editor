@@ -35,8 +35,8 @@ from amulet_team_editor.layout import (
     WidgetStackConfig,
     WidgetConfig,
     create_layout_button,
-
 )
+from amulet_team_editor._signal import init_editor, destroy_editor
 
 log = logging.getLogger(__name__)
 
@@ -114,6 +114,19 @@ def _init_editor() -> None:
         level_info_button.click()
 
 
+def _destroy_editor() -> None:
+    if home_button is not None:
+        home_button.delete()
+        unregister_layout(HomeLayoutID)
+
+    if level_info_button is not None:
+        level_info_button.delete()
+        unregister_layout(LevelInfoLayoutID)
+
+    unregister_widget(HomeWidget)
+    unregister_widget(LevelInfoWidget)
+
+
 def _main(args: FullArgs) -> None:
     global _translator
 
@@ -141,6 +154,8 @@ def _main(args: FullArgs) -> None:
 
     # Register widgets and layouts
     _init_editor()
+    destroy_editor.connect(_destroy_editor)
+    init_editor.emit()
 
     # Show the window
     get_main_window().showMaximized()
@@ -148,17 +163,6 @@ def _main(args: FullArgs) -> None:
 
 def unload() -> None:
     global _translator
-
-    if home_button is not None:
-        home_button.delete()
-        unregister_layout(HomeLayoutID)
-
-    if level_info_button is not None:
-        level_info_button.delete()
-        unregister_layout(LevelInfoLayoutID)
-
-    unregister_widget(HomeWidget)
-    unregister_widget(LevelInfoWidget)
 
     if _translator is not None:
         QApplication.removeTranslator(_translator)
