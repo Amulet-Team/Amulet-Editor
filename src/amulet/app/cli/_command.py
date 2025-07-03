@@ -12,11 +12,7 @@ from dataclasses import dataclass
 from threading import Lock
 from types import MappingProxyType
 
-if TYPE_CHECKING:
-    from ._cli import FullArgs
-
-
-DefaultCommand = "main"
+from ._parser import FullArgs
 
 
 @dataclass(frozen=True, kw_only=True)
@@ -63,12 +59,12 @@ def unregister_command(command: Command) -> None:
             _commands_map.pop(command.name)
 
 
-def _get_commands() -> list[Command]:
+def get_commands() -> list[Command]:
     with _lock:
         return list(_commands_set)
 
 
-def _run_command(name: str, args: FullArgs) -> None:
+def run_command(name: str, args: FullArgs) -> None:
     with _lock:
         command = _commands_map.get(name)
     if command is None:

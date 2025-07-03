@@ -1,11 +1,14 @@
 from PySide6.QtGui import QIcon
 from PySide6.QtWidgets import QFileDialog, QApplication, QWidget
 from PySide6.QtCore import Qt
-from ._open_world import Ui_OpenWorldPage
-from amulet_editor.application._cli import spawn_process
+
+from amulet.app.cli import spawn_process
+
 import tablericons
 
 from amulet_team_level import get_level
+
+from ._open_world import Ui_OpenWorldPage
 
 
 class OpenWorldPage(Ui_OpenWorldPage):
@@ -23,8 +26,8 @@ class OpenWorldPage(Ui_OpenWorldPage):
         dialog.setNameFilter("Minecraft files (*.*)")
         dialog.setViewMode(QFileDialog.ViewMode.Detail)
         if dialog.exec():
-            file, *_ = dialog.selectedFiles()
-            spawn_process(file)
+            path, *_ = dialog.selectedFiles()
+            spawn_process("main", "--level_path", path)
             if get_level() is None:
                 QApplication.quit()
 
@@ -32,7 +35,7 @@ class OpenWorldPage(Ui_OpenWorldPage):
         dialog = QFileDialog(self)
         dialog.setFileMode(QFileDialog.FileMode.Directory)
         if dialog.exec():
-            file, *_ = dialog.selectedFiles()
-            spawn_process(file)
+            path, *_ = dialog.selectedFiles()
+            spawn_process("main", "--level_path", path)
             if get_level() is None:
                 QApplication.quit()

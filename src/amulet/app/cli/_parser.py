@@ -1,4 +1,4 @@
-from argparse import ArgumentParser, Namespace
+from argparse import ArgumentParser
 import logging
 import subprocess
 import sys
@@ -10,24 +10,8 @@ from amulet.app.path._application import (
     DefaultLogDir,
 )
 
-from . import command as command_mod
-
-
-BROKER = "BROKER"
-
-
-class GlobalArgs(Namespace):
-    data_dir: str | None
-    config_dir: str | None
-    cache_dir: str | None
-    log_dir: str | None
-    logging_level: int
-    logging_format: str
-    trace: bool
-
-
-class FullArgs(GlobalArgs):
-    command: str | None
+from . import _command
+from ._args import GlobalArgs, FullArgs
 
 
 def get_parser(full: bool) -> ArgumentParser:
@@ -103,7 +87,7 @@ def get_parser(full: bool) -> ArgumentParser:
             dest="command", help="The main command to run"
         )
 
-        for command in command_mod._get_commands():
+        for command in _command.get_commands():
             command_parser = entry_subcommand.add_parser(
                 command.name,
                 *command.add_parser_args,
@@ -126,27 +110,3 @@ def parse_args(argv: Sequence[str] | None = None) -> FullArgs:
     parser = get_parser(True)
     args, _ = parser.parse_known_args(argv)
     return args  # noqa
-
-
-# TODO: move this somewhere more sensible
-def spawn_process(path: str | None = None) -> None:
-    """Spawn the broker process passing over the input CLI values."""
-    this_args = parse_args()
-    new_args = [sys.executable, sys.argv[0]]
-    # if path is not None:
-    #     new_args += ["--level_path", path]
-    new_args += [
-        "--logging_level",
-        str(this_args.logging_level),
-        "--logging_format",
-        this_args.logging_format,
-    ]
-    if this_args.trace:
-        new_args.append("--trace")
-    subprocess.Popen(
-        new_args,
-        start_new_session=True,
-        stdin=subprocess.DEVNULL,
-        stdout=subprocess.DEVNULL,
-        stderr=subprocess.DEVNULL,
-    )

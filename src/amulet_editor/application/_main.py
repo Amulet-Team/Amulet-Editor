@@ -30,8 +30,8 @@ from amulet.app.localisation import Translator, locale_changed
 import amulet.app.plugin._manager as plugin_manager
 import amulet_editor.data._rpc as rpc
 
-from ._cli import parse_global_args, parse_args, BROKER
-from .command import _run_command, DefaultCommand
+from amulet.app.cli._parser import parse_global_args, parse_args
+from amulet.app.cli._command import run_command
 from amulet.app.path._application import init_paths, logging_directory
 
 TraceFunction: TypeAlias = Callable[[FrameType, str, Any], Union["TraceFunction", None]]
@@ -162,7 +162,7 @@ def app_main(argv: Sequence[str] | None = None) -> None:
         with DisplayException("Failed to launch"):
             plugin_manager.load()
             full_args = parse_args(argv)
-            _run_command(full_args.command or DefaultCommand, full_args)
+            run_command(full_args.command or "main", full_args)
 
     # This will be processed after the app starts
     QTimer.singleShot(0, launch)
