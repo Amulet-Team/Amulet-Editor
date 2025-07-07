@@ -20,7 +20,7 @@ def main() -> None:
         init_paths(None, None, None, None)
 
         # Import and boot the app.
-        from amulet_editor.application._main import app_main
+        from amulet.app._main import app_main
 
         app_main()
 

@@ -25,7 +25,7 @@ from packaging.version import Version
 
 from PySide6.QtCore import Signal, QObject
 
-from amulet_editor.application._splash import Splash
+from amulet.app._splash import Splash
 from amulet.app.invoke import invoke
 
 from amulet.app.path._plugin import (
@@ -33,7 +33,7 @@ from amulet.app.path._plugin import (
     third_party_plugin_directory,
 )
 
-# from amulet_editor.data.process._messaging import (
+# from amulet.app.data.process._messaging import (
 #     register_global_function,
 #     call_in_parent,
 #     call_in_children,

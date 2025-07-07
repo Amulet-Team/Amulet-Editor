@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 ################################################################################
-## Form generated from reading UI file '_splash.ui'
+## Form generated from reading UI file '_splash_ui.ui'
 ##
 ## Created by: Qt User Interface Compiler version 6.9.1
 ##

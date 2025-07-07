@@ -3,7 +3,7 @@ from PySide6.QtGui import QPixmap
 
 from amulet.app.resource import get_resource_path
 
-from ._splash import Ui_Splash
+from ._splash_ui import Ui_Splash
 
 
 class Splash(Ui_Splash):
