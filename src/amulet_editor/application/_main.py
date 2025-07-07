@@ -28,7 +28,6 @@ from amulet.app.resource import get_resource_path
 from amulet.app.exception import CatchExceptionDialog
 from amulet.app.localisation import Translator, locale_changed
 import amulet.app.plugin._manager as plugin_manager
-import amulet_editor.data._rpc as rpc
 
 from amulet.app.cli._parser import parse_global_args, parse_args
 from amulet.app.cli._command import run_command
