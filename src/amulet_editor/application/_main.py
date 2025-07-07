@@ -25,7 +25,7 @@ from PySide6.QtWidgets import QApplication
 from PySide6.QtGui import QSurfaceFormat
 
 from amulet.app.resource import get_resource_path
-from amulet.app.exception import DisplayException
+from amulet.app.exception import CatchExceptionDialog
 from amulet.app.localisation import Translator, locale_changed
 import amulet.app.plugin._manager as plugin_manager
 import amulet_editor.data._rpc as rpc
@@ -159,7 +159,7 @@ def app_main(argv: Sequence[str] | None = None) -> None:
     app.aboutToQuit.connect(shut_down)
 
     def launch() -> None:
-        with DisplayException("Failed to launch"):
+        with CatchExceptionDialog("Failed to launch", suppress=False):
             plugin_manager.load()
             full_args = parse_args(argv)
             run_command(full_args.command or "main", full_args)

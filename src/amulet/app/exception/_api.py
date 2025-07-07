@@ -40,22 +40,24 @@ def display_exception(title: str = "", error: str = "", traceback: str = "") -> 
     )
 
 
-class DisplayException:
+class CatchExceptionDialog:
     """
-    A context manager class to display the traceback dialog when an error occurs.
-    It will also log the exception to the logging module and optionally suppress the exception.
+    A context manager to catch, log, display and optionally suppress exceptions.
     """
-
     def __init__(
         self,
         msg: str,
         *,
-        suppress: bool = False,
-        log: logging.Logger = logging.getLogger(),
+        exception_class: type[BaseException] = Exception,
+        suppress: bool = True,
+        logger: logging.Logger | None = logging.getLogger(),
     ) -> None:
         self._msg = msg
+        if not issubclass(exception_class, BaseException):
+            raise TypeError(f"{exception_class!r} is not a sub-class of BaseException.")
+        self._exception_class = exception_class
         self._suppress = suppress
-        self._log = log
+        self._logger = logger
 
     def __enter__(self) -> None:
         pass
@@ -66,8 +68,9 @@ class DisplayException:
         exc_val: BaseException | None,
         exc_tb: TracebackType | None,
     ) -> bool:
-        if exc_type and isinstance(exc_val, Exception):
-            self._log.exception(exc_val)
+        if exc_type and isinstance(exc_val, self._exception_class):
+            if self._logger is not None:
+                self._logger.exception(exc_val)
             display_exception(
                 title=self._msg,
                 error=str(exc_val),
@@ -75,28 +78,3 @@ class DisplayException:
             )
             return self._suppress
         return False
-
-
-class CatchException:
-    """
-    A context manager class to suppress an exception and display the traceback dialog.
-    It will also log the exception to the logging module.
-    """
-
-    def __enter__(self) -> None:
-        pass
-
-    def __exit__(
-        self,
-        exc_type: type[BaseException] | None,
-        exc_val: BaseException | None,
-        exc_tb: TracebackType | None,
-    ) -> bool:
-        if isinstance(exc_val, Exception):
-            main_logger.exception(exc_val)
-            display_exception(
-                title="Exception Dialog",
-                error=str(exc_val),
-                traceback="".join(tb.format_tb(exc_tb)),
-            )
-        return True

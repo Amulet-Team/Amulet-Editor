@@ -26,7 +26,7 @@ from amulet.resource_pack.abc import BaseResourcePackManager
 from ._textureatlas import create_atlas
 
 from amulet_editor.application._invoke import invoke
-from amulet.app.exception import DisplayException
+from amulet.app.exception import CatchExceptionDialog
 from amulet_editor.models.generic._promise import Promise
 from amulet.app.path import cache_directory
 
@@ -245,7 +245,7 @@ class OpenGLResourcePackHandle(QObject):
         def func(promise_data: Promise.Data) -> None:
             with (
                 self._lock,
-                DisplayException("Error initialising the OpenGL resource pack."),
+                CatchExceptionDialog("Error initialising the OpenGL resource pack.", suppress=False),
             ):
                 level = self._level()
                 if level is None:

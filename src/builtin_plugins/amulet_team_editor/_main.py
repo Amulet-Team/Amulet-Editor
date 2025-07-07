@@ -14,7 +14,7 @@ from amulet.level.loader import LevelLoaderPathToken
 from amulet.app import __version__
 from amulet_editor.application._cli import FullArgs
 from amulet.app.resource import get_resource_path
-from amulet.app.exception import DisplayException
+from amulet.app.exception import CatchExceptionDialog
 from amulet_editor.application.command import Command
 from amulet.app.localisation import Translator, locale_changed
 
@@ -142,7 +142,7 @@ def _main(args: FullArgs) -> None:
     else:
         log.debug("Loading level.")
         level_path = args.level_path
-        with DisplayException(f"Failed loading level at path {level_path}"):
+        with CatchExceptionDialog(f"Failed loading level at path {level_path}", suppress=False):
             level = get_level(
                 LevelLoaderPathToken(level_path)
             )  # TODO: make this generic

@@ -41,7 +41,7 @@ from PySide6.QtWidgets import QApplication
 from PySide6.QtNetwork import QLocalSocket, QLocalServer
 
 from amulet.app.exception import (
-    DisplayException,
+    CatchExceptionDialog,
     display_exception,
 )
 from amulet.app.cli import spawn_process, BROKER
@@ -139,7 +139,7 @@ _listener_connections: dict[RemoteProcedureCallingConnection, Optional[bool]] = 
 
 
 def _on_listener_connect() -> None:
-    with DisplayException("Error initialising socket", suppress=True, log=log):
+    with CatchExceptionDialog("Error initialising socket", logger=log):
         socket = _remote_call_listener.nextPendingConnection()
         connection = RemoteProcedureCallingConnection(socket)
         _listener_connections[connection] = None
@@ -161,7 +161,7 @@ def _on_listener_connect() -> None:
             )
 
         def on_disconnect() -> None:
-            with DisplayException("Error on socket disconnect", suppress=True, log=log):
+            with CatchExceptionDialog("Error on socket disconnect", logger=log):
                 is_landing = _listener_connections.pop(connection, None)
                 log.debug(f"Listener connection disconnected {socket}. {is_landing}")
                 if _is_broker and not any(
@@ -243,16 +243,15 @@ class RemoteProcedureCallingConnection:
         self.socket.write(payload)
 
     def _process_msg(self) -> None:
-        with DisplayException(
-            "Exception processing remote procedure call.", suppress=True, log=log
+        with CatchExceptionDialog(
+            "Exception processing remote procedure call.", logger=log
         ):
             while self.socket.bytesAvailable():
                 # It is possible for there to be more than one payload here.
                 # readyRead will only be re-emitted when the buffer is empty.
-                with DisplayException(
+                with CatchExceptionDialog(
                     "Exception processing remote procedure call.",
-                    suppress=True,
-                    log=log,
+                    logger=log,
                 ):
                     payload_length_data = self.socket.read(4).data()
                     if len(payload_length_data) != 4:
@@ -363,7 +362,7 @@ def init_rpc(broker: bool = False) -> None:
             raise Exception(msg)
 
     def on_connect() -> None:
-        with DisplayException("Error on socket connect", suppress=True, log=log):
+        with CatchExceptionDialog("Error on socket connect", logger=log):
             nonlocal failed_connections
             failed_connections = 0
             log.debug("Connected to broker process.")
@@ -391,8 +390,8 @@ def init_rpc(broker: bool = False) -> None:
                 )
 
     def on_error() -> None:
-        with DisplayException(
-            "Error on socket connection error", suppress=True, log=log
+        with CatchExceptionDialog(
+            "Error on socket connection error", logger=log
         ):
             nonlocal failed_connections
             if _is_broker:
