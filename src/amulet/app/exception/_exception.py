@@ -1,7 +1,7 @@
 from types import TracebackType
 import logging
 import traceback as tb
-from amulet_editor.application._invoke import invoke
+from amulet.app.invoke import invoke
 from ._traceback_dialog import TracebackDialog
 
 main_logger = logging.getLogger()

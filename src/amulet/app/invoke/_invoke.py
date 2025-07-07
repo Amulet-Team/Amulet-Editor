@@ -38,7 +38,8 @@ class InvokeMethod(QObject, Generic[T]):
         if parent is None:
             # Default to the app if not defined
             parent = QGuiApplication.instance()
-            assert parent is not None
+            if parent is None:
+                raise RuntimeError("The application instance does not exist.")
 
         # Get the thread from the object
         thread = parent.thread()

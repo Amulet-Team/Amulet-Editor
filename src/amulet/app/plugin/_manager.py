@@ -26,7 +26,7 @@ from packaging.version import Version
 from PySide6.QtCore import Signal, QObject
 
 from amulet_editor.application._splash import Splash
-from amulet_editor.application._invoke import invoke
+from amulet.app.invoke import invoke
 
 from amulet.app.path._plugin import (
     first_party_plugin_directory,
