@@ -6,7 +6,8 @@
 		"python": "~=3.11",
 		"library": [
 			"shiboken6~=6.2",
-			"PySide6_Essentials~=6.2"
+			"PySide6_Essentials~=6.2",
+			"amulet_editor~=1.0.0a1"
 		],
 		"plugin": [
 			"amulet_team_level~=1.0",
