@@ -7,7 +7,7 @@ from PySide6.QtCore import QSize, Qt
 from PySide6.QtGui import QMouseEvent
 from PySide6.QtWidgets import QFrame, QWidget, QVBoxLayout, QHBoxLayout, QButtonGroup
 
-from amulet_editor.models.widgets import ATooltipIconButton
+from amulet_team_editor._icon import ATooltipIconButton
 from amulet.app.exception import display_exception
 
 
