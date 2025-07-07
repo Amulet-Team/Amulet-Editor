@@ -27,7 +27,7 @@ class OpenWorldPage(Ui_OpenWorldPage):
         dialog.setViewMode(QFileDialog.ViewMode.Detail)
         if dialog.exec():
             path, *_ = dialog.selectedFiles()
-            spawn_process("main", "--level_path", path)
+            spawn_process("editor", "--level_path", path)
             if get_level() is None:
                 QApplication.quit()
 
@@ -36,6 +36,6 @@ class OpenWorldPage(Ui_OpenWorldPage):
         dialog.setFileMode(QFileDialog.FileMode.Directory)
         if dialog.exec():
             path, *_ = dialog.selectedFiles()
-            spawn_process("main", "--level_path", path)
+            spawn_process("editor", "--level_path", path)
             if get_level() is None:
                 QApplication.quit()

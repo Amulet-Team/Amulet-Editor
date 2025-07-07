@@ -191,7 +191,7 @@ def get_command() -> Command:
     global _editor_command
     if _editor_command is None:
         _editor_command = Command(
-            name="main",
+            name="editor",
             main_func=_main,
             init_argparse=_init_argparse,
         )

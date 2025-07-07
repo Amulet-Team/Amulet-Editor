@@ -161,7 +161,7 @@ def app_main(argv: Sequence[str] | None = None) -> None:
         with CatchExceptionDialog("Failed to launch", suppress=False):
             plugin_manager.load()
             full_args = parse_args(argv)
-            run_command(full_args.command or "main", full_args)
+            run_command(full_args.command or "editor", full_args)
 
     # This will be processed after the app starts
     QTimer.singleShot(0, launch)
