@@ -8,7 +8,7 @@ from PySide6.QtCore import (
 )
 
 
-def SingletonSignal(*args: Any) -> tuple[_QObject, _SignalInstance]:
+def create_signal(*args: Any) -> tuple[_QObject, _SignalInstance]:
     """
     Create a singleton signal.
 

@@ -1,10 +1,10 @@
 from amulet.core.selection import SelectionGroup
-from amulet_editor.models.generic._singleton_signal import SingletonSignal
+from amulet.app._signal import create_signal
 
 
 _selection: SelectionGroup = SelectionGroup()
 
-_selection_changed_obj, selection_changed = SingletonSignal(SelectionGroup)
+_selection_changed_obj, selection_changed = create_signal(SelectionGroup)
 
 
 def get_selection() -> SelectionGroup:
