@@ -4,7 +4,7 @@ from typing import Generic, TypeVar, Callable
 from threading import Lock
 from enum import IntEnum, Enum
 from PySide6.QtCore import QObject, Signal, QThreadPool, SignalInstance
-from amulet_editor.data.dev._debug import enable_trace
+from amulet.app._trace import enable_trace
 
 
 T = TypeVar("T")
