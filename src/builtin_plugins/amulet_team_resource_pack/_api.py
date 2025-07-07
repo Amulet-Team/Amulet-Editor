@@ -10,7 +10,7 @@ import logging
 from PySide6.QtCore import QObject, QCoreApplication, Signal
 
 from amulet.level.abc import Level
-from amulet_editor.models.generic._promise import Promise
+from amulet.app._promise import Promise
 from amulet.app.exception import CatchExceptionDialog
 
 from amulet.resource_pack.abc import BaseResourcePackManager
