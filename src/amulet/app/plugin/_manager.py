@@ -636,17 +636,17 @@ def _unload_plugin(plugin_container: PluginContainer) -> None:
             f"Disabling plugin {plugin_container.data.uid.identifier}"
         )
 
-    try:
-        # User code must be run from the main thread to avoid issues.
-        assert plugin_container.plugin is not None
-        invoke(plugin_container.plugin.unload)
-    except Exception as e:
-        log.exception(e)
-        display_exception(
-            title=f"Error while unloading plugin {plugin_container.data.uid.identifier} {plugin_container.data.uid.version}",
-            error=str(e),
-            traceback=traceback.format_exc(),
-        )
+    if plugin_container.plugin is not None:
+        try:
+            # User code must be run from the main thread to avoid issues.
+            invoke(plugin_container.plugin.unload)
+        except Exception as e:
+            log.exception(e)
+            display_exception(
+                title=f"Error while unloading plugin {plugin_container.data.uid.identifier} {plugin_container.data.uid.version}",
+                error=str(e),
+                traceback=traceback.format_exc(),
+            )
     plugin_container.instance = None
     plugin_container.plugin = None
 
