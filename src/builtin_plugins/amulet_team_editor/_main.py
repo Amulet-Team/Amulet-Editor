@@ -12,10 +12,9 @@ from amulet.level import get_level
 from amulet.level.loader import LevelLoaderPathToken
 
 from amulet.app import __version__
-from amulet_editor.application._cli import FullArgs
+from amulet.app.cli import FullArgs, Command
 from amulet.app.resource import get_resource_path
 from amulet.app.exception import CatchExceptionDialog
-from amulet_editor.application.command import Command
 from amulet.app.localisation import Translator, locale_changed
 
 import tablericons
