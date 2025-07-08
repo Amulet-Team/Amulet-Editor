@@ -104,20 +104,6 @@ class Event(QObject):
 _event = Event()
 
 
-TracePattern = re.compile(r"\s*File\s*\"(?P<path>.*?)\"")
-
-
-def get_trace_paths() -> list[str]:
-    paths = []
-    for line in reversed(traceback.format_stack()[:1]):
-        match = TracePattern.match(line)
-        if match:
-            paths.append(normpath(match.group("path")))
-        else:
-            log.error(f"Could not parse traceback line {line!r}")
-    return paths
-
-
 _amulet_modules = {
     "amulet-io": ["amulet", "amulet.io"],
     "amulet-leveldb": ["amulet", "amulet.leveldb"],
