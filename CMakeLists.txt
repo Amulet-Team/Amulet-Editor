@@ -22,3 +22,4 @@ if (MSVC)
 endif()
 
 add_subdirectory("src/builtin_plugins")
+add_subdirectory("src/amulet/app")
