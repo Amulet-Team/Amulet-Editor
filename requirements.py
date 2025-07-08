@@ -210,5 +210,5 @@ def get_runtime_dependencies() -> list[str]:
         f"pillow{PIL_REQUIREMENT}",
         f"PyOpenGL{PYOPENGL_REQUIREMENT}",
         f"amulet-runtime-final{AMULET_RUNTIME_FINAL_REQUIREMENT}",
-        f"pyside6-essentials{PYSIDE6_REQUIREMENT}",
+        f"PySide6-Essentials{PYSIDE6_REQUIREMENT}",
     ]
