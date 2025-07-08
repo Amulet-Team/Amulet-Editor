@@ -390,9 +390,7 @@ def init_rpc(broker: bool = False) -> None:
                 )
 
     def on_error() -> None:
-        with CatchExceptionDialog(
-            "Error on socket connection error", logger=log
-        ):
+        with CatchExceptionDialog("Error on socket connection error", logger=log):
             nonlocal failed_connections
             if _is_broker:
                 err = _broker_connection.socket.errorString()

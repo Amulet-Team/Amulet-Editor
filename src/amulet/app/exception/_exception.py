@@ -44,6 +44,7 @@ class CatchExceptionDialog:
     """
     A context manager to catch, log, display and optionally suppress exceptions.
     """
+
     def __init__(
         self,
         msg: str,
