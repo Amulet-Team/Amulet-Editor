@@ -12,6 +12,7 @@ import logging
 from importlib import import_module
 from importlib.util import spec_from_file_location, module_from_spec
 from importlib.metadata import version, packages_distributions
+
 # from queue import Queue
 from enum import Enum
 import sys
@@ -44,6 +45,7 @@ from ._state import PluginState
 from ._container import PluginContainer
 from ._requirement import Requirement
 from amulet.app.exception import display_exception
+from amulet.app._sys import set_sys_modules
 
 
 log = logging.getLogger(__name__)
@@ -134,6 +136,7 @@ _amulet_modules = {
     "amulet-anvil": ["amulet", "amulet.anvil"],
     "amulet-level": ["amulet", "amulet.level"],
     "amulet-resource-pack": ["amulet", "amulet.resource_pack"],
+    "amulet-editor": ["amulet", "amulet.app"],
 }
 
 _module_to_libraries: Optional[dict[str, set[str]]] = None
@@ -242,8 +245,7 @@ def _validate_import(imported_name: str, frame: FrameType | None) -> None:
 class CustomSysModules(UserDict[str, ModuleType]):
     def __init__(self, original: dict) -> None:
         super().__init__()
-        self.data = original  # I would prefer to do this but getitem does not get called if this line is used instead.
-        # self.data = copy(original)
+        self.data = original
 
     def __getitem__(self, imported_name: str) -> ModuleType:
         if not isinstance(imported_name, str):
@@ -263,13 +265,6 @@ class CustomSysModules(UserDict[str, ModuleType]):
             _validate_import(imported_name, frame)
 
         return super().__getitem__(imported_name)
-
-    def _remove_plugin(self, plugin_name: str) -> None:
-        plugin_prefix = f"{plugin_name}."
-        key: str
-        for key in list(self.data.keys()):
-            if key == plugin_name or key.startswith(plugin_prefix):
-                del self[key]
 
 
 class ImportProtocol(Protocol):
@@ -291,14 +286,16 @@ def wrap_importer(imp: ImportProtocol) -> ImportProtocol:
         fromlist: Sequence[str] = (),
         level: int = 0,
     ) -> ModuleType:
-        if level:
+        if level == 0:
+            imported_name = name
+        elif 1 <= level:
             assert globals is not None
             module_src = globals["__name__"]
             assert isinstance(module_src, str)
             name_split = module_src.split(".")
             imported_name = f"{'.'.join(name_split[:len(name_split)-level+1])}.{name}"
         else:
-            imported_name = name
+            raise ValueError("level must be 0 or larger")
         frame = inspect.currentframe()
         if frame is not None:
             frame = frame.f_back
@@ -341,7 +338,7 @@ def load() -> None:
         # Disable importing from builtin_plugins
         sys.modules["builtin_plugins"] = None  # type: ignore
 
-        sys.modules = CustomSysModules(sys.modules)  # type: ignore
+        set_sys_modules(CustomSysModules(sys.modules))
         builtins.__import__ = wrap_importer(builtins.__import__)
         scan_plugins()
         plugin_state = get_plugins_state()
@@ -653,7 +650,11 @@ def _unload_plugin(plugin_container: PluginContainer) -> None:
     # Remove the module from sys.modules
     modules = sys.modules
     if isinstance(modules, CustomSysModules):
-        modules._remove_plugin(plugin_container.data.uid.identifier)
+        plugin_name = plugin_container.data.uid.identifier
+        plugin_prefix = f"{plugin_name}."
+        for key in list(modules.keys()):
+            if key == plugin_name or key.startswith(plugin_prefix):
+                del modules[key]
 
 
 def _recursive_inactive_plugins(plugin_uid: LibraryUID) -> None:
