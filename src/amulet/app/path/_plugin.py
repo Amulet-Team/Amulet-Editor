@@ -10,7 +10,7 @@ _builtin_plugin_dir: str | None = None
 def first_party_plugin_directory() -> str:
     global _builtin_plugin_dir
     if _builtin_plugin_dir is None:
-        spec = importlib.util.find_spec("builtin_plugins")
+        spec = importlib.util.find_spec("plugin")
         if spec is None:
             raise RuntimeError
         paths = spec.submodule_search_locations
@@ -25,3 +25,7 @@ def third_party_plugin_directory() -> str:
     path = os.path.abspath(os.path.join(data_directory(), "plugins"))
     os.makedirs(path, exist_ok=True)
     return path
+
+
+def plugin_dirs() -> tuple[str, str]:
+    return first_party_plugin_directory(), third_party_plugin_directory()

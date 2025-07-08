@@ -29,10 +29,7 @@ from PySide6.QtCore import Signal, QObject
 from amulet.app._splash import Splash
 from amulet.app.invoke import invoke
 
-from amulet.app.path._plugin import (
-    first_party_plugin_directory,
-    third_party_plugin_directory,
-)
+from amulet.app.path._plugin import plugin_dirs
 
 # from amulet.app.data.process._messaging import (
 #     register_global_function,
@@ -63,16 +60,12 @@ def _get_packages_distributions() -> dict[str, list[str]]:
 
 """
 Notes:
-First party plugins are stored in builtin_plugins
+First party plugins are stored in plugin
 Third party plugins are imported as a zip and extracted to a writable directory with a UUID as the name.
-Custom code loads the plugin package into sys.modules under its package name. Adding builtin_plugins as sources root helps the IDE understand this.
+Custom code loads the plugin package into sys.modules under its package name. Adding plugin as sources root helps the IDE understand this.
 TODO: look into generating stub files for the active plugins to help with development on the compiled version.
 Plugins can import directly from other plugins to access static classes and functions 
 """
-
-
-def plugin_dirs() -> tuple[str, str]:
-    return first_party_plugin_directory(), third_party_plugin_directory()
 
 
 class PluginJobType(Enum):

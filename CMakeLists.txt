@@ -21,5 +21,5 @@ if (MSVC)
     add_definitions("/MP")
 endif()
 
-add_subdirectory("src/builtin_plugins")
 add_subdirectory("src/amulet/app")
+add_subdirectory("src/plugin/amulet_team_3d_viewer")
