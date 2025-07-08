@@ -301,6 +301,22 @@ def load() -> None:
         _splash_load_screen.setModal(True)
         _splash_load_screen.show()
 
+        # Remove the plugin directories from sys.path so that they are not directly importable
+        for i in range(len(sys.path) - 1, -1, -1):
+            path = sys.path[i]
+            for plugin_path in plugin_dirs():
+                try:
+                    is_same = samefile(path, plugin_path)
+                except FileNotFoundError:
+                    pass
+                else:
+                    if is_same:
+                        sys.path.pop(i)
+                        break
+
+        # Disable importing from builtin_plugins
+        sys.modules["builtin_plugins"] = None  # type: ignore
+
         set_sys_modules(CustomSysModules(sys.modules))
         builtins.__import__ = wrap_importer(builtins.__import__)
         scan_plugins()
