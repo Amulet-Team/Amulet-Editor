@@ -245,7 +245,9 @@ class OpenGLResourcePackHandle(QObject):
         def func(promise_data: Promise.Data) -> None:
             with (
                 self._lock,
-                CatchExceptionDialog("Error initialising the OpenGL resource pack.", suppress=False),
+                CatchExceptionDialog(
+                    "Error initialising the OpenGL resource pack.", suppress=False
+                ),
             ):
                 level = self._level()
                 if level is None:

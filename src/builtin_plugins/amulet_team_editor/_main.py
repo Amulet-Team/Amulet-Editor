@@ -141,7 +141,9 @@ def _main(args: FullArgs) -> None:
     else:
         log.debug("Loading level.")
         level_path = args.level_path
-        with CatchExceptionDialog(f"Failed loading level at path {level_path}", suppress=False):
+        with CatchExceptionDialog(
+            f"Failed loading level at path {level_path}", suppress=False
+        ):
             level = get_level(
                 LevelLoaderPathToken(level_path)
             )  # TODO: make this generic

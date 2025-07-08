@@ -88,7 +88,12 @@ class ResourcePackContainer(QObject):
         """
 
         def init(promise_data: Promise.Data) -> bool:
-            with self._lock, CatchExceptionDialog("Error initialising the resource pack.", suppress=False):
+            with (
+                self._lock,
+                CatchExceptionDialog(
+                    "Error initialising the resource pack.", suppress=False
+                ),
+            ):
                 if self._resource_pack is None:
                     # TODO: support other resource pack formats
                     promise_data.progress_text_change.emit(
