@@ -10,7 +10,7 @@ from weakref import ref
 
 from PySide6.QtCore import Qt, QPoint, QSize
 
-from amulet_editor.models.widgets import ATooltipIconButton
+from amulet_team_editor._icon import ATooltipIconButton
 
 from amulet_team_editor.window._main import (
     AmuletMainWindow,

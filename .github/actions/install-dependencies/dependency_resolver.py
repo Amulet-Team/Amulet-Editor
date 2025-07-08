@@ -97,14 +97,18 @@ class NoValidVersion(Exception):
     pass
 
 
+wheel_ok = {"PySide6-Essentials"}
+
+
 @lru_cache(maxsize=None)
 def _get_pypi_release(lib_name: str, specifier: SpecifierSet) -> Version:
     releases = _get_pypi_releases(lib_name)
     for version_str, files in releases.items():
         version = Version(version_str)
         # release must match the specifier and have a source distribution
-        if version in specifier and any(
-            file.get("packagetype", None) == "sdist" for file in files
+        if version in specifier and (
+            lib_name in wheel_ok
+            or any(file.get("packagetype", None) == "sdist" for file in files)
         ):
             return version
     raise NoValidVersion

@@ -8,11 +8,10 @@
 			"PySide6_Essentials~=6.2",
 			"amulet_editor~=1.0a0",
 			"amulet_core~=2.0a8",
+			"amulet_level~=1.0a0",
 			"amulet_resource_pack~=1.0a0"
 		],
-		"plugin": [
-			"amulet_team_locale~=1.0"
-		]
+		"plugin": []
 	},
 	"locked": "true"
 }

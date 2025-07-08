@@ -43,7 +43,7 @@ from PySide6.QtCore import (
     QSize,
 )
 
-from amulet_editor.models.widgets.traceback_dialog import DisplayException
+from amulet.app.exception import CatchExceptionDialog
 import tablericons
 
 _button_size: Optional[QSize] = None
@@ -640,7 +640,7 @@ class AbstractStackedTabWidget(QWidget):
         pass
 
     def _validate_page(self, page: TabWidget) -> tuple[str, Optional[QIcon]]:
-        with DisplayException(f"Error in {page.__class__}"):
+        with CatchExceptionDialog(f"Error in {page.__class__}", suppress=False):
             if not isinstance(page, TabWidget):
                 raise TypeError(
                     f"Page of type {type(page)} must be an instance of TabWidget"

@@ -34,8 +34,8 @@ from OpenGL.GL import (
 from amulet.level.abc.dimension import DimensionId
 from amulet.level.abc import Level
 
-from amulet_editor.models.widgets.traceback_dialog import (
-    DisplayException,
+from amulet.app.exception import (
+    CatchExceptionDialog,
     display_exception,
 )
 from ._settings import render_settings
@@ -552,7 +552,7 @@ class LevelGeometry(QObject):
         Submit chunks for meshing.
         This must be thread safe.
         """
-        with DisplayException("Error in chunk manager thread."):
+        with CatchExceptionDialog("Error in chunk manager thread.", suppress=False):
             gl_data = self._gl_data
             if gl_data is None:
                 raise RuntimeError("gl_data must not be None here.")

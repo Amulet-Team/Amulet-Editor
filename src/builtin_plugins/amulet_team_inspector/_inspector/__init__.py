@@ -5,7 +5,7 @@ from PySide6.QtWidgets import QTreeWidgetItem, QApplication, QWidget
 from PySide6.QtCore import QObject, QRect, QEvent, QPoint, Qt
 from PySide6.QtGui import QMouseEvent, QPainter, QColor, QIcon, QCloseEvent
 
-from amulet_editor.models.widgets.traceback_dialog import DisplayException
+from amulet.app.exception import CatchExceptionDialog
 import tablericons
 
 from ._inspector import Ui_InspectionTool
@@ -128,7 +128,7 @@ class InspectorTool(Ui_InspectionTool):
         if obj is None:
             print("Selected object no longer exists.")
         else:
-            with DisplayException("Error running user code."):
+            with CatchExceptionDialog("Error running user code.", suppress=False):
                 eval(self.code_editor.toPlainText(), {}, {"obj": obj})
 
 

@@ -1,9 +1,9 @@
-from amulet_editor import __version__
+from amulet.app import __version__
 
 from PySide6.QtWidgets import QWidget
 from PySide6.QtCore import Qt, QLocale
 from PySide6.QtGui import QImage, QPixmap
-from amulet_editor.resources import get_resource
+from amulet.app.resource import get_resource_path
 from ._home import Ui_HomePage
 
 
@@ -50,7 +50,7 @@ class HomePage(Ui_HomePage):
         self, parent: QWidget | None = None, f: Qt.WindowType = Qt.WindowType.Widget
     ):
         super().__init__(parent, f)
-        amulet_logo = QPixmap(QImage(get_resource("icons/amulet/amulet_logo.png")))
+        amulet_logo = QPixmap(QImage(get_resource_path("icons/amulet/amulet_logo.png")))
         amulet_logo = amulet_logo.scaledToHeight(128)
         self._lbl_app_icon.setPixmap(amulet_logo)
         self._lbl_app_version.setText(f"Version {__version__}")

@@ -26,7 +26,7 @@ import logging
 from PIL import Image
 import math
 from collections.abc import Collection
-from amulet_editor.models.generic._promise import Promise
+from amulet.app._promise import Promise
 
 log = logging.getLogger(__name__)
 

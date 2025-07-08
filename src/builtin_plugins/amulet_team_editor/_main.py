@@ -11,15 +11,13 @@ from PySide6.QtCore import QLocale
 from amulet.level import get_level
 from amulet.level.loader import LevelLoaderPathToken
 
-from amulet_editor import __version__
-from amulet_editor.application._cli import FullArgs
-from amulet_editor.resources import get_resource
-from amulet_editor.models.widgets.traceback_dialog import DisplayException
-from amulet_editor.application.command import Command
-from amulet_editor.models.localisation import ATranslator
+from amulet.app import __version__
+from amulet.app.cli import FullArgs, Command
+from amulet.app.resource import get_resource_path
+from amulet.app.exception import CatchExceptionDialog
+from amulet.app.localisation import Translator, locale_changed
 
 import tablericons
-import amulet_team_locale
 import amulet_team_level
 
 import amulet_team_editor
@@ -46,7 +44,7 @@ log = logging.getLogger(__name__)
 
 
 # Qt only weekly references this. We must hold a strong reference to stop it getting garbage collected
-_translator: ATranslator | None = None
+_translator: Translator | None = None
 
 HomeLayoutID = "073bfd20-249e-4e0c-ad41-0bcb0c9db89f"
 home_button: ButtonProxy | None = None
@@ -61,7 +59,7 @@ def _init_app() -> None:
         raise RuntimeError("No QApplication instance")
     app.setApplicationName("Amulet Editor")
     app.setApplicationVersion(__version__)
-    app.setWindowIcon(QIcon(get_resource("icons/amulet/Icon.ico")))
+    app.setWindowIcon(QIcon(get_resource_path("icons/amulet/Icon.ico")))
 
 
 def _load_translations() -> None:
@@ -143,7 +141,9 @@ def _main(args: FullArgs) -> None:
     else:
         log.debug("Loading level.")
         level_path = args.level_path
-        with DisplayException(f"Failed loading level at path {level_path}"):
+        with CatchExceptionDialog(
+            f"Failed loading level at path {level_path}", suppress=False
+        ):
             level = get_level(
                 LevelLoaderPathToken(level_path)
             )  # TODO: make this generic
@@ -151,10 +151,10 @@ def _main(args: FullArgs) -> None:
             amulet_team_level.set_level(level)
 
     # Load the translations
-    _translator = ATranslator()
+    _translator = Translator()
     _load_translations()
     QApplication.installTranslator(_translator)
-    amulet_team_locale.locale_changed.connect(_load_translations)
+    locale_changed.connect(_load_translations)
 
     # Register widgets and layouts
     _init_editor()
@@ -193,7 +193,7 @@ def get_command() -> Command:
     global _editor_command
     if _editor_command is None:
         _editor_command = Command(
-            name="main",
+            name="editor",
             main_func=_main,
             init_argparse=_init_argparse,
         )

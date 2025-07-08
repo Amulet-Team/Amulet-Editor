@@ -10,8 +10,8 @@ import logging
 from PySide6.QtCore import QObject, QCoreApplication, Signal
 
 from amulet.level.abc import Level
-from amulet_editor.models.generic._promise import Promise
-from amulet_editor.models.widgets.traceback_dialog import DisplayException
+from amulet.app._promise import Promise
+from amulet.app.exception import CatchExceptionDialog
 
 from amulet.resource_pack.abc import BaseResourcePackManager
 from amulet.resource_pack import load_resource_pack_manager
@@ -88,7 +88,12 @@ class ResourcePackContainer(QObject):
         """
 
         def init(promise_data: Promise.Data) -> bool:
-            with self._lock, DisplayException("Error initialising the resource pack."):
+            with (
+                self._lock,
+                CatchExceptionDialog(
+                    "Error initialising the resource pack.", suppress=False
+                ),
+            ):
                 if self._resource_pack is None:
                     # TODO: support other resource pack formats
                     promise_data.progress_text_change.emit(

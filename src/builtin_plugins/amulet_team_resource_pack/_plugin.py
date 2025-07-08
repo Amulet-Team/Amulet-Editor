@@ -4,24 +4,22 @@ from typing import Optional
 
 from PySide6.QtCore import QLocale, QCoreApplication
 
-from amulet_editor.models.localisation import ATranslator
-from amulet_editor.models.plugin import PluginV1
-
-import amulet_team_locale
+from amulet.app.localisation import Translator, locale_changed
+from amulet.app.plugin import PluginV1
 
 import amulet_team_resource_pack
 
 
 # Qt only weekly references this. We must hold a strong reference to stop it getting garbage collected
-_translator: Optional[ATranslator] = None
+_translator: Optional[Translator] = None
 
 
 def load_plugin() -> None:
     global _translator
-    _translator = ATranslator()
+    _translator = Translator()
     _locale_changed()
     QCoreApplication.installTranslator(_translator)
-    amulet_team_locale.locale_changed.connect(_locale_changed)
+    locale_changed.connect(_locale_changed)
 
 
 def _locale_changed() -> None:

@@ -25,7 +25,7 @@ from OpenGL.GL import (
     GL_DEPTH_TEST as _GL_DEPTH_TEST,
 )
 
-from amulet_editor.models.widgets.traceback_dialog import CatchException
+from amulet.app.exception import CatchExceptionDialog
 from amulet_team_resource_pack._api import get_resource_pack_container
 
 from amulet_team_level import get_level
@@ -158,7 +158,7 @@ class FirstPersonCanvas(QOpenGLWidget, QOpenGLFunctions):
 
     def initializeGL(self) -> None:
         """Private initialisation method called by the QOpenGLWidget"""
-        with CatchException():
+        with CatchExceptionDialog("Error initialising OpenGL."):
             log.debug("FirstPersonCanvas.initializeGL start")
 
             # Destroy OpenGL data upon context destruction.
@@ -185,20 +185,20 @@ class FirstPersonCanvas(QOpenGLWidget, QOpenGLFunctions):
         return self._camera
 
     def showEvent(self, event: QShowEvent) -> None:
-        with CatchException():
+        with CatchExceptionDialog("Error showing canvas."):
             log.debug("FirstPersonCanvas.showEvent start")
             self._gl_data.start()
             log.debug("FirstPersonCanvas.showEvent end")
 
     def hideEvent(self, event: QHideEvent) -> None:
-        with CatchException():
+        with CatchExceptionDialog("Error hiding canvas."):
             log.debug("FirstPersonCanvas.hideEvent start")
             self._gl_data.stop()
             log.debug("FirstPersonCanvas.hideEvent end")
 
     def paintGL(self) -> None:
         """Private paint method called by the QOpenGLWidget"""
-        with CatchException():
+        with CatchExceptionDialog("Error rendering OpenGL frame."):
             if (
                 not self.isVisible()
                 or QOpenGLContext.currentContext() is not self.context() is not None

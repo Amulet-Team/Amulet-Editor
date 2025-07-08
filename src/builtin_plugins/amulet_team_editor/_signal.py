@@ -1,4 +1,4 @@
-from amulet_editor.models.generic._singleton_signal import SingletonSignal
+from amulet.app._signal import create_signal
 
-_init_obj, init_editor = SingletonSignal()
-_del_obj, destroy_editor = SingletonSignal()
+_init_obj, init_editor = create_signal()
+_del_obj, destroy_editor = create_signal()

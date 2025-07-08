@@ -4,10 +4,11 @@ import traceback
 from weakref import finalize, WeakMethod
 
 from PySide6.QtCore import QSize, Qt
+from PySide6.QtGui import QMouseEvent
 from PySide6.QtWidgets import QFrame, QWidget, QVBoxLayout, QHBoxLayout, QButtonGroup
 
-from amulet_editor.models.widgets import ADragContainer, ATooltipIconButton
-from amulet_editor.models.widgets.traceback_dialog import display_exception
+from amulet_team_editor._icon import ATooltipIconButton
+from amulet.app.exception import display_exception
 
 
 class ButtonProxy:
@@ -74,6 +75,54 @@ class ButtonProxy:
         self._get_button().click()
 
 
+class DragContainer(QWidget):
+    """
+    Generic list sorting handler.
+    """
+
+    # orderChanged = Signal(list)
+
+    def __init__(
+        self,
+        parent: QWidget | None = None,
+        orientation: Qt.Orientation = Qt.Orientation.Vertical,
+    ):
+        super().__init__(parent)
+        self.setMouseTracking(True)
+
+        self._layout = {
+            Qt.Orientation.Horizontal: QHBoxLayout,
+            Qt.Orientation.Vertical: QVBoxLayout,
+        }[orientation](self)
+        self._layout.setContentsMargins(0, 0, 0, 0)
+
+        self._drag = None
+
+    def mouseMoveEvent(self, event: QMouseEvent) -> None:
+        if event.buttons() == Qt.MouseButton.LeftButton:
+            if self._drag is None:
+                for i in range(self._layout.count()):
+                    child = self._layout.itemAt(i).widget()
+                    if child.underMouse():
+                        self._drag = child
+                        break
+            if self._drag is not None:
+                point = event.position().toPoint()
+                for i in range(self._layout.count()):
+                    child = self._layout.itemAt(i).widget()
+                    rect = child.rect()
+                    rect.moveTo(child.pos())
+                    if rect.contains(point):
+                        self._layout.removeWidget(self._drag)
+                        self._layout.insertWidget(i, self._drag)
+                        break
+        else:
+            self._drag = None
+
+    def add_item(self, item: QWidget) -> None:
+        self._layout.addWidget(item)
+
+
 class ToolBar(QFrame):
     """
     A toolbar is a strip of buttons.
@@ -98,7 +147,7 @@ class ToolBar(QFrame):
         self._lyt_main.setContentsMargins(0, 0, 0, 0)
         self.setLayout(self._lyt_main)
 
-        self._wgt_layout_buttons = ADragContainer(self, orientation)
+        self._wgt_layout_buttons = DragContainer(self, orientation)
         self._lyt_main.addWidget(self._wgt_layout_buttons)
 
         self._lyt_static_buttons = layout_cls()

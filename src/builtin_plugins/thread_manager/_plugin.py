@@ -3,7 +3,7 @@ import logging
 from shiboken6 import isValid
 from PySide6.QtCore import QThread
 
-from amulet_editor.models.plugin import PluginV1
+from amulet.app.plugin import PluginV1
 
 log = logging.getLogger(__name__)
 

@@ -2,14 +2,14 @@ from amulet_editor import __version__
 
 from PySide6.QtCore import Qt
 from PySide6.QtGui import QImage, QPixmap
-from amulet_editor.resources import get_resource
+from amulet.app.resource import get_resource_path
 from ._home import Ui_HomePage
 
 
 class HomePage(Ui_HomePage):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        amulet_logo = QPixmap(QImage(get_resource("icons/amulet/amulet_logo.png")))
+        amulet_logo = QPixmap(QImage(get_resource_path("icons/amulet/amulet_logo.png")))
         amulet_logo = amulet_logo.scaledToHeight(128)
         self.lbl_app_icon.setPixmap(amulet_logo)
         self.lbl_app_version.setText(f"Version {__version__}")
