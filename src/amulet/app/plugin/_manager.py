@@ -498,10 +498,10 @@ def _enable_plugin(plugin_uid: LibraryUID) -> None:
                         sys.modules[module_qualname] = mod
                         loader.exec_module(mod)
 
-                        plugin_container.instance = mod
+                        plugin_container.module = mod
 
                         try:
-                            plugin = plugin_container.instance.plugin
+                            plugin = plugin_container.module.plugin
                         except AttributeError:
                             # The plugin does not have a plugin attribute
                             plugin = PluginV1()
@@ -596,7 +596,7 @@ def _unload_plugin(plugin_container: PluginContainer) -> None:
                 error=str(e),
                 traceback=traceback.format_exc(),
             )
-    plugin_container.instance = None
+    plugin_container.module = None
     plugin_container.plugin = None
 
     # Remove the module from sys.modules
