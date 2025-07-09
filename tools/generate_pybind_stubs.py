@@ -167,15 +167,24 @@ def main() -> None:
     root_path = os.path.dirname(os.path.dirname(__file__))
     src_path = os.path.join(root_path, "src")
     amulet_app_sys_path = get_package_dir("amulet.app._sys")
+    viewer_plugin_path = get_package_dir("plugin.amulet_team_3d_viewer")
+    builtin_plugin_path = os.path.dirname(os.path.dirname(viewer_plugin_path))
     tests_path = os.path.join(root_path, "tests")
     # test_amulet_editor_path = os.path.join(tests_path, "test_amulet_editor")
 
     # make tests importable
     sys.path.append(tests_path)
+    # make plugins importable
+    sys.path.append(builtin_plugin_path)
 
     # out_dir, module_dir, module_name
     modules: list[tuple[str, str, str]] = [
         (src_path, amulet_app_sys_path, "amulet.app._sys"),
+        (
+            builtin_plugin_path,
+            viewer_plugin_path,
+            "plugin.amulet_team_3d_viewer._view_3d",
+        ),
         # (tests_path, test_amulet_editor_path, "test_amulet_editor"),
     ]
 

@@ -6,10 +6,9 @@ from typing import NamedTuple, Optional, Protocol
 from types import FrameType, ModuleType
 from threading import RLock
 import os
-from os.path import normpath, samefile
+from os.path import samefile
 import glob
 import logging
-from importlib import import_module
 from importlib.util import spec_from_file_location, module_from_spec
 from importlib.metadata import version, packages_distributions
 
@@ -18,7 +17,6 @@ from enum import Enum
 import sys
 from collections import UserDict
 from collections.abc import Mapping, Sequence
-import re
 import traceback
 import builtins
 
@@ -29,10 +27,7 @@ from PySide6.QtCore import Signal, QObject
 from amulet.app._splash import Splash
 from amulet.app.invoke import invoke
 
-from amulet.app.path._plugin import (
-    first_party_plugin_directory,
-    third_party_plugin_directory,
-)
+from amulet.app.path._plugin import plugin_dirs
 
 # from amulet.app.data.process._messaging import (
 #     register_global_function,
@@ -71,10 +66,6 @@ Plugins can import directly from other plugins to access static classes and func
 """
 
 
-def plugin_dirs() -> tuple[str, str]:
-    return first_party_plugin_directory(), third_party_plugin_directory()
-
-
 class PluginJobType(Enum):
     Enable = 1
     Disable = 2
@@ -109,20 +100,6 @@ class Event(QObject):
 
 
 _event = Event()
-
-
-TracePattern = re.compile(r"\s*File\s*\"(?P<path>.*?)\"")
-
-
-def get_trace_paths() -> list[str]:
-    paths = []
-    for line in reversed(traceback.format_stack()[:1]):
-        match = TracePattern.match(line)
-        if match:
-            paths.append(normpath(match.group("path")))
-        else:
-            log.error(f"Could not parse traceback line {line!r}")
-    return paths
 
 
 _amulet_modules = {
@@ -178,6 +155,9 @@ def _module_qualname_to_libraries(qualname: str) -> set[str]:
     raise RuntimeError(f"Could not find library for {qualname}")
 
 
+PyModules = frozenset((*sys.builtin_module_names, *sys.stdlib_module_names))
+
+
 def _validate_import(imported_name: str, frame: FrameType | None) -> None:
     # Plugins can only import libraries and plugins they have specified as a dependency.
     # Plugins can only be imported by other plugins.
@@ -188,7 +168,7 @@ def _validate_import(imported_name: str, frame: FrameType | None) -> None:
     # Skip importlib frames
     while (
         frame is not None
-        and frame.f_globals.get("__name__", "").split(".")[0] == "importlib"
+        and frame.f_globals.get("__name__", "").split(".", 1)[0] == "importlib"
     ):
         frame = frame.f_back
 
@@ -196,49 +176,80 @@ def _validate_import(imported_name: str, frame: FrameType | None) -> None:
     if frame is None or frame.f_globals.get("__name__") == __name__:
         return
 
-    importer_name = frame.f_globals.get("__name__")
-    if importer_name is None:
-        raise RuntimeError(f"Could not find __name__ attribute for frame\n{frame}")
+    imported_name_split = imported_name.split(".")
+    if imported_name_split[0] in PyModules:
+        # A built-in python module was imported.
+        # Plugins don't need to specify native python libraries.
+        return
+    elif imported_name_split[0] == "plugin":
+        # A plugin was imported.
+        # The importer must be a plugin that specified it as a requirement.
 
-    imported_root_name = imported_name.split(".")[0]
-    importer_root_name = importer_name.split(".")[0]
-
-    if importer_root_name in _enabled_plugins:
-        # The module was imported by a plugin
-        importer_uid = _enabled_plugins[importer_root_name]
-        plugin_container = _plugins[importer_uid]
-        if imported_root_name in _enabled_plugins:
-            # A plugin imported a plugin
-            if importer_root_name != imported_root_name:
-                # a plugin imported a different plugin
-                if not any(
-                    dependency.identifier == imported_root_name
-                    for dependency in plugin_container.data.depends.plugin
-                ):
-                    # imported by a plugin that does not have the dependency listed
-                    raise RuntimeError(
-                        f"Plugin {importer_root_name} imported plugin {imported_root_name} which it does not have authority for.\nYou must list a plugin dependency in your plugin's metadata to be able to import it."
-                    )
-        elif (
-            imported_root_name in sys.builtin_module_names
-            or imported_root_name in sys.stdlib_module_names
-        ):
-            # A plugin imported a normal module
-            # Plugins don't need to specify native python libraries.
+        # Make sure a plugin was actually imported and not just the plugin namespace
+        if len(imported_name_split) < 2:
             return
-        else:
-            package_names = _module_qualname_to_libraries(imported_name)
-            if not any(
-                dependency.identifier in package_names
-                for dependency in plugin_container.data.depends.library
-            ):
-                raise RuntimeError(
-                    f"Plugin {importer_root_name} imported library {imported_name} which it does not have authority for.\nYou must list a dependency in your plugin's metadata to be able to import it."
-                )
-    elif imported_root_name in _enabled_plugins:
-        code = frame.f_code
+
+        # Get the imported plugin name.
+        imported_plugin = imported_name_split[1]
+
+        # Get the plugin that imported it
+        importer_name = frame.f_globals.get("__name__")
+        if importer_name is None:
+            raise RuntimeError(f"Could not find __name__ attribute for frame\n{frame}")
+        importer_name_split = importer_name.split(".", 2)
+        if importer_name_split[0] != "plugin" or len(importer_name_split) < 2:
+            raise RuntimeError(
+                f"Plugin module {imported_name} was imported by {importer_name}. Plugins can only be imported by plugins."
+            )
+        importer_plugin = importer_name_split[1]
+
+        # Plugins can import themselves
+        if importer_plugin == imported_plugin:
+            return
+
+        # Validate that it has permission to import the plugin
+        plugin_container = _plugins[_enabled_plugins[importer_plugin]]
+        if any(
+            dependency.identifier == imported_plugin
+            for dependency in plugin_container.data.depends.plugin
+        ):
+            return
+
+        # imported by a plugin that does not have the dependency listed
         raise RuntimeError(
-            f"Plugin module {imported_name} was imported by a non-plugin module {importer_name} {getattr(code, 'co_qualname', None) or getattr(code, 'co_name', 'could not resolve function name')}"
+            f"{importer_name} imported {imported_name} which it does not have authority for.\nYou must list a plugin dependency in your plugin's metadata to be able to import it."
+        )
+
+    else:
+        # A third party library was imported
+        # If it was imported by a plugin it must specify it as a requirement.
+
+        # Get the module that imported it
+        importer_name = frame.f_globals.get("__name__")
+        if importer_name is None:
+            raise RuntimeError(f"Could not find __name__ attribute for frame\n{frame}")
+        importer_name_split = importer_name.split(".", 2)
+
+        # Only plugins need to be validated.
+        if importer_name_split[0] != "plugin" or len(importer_name_split) < 2:
+            return
+
+        # Find the importer plugin data.
+        importer_plugin = importer_name_split[1]
+        plugin_container = _plugins[_enabled_plugins[importer_plugin]]
+
+        # Find which package the import came from.
+        package_names = _module_qualname_to_libraries(imported_name)
+
+        # Validate that the plugin is allowed to import that package.
+        if any(
+            dependency.identifier in package_names
+            for dependency in plugin_container.data.depends.library
+        ):
+            return
+
+        raise RuntimeError(
+            f"{importer_name} imported {imported_name} which it does not have authority for.\nYou must list a dependency in your plugin's metadata to be able to import it."
         )
 
 
@@ -298,9 +309,7 @@ def wrap_importer(imp: ImportProtocol) -> ImportProtocol:
             raise ValueError("level must be 0 or larger")
         frame = inspect.currentframe()
         if frame is not None:
-            frame = frame.f_back
-            assert frame is not None
-            _validate_import(imported_name, frame)
+            _validate_import(imported_name, frame.f_back)
         return imp(name, globals=globals, locals=locals, fromlist=fromlist, level=level)
 
     return wrap_importer_import
@@ -435,30 +444,6 @@ def scan_plugins() -> None:
                     plugin_container = PluginContainer.from_path(plugin_path)
                     plugin_uid = plugin_container.data.uid
 
-                    # Ensure that the module name does not shadow an existing module
-                    try:
-                        mod = import_module(plugin_uid.identifier)
-                    except ModuleNotFoundError:
-                        # No module with this name. We are all good
-                        pass
-                    else:
-                        # Imported a module with this name
-                        found_path: str | None
-                        try:
-                            # Only packages have a __path__ attribute.
-                            found_path = mod.__path__[0]
-                        except AttributeError:
-                            # All modules have a __file__ attribute, but it is None for namespace packages.
-                            found_path = mod.__file__
-                            if found_path is not None:
-                                found_path = os.path.splitext(found_path)[0]
-                        if plugin_path != found_path:
-                            # If the path does not match the expected path then it shadows an existing module
-                            log.warning(
-                                f"Skipping {plugin_container.data.path} because it would shadow module {plugin_uid.identifier}."
-                            )
-                            continue
-
                     if plugin_uid not in _plugins:
                         _plugins[plugin_uid] = plugin_container
                     elif _plugins[plugin_uid].data.path != plugin_path:
@@ -532,9 +517,10 @@ def _enable_plugin(plugin_uid: LibraryUID) -> None:
                         if os.path.isdir(path):
                             path = os.path.join(path, "__init__.py")
 
-                        spec = spec_from_file_location(
-                            plugin_container.data.uid.identifier, path
+                        module_qualname = (
+                            f"plugin.{plugin_container.data.uid.identifier}"
                         )
+                        spec = spec_from_file_location(module_qualname, path)
                         if spec is None:
                             raise Exception
                         loader = spec.loader
@@ -543,13 +529,13 @@ def _enable_plugin(plugin_uid: LibraryUID) -> None:
                         mod = module_from_spec(spec)
                         if mod is None:
                             raise Exception
-                        sys.modules[plugin_container.data.uid.identifier] = mod
+                        sys.modules[module_qualname] = mod
                         loader.exec_module(mod)
 
-                        plugin_container.instance = mod
+                        plugin_container.module = mod
 
                         try:
-                            plugin = plugin_container.instance.plugin
+                            plugin = plugin_container.module.plugin
                         except AttributeError:
                             # The plugin does not have a plugin attribute
                             plugin = PluginV1()
@@ -644,16 +630,16 @@ def _unload_plugin(plugin_container: PluginContainer) -> None:
                 error=str(e),
                 traceback=traceback.format_exc(),
             )
-    plugin_container.instance = None
+    plugin_container.module = None
     plugin_container.plugin = None
 
     # Remove the module from sys.modules
     modules = sys.modules
     if isinstance(modules, CustomSysModules):
-        plugin_name = plugin_container.data.uid.identifier
-        plugin_prefix = f"{plugin_name}."
+        module_qualname = f"plugin.{plugin_container.data.uid.identifier}"
+        plugin_prefix = f"{module_qualname}."
         for key in list(modules.keys()):
-            if key == plugin_name or key.startswith(plugin_prefix):
+            if key == module_qualname or key.startswith(plugin_prefix):
                 del modules[key]
 
 

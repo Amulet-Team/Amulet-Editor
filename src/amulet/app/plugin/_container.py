@@ -2,7 +2,8 @@ from __future__ import annotations
 
 import json
 import os.path
-from typing import Optional, Type, Protocol, Any, TypeVar
+from typing import Optional, Type, Any, TypeVar
+from types import ModuleType
 from abc import ABC, abstractmethod
 from packaging.version import Version
 from packaging.specifiers import SpecifierSet
@@ -30,28 +31,9 @@ def dynamic_cast(obj: Any, cls: type[T], msg: str = "") -> T:
         raise TypeError(f"Cast to type {cls} failed.")
 
 
-class Plugin(Protocol):
-    def load_plugin(self) -> None:
-        """
-        Logic run when the plugin is started.
-        All dependencies will be started when this is called.
-        Plugins may implement this method but must not call it.
-        """
-        ...
-
-    def unload_plugin(self) -> None:
-        """
-        Logic run when the plugin is stopped.
-        Dependents will be stopped at this point but dependencies are not.
-        This must leave the program in the same state as it was before load_plugin was called.
-        Plugins may implement this method but must not call it.
-        """
-        ...
-
-
 class PluginContainer(ABC):
     data: PluginData
-    instance: Optional[Plugin]  # The instance of the plugin.
+    module: Optional[ModuleType]  # The instance of the plugin.
     plugin: Optional[PluginV1]
     state: PluginState
 
@@ -59,7 +41,7 @@ class PluginContainer(ABC):
 
     def __init__(self, data: PluginData):
         self.data = data
-        self.instance = None
+        self.module = None
         self.plugin = None
         self.state = PluginState.Disabled
 

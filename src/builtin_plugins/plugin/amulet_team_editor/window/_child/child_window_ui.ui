@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ui version="4.0">
+ <class>AmuletChildWindow</class>
+ <widget class="QMainWindow" name="AmuletChildWindow">
+  <property name="geometry">
+   <rect>
+    <x>0</x>
+    <y>0</y>
+    <width>1129</width>
+    <height>792</height>
+   </rect>
+  </property>
+  <property name="windowTitle">
+   <string>Amulet Editor</string>
+  </property>
+  <widget class="RecursiveSplitter" name="view_container"/>
+ </widget>
+ <customwidgets>
+  <customwidget>
+   <class>RecursiveSplitter</class>
+   <extends>QFrame</extends>
+   <header>plugin.amulet_team_editor.window._tab_engine</header>
+   <container>1</container>
+  </customwidget>
+ </customwidgets>
+ <resources/>
+ <connections/>
+</ui>
