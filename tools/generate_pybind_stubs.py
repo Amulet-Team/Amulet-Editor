@@ -168,7 +168,7 @@ def main() -> None:
     src_path = os.path.join(root_path, "src")
     amulet_app_sys_path = get_package_dir("amulet.app._sys")
     viewer_plugin_path = get_package_dir("plugin.amulet.view_3d")
-    builtin_plugin_path = os.path.dirname(os.path.dirname(viewer_plugin_path))
+    builtin_plugin_path = os.path.dirname(os.path.dirname(os.path.dirname(viewer_plugin_path)))
     tests_path = os.path.join(root_path, "tests")
     # test_amulet_editor_path = os.path.join(tests_path, "test_amulet_editor")
 
