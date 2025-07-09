@@ -70,7 +70,8 @@ class PluginContainer(ABC):
             return cls2.from_data(
                 plugin_path,
                 plugin_data,
-                os.path.dirname(os.path.dirname(plugin_path)) == first_party_plugin_directory(),
+                os.path.dirname(os.path.dirname(plugin_path))
+                == first_party_plugin_directory(),
             )
 
     @classmethod
@@ -111,9 +112,7 @@ class PluginContainerV1(PluginContainer):
             "plugin.json[namespace] must be a string",
         )
         if not plugin_namespace.isidentifier():
-            raise ValueError(
-                "plugin.json[namespace] must be a valid python identifier"
-            )
+            raise ValueError("plugin.json[namespace] must be a valid python identifier")
 
         # Get the plugin identifier
         plugin_identifier = dynamic_cast(
