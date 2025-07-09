@@ -14,9 +14,7 @@ from amulet.core.selection import SelectionGroup
 from amulet.utils.lock import ThreadAccessMode, ThreadShareMode
 
 from ._chunk_mesher_lod0 import create_lod0_chunk
-
-if TYPE_CHECKING:
-    from ._resource_pack import OpenGLResourcePack
+from ._resource_pack import OpenGLResourcePack
 
 FloatSize = ctypes.sizeof(ctypes.c_float)
 

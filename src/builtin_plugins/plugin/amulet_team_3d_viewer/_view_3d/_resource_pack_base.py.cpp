@@ -20,6 +20,7 @@ class PyAbstractOpenGLResourcePack : public Amulet::AbstractOpenGLResourcePack {
 void init_resource_pack_base(py::module m_parent)
 {
     auto m = m_parent.def_submodule("_resource_pack_base");
+    py::module::import("amulet.resource_pack");
     py::class_<Amulet::AbstractOpenGLResourcePack, PyAbstractOpenGLResourcePack>(m, "AbstractOpenGLResourcePack")
         .def(py::init<>())
         .def_readwrite("_default_texture_bounds", &Amulet::AbstractOpenGLResourcePack::_default_texture_bounds)
