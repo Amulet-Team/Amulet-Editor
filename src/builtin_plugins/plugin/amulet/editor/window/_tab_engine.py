@@ -44,7 +44,7 @@ from PySide6.QtCore import (
 )
 
 from amulet.app.exception import CatchExceptionDialog
-from plugin import tablericons
+from plugin.tablericons import tablericons
 
 _button_size: Optional[QSize] = None
 

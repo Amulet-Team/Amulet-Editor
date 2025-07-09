@@ -8,7 +8,7 @@ from PySide6.QtCore import QLocale, QCoreApplication
 from amulet.app.localisation import Translator, locale_changed
 from amulet.app.plugin import PluginV1
 
-from plugin import tablericons
+from plugin.tablericons import tablericons
 from plugin.amulet.main_level import get_main_level
 from plugin.amulet.editor import (
     register_widget,

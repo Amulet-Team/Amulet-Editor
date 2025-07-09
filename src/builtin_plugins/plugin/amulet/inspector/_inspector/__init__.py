@@ -6,7 +6,7 @@ from PySide6.QtCore import QObject, QRect, QEvent, QPoint, Qt
 from PySide6.QtGui import QMouseEvent, QPainter, QColor, QIcon, QCloseEvent
 
 from amulet.app.exception import CatchExceptionDialog
-from plugin import tablericons
+from plugin.tablericons import tablericons
 
 from ._inspector import Ui_InspectionTool
 

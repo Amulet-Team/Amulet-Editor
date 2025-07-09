@@ -4,7 +4,7 @@ from PySide6.QtCore import Qt
 
 from amulet.app.cli import spawn_process
 
-from plugin import tablericons
+from plugin.tablericons import tablericons
 
 from plugin.amulet.main_level import get_main_level
 
