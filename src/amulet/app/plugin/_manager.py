@@ -511,9 +511,10 @@ def _enable_plugin(plugin_uid: LibraryUID) -> None:
                         if os.path.isdir(path):
                             path = os.path.join(path, "__init__.py")
 
-                        spec = spec_from_file_location(
-                            plugin_container.data.uid.identifier, path
+                        module_qualname = (
+                            f"plugin.{plugin_container.data.uid.identifier}"
                         )
+                        spec = spec_from_file_location(module_qualname, path)
                         if spec is None:
                             raise Exception
                         loader = spec.loader
@@ -522,7 +523,7 @@ def _enable_plugin(plugin_uid: LibraryUID) -> None:
                         mod = module_from_spec(spec)
                         if mod is None:
                             raise Exception
-                        sys.modules[plugin_container.data.uid.identifier] = mod
+                        sys.modules[module_qualname] = mod
                         loader.exec_module(mod)
 
                         plugin_container.instance = mod
@@ -629,10 +630,10 @@ def _unload_plugin(plugin_container: PluginContainer) -> None:
     # Remove the module from sys.modules
     modules = sys.modules
     if isinstance(modules, CustomSysModules):
-        plugin_name = plugin_container.data.uid.identifier
-        plugin_prefix = f"{plugin_name}."
+        module_qualname = f"plugin.{plugin_container.data.uid.identifier}"
+        plugin_prefix = f"{module_qualname}."
         for key in list(modules.keys()):
-            if key == plugin_name or key.startswith(plugin_prefix):
+            if key == module_qualname or key.startswith(plugin_prefix):
                 del modules[key]
 
 
