@@ -7,7 +7,7 @@ from PySide6.QtCore import QLocale, QCoreApplication
 from amulet.app.localisation import Translator, locale_changed
 from amulet.app.plugin import PluginV1
 
-import plugin.amulet_team_resource_pack
+from plugin import amulet_team_resource_pack
 
 
 # Qt only weekly references this. We must hold a strong reference to stop it getting garbage collected
@@ -28,7 +28,7 @@ def _locale_changed() -> None:
         QLocale(),
         "",
         directory=os.path.join(
-            *plugin.amulet_team_resource_pack.__path__, "resources", "lang"
+            *amulet_team_resource_pack.__path__, "resources", "lang"
         ),
     )
 

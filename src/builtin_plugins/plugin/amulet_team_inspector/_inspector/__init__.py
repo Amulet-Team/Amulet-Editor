@@ -6,7 +6,7 @@ from PySide6.QtCore import QObject, QRect, QEvent, QPoint, Qt
 from PySide6.QtGui import QMouseEvent, QPainter, QColor, QIcon, QCloseEvent
 
 from amulet.app.exception import CatchExceptionDialog
-import plugin.tablericons
+from plugin import tablericons
 
 from ._inspector import Ui_InspectionTool
 
@@ -59,8 +59,8 @@ class InspectorTool(Ui_InspectionTool):
         self._inspect = False
         self._highlight: Optional[tuple[QWidget, QObject]] = None
 
-        self.inspect_button.setIcon(QIcon(plugin.tablericons.click))
-        self.reload_button.setIcon(QIcon(plugin.tablericons.refresh))
+        self.inspect_button.setIcon(QIcon(tablericons.click))
+        self.reload_button.setIcon(QIcon(tablericons.refresh))
 
         self.inspect_button.clicked.connect(self.inspect)
         self.reload_button.clicked.connect(self.reload)

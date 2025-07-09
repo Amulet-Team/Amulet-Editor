@@ -8,7 +8,7 @@ from PySide6.QtCore import QLocale, QCoreApplication
 from amulet.app.localisation import Translator, locale_changed
 from amulet.app.plugin import PluginV1
 
-import plugin.tablericons
+from plugin import tablericons
 from plugin.amulet_team_level import get_level
 from plugin.amulet_team_editor import (
     register_widget,
@@ -25,7 +25,7 @@ from plugin.amulet_team_editor import (
     destroy_editor,
 )
 
-import plugin.amulet_team_3d_viewer
+from plugin import amulet_team_3d_viewer
 from ._view_3d import View3D
 
 
@@ -42,7 +42,7 @@ def _load_translations() -> None:
     _translator.load_lang(
         QLocale(),
         "",
-        directory=os.path.join(*plugin.amulet_team_3d_viewer.__path__, "_resources", "lang"),
+        directory=os.path.join(*amulet_team_3d_viewer.__path__, "_resources", "lang"),
     )
 
 
@@ -70,7 +70,7 @@ def _init_editor() -> None:
 
         # Set up the 3D View button
         view_3d_button = create_layout_button(View3DID)
-        view_3d_button.set_icon(plugin.tablericons.three_d_cube_sphere)
+        view_3d_button.set_icon(tablericons.three_d_cube_sphere)
         view_3d_button.set_name("3D Editor")
 
 

@@ -17,10 +17,10 @@ from amulet.app.resource import get_resource_path
 from amulet.app.exception import CatchExceptionDialog
 from amulet.app.localisation import Translator, locale_changed
 
-import plugin.tablericons
-import plugin.amulet_team_level
+from plugin import tablericons
+from plugin import amulet_team_level
 
-import plugin.amulet_team_editor
+from plugin import amulet_team_editor
 from plugin.amulet_team_editor.window._main import (
     get_main_window,
     destroy_main_window,
@@ -68,7 +68,7 @@ def _load_translations() -> None:
     _translator.load_lang(
         QLocale(),
         "",
-        directory=os.path.join(*plugin.amulet_team_editor.__path__, "_resources", "lang"),
+        directory=os.path.join(*amulet_team_editor.__path__, "_resources", "lang"),
     )
 
 
@@ -90,10 +90,10 @@ def _init_editor() -> None:
 
     # Set up the home button
     home_button = create_layout_button(HomeLayoutID)
-    home_button.set_icon(plugin.tablericons.home)
+    home_button.set_icon(tablericons.home)
     home_button.set_name("Home")
 
-    if plugin.amulet_team_level.get_level() is None:
+    if amulet_team_level.get_level() is None:
         # Make the home layout active by clicking the button
         home_button.click()
     else:
@@ -111,7 +111,7 @@ def _init_editor() -> None:
 
         # Set up the home button
         level_info_button = create_layout_button(LevelInfoLayoutID)
-        level_info_button.set_icon(plugin.tablericons.file_info)
+        level_info_button.set_icon(tablericons.file_info)
         level_info_button.set_name("Level Info")
         level_info_button.click()
 
@@ -137,7 +137,7 @@ def _main(args: FullArgs) -> None:
 
     # Load the level
     if args.command is None:
-        plugin.amulet_team_level.set_level(None)
+        amulet_team_level.set_level(None)
     else:
         log.debug("Loading level.")
         level_path = args.level_path
@@ -148,7 +148,7 @@ def _main(args: FullArgs) -> None:
                 LevelLoaderPathToken(level_path)
             )  # TODO: make this generic
             level.open()
-            plugin.amulet_team_level.set_level(level)
+            amulet_team_level.set_level(level)
 
     # Load the translations
     _translator = Translator()

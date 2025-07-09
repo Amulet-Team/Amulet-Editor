@@ -4,7 +4,7 @@ from PySide6.QtCore import Qt
 
 from amulet.app.cli import spawn_process
 
-import plugin.tablericons
+from plugin import tablericons
 
 from plugin.amulet_team_level import get_level
 
@@ -16,7 +16,7 @@ class OpenWorldPage(Ui_OpenWorldPage):
         self, parent: QWidget | None = None, f: Qt.WindowType = Qt.WindowType.Widget
     ):
         super().__init__(parent, f)
-        self.btn_back.setIcon(QIcon(plugin.tablericons.arrow_left))
+        self.btn_back.setIcon(QIcon(tablericons.arrow_left))
         self.load_file_button.clicked.connect(self.open_file)
         self.load_directory_button.clicked.connect(self.open_dir)
 

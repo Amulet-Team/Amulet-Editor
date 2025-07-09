@@ -44,7 +44,7 @@ from PySide6.QtCore import (
 )
 
 from amulet.app.exception import CatchExceptionDialog
-import plugin.tablericons
+from plugin import tablericons
 
 _button_size: Optional[QSize] = None
 
@@ -90,7 +90,7 @@ class TabButton(QFrame):
         self.close_button = QPushButton()
         size = int(button_size().height() * 0.75)
         self.close_button.setFixedSize(size, size)
-        self.close_button.setIcon(QIcon(plugin.tablericons.x))
+        self.close_button.setIcon(QIcon(tablericons.x))
         self.close_button.setFlat(True)
         self.layout_.addWidget(self.close_button)
 
