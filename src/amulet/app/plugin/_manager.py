@@ -165,7 +165,7 @@ def _validate_import(imported_name: str, frame: FrameType | None) -> None:
     # Skip importlib frames
     while (
         frame is not None
-        and frame.f_globals.get("__name__", "").split(".")[0] == "importlib"
+        and frame.f_globals.get("__name__", "").split(".", 1)[0] == "importlib"
     ):
         frame = frame.f_back
 
