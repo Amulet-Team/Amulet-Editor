@@ -1,7 +1,7 @@
 from typing import Optional
 
 from amulet.app.resource import get_resource_path
-from plugin.amulet_team_editor._label import QHoverLabel
+from plugin.amulet.editor._label import QHoverLabel
 from PySide6.QtCore import QEvent, QSize, Qt
 from PySide6.QtGui import (
     QColor,

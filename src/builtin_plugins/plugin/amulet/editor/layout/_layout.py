@@ -10,21 +10,21 @@ from weakref import ref
 
 from PySide6.QtCore import Qt, QPoint, QSize
 
-from plugin.amulet_team_editor._icon import ATooltipIconButton
+from plugin.amulet.editor._icon import ATooltipIconButton
 
-from plugin.amulet_team_editor.window._main import (
+from plugin.amulet.editor.window._main import (
     AmuletMainWindow,
     get_main_window,
     ButtonProxy,
 )
-from plugin.amulet_team_editor.window import _child as _child_window
-from plugin.amulet_team_editor.window._tab_engine import TabWidget
-from plugin.amulet_team_editor.widget import _widget
-from plugin.amulet_team_editor.window._tab_engine import (
+from plugin.amulet.editor.window import _child as _child_window
+from plugin.amulet.editor.window._tab_engine import TabWidget
+from plugin.amulet.editor.widget import _widget
+from plugin.amulet.editor.window._tab_engine import (
     RecursiveSplitter,
     AbstractStackedTabWidget,
 )
-from plugin.amulet_team_editor.window._tab_engine_imp import StackedTabWidget
+from plugin.amulet.editor.window._tab_engine_imp import StackedTabWidget
 
 
 UniqueIdPattern = re.compile(r"[a-z0-9-]+")

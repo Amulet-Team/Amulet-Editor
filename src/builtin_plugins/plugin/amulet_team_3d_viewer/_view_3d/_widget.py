@@ -5,7 +5,7 @@ from typing import Optional
 from PySide6.QtCore import Qt
 from PySide6.QtWidgets import QWidget, QVBoxLayout
 
-from plugin.amulet_team_editor import TabWidget
+from plugin.amulet.editor import TabWidget
 
 from ._canvas import FirstPersonCanvas
 

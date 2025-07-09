@@ -7,10 +7,8 @@ from ._tab_engine import (
     AbstractStackedTabWidget,
     TabWidget,
 )
-from plugin.amulet_team_editor.window import (
-    _main as _main_window,
-    _child as _child_window,
-)
+from plugin.amulet.editor.window import _main as _main_window
+from plugin.amulet.editor.window import _child as _child_window
 
 
 class TabContainerWidget(AbstractTabContainerWidget):

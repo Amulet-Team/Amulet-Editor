@@ -18,7 +18,7 @@
 			"amulet_resource_pack~=1.0a0"
 		],
 		"plugin": [
-			"amulet_team_editor~=1.0",
+			"amulet.editor~=1.0",
 			"amulet_team_resource_pack~=1.0",
 			"amulet_team_level~=1.0",
 			"tablericons~=1.0",

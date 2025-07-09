@@ -1,5 +1,6 @@
 {
-	"identifier": "amulet_team_editor",
+	"namespace": "amulet",
+	"identifier": "editor",
 	"version": "1.0.0",
 	"name": "Amulet Editor",
 	"depends": {

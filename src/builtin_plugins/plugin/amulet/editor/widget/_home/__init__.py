@@ -8,7 +8,7 @@ from PySide6.QtWidgets import QWidget, QVBoxLayout
 from .home import HomePage
 from .open_world import OpenWorldPage
 
-from plugin.amulet_team_editor.window import TabWidget
+from plugin.amulet.editor.window import TabWidget
 from amulet.app.localisation import set_locale
 
 

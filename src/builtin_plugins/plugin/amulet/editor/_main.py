@@ -20,16 +20,16 @@ from amulet.app.localisation import Translator, locale_changed
 from plugin import tablericons
 from plugin import amulet_team_level
 
-from plugin import amulet_team_editor
-from plugin.amulet_team_editor.window._main import (
+from plugin.amulet import editor
+from plugin.amulet.editor.window._main import (
     get_main_window,
     destroy_main_window,
     ButtonProxy,
 )
-from plugin.amulet_team_editor.widget._home import HomeWidget
-from plugin.amulet_team_editor.widget._level_info import LevelInfoWidget
-from plugin.amulet_team_editor.widget import register_widget, unregister_widget
-from plugin.amulet_team_editor.layout import (
+from plugin.amulet.editor import HomeWidget
+from plugin.amulet.editor import LevelInfoWidget
+from plugin.amulet.editor.widget import register_widget, unregister_widget
+from plugin.amulet.editor.layout import (
     register_layout,
     unregister_layout,
     LayoutConfig,
@@ -38,7 +38,7 @@ from plugin.amulet_team_editor.layout import (
     WidgetConfig,
     create_layout_button,
 )
-from plugin.amulet_team_editor._signal import init_editor, destroy_editor
+from plugin.amulet.editor._signal import init_editor, destroy_editor
 
 log = logging.getLogger(__name__)
 
@@ -68,7 +68,7 @@ def _load_translations() -> None:
     _translator.load_lang(
         QLocale(),
         "",
-        directory=os.path.join(*amulet_team_editor.__path__, "_resources", "lang"),
+        directory=os.path.join(*editor.__path__, "_resources", "lang"),
     )
 
 

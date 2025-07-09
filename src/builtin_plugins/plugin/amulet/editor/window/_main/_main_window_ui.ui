@@ -38,7 +38,7 @@
   <customwidget>
    <class>RecursiveSplitter</class>
    <extends>QFrame</extends>
-   <header>plugin.amulet_team_editor.window._tab_engine</header>
+   <header>plugin.amulet.editor.window._tab_engine</header>
    <container>1</container>
   </customwidget>
  </customwidgets>

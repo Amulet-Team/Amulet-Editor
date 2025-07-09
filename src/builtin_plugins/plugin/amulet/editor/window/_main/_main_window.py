@@ -9,7 +9,7 @@ from PySide6.QtWidgets import QWidget
 
 from plugin.amulet_team_inspector import show_inspector
 
-from plugin.amulet_team_editor._signal import destroy_editor
+from plugin.amulet.editor._signal import destroy_editor
 from ._main_window_ui import Ui_AmuletMainWindow
 from .._tab_engine import RecursiveSplitter
 

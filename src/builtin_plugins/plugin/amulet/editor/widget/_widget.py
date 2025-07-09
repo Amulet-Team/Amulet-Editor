@@ -5,8 +5,8 @@ from threading import Lock
 from PySide6.QtWidgets import QVBoxLayout, QLabel
 from PySide6.QtCore import Qt
 
-from plugin.amulet_team_editor.window._tab_engine import TabWidget
-from plugin.amulet_team_editor.layout import _layout
+from plugin.amulet.editor.window._tab_engine import TabWidget
+from plugin.amulet.editor.layout import _layout
 
 # Maps the classes qualified name to the class.
 lock = Lock()

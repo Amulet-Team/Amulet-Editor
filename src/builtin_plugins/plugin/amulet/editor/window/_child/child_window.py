@@ -2,7 +2,7 @@ from PySide6.QtGui import QCloseEvent
 from weakref import WeakSet
 
 from .child_window_ui import Ui_AmuletChildWindow
-from plugin.amulet_team_editor.window import _main as _main_window
+from plugin.amulet.editor.window import _main as _main_window
 
 
 class AmuletChildWindow(Ui_AmuletChildWindow):
