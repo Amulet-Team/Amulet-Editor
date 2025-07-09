@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ui version="4.0">
+ <class>AmuletMainWindow</class>
+ <widget class="QMainWindow" name="AmuletMainWindow">
+  <property name="geometry">
+   <rect>
+    <x>0</x>
+    <y>0</y>
+    <width>1129</width>
+    <height>780</height>
+   </rect>
+  </property>
+  <property name="windowTitle">
+   <string>Amulet Editor</string>
+  </property>
+  <widget class="QWidget" name="_widget">
+   <layout class="QHBoxLayout" name="_layout">
+    <item>
+     <widget class="ToolBar" name="toolbar">
+      <property name="backgroundColor" stdset="0">
+       <string notr="true">surface</string>
+      </property>
+     </widget>
+    </item>
+    <item>
+     <widget class="RecursiveSplitter" name="view_container"/>
+    </item>
+   </layout>
+  </widget>
+ </widget>
+ <customwidgets>
+  <customwidget>
+   <class>ToolBar</class>
+   <extends>QFrame</extends>
+   <header>.toolbar</header>
+   <container>1</container>
+  </customwidget>
+  <customwidget>
+   <class>RecursiveSplitter</class>
+   <extends>QFrame</extends>
+   <header>plugin.amulet.editor.window._tab_engine</header>
+   <container>1</container>
+  </customwidget>
+ </customwidgets>
+ <resources/>
+ <connections/>
+</ui>

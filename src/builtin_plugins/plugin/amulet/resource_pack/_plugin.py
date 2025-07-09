@@ -1,0 +1,39 @@
+from __future__ import annotations
+import os
+from typing import Optional
+
+from PySide6.QtCore import QLocale, QCoreApplication
+
+from amulet.app.localisation import Translator, locale_changed
+from amulet.app.plugin import PluginV1
+
+from plugin.amulet.resource_pack import __path__ as resource_pack_path
+
+
+# Qt only weekly references this. We must hold a strong reference to stop it getting garbage collected
+_translator: Optional[Translator] = None
+
+
+def load_plugin() -> None:
+    global _translator
+    _translator = Translator()
+    _locale_changed()
+    QCoreApplication.installTranslator(_translator)
+    locale_changed.connect(_locale_changed)
+
+
+def _locale_changed() -> None:
+    assert _translator is not None
+    _translator.load_lang(
+        QLocale(),
+        "",
+        directory=os.path.join(*resource_pack_path, "resources", "lang"),
+    )
+
+
+def unload_plugin() -> None:
+    assert _translator is not None
+    QCoreApplication.removeTranslator(_translator)
+
+
+plugin = PluginV1(load=load_plugin, unload=unload_plugin)

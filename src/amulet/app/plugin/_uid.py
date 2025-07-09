@@ -44,7 +44,9 @@ class LibraryUID:
 
     @classmethod
     def from_string(cls, s: str) -> LibraryUID:
-        match = re.fullmatch(r"(?P<identifier>[a-zA-Z_]+\w*)@(?P<version>.*)", s)
+        match = re.fullmatch(
+            r"(?P<identifier>[a-zA-Z]+\w*(\.[a-zA-Z]+\w*)?)@(?P<version>.*)", s
+        )
         if match is None:
             raise ValueError(f"Invalid LibraryUID string: {s}")
         version = Version(match.group("version"))

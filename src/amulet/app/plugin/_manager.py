@@ -72,9 +72,9 @@ class PluginJobType(Enum):
     Reload = 3
 
 
-class PluginJob(NamedTuple):
-    plugin_identifier: LibraryUID
-    job_type: PluginJobType
+# class PluginJob(NamedTuple):
+#     plugin_identifier: LibraryUID
+#     job_type: PluginJobType
 
 
 # A lock for the plugin data. Code must acquire this before touching the plugin data
@@ -176,7 +176,7 @@ def _validate_import(imported_name: str, frame: FrameType | None) -> None:
     if frame is None or frame.f_globals.get("__name__") == __name__:
         return
 
-    imported_name_split = imported_name.split(".")
+    imported_name_split = imported_name.split(".", 3)
     if imported_name_split[0] in PyModules:
         # A built-in python module was imported.
         # Plugins don't need to specify native python libraries.
@@ -186,22 +186,22 @@ def _validate_import(imported_name: str, frame: FrameType | None) -> None:
         # The importer must be a plugin that specified it as a requirement.
 
         # Make sure a plugin was actually imported and not just the plugin namespace
-        if len(imported_name_split) < 2:
+        if len(imported_name_split) < 3:
             return
 
         # Get the imported plugin name.
-        imported_plugin = imported_name_split[1]
+        imported_plugin = f"{imported_name_split[1]}.{imported_name_split[2]}"
 
         # Get the plugin that imported it
         importer_name = frame.f_globals.get("__name__")
         if importer_name is None:
             raise RuntimeError(f"Could not find __name__ attribute for frame\n{frame}")
-        importer_name_split = importer_name.split(".", 2)
-        if importer_name_split[0] != "plugin" or len(importer_name_split) < 2:
+        importer_name_split = importer_name.split(".", 3)
+        if importer_name_split[0] != "plugin" or len(importer_name_split) < 3:
             raise RuntimeError(
-                f"Plugin module {imported_name} was imported by {importer_name}. Plugins can only be imported by plugins."
+                f'Plugin module "{imported_name}" was imported by "{importer_name}". Plugins can only be imported by plugins.'
             )
-        importer_plugin = importer_name_split[1]
+        importer_plugin = f"{importer_name_split[1]}.{importer_name_split[2]}"
 
         # Plugins can import themselves
         if importer_plugin == imported_plugin:
@@ -228,14 +228,14 @@ def _validate_import(imported_name: str, frame: FrameType | None) -> None:
         importer_name = frame.f_globals.get("__name__")
         if importer_name is None:
             raise RuntimeError(f"Could not find __name__ attribute for frame\n{frame}")
-        importer_name_split = importer_name.split(".", 2)
+        importer_name_split = importer_name.split(".", 3)
 
         # Only plugins need to be validated.
-        if importer_name_split[0] != "plugin" or len(importer_name_split) < 2:
+        if importer_name_split[0] != "plugin" or len(importer_name_split) < 3:
             return
 
         # Find the importer plugin data.
-        importer_plugin = importer_name_split[1]
+        importer_plugin = f"{importer_name_split[1]}.{importer_name_split[2]}"
         plugin_container = _plugins[_enabled_plugins[importer_plugin]]
 
         # Find which package the import came from.
@@ -437,7 +437,7 @@ def scan_plugins() -> None:
         # Find and parse all plugins
         for plugin_dir in plugin_dirs():
             for manifest_path in glob.glob(
-                os.path.join(plugin_dir, "*", "plugin.json")
+                os.path.join(plugin_dir, "*", "*", "plugin.json")
             ):
                 try:
                     plugin_path = os.path.dirname(manifest_path)
