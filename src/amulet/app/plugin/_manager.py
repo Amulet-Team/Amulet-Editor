@@ -6,10 +6,9 @@ from typing import NamedTuple, Optional, Protocol
 from types import FrameType, ModuleType
 from threading import RLock
 import os
-from os.path import normpath, samefile
+from os.path import samefile
 import glob
 import logging
-from importlib import import_module
 from importlib.util import spec_from_file_location, module_from_spec
 from importlib.metadata import version, packages_distributions
 
@@ -18,7 +17,6 @@ from enum import Enum
 import sys
 from collections import UserDict
 from collections.abc import Mapping, Sequence
-import re
 import traceback
 import builtins
 
