@@ -72,9 +72,9 @@ class PluginJobType(Enum):
     Reload = 3
 
 
-class PluginJob(NamedTuple):
-    plugin_identifier: LibraryUID
-    job_type: PluginJobType
+# class PluginJob(NamedTuple):
+#     plugin_identifier: LibraryUID
+#     job_type: PluginJobType
 
 
 # A lock for the plugin data. Code must acquire this before touching the plugin data
