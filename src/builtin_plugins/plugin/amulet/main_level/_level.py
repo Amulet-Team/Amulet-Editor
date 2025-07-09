@@ -14,7 +14,7 @@ _lock = Lock()
 _level: UnsetType | Level | None = Unset
 
 
-def get_level() -> Level | None:
+def get_main_level() -> Level | None:
     """Get the active level."""
     with _lock:
         if _level is Unset:
@@ -22,7 +22,7 @@ def get_level() -> Level | None:
         return _level
 
 
-def set_level(level: Level | None) -> None:
+def set_main_level(level: Level | None) -> None:
     """
     Set the active level.
     Only the entry command can call this function.

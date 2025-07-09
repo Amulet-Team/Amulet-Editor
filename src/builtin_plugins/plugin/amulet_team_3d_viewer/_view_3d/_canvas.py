@@ -28,7 +28,7 @@ from OpenGL.GL import (
 from amulet.app.exception import CatchExceptionDialog
 from plugin.amulet_team_resource_pack._api import get_resource_pack_container
 
-from plugin.amulet_team_level import get_level
+from plugin.amulet.level import get_level
 
 from ._camera import Camera, Location, Rotation
 from ._key_catcher import KeySrc, KeyCatcher

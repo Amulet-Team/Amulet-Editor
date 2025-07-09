@@ -1,5 +1,6 @@
 {
-	"identifier": "amulet_team_level",
+	"namespace": "amulet",
+	"identifier": "main_level",
 	"version": "1.0.0",
 	"name": "Main Level Storage",
 	"depends": {

@@ -17,8 +17,8 @@ from amulet.app.resource import get_resource_path
 from amulet.app.exception import CatchExceptionDialog
 from amulet.app.localisation import Translator, locale_changed
 
-from plugin import tablericons
-from plugin import amulet_team_level
+from plugin.tablericons import tablericons
+from plugin.amulet.main_level import get_main_level, set_main_level
 
 from plugin.amulet import editor
 from plugin.amulet.editor.window._main import (
@@ -26,8 +26,8 @@ from plugin.amulet.editor.window._main import (
     destroy_main_window,
     ButtonProxy,
 )
-from plugin.amulet.editor import HomeWidget
-from plugin.amulet.editor import LevelInfoWidget
+from plugin.amulet.editor.widget._home import HomeWidget
+from plugin.amulet.editor.widget._level_info import LevelInfoWidget
 from plugin.amulet.editor.widget import register_widget, unregister_widget
 from plugin.amulet.editor.layout import (
     register_layout,
@@ -93,7 +93,7 @@ def _init_editor() -> None:
     home_button.set_icon(tablericons.home)
     home_button.set_name("Home")
 
-    if amulet_team_level.get_level() is None:
+    if get_main_level() is None:
         # Make the home layout active by clicking the button
         home_button.click()
     else:
@@ -137,7 +137,7 @@ def _main(args: FullArgs) -> None:
 
     # Load the level
     if args.command is None:
-        amulet_team_level.set_level(None)
+        set_main_level(None)
     else:
         log.debug("Loading level.")
         level_path = args.level_path
@@ -148,7 +148,7 @@ def _main(args: FullArgs) -> None:
                 LevelLoaderPathToken(level_path)
             )  # TODO: make this generic
             level.open()
-            amulet_team_level.set_level(level)
+            set_main_level(level)
 
     # Load the translations
     _translator = Translator()

@@ -9,7 +9,7 @@ from amulet.app.localisation import Translator, locale_changed
 from amulet.app.plugin import PluginV1
 
 from plugin import tablericons
-from plugin.amulet_team_level import get_level
+from plugin.amulet.main_level import get_main_level
 from plugin.amulet.editor import (
     register_widget,
     unregister_widget,
