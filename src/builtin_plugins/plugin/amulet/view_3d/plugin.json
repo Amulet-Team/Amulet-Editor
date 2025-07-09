@@ -22,8 +22,7 @@
 			"amulet.editor~=1.0",
 			"amulet.resource_pack~=1.0",
 			"amulet.main_level~=1.0",
-			"tablericons.tablericons~=1.0",
-			"thread_manager~=1.0"
+			"tablericons.tablericons~=1.0"
 		]
 	},
 	"locked": "true"
