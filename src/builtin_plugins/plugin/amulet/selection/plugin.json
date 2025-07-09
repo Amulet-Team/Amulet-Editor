@@ -1,5 +1,6 @@
 {
-	"identifier": "amulet_team_selection",
+	"namespace": "amulet",
+	"identifier": "selection",
 	"version": "1.0.0",
 	"name": "Amulet Selection",
 	"depends": {
