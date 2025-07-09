@@ -20,7 +20,7 @@ from amulet.app.localisation import Translator, locale_changed
 from plugin.tablericons import tablericons
 from plugin.amulet.main_level import get_main_level, set_main_level
 
-from plugin.amulet import editor
+from plugin.amulet.editor import __path__ as editor_path
 from plugin.amulet.editor.window._main import (
     get_main_window,
     destroy_main_window,
@@ -68,7 +68,7 @@ def _load_translations() -> None:
     _translator.load_lang(
         QLocale(),
         "",
-        directory=os.path.join(*editor.__path__, "_resources", "lang"),
+        directory=os.path.join(*editor_path, "_resources", "lang"),
     )
 
 

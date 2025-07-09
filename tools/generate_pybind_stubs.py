@@ -167,7 +167,7 @@ def main() -> None:
     root_path = os.path.dirname(os.path.dirname(__file__))
     src_path = os.path.join(root_path, "src")
     amulet_app_sys_path = get_package_dir("amulet.app._sys")
-    viewer_plugin_path = get_package_dir("plugin.amulet_team_3d_viewer")
+    viewer_plugin_path = get_package_dir("plugin.amulet.view_3d")
     builtin_plugin_path = os.path.dirname(os.path.dirname(viewer_plugin_path))
     tests_path = os.path.join(root_path, "tests")
     # test_amulet_editor_path = os.path.join(tests_path, "test_amulet_editor")
@@ -183,7 +183,7 @@ def main() -> None:
         (
             builtin_plugin_path,
             viewer_plugin_path,
-            "plugin.amulet_team_3d_viewer._view_3d",
+            "plugin.amulet.view_3d._view_3d",
         ),
         # (tests_path, test_amulet_editor_path, "test_amulet_editor"),
     ]

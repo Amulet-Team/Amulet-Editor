@@ -26,7 +26,7 @@ from OpenGL.GL import (
 )
 
 from amulet.app.exception import CatchExceptionDialog
-from plugin.amulet_team_resource_pack._api import get_resource_pack_container
+from plugin.amulet.resource_pack._api import get_resource_pack_container
 
 from plugin.amulet.main_level import get_main_level
 

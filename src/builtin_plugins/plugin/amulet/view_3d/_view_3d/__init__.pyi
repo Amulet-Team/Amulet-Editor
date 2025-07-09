@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from plugin.amulet_team_3d_viewer._view_3d._widget import View3D
+from plugin.amulet.view_3d._view_3d._widget import View3D
 
 from . import (
     _camera,

@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 3.13)
 
-project(amulet_team_3d_viewer LANGUAGES CXX)
+project(view_3d LANGUAGES CXX)
 
 # Add pybind11
 find_package(pybind11 CONFIG REQUIRED)
@@ -36,4 +36,4 @@ if(NOT DEFINED AMULET_EDITOR_EXT_SRC_DIR)
 endif()
 
 # Install
-install(TARGETS _view_3d DESTINATION ${AMULET_EDITOR_EXT_SRC_DIR}/builtin_plugins/plugin/amulet_team_3d_viewer/_view_3d)
+install(TARGETS _view_3d DESTINATION ${AMULET_EDITOR_EXT_SRC_DIR}/builtin_plugins/plugin/amulet/view_3d/_view_3d)

@@ -1,5 +1,6 @@
 {
-	"identifier": "amulet_team_3d_viewer",
+	"namespace": "amulet",
+	"identifier": "view_3d",
 	"version": "1.0.0",
 	"name": "Amulet 3D Viewer",
 	"depends": {

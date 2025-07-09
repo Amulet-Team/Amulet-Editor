@@ -25,7 +25,7 @@ from plugin.amulet.editor import (
     destroy_editor,
 )
 
-from plugin import amulet_team_3d_viewer
+from plugin.amulet.view_3d import __path__ as view_3d_path
 from ._view_3d import View3D
 
 
@@ -42,7 +42,7 @@ def _load_translations() -> None:
     _translator.load_lang(
         QLocale(),
         "",
-        directory=os.path.join(*amulet_team_3d_viewer.__path__, "_resources", "lang"),
+        directory=os.path.join(*view_3d_path, "_resources", "lang"),
     )
 
 

@@ -30,7 +30,7 @@ from amulet.app.exception import CatchExceptionDialog
 from amulet.app._promise import Promise
 from amulet.app.path import cache_directory
 
-from plugin.amulet_team_resource_pack._api import get_resource_pack_container
+from plugin.amulet.resource_pack._api import get_resource_pack_container
 from ._resource_pack_base import AbstractOpenGLResourcePack
 
 log = logging.getLogger(__name__)
