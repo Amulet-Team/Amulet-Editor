@@ -70,7 +70,7 @@ class PluginContainer(ABC):
             return cls2.from_data(
                 plugin_path,
                 plugin_data,
-                os.path.dirname(plugin_path) == first_party_plugin_directory(),
+                os.path.dirname(os.path.dirname(plugin_path)) == first_party_plugin_directory(),
             )
 
     @classmethod
@@ -104,6 +104,17 @@ class PluginContainerV1(PluginContainer):
         Populate a PluginContainer instance from the data in a directory.
         plugin_path is the system path to a directory containing a plugin.json file.
         """
+        # Get the plugin namespace
+        plugin_namespace = dynamic_cast(
+            plugin_data.get("namespace"),
+            str,
+            "plugin.json[namespace] must be a string",
+        )
+        if not plugin_namespace.isidentifier():
+            raise ValueError(
+                "plugin.json[namespace] must be a valid python identifier"
+            )
+
         # Get the plugin identifier
         plugin_identifier = dynamic_cast(
             plugin_data.get("identifier"),
@@ -169,7 +180,7 @@ class PluginContainerV1(PluginContainer):
 
         return cls(
             PluginData(
-                LibraryUID(plugin_identifier, plugin_version),
+                LibraryUID(f"{plugin_namespace}.{plugin_identifier}", plugin_version),
                 plugin_path,
                 plugin_name,
                 PluginDataDepends(

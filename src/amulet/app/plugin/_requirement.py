@@ -7,7 +7,7 @@ from ._uid import LibraryUID
 
 
 RequirementPattern = re.compile(
-    r"(?P<identifier>[a-zA-Z_]+[a-zA-Z_0-9]*)(?P<requirement>.*)"
+    r"(?P<identifier>[a-zA-Z]+\w*(\.[a-zA-Z]+\w*)?)(?P<requirement>.*)"
 )
 
 
