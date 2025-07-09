@@ -28,7 +28,7 @@ class OpenWorldPage(Ui_OpenWorldPage):
         if dialog.exec():
             path, *_ = dialog.selectedFiles()
             spawn_process("editor", "--level_path", path)
-            if get_level() is None:
+            if get_main_level() is None:
                 QApplication.quit()
 
     def open_dir(self) -> None:
@@ -37,5 +37,5 @@ class OpenWorldPage(Ui_OpenWorldPage):
         if dialog.exec():
             path, *_ = dialog.selectedFiles()
             spawn_process("editor", "--level_path", path)
-            if get_level() is None:
+            if get_main_level() is None:
                 QApplication.quit()

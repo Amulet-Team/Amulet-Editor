@@ -48,7 +48,7 @@ def _load_translations() -> None:
 
 def _init_editor() -> None:
     global _translator, view_3d_button
-    if get_level() is not None:
+    if get_main_level() is not None:
         _translator = Translator()
         _load_translations()
         QCoreApplication.installTranslator(_translator)

@@ -28,7 +28,7 @@ from OpenGL.GL import (
 from amulet.app.exception import CatchExceptionDialog
 from plugin.amulet_team_resource_pack._api import get_resource_pack_container
 
-from plugin.amulet.level import get_level
+from plugin.amulet.main_level import get_main_level
 
 from ._camera import Camera, Location, Rotation
 from ._key_catcher import KeySrc, KeyCatcher
@@ -102,7 +102,7 @@ class FirstPersonCanvas(QOpenGLWidget, QOpenGLFunctions):
         QOpenGLWidget.__init__(self, parent)
         QOpenGLFunctions.__init__(self)
 
-        level = get_level()
+        level = get_main_level()
         if level is None:
             raise RuntimeError(
                 "FirstPersonCanvas cannot be constructed when a level does not exist."
