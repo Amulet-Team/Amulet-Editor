@@ -155,6 +155,9 @@ def _module_qualname_to_libraries(qualname: str) -> set[str]:
     raise RuntimeError(f"Could not find library for {qualname}")
 
 
+PyModules = frozenset((*sys.builtin_module_names, *sys.stdlib_module_names))
+
+
 def _validate_import(imported_name: str, frame: FrameType | None) -> None:
     # Plugins can only import libraries and plugins they have specified as a dependency.
     # Plugins can only be imported by other plugins.
@@ -173,49 +176,78 @@ def _validate_import(imported_name: str, frame: FrameType | None) -> None:
     if frame is None or frame.f_globals.get("__name__") == __name__:
         return
 
-    importer_name = frame.f_globals.get("__name__")
-    if importer_name is None:
-        raise RuntimeError(f"Could not find __name__ attribute for frame\n{frame}")
+    imported_name_split = imported_name.split(".")
+    if imported_name_split[0] in PyModules:
+        # A built-in python module was imported.
+        # Plugins don't need to specify native python libraries.
+        return
+    elif imported_name_split[0] == "plugin":
+        # A plugin was imported.
+        # The importer must be a plugin that specified it as a requirement.
 
-    imported_root_name = imported_name.split(".")[0]
-    importer_root_name = importer_name.split(".")[0]
-
-    if importer_root_name in _enabled_plugins:
-        # The module was imported by a plugin
-        importer_uid = _enabled_plugins[importer_root_name]
-        plugin_container = _plugins[importer_uid]
-        if imported_root_name in _enabled_plugins:
-            # A plugin imported a plugin
-            if importer_root_name != imported_root_name:
-                # a plugin imported a different plugin
-                if not any(
-                    dependency.identifier == imported_root_name
-                    for dependency in plugin_container.data.depends.plugin
-                ):
-                    # imported by a plugin that does not have the dependency listed
-                    raise RuntimeError(
-                        f"Plugin {importer_root_name} imported plugin {imported_root_name} which it does not have authority for.\nYou must list a plugin dependency in your plugin's metadata to be able to import it."
-                    )
-        elif (
-            imported_root_name in sys.builtin_module_names
-            or imported_root_name in sys.stdlib_module_names
-        ):
-            # A plugin imported a normal module
-            # Plugins don't need to specify native python libraries.
+        # Make sure a plugin was actually imported and not just the plugin namespace
+        if len(imported_name_split) < 2:
             return
-        else:
-            package_names = _module_qualname_to_libraries(imported_name)
-            if not any(
-                dependency.identifier in package_names
-                for dependency in plugin_container.data.depends.library
-            ):
-                raise RuntimeError(
-                    f"Plugin {importer_root_name} imported library {imported_name} which it does not have authority for.\nYou must list a dependency in your plugin's metadata to be able to import it."
-                )
-    elif imported_root_name in _enabled_plugins:
-        code = frame.f_code
+
+        # Get the imported plugin name.
+        imported_plugin = imported_name_split[1]
+
+        # Get the plugin that imported it
+        importer_name = frame.f_globals.get("__name__")
+        if importer_name is None:
+            raise RuntimeError(f"Could not find __name__ attribute for frame\n{frame}")
+        importer_name_split = importer_name.split(".", 2)
+        if importer_name_split[0] != "plugin" or len(importer_name_split) < 2:
+            raise RuntimeError(f"Plugin module {imported_name} was imported by {importer_name}. Plugins can only be imported by plugins.")
+        importer_plugin = importer_name_split[1]
+
+        # Plugins can import themselves
+        if importer_plugin == imported_plugin:
+            return
+
+        # Validate that it has permission to import the plugin
+        plugin_container = _plugins[_enabled_plugins[importer_plugin]]
+        if any(
+            dependency.identifier == imported_plugin
+            for dependency in plugin_container.data.depends.plugin
+        ):
+            return
+
+        # imported by a plugin that does not have the dependency listed
         raise RuntimeError(
-            f"Plugin module {imported_name} was imported by a non-plugin module {importer_name} {getattr(code, 'co_qualname', None) or getattr(code, 'co_name', 'could not resolve function name')}"
+            f"{importer_name} imported {imported_name} which it does not have authority for.\nYou must list a plugin dependency in your plugin's metadata to be able to import it."
+        )
+
+    else:
+        # A third party library was imported
+        # If it was imported by a plugin it must specify it as a requirement.
+
+        # Get the module that imported it
+        importer_name = frame.f_globals.get("__name__")
+        if importer_name is None:
+            raise RuntimeError(f"Could not find __name__ attribute for frame\n{frame}")
+        importer_name_split = importer_name.split(".", 2)
+
+        # Only plugins need to be validated.
+        if importer_name_split[0] != "plugin" or len(importer_name_split) < 2:
+            return
+
+        # Find the importer plugin data.
+        importer_plugin = importer_name_split[1]
+        plugin_container = _plugins[_enabled_plugins[importer_plugin]]
+
+        # Find which package the import came from.
+        package_names = _module_qualname_to_libraries(imported_name)
+
+        # Validate that the plugin is allowed to import that package.
+        if any(
+            dependency.identifier in package_names
+            for dependency in plugin_container.data.depends.library
+        ):
+            return
+
+        raise RuntimeError(
+            f"{importer_name} imported {imported_name} which it does not have authority for.\nYou must list a dependency in your plugin's metadata to be able to import it."
         )
 
 
