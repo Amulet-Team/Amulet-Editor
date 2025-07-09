@@ -58,9 +58,9 @@ def _get_packages_distributions() -> dict[str, list[str]]:
 
 """
 Notes:
-First party plugins are stored in plugin
+First party plugins are stored in builtin_plugins
 Third party plugins are imported as a zip and extracted to a writable directory with a UUID as the name.
-Custom code loads the plugin package into sys.modules under its package name. Adding plugin as sources root helps the IDE understand this.
+Custom code loads the plugin package into sys.modules under its package name. Adding builtin_plugins as sources root helps the IDE understand this.
 TODO: look into generating stub files for the active plugins to help with development on the compiled version.
 Plugins can import directly from other plugins to access static classes and functions 
 """

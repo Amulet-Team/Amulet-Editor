@@ -7,7 +7,7 @@ from PyInstaller.utils.hooks import (
 datas = [
     *collect_data_files("amulet.app", excludes=["**/*.ui", "**/*.cpp", "**/*.pyc"]),
     *collect_data_files(
-        "plugin",
+        "builtin_plugins",
         include_py_files=True,
         excludes=["**/*.ui", "**/*.cpp", "**/*.pyc"],
     ),
