@@ -25,7 +25,6 @@ classifiers = [
 dev = [
     "setuptools>=42",
     "versioneer",
-    "packaging",
     "wheel",
     "amulet_pybind11_extensions~=1.0",
     "pybind11_stubgen>=2.5.4",
