@@ -414,30 +414,6 @@ def scan_plugins() -> None:
                     plugin_container = PluginContainer.from_path(plugin_path)
                     plugin_uid = plugin_container.data.uid
 
-                    # Ensure that the module name does not shadow an existing module
-                    try:
-                        mod = import_module(plugin_uid.identifier)
-                    except ModuleNotFoundError:
-                        # No module with this name. We are all good
-                        pass
-                    else:
-                        # Imported a module with this name
-                        found_path: str | None
-                        try:
-                            # Only packages have a __path__ attribute.
-                            found_path = mod.__path__[0]
-                        except AttributeError:
-                            # All modules have a __file__ attribute, but it is None for namespace packages.
-                            found_path = mod.__file__
-                            if found_path is not None:
-                                found_path = os.path.splitext(found_path)[0]
-                        if plugin_path != found_path:
-                            # If the path does not match the expected path then it shadows an existing module
-                            log.warning(
-                                f"Skipping {plugin_container.data.path} because it would shadow module {plugin_uid.identifier}."
-                            )
-                            continue
-
                     if plugin_uid not in _plugins:
                         _plugins[plugin_uid] = plugin_container
                     elif _plugins[plugin_uid].data.path != plugin_path:
