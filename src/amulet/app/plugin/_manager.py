@@ -275,9 +275,7 @@ def wrap_importer(imp: ImportProtocol) -> ImportProtocol:
             raise ValueError("level must be 0 or larger")
         frame = inspect.currentframe()
         if frame is not None:
-            frame = frame.f_back
-            assert frame is not None
-            _validate_import(imported_name, frame)
+            _validate_import(imported_name, frame.f_back)
         return imp(name, globals=globals, locals=locals, fromlist=fromlist, level=level)
 
     return wrap_importer_import
