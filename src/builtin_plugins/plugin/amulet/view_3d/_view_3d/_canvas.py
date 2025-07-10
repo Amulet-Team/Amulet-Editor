@@ -142,18 +142,9 @@ class FirstPersonCanvas(QOpenGLWidget, QOpenGLFunctions):
         )
 
         self._resource_pack_container = get_resource_pack_container(self._level)
-        self._resource_pack_container.changing.connect(
-            lambda prom: prom.progress_change.connect(
-                lambda prog: print(f"Loading resource pack {prog}")
-            )
-        )
         self._gl_resource_pack_container = get_gl_resource_pack_container(self._level)
-        self._gl_resource_pack_container.changing.connect(
-            lambda prom: prom.progress_change.connect(
-                lambda prog: print(f"Loading GL resource pack {prog}")
-            )
-        )
-        self._resource_pack_container.init()
+        # TODO: connect this to the GUI
+        self._resource_pack_container.get_resource_pack()
         log.debug("FirstPersonCanvas.__init__ end")
 
     def initializeGL(self) -> None:

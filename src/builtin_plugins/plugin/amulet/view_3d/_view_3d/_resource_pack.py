@@ -15,6 +15,10 @@ from PySide6.QtCore import QObject, Signal
 from PySide6.QtGui import QImage, QOpenGLContext, QOffscreenSurface
 from PySide6.QtOpenGL import QOpenGLTexture
 
+from amulet.utils.task_manager import (
+    AbstractProgressManager,
+    VoidProgressManager,
+)
 from amulet.core.version import VersionNumber
 from amulet.core.block import Block, BlockStack
 from amulet.level.abc import Level, DiskLevel
@@ -72,102 +76,92 @@ class OpenGLResourcePack(AbstractOpenGLResourcePack):
             self._texture.destroy()
             self._context.doneCurrent()
 
-    def initialise(self) -> Promise[None]:
+    def initialise(
+        self, progress_manager: AbstractProgressManager = VoidProgressManager()
+    ) -> None:
         """
         Create the atlas texture.
         """
+        with self._lock:
+            if self._texture is None:
+                cache_id = struct.unpack(
+                    "H",
+                    hashlib.sha1(
+                        "".join(self._resource_pack.pack_paths).encode("utf-8")
+                    ).digest()[:2],
+                )[0]
 
-        def func(promise_data: Promise.Data) -> None:
-            with self._lock:
-                if self._texture is None:
-                    cache_id = struct.unpack(
-                        "H",
-                        hashlib.sha1(
-                            "".join(self._resource_pack.pack_paths).encode("utf-8")
-                        ).digest()[:2],
-                    )[0]
+                atlas: Image.Image
 
-                    atlas: Image.Image
+                if not self._resource_pack.pack_paths:
+                    log.warning("There are no resource packs to load.")
 
-                    if not self._resource_pack.pack_paths:
-                        log.warning("There are no resource packs to load.")
+                mod_time = max(
+                    (
+                        os.stat(path).st_mtime
+                        for pack in self._resource_pack.pack_paths
+                        for path in glob.glob(
+                            os.path.join(glob.escape(pack), "**", "*.*"),
+                            recursive=True,
+                        )
+                    ),
+                    default=0,
+                )
 
-                    mod_time = max(
-                        (
-                            os.stat(path).st_mtime
-                            for pack in self._resource_pack.pack_paths
-                            for path in glob.glob(
-                                os.path.join(glob.escape(pack), "**", "*.*"),
-                                recursive=True,
-                            )
-                        ),
-                        default=0,
+                cache_dir = os.path.join(cache_directory(), "resource_pack")
+                img_path = os.path.join(cache_dir, f"{cache_id}.png")
+                bounds_path = os.path.join(cache_dir, f"{cache_id}.json")
+                try:
+                    with open(bounds_path) as f:
+                        cache_mod_time, bounds = json.load(f)
+                    if mod_time != cache_mod_time:
+                        raise Exception(
+                            "The resource packs have changed since last merging."
+                        )
+                    _atlas = QImage(img_path)
+                except Exception:
+                    (
+                        atlas,
+                        bounds,
+                    ) = create_atlas(self._resource_pack.textures, progress_manager)
+
+                    os.makedirs(cache_dir, exist_ok=True)
+                    atlas.save(img_path)
+                    with open(bounds_path, "w") as f:
+                        json.dump((mod_time, bounds), f)
+                    _atlas = ImageQt(atlas)
+
+                self._texture_bounds = bounds
+                self._default_texture_bounds = self._texture_bounds[
+                    self._resource_pack.missing_no
+                ]
+
+                def init_gl() -> None:
+                    self._context = QOpenGLContext()
+                    self._context.setShareContext(QOpenGLContext.globalShareContext())
+                    self._context.create()
+                    self._surface = QOffscreenSurface()
+                    self._surface.create()
+                    if not self._context.makeCurrent(self._surface):
+                        raise RuntimeError("Could not make context current.")
+
+                    self._texture = QOpenGLTexture(QOpenGLTexture.Target.Target2D)
+                    self._texture.setMinificationFilter(QOpenGLTexture.Filter.Nearest)
+                    self._texture.setMagnificationFilter(QOpenGLTexture.Filter.Nearest)
+                    self._texture.setWrapMode(
+                        QOpenGLTexture.CoordinateDirection.DirectionS,
+                        QOpenGLTexture.WrapMode.ClampToEdge,
                     )
+                    self._texture.setWrapMode(
+                        QOpenGLTexture.CoordinateDirection.DirectionT,
+                        QOpenGLTexture.WrapMode.ClampToEdge,
+                    )
+                    self._texture.setData(_atlas)
+                    self._texture.create()
 
-                    cache_dir = os.path.join(cache_directory(), "resource_pack")
-                    img_path = os.path.join(cache_dir, f"{cache_id}.png")
-                    bounds_path = os.path.join(cache_dir, f"{cache_id}.json")
-                    try:
-                        with open(bounds_path) as f:
-                            cache_mod_time, bounds = json.load(f)
-                        if mod_time != cache_mod_time:
-                            raise Exception(
-                                "The resource packs have changed since last merging."
-                            )
-                        _atlas = QImage(img_path)
-                    except Exception:
-                        (
-                            atlas,
-                            bounds,
-                        ) = create_atlas(
-                            self._resource_pack.textures
-                        ).call_chained(promise_data)
+                    self._context.doneCurrent()
 
-                        os.makedirs(cache_dir, exist_ok=True)
-                        atlas.save(img_path)
-                        with open(bounds_path, "w") as f:
-                            json.dump((mod_time, bounds), f)
-                        _atlas = ImageQt(atlas)
-
-                    self._texture_bounds = bounds
-                    self._default_texture_bounds = self._texture_bounds[
-                        self._resource_pack.missing_no
-                    ]
-
-                    def init_gl() -> None:
-                        self._context = QOpenGLContext()
-                        self._context.setShareContext(
-                            QOpenGLContext.globalShareContext()
-                        )
-                        self._context.create()
-                        self._surface = QOffscreenSurface()
-                        self._surface.create()
-                        if not self._context.makeCurrent(self._surface):
-                            raise RuntimeError("Could not make context current.")
-
-                        self._texture = QOpenGLTexture(QOpenGLTexture.Target.Target2D)
-                        self._texture.setMinificationFilter(
-                            QOpenGLTexture.Filter.Nearest
-                        )
-                        self._texture.setMagnificationFilter(
-                            QOpenGLTexture.Filter.Nearest
-                        )
-                        self._texture.setWrapMode(
-                            QOpenGLTexture.CoordinateDirection.DirectionS,
-                            QOpenGLTexture.WrapMode.ClampToEdge,
-                        )
-                        self._texture.setWrapMode(
-                            QOpenGLTexture.CoordinateDirection.DirectionT,
-                            QOpenGLTexture.WrapMode.ClampToEdge,
-                        )
-                        self._texture.setData(_atlas)
-                        self._texture.create()
-
-                        self._context.doneCurrent()
-
-                    invoke(init_gl)
-
-        return Promise(func)
+                invoke(init_gl)
 
     def get_texture(self) -> QOpenGLTexture:
         """
@@ -221,6 +215,7 @@ class OpenGLResourcePackHandle(QObject):
         self._resource_pack: Optional[OpenGLResourcePack] = None
         self._loader: Optional[Promise[None]] = None
         self._resource_pack_container = get_resource_pack_container(level)
+        # TODO: move this to a thread
         self._resource_pack_container.changed.connect(self._reload)
 
     @property
@@ -241,47 +236,47 @@ class OpenGLResourcePackHandle(QObject):
             )
         return rp
 
-    def _reload(self) -> None:
-        def func(promise_data: Promise.Data) -> None:
-            with (
-                self._lock,
-                CatchExceptionDialog(
-                    "Error initialising the OpenGL resource pack.", suppress=False
-                ),
-            ):
-                level = self._level()
-                if level is None:
-                    raise Exception("Level is None")
-                if isinstance(level, DiskLevel):
-                    log.debug(f"Loading OpenGL resource pack for level {level.path}")
-                else:
-                    log.debug(f"Loading OpenGL resource pack.")
-                resource_pack = self._resource_pack_container.resource_pack
-                # TODO: modify the resource pack library to expose the desired translator
-                translator = get_game_version("java", VersionNumber(2, -1, 0))
+    def _reload(
+        self,
+        progress_manager: AbstractProgressManager = VoidProgressManager(),
+    ) -> None:
+        # old_loader = self._loader
+        # if old_loader is not None:
+        #     old_loader.cancel()
+        # self._loader = promise_
+        # self.changing.emit(promise_)
+        # promise_.start()
 
-                rp = OpenGLResourcePack(resource_pack, translator)
-                promise = rp.initialise()
-                # TODO: support canceling
-                promise.call_chained(promise_data)
-                # for progress in rp.initialise():
-                #     if promise_data.is_cancel_requested or _tokens.get(level) is not token:
-                #         # Abort if a new generation has been started
-                #         raise Promise.OperationCanceled()
-                #
-                #     promise_data.progress_change.emit(0.5 + progress * 0.5)
+        with (
+            self._lock,
+            CatchExceptionDialog(
+                "Error initialising the OpenGL resource pack.", suppress=False
+            ),
+        ):
+            level = self._level()
+            if level is None:
+                raise Exception("Level is None")
+            if isinstance(level, DiskLevel):
+                log.debug(f"Loading OpenGL resource pack for level {level.path}")
+            else:
+                log.debug(f"Loading OpenGL resource pack.")
+            resource_pack = self._resource_pack_container.get_resource_pack()
+            # TODO: modify the resource pack library to expose the desired translator
+            translator = get_game_version("java", VersionNumber(2, -1, 0))
 
-                self._resource_pack = rp
-                self.changed.emit()
-                log.debug(f"Loaded OpenGL resource pack for level {level}")
+            rp = OpenGLResourcePack(resource_pack, translator)
+            rp.initialise(progress_manager)
+            # TODO: support canceling
+            # for progress in rp.initialise():
+            #     if promise_data.is_cancel_requested or _tokens.get(level) is not token:
+            #         # Abort if a new generation has been started
+            #         raise Promise.OperationCanceled()
+            #
+            #     promise_data.progress_change.emit(0.5 + progress * 0.5)
 
-        promise_ = Promise(func)
-        old_loader = self._loader
-        if old_loader is not None:
-            old_loader.cancel()
-        self._loader = promise_
-        self.changing.emit(promise_)
-        promise_.start()
+            self._resource_pack = rp
+            self.changed.emit()
+            log.debug(f"Loaded OpenGL resource pack for level {level}")
 
 
 _lock = Lock()
