@@ -13,10 +13,11 @@ from amulet.level.abc import Level
 from amulet.app._promise import Promise
 from amulet.app.exception import CatchExceptionDialog
 
+from amulet.utils.task_manager import ProgressManager
 from amulet.resource_pack.abc import BaseResourcePackManager
 from amulet.resource_pack import load_resource_pack_manager
 from amulet.resource_pack.java.download_resources import (
-    get_java_vanilla_latest_iter,
+    get_java_vanilla_latest,
     get_java_vanilla_fix,
 )
 
@@ -101,27 +102,29 @@ class ResourcePackContainer(QObject):
                             "ResourcePack", "downloading_resource_pack", None
                         )
                     )
-                    try:
-                        it = get_java_vanilla_latest_iter()
-                        while True:
-                            progress = next(it)
-                            promise_data.progress_change.emit(progress * 0.5)
-                            if promise_data.is_cancel_requested():
-                                raise Promise.OperationCanceled()
-                    except StopIteration as e:
-                        vanilla = e.value
+                    progress_manager = ProgressManager()
+                    token = progress_manager.register_progress_callback(
+                        promise_data.progress_change.emit
+                    )
 
-                    self._resource_pack = load_resource_pack_manager(
-                        [vanilla, get_java_vanilla_fix()], load=False
-                    )
-                    promise_data.progress_text_change.emit(
-                        QCoreApplication.translate(
-                            "ResourcePack", "loading_resource_pack", None
+                    try:
+                        download_progress_manager = progress_manager.get_child(0.0, 0.5)
+                        vanilla = get_java_vanilla_latest(download_progress_manager)
+
+                        self._resource_pack = load_resource_pack_manager(
+                            [vanilla, get_java_vanilla_fix()], load=False
                         )
-                    )
-                    for progress in self._resource_pack.reload():
-                        promise_data.progress_change.emit(0.5 + progress * 0.5)
-                    self.changed.emit()
+                        promise_data.progress_text_change.emit(
+                            QCoreApplication.translate(
+                                "ResourcePack", "loading_resource_pack", None
+                            )
+                        )
+                        reload_progress_manager = progress_manager.get_child(0.5, 1.0)
+                        self._resource_pack.reload(reload_progress_manager)
+                        self.changed.emit()
+                    finally:
+                        progress_manager.unregister_progress_callback(token)
+
                     log.debug("Loaded resource pack.")
                     return False
             # TODO: if an exception was raised it won't be loaded.
