@@ -139,7 +139,7 @@ class ResourcePackContainer(QObject):
             self.changed.emit(self._resource_pack)
             return self._resource_pack
 
-    def set_resource_pack(self, resource_pack: BaseResourcePackManager):
+    def set_resource_pack(self, resource_pack: BaseResourcePackManager) -> None:
         """
         Set the resource pack.
         Will emit a signal from changed after setting
