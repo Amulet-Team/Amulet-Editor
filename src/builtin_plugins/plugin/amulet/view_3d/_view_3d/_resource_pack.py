@@ -32,7 +32,6 @@ from ._textureatlas import create_atlas
 
 from amulet.app.invoke import invoke
 from amulet.app.exception import CatchExceptionDialog
-from amulet.app._promise import Promise
 from amulet.app.path import cache_directory
 
 from plugin.amulet.resource_pack._api import get_resource_pack_container
