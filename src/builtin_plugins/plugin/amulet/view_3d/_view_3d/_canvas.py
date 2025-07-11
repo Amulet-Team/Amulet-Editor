@@ -3,7 +3,7 @@ from typing import Any, TypeVar
 import logging
 from math import sin, cos, radians
 
-from PySide6.QtCore import Qt, QPoint, Slot
+from PySide6.QtCore import Qt, QPoint, Slot, QThreadPool
 from PySide6.QtGui import (
     QOpenGLFunctions,
     QOpenGLContext,
@@ -26,6 +26,7 @@ from OpenGL.GL import (
 )
 
 from amulet.app.exception import CatchExceptionDialog
+from amulet.utils.task_manager import ProgressManager
 from plugin.amulet.resource_pack._api import get_resource_pack_container
 
 from plugin.amulet.main_level import get_main_level
@@ -143,8 +144,6 @@ class FirstPersonCanvas(QOpenGLWidget, QOpenGLFunctions):
 
         self._resource_pack_container = get_resource_pack_container(self._level)
         self._gl_resource_pack_container = get_gl_resource_pack_container(self._level)
-        # TODO: connect this to the GUI
-        self._resource_pack_container.get_resource_pack()
         log.debug("FirstPersonCanvas.__init__ end")
 
     def initializeGL(self) -> None:
@@ -175,10 +174,29 @@ class FirstPersonCanvas(QOpenGLWidget, QOpenGLFunctions):
     def camera(self) -> Camera:
         return self._camera
 
+    def _load_resource_pack(self) -> None:
+        # TODO: connect this to the GUI
+        progress_manager = ProgressManager()
+
+        def print_msg(msg: str) -> None:
+            log.info(msg)
+
+        def print_progress(progress: float) -> None:
+            log.info(str(progress))
+
+        progress_text_token = progress_manager.register_progress_text_callback(print_msg)
+        progress_token = progress_manager.register_progress_callback(
+            print_progress
+        )
+        self._gl_resource_pack_container.get_gl_resource_pack(progress_manager)
+        progress_manager.unregister_progress_text_callback(progress_text_token)
+        progress_manager.unregister_progress_callback(progress_token)
+
     def showEvent(self, event: QShowEvent) -> None:
         with CatchExceptionDialog("Error showing canvas."):
             log.debug("FirstPersonCanvas.showEvent start")
             self._gl_data.start()
+            QThreadPool.globalInstance().start(self._load_resource_pack)
             log.debug("FirstPersonCanvas.showEvent end")
 
     def hideEvent(self, event: QHideEvent) -> None:

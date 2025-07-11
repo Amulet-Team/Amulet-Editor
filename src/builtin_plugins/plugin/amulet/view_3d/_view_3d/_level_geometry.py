@@ -201,10 +201,11 @@ class LevelGeometry(QObject):
     _surface: QOffscreenSurface
 
     # Threads
-    # The thread dispatching jobs
-    _manager_thread: None | QThread
     # A condition for the manager thread to wait on.
-    _manager_condition: Condition
+    _lock: RLock
+    _condition: Condition
+    # The thread dispatching jobs
+    _chunk_manager_thread: None | QThread
     # The pool of threads processing the meshes.
     _worker_threads: QThreadPool
 
@@ -228,7 +229,6 @@ class LevelGeometry(QObject):
         self._gl_resource_pack: OpenGLResourcePack | None = None
         self._gl_texture: QOpenGLTexture | None = None
 
-        self._lock = RLock()
         self._dimension = None
         self._camera_chunk = None
         self._chunk_finder = empty_iterator()
@@ -239,15 +239,16 @@ class LevelGeometry(QObject):
         self._surface = QOffscreenSurface()
         self._surface.create()
 
-        self._manager_thread = None
-        self._manager_condition = Condition(self._lock)
+        self._lock = RLock()
+        self._condition = Condition(self._lock)
+        self._chunk_manager_thread = None
 
         self._worker_threads: QThreadPool = QThreadPool()
         self._worker_threads.setThreadPriority(QThread.Priority.IdlePriority)
         self._worker_threads.setMaxThreadCount(MaxThreadCount)
 
         render_settings.render_distance_changed.connect(self._on_render_distance_change)
-        self._gl_resource_pack_holder.changed.connect(self._on_resource_pack_change)
+        self._gl_resource_pack_holder.changed.connect(self._set_resource_pack)
         self._init_chunk_gl_signal.connect(self._init_chunk_gl)
 
     def init_gl(self) -> None:
@@ -338,9 +339,9 @@ class LevelGeometry(QObject):
         Call this on canvas.showEvent
         """
         # Create and start the manager thread.
-        if self._manager_thread is None:
-            self._manager_thread = Thread(self._chunk_thread)
-            self._manager_thread.start(QThread.Priority.IdlePriority)
+        if self._chunk_manager_thread is None:
+            self._chunk_manager_thread = Thread(self._chunk_manager)
+            self._chunk_manager_thread.start(QThread.Priority.IdlePriority)
 
     def stop(self) -> None:
         """
@@ -349,14 +350,14 @@ class LevelGeometry(QObject):
         This must be called by the main thread.
         Call this on canvas.hideEvent
         """
-        if self._manager_thread is not None:
+        if self._chunk_manager_thread is not None:
             # Set the interruption flag.
-            self._manager_thread.requestInterruption()
+            self._chunk_manager_thread.requestInterruption()
             # Wake the manager thread if it is sleeping.
-            self._wake_chunk_thread()
+            self._wake_chunk_manager()
             # Wait for the thread to finish.
-            self._manager_thread.wait()
-            self._manager_thread = None
+            self._chunk_manager_thread.wait()
+            self._chunk_manager_thread = None
 
     def destroy_gl(self) -> None:
         """
@@ -429,8 +430,8 @@ class LevelGeometry(QObject):
         Set the active dimension.
         This must be called by the main thread.
         """
-        if dimension != self._dimension:
-            with self._lock:
+        with self._lock:
+            if dimension != self._dimension:
                 self._dimension = dimension
                 self._clear_chunks()
                 self._reset_chunk_finder()
@@ -441,8 +442,8 @@ class LevelGeometry(QObject):
         This must be called by the main thread.
         """
         location = (cx, cz)
-        if location != self._camera_chunk:
-            with self._lock:
+        with self._lock:
+            if location != self._camera_chunk:
                 self._camera_chunk = location
                 self._clear_far_chunks()
                 self._reset_chunk_finder()
@@ -454,16 +455,18 @@ class LevelGeometry(QObject):
             self._clear_far_chunks()
             self._reset_chunk_finder()
 
-    def _on_resource_pack_change(self, gl_resource_pack: OpenGLResourcePack) -> None:
+    def _set_resource_pack(self, gl_resource_pack: OpenGLResourcePack) -> None:
         with self._lock:
             # Mark all existing chunks as changed
-            gl_data = self._gl_data
-            if gl_data is None:
+            if self._gl_data is None:
+                # This can only run if the opengl state has been initialised
                 return
             self._clear_chunks()
             self._reset_chunk_finder()
             self._gl_resource_pack = gl_resource_pack
             self._gl_texture = self._gl_resource_pack.get_texture()
+            # The chunk manager may be waiting for the resource pack.
+            self._wake_chunk_manager()
 
     def _clear_chunks(self) -> None:
         """
@@ -537,17 +540,17 @@ class LevelGeometry(QObject):
             self._chunk_finder = get_grid_spiral(
                 self._dimension, cx, cz, render_settings.chunk_load_distance
             )
-            self._wake_chunk_thread()
+            self._wake_chunk_manager()
 
-    def _wake_chunk_thread(self) -> None:
+    def _wake_chunk_manager(self) -> None:
         """
         Wake up the chunk thread if it is sleeping.
         Thread safe.
         """
         with self._lock:
-            self._manager_condition.notify()
+            self._condition.notify()
 
-    def _chunk_thread(self) -> None:
+    def _chunk_manager(self) -> None:
         """
         Submit chunks for meshing.
         This must be thread safe.
@@ -561,23 +564,23 @@ class LevelGeometry(QObject):
             with self._lock:
                 while (
                     not QThread.currentThread().isInterruptionRequested()
-                    and not self._gl_resource_pack_holder.loaded
+                    and self._gl_texture is None
                 ):
-                    self._manager_condition.wait()
+                    # Sleep until the resource pack is loaded
+                    self._condition.wait()
 
-            # The number of chunks we have processed.
-            # After MaxThreadCount processed chunks, the finder should be restarted.
-            # This gives a balance between prioritising near chunks and not constantly rebuilding the same chunk.
-            processed_count = 0
-            # Loop until thread interruption is requested.
-            while not QThread.currentThread().isInterruptionRequested():
-                with self._lock:
+                # The number of chunks we have processed.
+                # After MaxThreadCount processed chunks, the finder should be restarted.
+                # This gives a balance between prioritising near chunks and not constantly rebuilding the same chunk.
+                processed_count = 0
+                # Loop until thread interruption is requested.
+                while not QThread.currentThread().isInterruptionRequested():
                     if (
                         self._worker_threads.maxThreadCount()
                         <= self._worker_threads.activeThreadCount()
                     ):
                         # All the threads in the pool are running. Sleep until woken.
-                        self._manager_condition.wait()
+                        self._condition.wait()
                         continue
 
                     # Find the next chunk to process.
@@ -602,7 +605,7 @@ class LevelGeometry(QObject):
 
                     if chunk_key is None:
                         # There are no more chunks to process. Sleep until woken.
-                        self._manager_condition.wait()
+                        self._condition.wait()
                         continue
 
                     # Keep track of which chunks are processing
@@ -648,7 +651,7 @@ class LevelGeometry(QObject):
             # Remove the chunk key from the processing set.
             level_gl_data.processing_chunks.remove(chunk_key)
             # Wake up the manager thread to submit new jobs.
-            self._wake_chunk_thread()
+            self._wake_chunk_manager()
 
     def _chunk_mesher(
         self,

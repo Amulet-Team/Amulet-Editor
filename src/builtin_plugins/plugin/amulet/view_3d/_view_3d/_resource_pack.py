@@ -7,11 +7,12 @@ import glob
 import logging
 from threading import Lock, Condition
 from weakref import WeakKeyDictionary, ref
+import traceback
 
 from PIL import Image
 from PIL.ImageQt import ImageQt
 
-from PySide6.QtCore import QObject, Signal
+from PySide6.QtCore import QObject, Signal, QThreadPool
 from PySide6.QtGui import QImage, QOpenGLContext, QOffscreenSurface
 from PySide6.QtOpenGL import QOpenGLTexture
 
@@ -31,7 +32,7 @@ from amulet.resource_pack.abc import BaseResourcePackManager
 from ._textureatlas import create_atlas
 
 from amulet.app.invoke import invoke
-from amulet.app.exception import CatchExceptionDialog
+from amulet.app.exception import display_exception
 from amulet.app.path import cache_directory
 
 from plugin.amulet.resource_pack._api import get_resource_pack_container
@@ -85,9 +86,9 @@ class OpenGLResourcePack(AbstractOpenGLResourcePack):
                 os.stat(path).st_mtime
                 for pack in self._resource_pack.pack_paths
                 for path in glob.glob(
-                os.path.join(glob.escape(pack), "**", "*.*"),
-                recursive=True,
-            )
+                    os.path.join(glob.escape(pack), "**", "*.*"),
+                    recursive=True,
+                )
             ),
             default=0,
         )
@@ -99,9 +100,7 @@ class OpenGLResourcePack(AbstractOpenGLResourcePack):
             with open(bounds_path) as f:
                 cache_mod_time, bounds = json.load(f)
             if mod_time != cache_mod_time:
-                raise Exception(
-                    "The resource packs have changed since last merging."
-                )
+                raise Exception("The resource packs have changed since last merging.")
             _atlas = QImage(img_path)
         except Exception:
             (
@@ -210,11 +209,6 @@ class OpenGLResourcePackHandle(QObject):
 
         self._resource_pack_container.changed.connect(self._resource_pack_changed)
 
-    @property
-    def loaded(self) -> bool:
-        """Is there a valid resource pack."""
-        return self._gl_resource_pack is not None
-
     def get_gl_resource_pack(
         self,
         progress_manager: AbstractProgressManager = VoidProgressManager(),
@@ -256,12 +250,16 @@ class OpenGLResourcePackHandle(QObject):
                 log.debug(f"Loading OpenGL resource pack for level {level.path}")
             else:
                 log.debug(f"Loading OpenGL resource pack.")
-            resource_pack = self._resource_pack_container.get_resource_pack(progress_manager)
+            resource_pack = self._resource_pack_container.get_resource_pack(
+                progress_manager
+            )
             # TODO: modify the resource pack library to expose the desired translator
             translator = get_game_version("java", VersionNumber(2, -1, 0))
 
             # TODO: support canceling
-            gl_resource_pack = OpenGLResourcePack(resource_pack, translator, progress_manager)
+            gl_resource_pack = OpenGLResourcePack(
+                resource_pack, translator, progress_manager
+            )
         except Exception as e:
             # Loading failed
             display_exception(
