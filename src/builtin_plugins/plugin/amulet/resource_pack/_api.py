@@ -5,7 +5,6 @@ This module manages resource pack objects for each level
 from weakref import WeakKeyDictionary
 from threading import Lock, Condition
 import logging
-from enum import IntEnum
 import traceback
 
 from PySide6.QtCore import QObject, QCoreApplication, Signal
@@ -24,24 +23,15 @@ from amulet.resource_pack.java.download_resources import (
 log = logging.getLogger(__name__)
 
 
-class LoadState(IntEnum):
-    NotLoaded = 0
-    Loading = 1
-    Loaded = 2
-
-
 class ResourcePackContainer(QObject):
     # Emitted when the resource pack has changed.
     changed = Signal(BaseResourcePackManager)
 
     def __init__(self) -> None:
         super().__init__()
-
-        self._lock = Lock()
-        self._condition = Condition(self._lock)
+        self._condition = Condition(Lock())
         self._resource_pack: BaseResourcePackManager | None = None
         self._load_progress_manager: AbstractProgressManager | None = None
-        self._load_state: LoadState = LoadState.NotLoaded
 
     def __del__(self) -> None:
         log.debug("ResourcePackContainer.__del__")
@@ -56,13 +46,9 @@ class ResourcePackContainer(QObject):
         If it is called again before the first call is finished it will block until the first call is finished.
         """
         with self._condition:
-            if self._load_state == LoadState.Loading:
+            if self._load_progress_manager is not None:
                 # The resource pack is being loaded by another call.
                 # Connect the progress managers
-                if self._load_progress_manager is None:
-                    raise RuntimeError(
-                        "_load_progress_manager should not be None here."
-                    )
                 progress_token = self._load_progress_manager.register_progress_callback(
                     progress_manager.update_progress
                 )
@@ -73,7 +59,7 @@ class ResourcePackContainer(QObject):
                 )
 
                 # Wait until the first call completes. Note that it may fail.
-                while self._load_state == LoadState.Loading:
+                while self._load_progress_manager is not None:
                     self._condition.wait()
 
                 self._load_progress_manager.unregister_progress_callback(progress_token)
@@ -81,18 +67,12 @@ class ResourcePackContainer(QObject):
                     progress_text_token
                 )
 
-            # This is intentionally "if" in case the other call we were waiting for failed.
-            if self._load_state == LoadState.Loaded:
-                # The resource pack has already been set/loaded
-                if self._resource_pack is None:
-                    raise RuntimeError("_resource_pack should not be None here.")
-                return self._resource_pack
-            elif self._load_state == LoadState.NotLoaded:
+            if self._resource_pack is None:
                 # The resource pack has not been loaded
-                self._load_state = LoadState.Loading
                 self._load_progress_manager = progress_manager
             else:
-                raise RuntimeError("This should be impossible.")
+                # The resource pack has already been set/loaded
+                return self._resource_pack
 
         try:
             # TODO: support other resource pack formats
@@ -123,7 +103,6 @@ class ResourcePackContainer(QObject):
                 traceback=traceback.format_exc(),
             )
             with self._condition:
-                self._load_state = LoadState.NotLoaded
                 self._load_progress_manager = None
                 self._condition.notify_all()
             # re-raise the exception
@@ -131,13 +110,12 @@ class ResourcePackContainer(QObject):
         else:
             # Loading succeeded
             with self._condition:
-                self._load_state = LoadState.Loaded
                 self._load_progress_manager = None
                 self._resource_pack = resource_pack
                 self._condition.notify_all()
             log.debug("Loaded resource pack.")
-            self.changed.emit(self._resource_pack)
-            return self._resource_pack
+            self.changed.emit(resource_pack)
+            return resource_pack
 
     def set_resource_pack(self, resource_pack: BaseResourcePackManager) -> None:
         """
@@ -153,7 +131,7 @@ class ResourcePackContainer(QObject):
         with self._condition:
             # Wait for loading operations to finish.
             # TODO: add the ability to cancel the loading operation so we don't need to wait for it to finish.
-            while self._load_state == LoadState.Loading:
+            while self._load_progress_manager is not None:
                 self._condition.wait()
             self._resource_pack = resource_pack
         self.changed.emit(self._resource_pack)
