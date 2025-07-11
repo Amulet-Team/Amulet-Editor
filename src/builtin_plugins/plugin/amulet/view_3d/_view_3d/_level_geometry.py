@@ -224,9 +224,9 @@ class LevelGeometry(QObject):
         log.debug("LevelGeometry.__init__ start")
         super().__init__()
         self._level = level
-        self._resource_pack_holder = get_gl_resource_pack_container(level)
-        self._resource_pack: OpenGLResourcePack | None = None
-        self._texture: QOpenGLTexture | None = None
+        self._gl_resource_pack_holder = get_gl_resource_pack_container(level)
+        self._gl_resource_pack: OpenGLResourcePack | None = None
+        self._gl_texture: QOpenGLTexture | None = None
 
         self._lock = RLock()
         self._dimension = None
@@ -247,7 +247,7 @@ class LevelGeometry(QObject):
         self._worker_threads.setMaxThreadCount(MaxThreadCount)
 
         render_settings.render_distance_changed.connect(self._on_render_distance_change)
-        self._resource_pack_holder.changed.connect(self._on_resource_pack_change)
+        self._gl_resource_pack_holder.changed.connect(self._on_resource_pack_change)
         self._init_chunk_gl_signal.connect(self._init_chunk_gl)
 
     def init_gl(self) -> None:
@@ -386,7 +386,7 @@ class LevelGeometry(QObject):
         :param view_matrix: The camera external matrix.
         """
         gl_data = self._gl_data
-        texture = self._texture
+        texture = self._gl_texture
         if gl_data is None or texture is None:
             return
 
@@ -454,7 +454,7 @@ class LevelGeometry(QObject):
             self._clear_far_chunks()
             self._reset_chunk_finder()
 
-    def _on_resource_pack_change(self) -> None:
+    def _on_resource_pack_change(self, gl_resource_pack: OpenGLResourcePack) -> None:
         with self._lock:
             # Mark all existing chunks as changed
             gl_data = self._gl_data
@@ -462,8 +462,8 @@ class LevelGeometry(QObject):
                 return
             self._clear_chunks()
             self._reset_chunk_finder()
-            self._resource_pack = self._resource_pack_holder.resource_pack
-            self._texture = self._resource_pack.get_texture()
+            self._gl_resource_pack = gl_resource_pack
+            self._gl_texture = self._gl_resource_pack.get_texture()
 
     def _clear_chunks(self) -> None:
         """
@@ -561,7 +561,7 @@ class LevelGeometry(QObject):
             with self._lock:
                 while (
                     not QThread.currentThread().isInterruptionRequested()
-                    and not self._resource_pack_holder.loaded
+                    and not self._gl_resource_pack_holder.loaded
                 ):
                     self._manager_condition.wait()
 
@@ -662,7 +662,7 @@ class LevelGeometry(QObject):
         """
         try:
             chunk_state = chunk_data.chunk_state
-            resource_pack = self._resource_pack
+            resource_pack = self._gl_resource_pack
             if resource_pack is None:
                 self._finish_chunk_mesher(level_gl_data, chunk_key)
                 return
