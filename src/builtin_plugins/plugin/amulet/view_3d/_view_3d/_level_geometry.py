@@ -2,7 +2,7 @@ from typing import Any, TypeVar, Callable, TypeAlias
 from collections.abc import Iterator, MutableMapping
 import logging
 from bisect import bisect_left
-from threading import Condition, RLock
+from threading import Lock, RLock, Condition
 import traceback
 import ctypes
 
@@ -41,7 +41,11 @@ from amulet.app.exception import (
 )
 from ._settings import render_settings
 from ._chunk_mesher import mesh_chunk
-from ._resource_pack import OpenGLResourcePack, get_gl_resource_pack_container
+from ._resource_pack import (
+    OpenGLResourcePack,
+    OpenGLResourcePackHandle,
+    get_gl_resource_pack_container,
+)
 from ._chunk_geometry import ChunkData, ChunkGLData
 
 FloatSize = ctypes.sizeof(ctypes.c_float)
@@ -189,22 +193,32 @@ class LevelGeometry(QObject):
     This must exist on the main thread.
     """
 
+    _level: Level
     _dimension: DimensionId | None
     _camera_chunk: tuple[int, int] | None
     _chunk_finder: Iterator[ChunkKey]
 
     # OpenGL attributes
-    _gl_data: LevelGeometryGLData | None
+    _gl_lock: Lock
+    # Constant OpenGL attributes
+    _gl_resource_pack_handle: OpenGLResourcePackHandle
     _surface: QOffscreenSurface
+    # Mutable OpenGL Attributes
+    # _gl_lock must be held when accessing/setting these variables.
+    # The objects must be destroyed by the main thread.
+    # The main thread may hold onto them in local variables.
+    _gl_resource_pack: OpenGLResourcePack | None
+    _gl_texture: QOpenGLTexture | None
+    _gl_data: LevelGeometryGLData | None
 
     # Threads
     # A condition for the manager thread to wait on.
     _lock: RLock
     _condition: Condition
     # The thread dispatching jobs
-    _chunk_manager_thread: None | QThread
+    _manager_thread: None | QThread
     # The pool of threads processing the meshes.
-    _worker_threads: QThreadPool
+    _worker_thread_pool: QThreadPool
 
     # The geometry has changed and needs repainting.
     geometry_changed = Signal()
@@ -225,14 +239,14 @@ class LevelGeometry(QObject):
 
         super().__init__()
         self._level = level
-        self._gl_resource_pack_holder = get_gl_resource_pack_container(level)
-        self._gl_resource_pack: OpenGLResourcePack | None = None
-        self._gl_texture: QOpenGLTexture | None = None
-
         self._dimension = None
         self._camera_chunk = None
         self._chunk_finder = empty_iterator()
 
+        self._gl_lock = Lock()
+        self._gl_resource_pack_handle = get_gl_resource_pack_container(level)
+        self._gl_resource_pack = None
+        self._gl_texture = None
         self._gl_data = None
         # Used to modify the OpenGL data.
         # The owner surface may have been destroyed in some cases.
@@ -241,15 +255,11 @@ class LevelGeometry(QObject):
 
         self._lock = RLock()
         self._condition = Condition(self._lock)
-        self._chunk_manager_thread = None
+        self._manager_thread = None
 
-        self._worker_threads: QThreadPool = QThreadPool()
-        self._worker_threads.setThreadPriority(QThread.Priority.IdlePriority)
-        self._worker_threads.setMaxThreadCount(MaxThreadCount)
-
-        render_settings.render_distance_changed.connect(self._on_render_distance_change)
-        self._gl_resource_pack_holder.changed.connect(self._set_resource_pack)
-        self._init_chunk_gl_signal.connect(self._init_chunk_gl)
+        self._worker_thread_pool: QThreadPool = QThreadPool()
+        self._worker_thread_pool.setThreadPriority(QThread.Priority.IdlePriority)
+        self._worker_thread_pool.setMaxThreadCount(MaxThreadCount)
 
     def init_gl(self) -> None:
         """
@@ -343,10 +353,15 @@ class LevelGeometry(QObject):
         """
         if not QThread.isMainThread():
             raise RuntimeError("LevelGeometry.start must be called from main thread.")
+
+        render_settings.render_distance_changed.connect(self._on_render_distance_change)
+        self._gl_resource_pack_handle.changed.connect(self._set_resource_pack)
+        self._init_chunk_gl_signal.connect(self._init_chunk_gl)
+
         # Create and start the manager thread.
-        if self._chunk_manager_thread is None:
-            self._chunk_manager_thread = Thread(self._chunk_manager)
-            self._chunk_manager_thread.start(QThread.Priority.IdlePriority)
+        if self._manager_thread is None:
+            self._manager_thread = Thread(self._chunk_manager)
+            self._manager_thread.start(QThread.Priority.IdlePriority)
 
     def stop(self) -> None:
         """
@@ -357,14 +372,19 @@ class LevelGeometry(QObject):
         """
         if not QThread.isMainThread():
             raise RuntimeError("LevelGeometry.stop must be called from main thread.")
-        if self._chunk_manager_thread is not None:
+
+        render_settings.render_distance_changed.disconnect(self._on_render_distance_change)
+        self._gl_resource_pack_handle.changed.disconnect(self._set_resource_pack)
+        self._init_chunk_gl_signal.disconnect(self._init_chunk_gl)
+
+        if self._manager_thread is not None:
             # Set the interruption flag.
-            self._chunk_manager_thread.requestInterruption()
+            self._manager_thread.requestInterruption()
             # Wake the manager thread if it is sleeping.
             self._wake_chunk_manager()
             # Wait for the thread to finish.
-            self._chunk_manager_thread.wait()
-            self._chunk_manager_thread = None
+            self._manager_thread.wait()
+            self._manager_thread = None
 
     def destroy_gl(self) -> None:
         """
@@ -373,23 +393,27 @@ class LevelGeometry(QObject):
         This must be called by the context.aboutToBeDestroyed signal.
         """
         if not QThread.isMainThread():
-            raise RuntimeError("LevelGeometry.destroy_gl must be called from main thread.")
+            raise RuntimeError(
+                "LevelGeometry.destroy_gl must be called from main thread."
+            )
         gl_data = self._gl_data
         if gl_data is None:
             raise RuntimeError("gl_data is None.")
         # Cancel all pending chunk meshing jobs.
-        self._worker_threads.clear()
+        self._worker_thread_pool.clear()
         # Wait for running chunk meshing to finish.
-        self._worker_threads.waitForDone()
+        self._worker_thread_pool.waitForDone()
         if not isValid(gl_data.context):
             # The C++ object still exists at this point but the link to the Python object has been broken.
             # We can create a new Python object wrapping the C++ object and use it until it is actually destroyed.
-            gl_data.context = dynamic_cast(wrapInstance(gl_data.context_ptr, QOpenGLContext), QOpenGLContext)
+            gl_data.context = dynamic_cast(
+                wrapInstance(gl_data.context_ptr, QOpenGLContext), QOpenGLContext
+            )
         self._clear_chunks()
         self._gl_data = None
 
     def __del__(self) -> None:
-        log.debug("SharedLevelGeometry.__del__")
+        log.debug("LevelGeometry.__del__")
 
     def paint_gl(self, projection_matrix: QMatrix4x4, view_matrix: QMatrix4x4) -> None:
         """
@@ -399,10 +423,11 @@ class LevelGeometry(QObject):
         :param projection_matrix: The camera internal projection matrix.
         :param view_matrix: The camera external matrix.
         """
-        gl_data = self._gl_data
-        texture = self._gl_texture
-        if gl_data is None or texture is None:
-            return
+        with self._gl_lock:
+            gl_data = self._gl_data
+            texture = self._gl_texture
+            if gl_data is None or texture is None:
+                return
 
         if QOpenGLContext.currentContext() is not gl_data.context:
             raise RuntimeError("Context is different.")
@@ -444,7 +469,9 @@ class LevelGeometry(QObject):
         This must be called by the main thread.
         """
         if not QThread.isMainThread():
-            raise RuntimeError("LevelGeometry.set_dimension must be called from main thread.")
+            raise RuntimeError(
+                "LevelGeometry.set_dimension must be called from main thread."
+            )
         with self._lock:
             if dimension != self._dimension:
                 self._dimension = dimension
@@ -457,7 +484,9 @@ class LevelGeometry(QObject):
         This must be called by the main thread.
         """
         if not QThread.isMainThread():
-            raise RuntimeError("LevelGeometry.set_location must be called from main thread.")
+            raise RuntimeError(
+                "LevelGeometry.set_location must be called from main thread."
+            )
         location = (cx, cz)
         with self._lock:
             if location != self._camera_chunk:
@@ -480,8 +509,9 @@ class LevelGeometry(QObject):
                 return
             self._clear_chunks()
             self._reset_chunk_finder()
-            self._gl_resource_pack = gl_resource_pack
-            self._gl_texture = self._gl_resource_pack.get_texture()
+            with self._gl_lock:
+                self._gl_resource_pack = gl_resource_pack
+                self._gl_texture = self._gl_resource_pack.get_texture()
             # The chunk manager may be waiting for the resource pack.
             self._wake_chunk_manager()
 
@@ -490,13 +520,14 @@ class LevelGeometry(QObject):
         Destroy all chunk data.
         This must be called by the main thread.
         """
-        gl_data = self._gl_data
-        if gl_data is None:
-            return
         if not QThread.isMainThread():
             raise RuntimeError("_clear_chunks can only be called from main thread.")
 
         with self._lock:
+            gl_data = self._gl_data
+            if gl_data is None:
+                return
+
             if not gl_data.context.makeCurrent(self._surface):
                 raise RuntimeError("Could not make context current.")
             # unload the OpenGL data.
@@ -514,20 +545,22 @@ class LevelGeometry(QObject):
         Unload all chunk data outside the unload render distance.
         This must be called by the main thread.
         """
-        gl_data = self._gl_data
-        if gl_data is None:
-            return
         if not QThread.isMainThread():
-            raise RuntimeError("LevelGeometry._clear_far_chunks must be called from main thread.")
-
-        if self._camera_chunk is None:
-            return
-        camera_dimension = self._dimension
-        camera_cx, camera_cz = self._camera_chunk
-
-        unload_distance = render_settings.chunk_unload_distance
-
+            raise RuntimeError(
+                "LevelGeometry._clear_far_chunks must be called from main thread."
+            )
         with self._lock:
+            gl_data = self._gl_data
+            if gl_data is None:
+                return
+
+            if self._camera_chunk is None:
+                return
+            camera_dimension = self._dimension
+            camera_cx, camera_cz = self._camera_chunk
+
+            unload_distance = render_settings.chunk_unload_distance
+
             if not gl_data.context.makeCurrent(self._surface):
                 raise RuntimeError("Could not make context current.")
             # unload the OpenGL data.
@@ -554,14 +587,15 @@ class LevelGeometry(QObject):
             gl_data.context.doneCurrent()
 
     def _reset_chunk_finder(self) -> None:
-        if self._dimension is None or self._camera_chunk is None:
-            self._chunk_finder = empty_iterator()
-        else:
-            cx, cz = self._camera_chunk
-            self._chunk_finder = get_grid_spiral(
-                self._dimension, cx, cz, render_settings.chunk_load_distance
-            )
-            self._wake_chunk_manager()
+        with self._lock:
+            if self._dimension is None or self._camera_chunk is None:
+                self._chunk_finder = empty_iterator()
+            else:
+                cx, cz = self._camera_chunk
+                self._chunk_finder = get_grid_spiral(
+                    self._dimension, cx, cz, render_settings.chunk_load_distance
+                )
+                self._wake_chunk_manager()
 
     def _wake_chunk_manager(self) -> None:
         """
@@ -576,83 +610,84 @@ class LevelGeometry(QObject):
         Submit chunks for meshing.
         This must be thread safe.
         """
-        with CatchExceptionDialog("Error in chunk manager thread.", suppress=False):
+        with (
+            CatchExceptionDialog("Error in chunk manager thread.", suppress=False),
+            self._lock,
+        ):
             gl_data = self._gl_data
             if gl_data is None:
                 raise RuntimeError("gl_data must not be None here.")
 
-            # The resource pack may initially be None. Wait until it is loaded.
-            with self._lock:
-                while (
-                    not QThread.currentThread().isInterruptionRequested()
-                    and self._gl_texture is None
+            while (
+                not QThread.currentThread().isInterruptionRequested()
+                and self._gl_texture is None
+            ):
+                # Sleep until the resource pack is loaded
+                self._condition.wait()
+
+            # The number of chunks we have processed.
+            # After MaxThreadCount processed chunks, the finder should be restarted.
+            # This gives a balance between prioritising near chunks and not constantly rebuilding the same chunk.
+            processed_count = 0
+            # Loop until thread interruption is requested.
+            while not QThread.currentThread().isInterruptionRequested():
+                if (
+                    self._worker_thread_pool.maxThreadCount()
+                    <= self._worker_thread_pool.activeThreadCount()
                 ):
-                    # Sleep until the resource pack is loaded
+                    # All the threads in the pool are running. Sleep until woken.
                     self._condition.wait()
+                    continue
 
-                # The number of chunks we have processed.
-                # After MaxThreadCount processed chunks, the finder should be restarted.
-                # This gives a balance between prioritising near chunks and not constantly rebuilding the same chunk.
-                processed_count = 0
-                # Loop until thread interruption is requested.
-                while not QThread.currentThread().isInterruptionRequested():
-                    if (
-                        self._worker_threads.maxThreadCount()
-                        <= self._worker_threads.activeThreadCount()
-                    ):
-                        # All the threads in the pool are running. Sleep until woken.
-                        self._condition.wait()
-                        continue
-
-                    # Find the next chunk to process.
-                    chunk_key: ChunkKey | None
-                    chunk_data: ChunkData | None = None
-                    while True:
-                        try:
-                            # Find one chunk to mesh.
-                            chunk_key = next(self._chunk_finder)
-                        except StopIteration:
-                            # If no chunk is found
-                            chunk_key = None
+                # Find the next chunk to process.
+                chunk_key: ChunkKey | None
+                chunk_data: ChunkData | None = None
+                while True:
+                    try:
+                        # Find one chunk to mesh.
+                        chunk_key = next(self._chunk_finder)
+                    except StopIteration:
+                        # If no chunk is found
+                        chunk_key = None
+                        break
+                    else:
+                        if chunk_key in gl_data.processing_chunks:
+                            # If the chunk is being meshed then skip.
+                            continue
+                        chunk_data = gl_data.chunks.get(chunk_key)
+                        if chunk_data is None or chunk_data.has_changed():
+                            # has not been generated yet or has changed since it was last generated
                             break
-                        else:
-                            if chunk_key in gl_data.processing_chunks:
-                                # If the chunk is being meshed then skip.
-                                continue
-                            chunk_data = gl_data.chunks.get(chunk_key)
-                            if chunk_data is None or chunk_data.has_changed():
-                                # has not been generated yet or has changed since it was last generated
-                                break
 
-                    if chunk_key is None:
-                        # There are no more chunks to process. Sleep until woken.
-                        self._condition.wait()
-                        continue
+                if chunk_key is None:
+                    # There are no more chunks to process. Sleep until woken.
+                    self._condition.wait()
+                    continue
 
-                    # Keep track of which chunks are processing
-                    gl_data.processing_chunks.add(chunk_key)
-                    # Create the chunk data object if it doesn't exist.
-                    if chunk_data is None:
-                        dimension, cx, cz = chunk_key
-                        transform = QMatrix4x4()
-                        transform.translate(cx * 16, 0, cz * 16)
-                        chunk_handle = self._level.get_dimension(
-                            dimension
-                        ).get_chunk_handle(cx, cz)
-                        chunk_data = ChunkData(
-                            chunk_handle,
-                            transform,
-                        )
-                        chunk_data.changed.connect(self._reset_chunk_finder)
-                        gl_data.chunks[chunk_key] = chunk_data
-                    # Add the chunk meshing job.
-                    self._start_chunk_mesher(chunk_key, gl_data, chunk_data)
+                # Keep track of which chunks are processing
+                gl_data.processing_chunks.add(chunk_key)
+                # Create the chunk data object if it doesn't exist.
+                if chunk_data is None:
+                    dimension, cx, cz = chunk_key
+                    transform = QMatrix4x4()
+                    transform.translate(cx * 16, 0, cz * 16)
+                    chunk_handle = self._level.get_dimension(
+                        dimension
+                    ).get_chunk_handle(cx, cz)
+                    chunk_data = ChunkData(
+                        chunk_handle,
+                        transform,
+                    )
+                    chunk_data.changed.connect(self._reset_chunk_finder)
+                    gl_data.chunks[chunk_key] = chunk_data
+                # Add the chunk meshing job.
+                self._start_chunk_mesher(chunk_key, gl_data, chunk_data)
 
-                    processed_count += 1
-                    if MaxThreadCount <= processed_count:
-                        # Once we have generated MaxThreadCount chunks, recheck the nearer chunks.
-                        processed_count = 0
-                        self._reset_chunk_finder()
+                processed_count += 1
+                if MaxThreadCount <= processed_count:
+                    # Once we have generated MaxThreadCount chunks, recheck the nearer chunks.
+                    processed_count = 0
+                    self._reset_chunk_finder()
 
     def _start_chunk_mesher(
         self,
@@ -661,7 +696,7 @@ class LevelGeometry(QObject):
         chunk_data: ChunkData,
     ) -> None:
         """Needed so that the variables in the lambda don't change."""
-        self._worker_threads.start(
+        self._worker_thread_pool.start(
             lambda: self._chunk_mesher(chunk_key, level_gl_data, chunk_data)
         )
 
