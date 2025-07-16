@@ -70,6 +70,9 @@ class CanvasGlData:
     def __init__(self, render_level: LevelGeometry) -> None:
         self.render_level = render_level
 
+    def __del__(self) -> None:
+        log.debug("CanvasGlData.__del__")
+
     def init_gl(self) -> None:
         log.debug("CanvasGlData.init_gl()")
         self.render_level.init_gl()
