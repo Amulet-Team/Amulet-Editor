@@ -160,8 +160,10 @@ class FirstPersonCanvas(QOpenGLWidget, QOpenGLFunctions):
             # Destroy OpenGL data upon context destruction.
             # This does not work if destroy_gl is connected directly to aboutToBeDestroyed and I don't know why.
             gl_data = self._gl_data
+
             def on_context_destruction() -> None:
                 gl_data.destroy_gl()
+
             self.context().aboutToBeDestroyed.connect(
                 on_context_destruction, Qt.ConnectionType.DirectConnection
             )
@@ -194,10 +196,10 @@ class FirstPersonCanvas(QOpenGLWidget, QOpenGLFunctions):
         def print_progress(progress: float) -> None:
             log.info(str(progress))
 
-        progress_text_token = progress_manager.register_progress_text_callback(print_msg)
-        progress_token = progress_manager.register_progress_callback(
-            print_progress
+        progress_text_token = progress_manager.register_progress_text_callback(
+            print_msg
         )
+        progress_token = progress_manager.register_progress_callback(print_progress)
         self._gl_resource_pack_container.get_gl_resource_pack(progress_manager)
         progress_manager.unregister_progress_text_callback(progress_text_token)
         progress_manager.unregister_progress_callback(progress_token)
