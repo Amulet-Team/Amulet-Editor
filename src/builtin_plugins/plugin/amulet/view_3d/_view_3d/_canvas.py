@@ -71,15 +71,19 @@ class CanvasGlData:
         self.render_level = render_level
 
     def init_gl(self) -> None:
+        log.debug("CanvasGlData.init_gl()")
         self.render_level.init_gl()
 
     def start(self) -> None:
+        log.debug("CanvasGlData.start()")
         self.render_level.start()
 
     def stop(self) -> None:
+        log.debug("CanvasGlData.stop()")
         self.render_level.stop()
 
     def destroy_gl(self) -> None:
+        log.debug("CanvasGlData.destroy_gl()")
         self.render_level.destroy_gl()
 
     def paint_gl(self, projection_matrix: QMatrix4x4, view_matrix: QMatrix4x4) -> None:
