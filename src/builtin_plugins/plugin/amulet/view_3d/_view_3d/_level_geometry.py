@@ -31,6 +31,7 @@ from OpenGL.GL import (
     GL_ONE_MINUS_SRC_ALPHA as _GL_ONE_MINUS_SRC_ALPHA,
 )
 
+from amulet.utils.cast import dynamic_cast
 from amulet.level.abc.dimension import DimensionId
 from amulet.level.abc import Level
 
@@ -50,12 +51,6 @@ log = logging.getLogger(__name__)
 ChunkKey: TypeAlias = tuple[DimensionId, int, int]
 
 T = TypeVar("T")
-
-
-def dynamic_cast(obj: Any, new_type: type[T]) -> T:
-    if not isinstance(obj, new_type):
-        raise TypeError(f"{obj} is not an instance of {new_type}")
-    return obj
 
 
 # This should really be typed better in PyOpenGL
