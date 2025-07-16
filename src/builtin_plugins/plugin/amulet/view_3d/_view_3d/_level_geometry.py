@@ -6,7 +6,7 @@ from threading import Condition, RLock
 import traceback
 import ctypes
 
-from shiboken6 import VoidPtr
+from shiboken6 import VoidPtr, getCppPointer, isValid, wrapInstance
 from PySide6.QtCore import QObject, Signal, QThreadPool, QThread
 from PySide6.QtGui import QMatrix4x4, QOpenGLContext, QOffscreenSurface
 from PySide6.QtOpenGL import (
