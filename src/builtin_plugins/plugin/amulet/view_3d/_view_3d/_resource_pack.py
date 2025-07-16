@@ -147,6 +147,7 @@ class OpenGLResourcePack(AbstractOpenGLResourcePack):
         invoke(init_gl)
 
     def __del__(self) -> None:
+        log.debug("OpenGLResourcePack.__del__")
         if (
             self._context is not None
             and self._surface is not None
