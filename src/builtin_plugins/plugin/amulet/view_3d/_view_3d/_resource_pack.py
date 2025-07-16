@@ -19,7 +19,6 @@ from PySide6.QtOpenGL import QOpenGLTexture
 from amulet.utils.task_manager import (
     AbstractProgressManager,
     VoidProgressManager,
-    ProgressManager,
 )
 from amulet.core.version import VersionNumber
 from amulet.core.block import Block, BlockStack
@@ -44,8 +43,6 @@ log = logging.getLogger(__name__)
 class OpenGLResourcePack(AbstractOpenGLResourcePack):
     """
     This class will take a resource pack and load the textures into a texture atlas.
-    After creating an instance, initialise must be called.
-
     """
 
     _lock = Lock()
