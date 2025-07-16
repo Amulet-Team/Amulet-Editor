@@ -158,8 +158,12 @@ class FirstPersonCanvas(QOpenGLWidget, QOpenGLFunctions):
             log.debug("FirstPersonCanvas.initializeGL start")
 
             # Destroy OpenGL data upon context destruction.
+            # This does not work if destroy_gl is connected directly to aboutToBeDestroyed and I don't know why.
+            gl_data = self._gl_data
+            def on_context_destruction() -> None:
+                gl_data.destroy_gl()
             self.context().aboutToBeDestroyed.connect(
-                self._gl_data.destroy_gl, Qt.ConnectionType.DirectConnection
+                on_context_destruction, Qt.ConnectionType.DirectConnection
             )
 
             # Do the initialisation
