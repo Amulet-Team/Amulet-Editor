@@ -152,6 +152,7 @@ class LevelGeometryGLData:
 
     # Immutable data
     context: QOpenGLContext
+    context_ptr: int
     program: QOpenGLShaderProgram
     matrix_location: int
 
@@ -168,6 +169,7 @@ class LevelGeometryGLData:
         matrix_location: int,
     ):
         self.context = context
+        self.context_ptr = getCppPointer(context)[0]
         self.program = program
         self.matrix_location = matrix_location
         self.chunks = ChunkContainer()
@@ -379,6 +381,10 @@ class LevelGeometry(QObject):
         self._worker_threads.clear()
         # Wait for running chunk meshing to finish.
         self._worker_threads.waitForDone()
+        if not isValid(gl_data.context):
+            # The C++ object still exists at this point but the link to the Python object has been broken.
+            # We can create a new Python object wrapping the C++ object and use it until it is actually destroyed.
+            gl_data.context = dynamic_cast(wrapInstance(gl_data.context_ptr, QOpenGLContext), QOpenGLContext)
         self._clear_chunks()
         self._gl_data = None
 
