@@ -369,7 +369,7 @@ def unload() -> None:
     """
     global _splash_unload_screen
 
-    log.debug("Unloading plugin manager")
+    log.debug("Unloading plugins")
 
     log.debug("Waiting for plugin lock")
     with _plugin_lock:
