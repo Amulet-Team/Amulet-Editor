@@ -223,6 +223,9 @@ class LevelGeometry(QObject):
 
     def __init__(self, level: Level) -> None:
         log.debug("LevelGeometry.__init__ start")
+        if not QThread.isMainThread():
+            raise RuntimeError("LevelGeometry must be constructed by the main thread.")
+
         super().__init__()
         self._level = level
         self._gl_resource_pack_holder = get_gl_resource_pack_container(level)
@@ -258,6 +261,9 @@ class LevelGeometry(QObject):
         This context must be active for all calls that need one.
         """
         log.debug("LevelGeometry.initializeGL start")
+        if not QThread.isMainThread():
+            raise RuntimeError("LevelGeometry.init_gl must be called from main thread.")
+
         context = QOpenGLContext.currentContext()
         # if not QOpenGLContext.areSharing(context, QOpenGLContext.globalShareContext()):
         #     raise RuntimeError(
@@ -338,6 +344,8 @@ class LevelGeometry(QObject):
         This must be called by the main thread.
         Call this on canvas.showEvent
         """
+        if not QThread.isMainThread():
+            raise RuntimeError("LevelGeometry.start must be called from main thread.")
         # Create and start the manager thread.
         if self._chunk_manager_thread is None:
             self._chunk_manager_thread = Thread(self._chunk_manager)
@@ -350,6 +358,8 @@ class LevelGeometry(QObject):
         This must be called by the main thread.
         Call this on canvas.hideEvent
         """
+        if not QThread.isMainThread():
+            raise RuntimeError("LevelGeometry.stop must be called from main thread.")
         if self._chunk_manager_thread is not None:
             # Set the interruption flag.
             self._chunk_manager_thread.requestInterruption()
@@ -365,6 +375,8 @@ class LevelGeometry(QObject):
         This must be called by the main thread.
         This must be called by the context.aboutToBeDestroyed signal.
         """
+        if not QThread.isMainThread():
+            raise RuntimeError("LevelGeometry.destroy_gl must be called from main thread.")
         gl_data = self._gl_data
         if gl_data is None:
             raise RuntimeError("gl_data is None.")
@@ -430,6 +442,8 @@ class LevelGeometry(QObject):
         Set the active dimension.
         This must be called by the main thread.
         """
+        if not QThread.isMainThread():
+            raise RuntimeError("LevelGeometry.set_dimension must be called from main thread.")
         with self._lock:
             if dimension != self._dimension:
                 self._dimension = dimension
@@ -441,6 +455,8 @@ class LevelGeometry(QObject):
         Set the chunk the camera is in.
         This must be called by the main thread.
         """
+        if not QThread.isMainThread():
+            raise RuntimeError("LevelGeometry.set_location must be called from main thread.")
         location = (cx, cz)
         with self._lock:
             if location != self._camera_chunk:
@@ -476,6 +492,8 @@ class LevelGeometry(QObject):
         gl_data = self._gl_data
         if gl_data is None:
             return
+        if not QThread.isMainThread():
+            raise RuntimeError("_clear_chunks can only be called from main thread.")
 
         with self._lock:
             if not gl_data.context.makeCurrent(self._surface):
@@ -498,6 +516,8 @@ class LevelGeometry(QObject):
         gl_data = self._gl_data
         if gl_data is None:
             return
+        if not QThread.isMainThread():
+            raise RuntimeError("LevelGeometry._clear_far_chunks must be called from main thread.")
 
         if self._camera_chunk is None:
             return

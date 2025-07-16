@@ -3,7 +3,7 @@ from typing import Any, TypeVar
 import logging
 from math import sin, cos, radians
 
-from PySide6.QtCore import Qt, QPoint, Slot, QThreadPool
+from PySide6.QtCore import Qt, QPoint, Slot, QThread, QThreadPool
 from PySide6.QtGui import (
     QOpenGLFunctions,
     QOpenGLContext,
@@ -104,6 +104,8 @@ class FirstPersonCanvas(QOpenGLWidget, QOpenGLFunctions):
 
     def __init__(self, parent: QWidget | None = None) -> None:
         log.debug("FirstPersonCanvas.__init__ start")
+        if not QThread.isMainThread():
+            raise RuntimeError("FirstPersonCanvas must be constructed in main thread")
         QOpenGLWidget.__init__(self, parent)
         QOpenGLFunctions.__init__(self)
 
