@@ -300,11 +300,17 @@ class OpenGLResourcePackHandle(QObject):
 
 
 _lock = Lock()
-_level_data: WeakKeyDictionary[Level, OpenGLResourcePackHandle] = WeakKeyDictionary()
+_level_data: WeakKeyDictionary[Level, ref[OpenGLResourcePackHandle]] = WeakKeyDictionary()
 
 
 def get_gl_resource_pack_container(level: Level) -> OpenGLResourcePackHandle:
+    """
+    Get a handle to the OpenGL resource pack for this level.
+    The caller must store a strong reference to this object.
+    """
     with _lock:
-        if level not in _level_data:
-            _level_data[level] = invoke(lambda: OpenGLResourcePackHandle(level))
-        return _level_data[level]
+        handle = _level_data.get(level, lambda: None)()
+        if handle is None:
+            handle = invoke(lambda: OpenGLResourcePackHandle(level))
+            _level_data[level] = ref(handle)
+        return handle
