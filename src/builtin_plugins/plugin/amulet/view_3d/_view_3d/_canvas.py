@@ -119,8 +119,6 @@ class FirstPersonCanvas(QOpenGLWidget, QOpenGLFunctions):
             )
         self._level = level
         self._canvas_gl_data = CanvasGlData(LevelGeometry(self._level))
-        # Repaint every time the geometry changes
-        self._canvas_gl_data.render_level.geometry_changed.connect(self.update)
 
         self._camera = Camera()
         self.camera.transform_changed.connect(self.update)
@@ -210,6 +208,8 @@ class FirstPersonCanvas(QOpenGLWidget, QOpenGLFunctions):
     def showEvent(self, event: QShowEvent) -> None:
         with CatchExceptionDialog("Error showing canvas."):
             log.debug("FirstPersonCanvas.showEvent start")
+            # Repaint every time the geometry changes
+            self._canvas_gl_data.render_level.geometry_changed.connect(self.update)
             self._canvas_gl_data.start()
             QThreadPool.globalInstance().start(self._load_resource_pack)
             log.debug("FirstPersonCanvas.showEvent end")
@@ -217,6 +217,7 @@ class FirstPersonCanvas(QOpenGLWidget, QOpenGLFunctions):
     def hideEvent(self, event: QHideEvent) -> None:
         with CatchExceptionDialog("Error hiding canvas."):
             log.debug("FirstPersonCanvas.hideEvent start")
+            self._canvas_gl_data.render_level.geometry_changed.disconnect(self.update)
             self._canvas_gl_data.stop()
             log.debug("FirstPersonCanvas.hideEvent end")
 
