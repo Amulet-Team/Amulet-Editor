@@ -103,7 +103,7 @@ class FirstPersonCanvas(QOpenGLWidget, QOpenGLFunctions):
     # All the OpenGL data owned by this context must be stored in this instance.
     # This allows the destructor to have access to the data without needing a pointer to self.
     # Having a pointer to self would stop self being garbage collected.
-    _gl_data: CanvasGlData
+    _canvas_gl_data: CanvasGlData
 
     def __init__(self, parent: QWidget | None = None) -> None:
         log.debug("FirstPersonCanvas.__init__ start")
@@ -118,9 +118,9 @@ class FirstPersonCanvas(QOpenGLWidget, QOpenGLFunctions):
                 "FirstPersonCanvas cannot be constructed when a level does not exist."
             )
         self._level = level
-        self._gl_data = CanvasGlData(LevelGeometry(self._level))
+        self._canvas_gl_data = CanvasGlData(LevelGeometry(self._level))
         # Repaint every time the geometry changes
-        self._gl_data.render_level.geometry_changed.connect(self.update)
+        self._canvas_gl_data.render_level.geometry_changed.connect(self.update)
 
         self._camera = Camera()
         self.camera.transform_changed.connect(self.update)
@@ -162,7 +162,7 @@ class FirstPersonCanvas(QOpenGLWidget, QOpenGLFunctions):
 
             # Destroy OpenGL data upon context destruction.
             # This does not work if destroy_gl is connected directly to aboutToBeDestroyed and I don't know why.
-            gl_data = self._gl_data
+            gl_data = self._canvas_gl_data
 
             def on_context_destruction() -> None:
                 gl_data.destroy_gl()
@@ -174,11 +174,11 @@ class FirstPersonCanvas(QOpenGLWidget, QOpenGLFunctions):
             # Do the initialisation
             self.initializeOpenGLFunctions()
             self.glClearColor(*self.background_colour, 1)
-            self._gl_data.init_gl()
+            self._canvas_gl_data.init_gl()
             # TODO: pull this data from somewhere
             # Set the start position after OpenGL has been initialised
             # gl_data.render_level.set_dimension(next(iter(self._level.dimension_ids())))
-            self._gl_data.render_level.set_dimension("minecraft:overworld")
+            self._canvas_gl_data.render_level.set_dimension("minecraft:overworld")
             self.camera.location = Location(0, 0, 0)
             log.debug("FirstPersonCanvas.initializeGL end")
 
@@ -210,14 +210,14 @@ class FirstPersonCanvas(QOpenGLWidget, QOpenGLFunctions):
     def showEvent(self, event: QShowEvent) -> None:
         with CatchExceptionDialog("Error showing canvas."):
             log.debug("FirstPersonCanvas.showEvent start")
-            self._gl_data.start()
+            self._canvas_gl_data.start()
             QThreadPool.globalInstance().start(self._load_resource_pack)
             log.debug("FirstPersonCanvas.showEvent end")
 
     def hideEvent(self, event: QHideEvent) -> None:
         with CatchExceptionDialog("Error hiding canvas."):
             log.debug("FirstPersonCanvas.hideEvent start")
-            self._gl_data.stop()
+            self._canvas_gl_data.stop()
             log.debug("FirstPersonCanvas.hideEvent end")
 
     def paintGL(self) -> None:
@@ -235,7 +235,7 @@ class FirstPersonCanvas(QOpenGLWidget, QOpenGLFunctions):
             self.glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT)
             self.glEnable(GL_DEPTH_TEST)
 
-            self._gl_data.paint_gl(
+            self._canvas_gl_data.paint_gl(
                 self.camera.intrinsic_matrix, self.camera.extrinsic_matrix
             )
 
@@ -279,7 +279,7 @@ class FirstPersonCanvas(QOpenGLWidget, QOpenGLFunctions):
 
     def _on_move(self) -> None:
         x, _, z = self.camera.location
-        self._gl_data.render_level.set_location(int(x // 16), int(z // 16))
+        self._canvas_gl_data.render_level.set_location(int(x // 16), int(z // 16))
 
     def _move_relative(self, angle: int, dt: float) -> None:
         x, y, z = self.camera.location

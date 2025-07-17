@@ -209,7 +209,7 @@ class LevelGeometry(QObject):
     # The main thread may hold onto them in local variables.
     _gl_resource_pack: OpenGLResourcePack | None
     _gl_texture: QOpenGLTexture | None
-    _gl_data: LevelGeometryGLData | None
+    _level_gl_data: LevelGeometryGLData | None
 
     # Threads
     # A condition for the manager thread to wait on.
@@ -247,7 +247,7 @@ class LevelGeometry(QObject):
         self._gl_resource_pack_handle = get_gl_resource_pack_container(level)
         self._gl_resource_pack = None
         self._gl_texture = None
-        self._gl_data = None
+        self._level_gl_data = None
         # Used to modify the OpenGL data.
         # The owner surface may have been destroyed in some cases.
         self._surface = QOffscreenSurface()
@@ -277,7 +277,7 @@ class LevelGeometry(QObject):
         #         "The widget context is not sharing with the global context."
         #     )
 
-        if self._gl_data is not None:
+        if self._level_gl_data is not None:
             raise RuntimeError("gl_data is not None.")
 
         # Initialise the shader
@@ -342,7 +342,7 @@ class LevelGeometry(QObject):
         program.setUniformValue1i(texture_location, 0)
         program.release()
 
-        self._gl_data = LevelGeometryGLData(context, program, matrix_location)
+        self._level_gl_data = LevelGeometryGLData(context, program, matrix_location)
         log.debug("LevelGeometry.initializeGL end")
 
     def start(self) -> None:
@@ -396,7 +396,7 @@ class LevelGeometry(QObject):
             raise RuntimeError(
                 "LevelGeometry.destroy_gl must be called from main thread."
             )
-        gl_data = self._gl_data
+        gl_data = self._level_gl_data
         if gl_data is None:
             raise RuntimeError("gl_data is None.")
         # Cancel all pending chunk meshing jobs.
@@ -410,7 +410,7 @@ class LevelGeometry(QObject):
                 wrapInstance(gl_data.context_ptr, QOpenGLContext), QOpenGLContext
             )
         self._clear_chunks()
-        self._gl_data = None
+        self._level_gl_data = None
 
     def __del__(self) -> None:
         log.debug("LevelGeometry.__del__")
@@ -424,7 +424,7 @@ class LevelGeometry(QObject):
         :param view_matrix: The camera external matrix.
         """
         with self._gl_lock:
-            gl_data = self._gl_data
+            gl_data = self._level_gl_data
             texture = self._gl_texture
             if gl_data is None or texture is None:
                 return
@@ -493,8 +493,8 @@ class LevelGeometry(QObject):
                 self._camera_chunk = location
                 self._clear_far_chunks()
                 self._reset_chunk_finder()
-                if self._gl_data is not None:
-                    self._gl_data.chunks.set_position(cx, cz)
+                if self._level_gl_data is not None:
+                    self._level_gl_data.chunks.set_position(cx, cz)
 
     def _on_render_distance_change(self) -> None:
         with self._lock:
@@ -504,7 +504,7 @@ class LevelGeometry(QObject):
     def _set_resource_pack(self, gl_resource_pack: OpenGLResourcePack) -> None:
         with self._lock:
             # Mark all existing chunks as changed
-            if self._gl_data is None:
+            if self._level_gl_data is None:
                 # This can only run if the opengl state has been initialised
                 return
             self._clear_chunks()
@@ -524,7 +524,7 @@ class LevelGeometry(QObject):
             raise RuntimeError("_clear_chunks can only be called from main thread.")
 
         with self._lock:
-            gl_data = self._gl_data
+            gl_data = self._level_gl_data
             if gl_data is None:
                 return
 
@@ -550,7 +550,7 @@ class LevelGeometry(QObject):
                 "LevelGeometry._clear_far_chunks must be called from main thread."
             )
         with self._lock:
-            gl_data = self._gl_data
+            gl_data = self._level_gl_data
             if gl_data is None:
                 return
 
@@ -614,7 +614,7 @@ class LevelGeometry(QObject):
             CatchExceptionDialog("Error in chunk manager thread.", suppress=False),
             self._lock,
         ):
-            gl_data = self._gl_data
+            gl_data = self._level_gl_data
             if gl_data is None:
                 raise RuntimeError("gl_data must not be None here.")
 
