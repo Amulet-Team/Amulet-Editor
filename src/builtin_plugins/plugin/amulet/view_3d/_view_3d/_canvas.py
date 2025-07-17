@@ -171,7 +171,8 @@ class FirstPersonCanvas(QOpenGLWidget, QOpenGLFunctions):
 
             # Do the initialisation
             self.initializeOpenGLFunctions()
-            self.glClearColor(*self.background_colour, 1)
+            r, g, b = self.background_colour
+            self.glClearColor(r, g, b, 1)
             self._canvas_gl_data.init_gl()
             # TODO: pull this data from somewhere
             # Set the start position after OpenGL has been initialised
