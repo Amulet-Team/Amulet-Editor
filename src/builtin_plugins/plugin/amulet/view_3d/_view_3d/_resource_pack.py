@@ -12,10 +12,12 @@ import traceback
 from PIL import Image
 from PIL.ImageQt import ImageQt
 
-from PySide6.QtCore import QObject, Signal, QThreadPool
+from shiboken6 import getCppPointer, wrapInstance
+from PySide6.QtCore import QObject, Signal, QThreadPool, Qt
 from PySide6.QtGui import QImage, QOpenGLContext, QOffscreenSurface
 from PySide6.QtOpenGL import QOpenGLTexture
 
+from amulet.utils.cast import dynamic_cast
 from amulet.utils.task_manager import (
     AbstractProgressManager,
     VoidProgressManager,
@@ -40,6 +42,22 @@ from ._resource_pack_base import AbstractOpenGLResourcePack
 log = logging.getLogger(__name__)
 
 
+class ResourcePackGLData:
+    # Image on GPU
+    texture: QOpenGLTexture
+    context: QOpenGLContext
+    context_ptr: int
+
+    def __init__(
+        self,
+        texture: QOpenGLTexture,
+        context: QOpenGLContext,
+    ):
+        self.texture = texture
+        self.context = context
+        self.context_ptr = getCppPointer(context)[0]
+
+
 class OpenGLResourcePack(AbstractOpenGLResourcePack):
     """
     This class will take a resource pack and load the textures into a texture atlas.
@@ -50,10 +68,7 @@ class OpenGLResourcePack(AbstractOpenGLResourcePack):
     # The translator to look up the version block
     _game_version: GameVersion
 
-    # Image on GPU
-    _texture: QOpenGLTexture
-    _context: QOpenGLContext
-    _surface: QOffscreenSurface
+    _gl_data: ResourcePackGLData
 
     def __init__(
         self,
@@ -118,43 +133,62 @@ class OpenGLResourcePack(AbstractOpenGLResourcePack):
 
         def init_gl() -> None:
             log.debug("Initialising OpenGL resource pack texture.")
-            self._context = QOpenGLContext()
-            self._context.setShareContext(QOpenGLContext.globalShareContext())
-            self._context.create()
-            self._surface = QOffscreenSurface()
-            self._surface.create()
-            if not self._context.makeCurrent(self._surface):
+            context = QOpenGLContext()
+            context.setShareContext(QOpenGLContext.globalShareContext())
+            context.create()
+            surface = QOffscreenSurface()
+            surface.create()
+            if not context.makeCurrent(surface):
                 raise RuntimeError("Could not make context current.")
 
-            self._texture = QOpenGLTexture(QOpenGLTexture.Target.Target2D)
-            self._texture.setMinificationFilter(QOpenGLTexture.Filter.Nearest)
-            self._texture.setMagnificationFilter(QOpenGLTexture.Filter.Nearest)
-            self._texture.setWrapMode(
+            texture = QOpenGLTexture(QOpenGLTexture.Target.Target2D)
+            texture.setMinificationFilter(QOpenGLTexture.Filter.Nearest)
+            texture.setMagnificationFilter(QOpenGLTexture.Filter.Nearest)
+            texture.setWrapMode(
                 QOpenGLTexture.CoordinateDirection.DirectionS,
                 QOpenGLTexture.WrapMode.ClampToEdge,
             )
-            self._texture.setWrapMode(
+            texture.setWrapMode(
                 QOpenGLTexture.CoordinateDirection.DirectionT,
                 QOpenGLTexture.WrapMode.ClampToEdge,
             )
-            self._texture.setData(_atlas)
-            self._texture.create()
+            texture.setData(_atlas)
+            texture.create()
 
-            self._context.doneCurrent()
+            context.doneCurrent()
+            surface.destroy()
+            self._gl_data = ResourcePackGLData(
+                texture,
+                context,
+            )
             log.debug("Finished initialising OpenGL resource pack texture.")
 
         invoke(init_gl)
 
+        gl_data = self._gl_data
+
+        def destroy_gl() -> None:
+            if not gl_data.texture.isCreated():
+                # Texture was not created or has already been destroyed.
+                return
+            log.debug("Destroying OpenGL resource pack texture.")
+            context = dynamic_cast(
+                wrapInstance(gl_data.context_ptr, QOpenGLContext), QOpenGLContext
+            )
+            surface = QOffscreenSurface()
+            surface.create()
+            if not context.makeCurrent(surface):
+                raise RuntimeError("Could not make context current.")
+            gl_data.texture.destroy()
+            context.doneCurrent()
+            surface.destroy()
+
+        self._gl_data.context.aboutToBeDestroyed.connect(
+            destroy_gl, Qt.ConnectionType.DirectConnection
+        )
+
     def __del__(self) -> None:
         log.debug("OpenGLResourcePack.__del__")
-        if (
-            self._context is not None
-            and self._surface is not None
-            and self._texture is not None
-        ):
-            self._context.makeCurrent(self._surface)
-            self._texture.destroy()
-            self._context.doneCurrent()
 
     def get_texture(self) -> QOpenGLTexture:
         """
@@ -162,7 +196,7 @@ class OpenGLResourcePack(AbstractOpenGLResourcePack):
         The GPU data will be destroyed when the last reference to this instance is released.
         :return: A QOpenGLTexture instance.
         """
-        return self._texture
+        return self._gl_data.texture
 
     def get_texture_path(self, namespace: Optional[str], relative_path: str) -> str:
         """Get the absolute path of the image from the relative components.
@@ -300,7 +334,9 @@ class OpenGLResourcePackHandle(QObject):
 
 
 _lock = Lock()
-_level_data: WeakKeyDictionary[Level, ref[OpenGLResourcePackHandle]] = WeakKeyDictionary()
+_level_data: WeakKeyDictionary[Level, ref[OpenGLResourcePackHandle]] = (
+    WeakKeyDictionary()
+)
 
 
 def get_gl_resource_pack_container(level: Level) -> OpenGLResourcePackHandle:
