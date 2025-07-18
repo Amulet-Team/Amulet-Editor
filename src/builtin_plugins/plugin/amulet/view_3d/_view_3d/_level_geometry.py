@@ -246,6 +246,7 @@ class LevelGeometry(QObject):
     _manager_thread: None | QThread
     # The pool of threads processing the meshes.
     _worker_thread_pool: QThreadPool
+    _worker_count: int
 
     _new_processed_chunks = Signal()
     # The geometry has changed and needs repainting.
@@ -279,6 +280,7 @@ class LevelGeometry(QObject):
         self._worker_thread_pool: QThreadPool = QThreadPool()
         self._worker_thread_pool.setThreadPriority(QThread.Priority.IdlePriority)
         self._worker_thread_pool.setMaxThreadCount(MaxThreadCount)
+        self._worker_count = 0
 
         self._new_processed_chunks.connect(
             self._init_chunks_gl, Qt.ConnectionType.QueuedConnection
@@ -673,10 +675,8 @@ class LevelGeometry(QObject):
             processed_count = 0
             # Loop until thread interruption is requested.
             while not QThread.currentThread().isInterruptionRequested():
-                if (
-                    self._worker_thread_pool.maxThreadCount()
-                    <= self._worker_thread_pool.activeThreadCount()
-                ):
+                if self._worker_thread_pool.maxThreadCount() <= self._worker_count:
+                    log.debug("hit max thread count. Sleeping")
                     # All the threads in the pool are running. Sleep until woken.
                     self._condition.wait()
                     continue
@@ -726,6 +726,8 @@ class LevelGeometry(QObject):
 
                 # Keep track of which chunks are processing
                 chunk_data.processing = True
+                # Increment the worker count
+                self._worker_count += 1
                 # Add the chunk meshing job.
                 self._start_chunk_mesher(chunk_key, gl_data, chunk_data)
 
@@ -795,6 +797,8 @@ class LevelGeometry(QObject):
                 if len(level_gl_data.processed_chunks) == 1:
                     # If it is more than 1 there should be an event pending.
                     self._new_processed_chunks.emit()
+        with self._lock:
+            self._worker_count -= 1
         # Wake up the manager thread to submit new jobs.
         self._wake_chunk_manager()
         log.debug(f"Finished meshing chunk {chunk_key}.")
