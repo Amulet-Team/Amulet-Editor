@@ -3,20 +3,20 @@ This module manages resource pack objects for each level
 """
 
 from weakref import WeakKeyDictionary
-from threading import Lock, RLock
-from typing import Optional
+from threading import Lock, Condition
 import logging
+import traceback
 
 from PySide6.QtCore import QObject, QCoreApplication, Signal
 
 from amulet.level.abc import Level
-from amulet.app._promise import Promise
-from amulet.app.exception import CatchExceptionDialog
+from amulet.app.exception import display_exception
 
+from amulet.utils.task_manager import AbstractProgressManager, VoidProgressManager
 from amulet.resource_pack.abc import BaseResourcePackManager
 from amulet.resource_pack import load_resource_pack_manager
 from amulet.resource_pack.java.download_resources import (
-    get_java_vanilla_latest_iter,
+    get_java_vanilla_latest,
     get_java_vanilla_fix,
 )
 
@@ -24,129 +24,117 @@ log = logging.getLogger(__name__)
 
 
 class ResourcePackContainer(QObject):
-    # Emitted with a promise object when a resource pack change is started.
-    changing = Signal(object)  # Promise[None]
     # Emitted when the resource pack has changed.
-    changed = Signal()
+    changed = Signal(BaseResourcePackManager)
 
     def __init__(self) -> None:
         super().__init__()
-        self._lock = RLock()
-        self._resource_pack: Optional[BaseResourcePackManager] = None
-        self._loader: Optional[Promise[bool]] = None
+        self._condition = Condition(Lock())
+        self._resource_pack: BaseResourcePackManager | None = None
+        self._load_progress_manager: AbstractProgressManager | None = None
 
     def __del__(self) -> None:
         log.debug("ResourcePackContainer.__del__")
 
-    @property
-    def loader(self) -> Optional[Promise[bool]]:
+    def get_resource_pack(
+        self,
+        progress_manager: AbstractProgressManager = VoidProgressManager(),
+    ) -> BaseResourcePackManager:
         """
-        If the resource pack is being loaded this will be a promise.
-        This can be used to update a GUI to show the progress.
-        :return: A Promise instance if a resource pack is being loaded otherwise None.
+        The active resource pack for this level.
+        If the resource pack has not been loaded/set, this will block until it is loaded.
+        If it is called again before the first call is finished it will block until the first call is finished.
         """
-        return self._loader
+        with self._condition:
+            if self._load_progress_manager is not None:
+                # The resource pack is being loaded by another call.
+                # Connect the progress managers
+                progress_token = self._load_progress_manager.register_progress_callback(
+                    progress_manager.update_progress
+                )
+                progress_text_token = (
+                    self._load_progress_manager.register_progress_text_callback(
+                        progress_manager.update_progress_text
+                    )
+                )
 
-    @property
-    def loaded(self) -> bool:
-        """
-        Is there a valid resource pack.
-        :return: True if loaded otherwise False.
-        """
-        return self._resource_pack is not None
+                # Wait until the first call completes. Note that it may fail.
+                while self._load_progress_manager is not None:
+                    self._condition.wait()
 
-    @property
-    def resource_pack(self) -> BaseResourcePackManager:
-        """
-        :return: The active resource pack for this level.
-        :raises RuntimeError: If the resource pack has not been initialised yet.
-        """
-        rp = self._resource_pack
-        if rp is None:
-            raise RuntimeError(
-                "The ResourcePackManager for this level has not been loaded yet."
+                self._load_progress_manager.unregister_progress_callback(progress_token)
+                self._load_progress_manager.unregister_progress_text_callback(
+                    progress_text_token
+                )
+
+            if self._resource_pack is None:
+                # The resource pack has not been loaded
+                self._load_progress_manager = progress_manager
+            else:
+                # The resource pack has already been set/loaded
+                return self._resource_pack
+
+        try:
+            # TODO: support other resource pack formats
+            progress_manager.update_progress_text(
+                QCoreApplication.translate(
+                    "ResourcePack", "downloading_resource_pack", None
+                )
             )
-        return rp
 
-    def init(self) -> None:
+            download_progress_manager = progress_manager.get_child(0.0, 0.5)
+            vanilla = get_java_vanilla_latest(download_progress_manager)
+
+            resource_pack = load_resource_pack_manager(
+                [vanilla, get_java_vanilla_fix()], load=False
+            )
+            progress_manager.update_progress_text(
+                QCoreApplication.translate(
+                    "ResourcePack", "loading_resource_pack", None
+                )
+            )
+            reload_progress_manager = progress_manager.get_child(0.5, 1.0)
+            resource_pack.reload(reload_progress_manager)
+        except Exception as e:
+            # Loading failed
+            display_exception(
+                title="Error initialising the resource pack.",
+                error=str(e),
+                traceback=traceback.format_exc(),
+            )
+            with self._condition:
+                self._load_progress_manager = None
+                self._condition.notify_all()
+            # re-raise the exception
+            raise
+        else:
+            # Loading succeeded
+            with self._condition:
+                self._load_progress_manager = None
+                self._resource_pack = resource_pack
+                self._condition.notify_all()
+            log.debug("Loaded resource pack.")
+            self.changed.emit(resource_pack)
+            return resource_pack
+
+    def set_resource_pack(self, resource_pack: BaseResourcePackManager) -> None:
         """
-        Initialise the default resource pack for this level if one does not already exist.
-        This is completed asynchronously. A promise is emitted from changing.
+        Set the resource pack.
+        Will emit a signal from changed after setting
 
-        >>> def load(level: Level):
-        >>>     container = get_resource_pack_container(level)
-        >>>     promise = container.init(level)
-        >>>     def on_ready():
-        >>>         print("finished")
-        >>>         if promise.get_return():
-        >>>             print("resource pack was already loaded")
-        >>>         else:
-        >>>             print("resource pack has been loaded.")
-        >>>     promise.ready.connect(on_ready)
-        >>>     promise.progress_change.connect(lambda progress: print(progress))
-        >>>     promise.start()
+        :param resource_pack: The resource pack to set.
         """
-
-        def init(promise_data: Promise.Data) -> bool:
-            with (
-                self._lock,
-                CatchExceptionDialog(
-                    "Error initialising the resource pack.", suppress=False
-                ),
-            ):
-                if self._resource_pack is None:
-                    # TODO: support other resource pack formats
-                    promise_data.progress_text_change.emit(
-                        QCoreApplication.translate(
-                            "ResourcePack", "downloading_resource_pack", None
-                        )
-                    )
-                    try:
-                        it = get_java_vanilla_latest_iter()
-                        while True:
-                            progress = next(it)
-                            promise_data.progress_change.emit(progress * 0.5)
-                            if promise_data.is_cancel_requested():
-                                raise Promise.OperationCanceled()
-                    except StopIteration as e:
-                        vanilla = e.value
-
-                    self._resource_pack = load_resource_pack_manager(
-                        [vanilla, get_java_vanilla_fix()], load=False
-                    )
-                    promise_data.progress_text_change.emit(
-                        QCoreApplication.translate(
-                            "ResourcePack", "loading_resource_pack", None
-                        )
-                    )
-                    for progress in self._resource_pack.reload():
-                        promise_data.progress_change.emit(0.5 + progress * 0.5)
-                    self.changed.emit()
-                    log.debug("Loaded resource pack.")
-                    return False
-            # TODO: if an exception was raised it won't be loaded.
-            return True
-
-        promise_ = Promise[bool](init)
-        old_loader = self._loader
-        if old_loader is not None:
-            old_loader.cancel()
-        self._loader = promise_
-        self.changing.emit(promise_)
-        promise_.start()
-
-    # def set_resource_pack(self, resource_pack: BaseResourcePackManager):
-    #     """
-    #     Set the resource pack.
-    #     Will emit a signal from changed after setting
-    #
-    #     :param resource_pack: The resource pack to set.
-    #     """
-    #     if not isinstance(resource_pack, BaseResourcePackManager):
-    #         raise TypeError("resource_pack must be an instance of BaseResourcePackManager")
-    #     with self._lock:
-    #         self._resource_pack = resource_pack
-    #         self.changed.emit()
+        if not isinstance(resource_pack, BaseResourcePackManager):
+            raise TypeError(
+                "resource_pack must be an instance of BaseResourcePackManager"
+            )
+        with self._condition:
+            # Wait for loading operations to finish.
+            # TODO: add the ability to cancel the loading operation so we don't need to wait for it to finish.
+            while self._load_progress_manager is not None:
+                self._condition.wait()
+            self._resource_pack = resource_pack
+        self.changed.emit(self._resource_pack)
 
 
 _lock = Lock()

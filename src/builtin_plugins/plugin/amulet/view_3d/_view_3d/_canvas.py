@@ -3,7 +3,7 @@ from typing import Any, TypeVar
 import logging
 from math import sin, cos, radians
 
-from PySide6.QtCore import Qt, QPoint, Slot
+from PySide6.QtCore import Qt, QPoint, Slot, QThread, QThreadPool
 from PySide6.QtGui import (
     QOpenGLFunctions,
     QOpenGLContext,
@@ -26,6 +26,7 @@ from OpenGL.GL import (
 )
 
 from amulet.app.exception import CatchExceptionDialog
+from amulet.utils.task_manager import ProgressManager
 from plugin.amulet.resource_pack._api import get_resource_pack_container
 
 from plugin.amulet.main_level import get_main_level
@@ -53,8 +54,8 @@ GL_DEPTH_TEST = dynamic_cast(_GL_DEPTH_TEST, IntConstant)
 
 """
 GPU Memory Deallocation
-Context memory must be destroyed when the context is destroyed.
-    self.context().aboutToBeDestroyed.connect(func)
+Context memory must be destroyed before the context is destroyed.
+    self.context().aboutToBeDestroyed.connect(func, Qt.ConnectionType.DirectConnection)
     
 Note that func must be a python function not a method. If it is a method IT WILL NOT BE CALLED.
 I suggest defining a functon in initGL and bind that. Make sure you don't have circular references.
@@ -69,16 +70,23 @@ class CanvasGlData:
     def __init__(self, render_level: LevelGeometry) -> None:
         self.render_level = render_level
 
+    def __del__(self) -> None:
+        log.debug("CanvasGlData.__del__")
+
     def init_gl(self) -> None:
+        log.debug("CanvasGlData.init_gl()")
         self.render_level.init_gl()
 
     def start(self) -> None:
+        log.debug("CanvasGlData.start()")
         self.render_level.start()
 
     def stop(self) -> None:
+        log.debug("CanvasGlData.stop()")
         self.render_level.stop()
 
     def destroy_gl(self) -> None:
+        log.debug("CanvasGlData.destroy_gl()")
         self.render_level.destroy_gl()
 
     def paint_gl(self, projection_matrix: QMatrix4x4, view_matrix: QMatrix4x4) -> None:
@@ -95,10 +103,12 @@ class FirstPersonCanvas(QOpenGLWidget, QOpenGLFunctions):
     # All the OpenGL data owned by this context must be stored in this instance.
     # This allows the destructor to have access to the data without needing a pointer to self.
     # Having a pointer to self would stop self being garbage collected.
-    _gl_data: CanvasGlData
+    _canvas_gl_data: CanvasGlData
 
     def __init__(self, parent: QWidget | None = None) -> None:
         log.debug("FirstPersonCanvas.__init__ start")
+        if not QThread.isMainThread():
+            raise RuntimeError("FirstPersonCanvas must be constructed in main thread")
         QOpenGLWidget.__init__(self, parent)
         QOpenGLFunctions.__init__(self)
 
@@ -108,9 +118,7 @@ class FirstPersonCanvas(QOpenGLWidget, QOpenGLFunctions):
                 "FirstPersonCanvas cannot be constructed when a level does not exist."
             )
         self._level = level
-        self._gl_data = CanvasGlData(LevelGeometry(self._level))
-        # Repaint every time the geometry changes
-        self._gl_data.render_level.geometry_changed.connect(self.update)
+        self._canvas_gl_data = CanvasGlData(LevelGeometry(self._level))
 
         self._camera = Camera()
         self.camera.transform_changed.connect(self.update)
@@ -142,18 +150,7 @@ class FirstPersonCanvas(QOpenGLWidget, QOpenGLFunctions):
         )
 
         self._resource_pack_container = get_resource_pack_container(self._level)
-        self._resource_pack_container.changing.connect(
-            lambda prom: prom.progress_change.connect(
-                lambda prog: print(f"Loading resource pack {prog}")
-            )
-        )
         self._gl_resource_pack_container = get_gl_resource_pack_container(self._level)
-        self._gl_resource_pack_container.changing.connect(
-            lambda prom: prom.progress_change.connect(
-                lambda prog: print(f"Loading GL resource pack {prog}")
-            )
-        )
-        self._resource_pack_container.init()
         log.debug("FirstPersonCanvas.__init__ end")
 
     def initializeGL(self) -> None:
@@ -162,18 +159,25 @@ class FirstPersonCanvas(QOpenGLWidget, QOpenGLFunctions):
             log.debug("FirstPersonCanvas.initializeGL start")
 
             # Destroy OpenGL data upon context destruction.
+            # This does not work if destroy_gl is connected directly to aboutToBeDestroyed and I don't know why.
+            gl_data = self._canvas_gl_data
+
+            def on_context_destruction() -> None:
+                gl_data.destroy_gl()
+
             self.context().aboutToBeDestroyed.connect(
-                self._gl_data.destroy_gl, Qt.ConnectionType.DirectConnection
+                on_context_destruction, Qt.ConnectionType.DirectConnection
             )
 
             # Do the initialisation
             self.initializeOpenGLFunctions()
-            self.glClearColor(*self.background_colour, 1)
-            self._gl_data.init_gl()
+            r, g, b = self.background_colour
+            self.glClearColor(r, g, b, 1)
+            self._canvas_gl_data.init_gl()
             # TODO: pull this data from somewhere
             # Set the start position after OpenGL has been initialised
             # gl_data.render_level.set_dimension(next(iter(self._level.dimension_ids())))
-            self._gl_data.render_level.set_dimension("minecraft:overworld")
+            self._canvas_gl_data.render_level.set_dimension("minecraft:overworld")
             self.camera.location = Location(0, 0, 0)
             log.debug("FirstPersonCanvas.initializeGL end")
 
@@ -184,16 +188,38 @@ class FirstPersonCanvas(QOpenGLWidget, QOpenGLFunctions):
     def camera(self) -> Camera:
         return self._camera
 
+    def _load_resource_pack(self) -> None:
+        # TODO: connect this to the GUI
+        progress_manager = ProgressManager()
+
+        def print_msg(msg: str) -> None:
+            log.info(msg)
+
+        def print_progress(progress: float) -> None:
+            log.info(str(progress))
+
+        progress_text_token = progress_manager.register_progress_text_callback(
+            print_msg
+        )
+        progress_token = progress_manager.register_progress_callback(print_progress)
+        self._gl_resource_pack_container.get_gl_resource_pack(progress_manager)
+        progress_manager.unregister_progress_text_callback(progress_text_token)
+        progress_manager.unregister_progress_callback(progress_token)
+
     def showEvent(self, event: QShowEvent) -> None:
         with CatchExceptionDialog("Error showing canvas."):
             log.debug("FirstPersonCanvas.showEvent start")
-            self._gl_data.start()
+            # Repaint every time the geometry changes
+            self._canvas_gl_data.render_level.geometry_changed.connect(self.update)
+            self._canvas_gl_data.start()
+            QThreadPool.globalInstance().start(self._load_resource_pack)
             log.debug("FirstPersonCanvas.showEvent end")
 
     def hideEvent(self, event: QHideEvent) -> None:
         with CatchExceptionDialog("Error hiding canvas."):
             log.debug("FirstPersonCanvas.hideEvent start")
-            self._gl_data.stop()
+            self._canvas_gl_data.render_level.geometry_changed.disconnect(self.update)
+            self._canvas_gl_data.stop()
             log.debug("FirstPersonCanvas.hideEvent end")
 
     def paintGL(self) -> None:
@@ -211,7 +237,7 @@ class FirstPersonCanvas(QOpenGLWidget, QOpenGLFunctions):
             self.glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT)
             self.glEnable(GL_DEPTH_TEST)
 
-            self._gl_data.paint_gl(
+            self._canvas_gl_data.paint_gl(
                 self.camera.intrinsic_matrix, self.camera.extrinsic_matrix
             )
 
@@ -255,7 +281,7 @@ class FirstPersonCanvas(QOpenGLWidget, QOpenGLFunctions):
 
     def _on_move(self) -> None:
         x, _, z = self.camera.location
-        self._gl_data.render_level.set_location(int(x // 16), int(z // 16))
+        self._canvas_gl_data.render_level.set_location(int(x // 16), int(z // 16))
 
     def _move_relative(self, angle: int, dt: float) -> None:
         x, y, z = self.camera.location

@@ -2,6 +2,7 @@ from __future__ import annotations
 import os
 from typing import Optional
 from contextlib import suppress
+import logging
 
 from PySide6.QtCore import QLocale, QCoreApplication
 
@@ -27,6 +28,8 @@ from plugin.amulet.editor import (
 
 from plugin.amulet.view_3d import __path__ as view_3d_path
 from ._view_3d import View3D
+
+log = logging.getLogger(__name__)
 
 
 # Qt only weekly references this. We must hold a strong reference to stop it getting garbage collected
@@ -85,13 +88,17 @@ def _destroy_editor() -> None:
 
 
 def load_plugin() -> None:
+    log.debug("Loading plugin.amulet.view_3d")
     init_editor.connect(_init_editor)
     destroy_editor.connect(_destroy_editor)
+    log.debug("Loaded plugin.amulet.view_3d")
 
 
 def unload_plugin() -> None:
+    log.debug("Unloading plugin.amulet.view_3d")
     init_editor.disconnect(_init_editor)
     destroy_editor.disconnect(_destroy_editor)
+    log.debug("Unloaded plugin.amulet.view_3d")
 
 
 plugin = PluginV1(load=load_plugin, unload=unload_plugin)

@@ -26,7 +26,7 @@ import logging
 from PIL import Image
 import math
 from collections.abc import Collection
-from amulet.app._promise import Promise
+from amulet.utils.task_manager import AbstractProgressManager, VoidProgressManager
 
 log = logging.getLogger(__name__)
 
@@ -254,66 +254,62 @@ class TextureAtlas(PackRegion):
 
 def create_atlas(
     texture_tuple: Collection[str],
-) -> Promise[tuple[Image.Image, dict[str, tuple[float, float, float, float]]]]:
-    def func(
-        promise_data: Promise.Data,
-    ) -> tuple[Image.Image, dict[str, tuple[float, float, float, float]]]:
-        log.info("Creating texture atlas")
-        # Parse texture names
-        textures = []
-        for texture_index, texture_path in enumerate(texture_tuple):
-            if not texture_index % 100:
-                promise_data.progress_change.emit(
-                    0.5 * texture_index / (len(texture_tuple))
-                )
+    progress_manager: AbstractProgressManager = VoidProgressManager(),
+) -> tuple[Image.Image, dict[str, tuple[float, float, float, float]]]:
+    log.info("Creating texture atlas")
+    # Parse texture names
+    progress_manager_1 = progress_manager.get_child(0.0, 0.5)
+    textures = []
+    for texture_index, texture_path in enumerate(texture_tuple):
+        if not texture_index % 100:
+            progress_manager_1.update_progress(texture_index / len(texture_tuple))
 
-            # Build frame objects
-            frames = [Frame(texture_path)]
+        # Build frame objects
+        frames = [Frame(texture_path)]
 
-            # Add frames to texture object list
-            textures.append(Texture(texture_path, frames))
+        # Add frames to texture object list
+        textures.append(Texture(texture_path, frames))
 
-        # Sort textures by perimeter size in non-increasing order
-        textures = sorted(textures, key=lambda i: i.frames[0].perimeter, reverse=True)
+    # Sort textures by perimeter size in non-increasing order
+    textures = sorted(textures, key=lambda i: i.frames[0].perimeter, reverse=True)
 
-        height = 0
-        width = 0
-        pixels = 0
-        for t in textures:
-            for f in t.frames:
-                height = max(f.height, height)
-                width = max(f.width, width)
-                pixels += f.height * f.width
+    height = 0
+    width = 0
+    pixels = 0
+    for t in textures:
+        for f in t.frames:
+            height = max(f.height, height)
+            width = max(f.width, width)
+            pixels += f.height * f.width
 
-        size = max(height, width, 1 << (math.ceil(pixels**0.5) - 1).bit_length())
+    size = max(height, width, 1 << (math.ceil(pixels**0.5) - 1).bit_length())
 
-        while True:
-            try:
-                # Create the atlas and pack textures in
-                log.info(f"Trying to pack textures into image of size {size}x{size}")
-                atlas = TextureAtlas(size, size)
+    progress_manager_2 = progress_manager.get_child(0.5, 1.0)
+    while True:
+        try:
+            # Create the atlas and pack textures in
+            log.info(f"Trying to pack textures into image of size {size}x{size}")
+            atlas = TextureAtlas(size, size)
 
-                for texture_index, texture in enumerate(textures):
-                    if not texture_index % 30:
-                        promise_data.progress_change.emit(
-                            0.5 + 0.5 * texture_index / len(textures)
-                        )
-                    atlas.pack_texture(texture)
-                break
-            except AtlasTooSmall:
-                log.info(f"Image was too small. Trying with a larger area")
-                size *= 2
+            for texture_index, texture in enumerate(textures):
+                if not texture_index % 30:
+                    progress_manager_2.update_progress(texture_index / len(textures))
+                atlas.pack_texture(texture)
+        except AtlasTooSmall:
+            log.info(f"Image was too small. Trying with a larger area")
+            size *= 2
+        else:
+            log.info(
+                f"Successfully packed textures into an image of size {size}x{size}"
+            )
 
-        log.info(f"Successfully packed textures into an image of size {size}x{size}")
+            texture_atlas = atlas.generate("RGBA")
 
-        texture_atlas = atlas.generate("RGBA")
+            texture_bounds = atlas.to_dict()
+            texture_bounds = {
+                texture_path: texture_bounds[texture_path]
+                for texture_path in texture_tuple
+            }
 
-        texture_bounds = atlas.to_dict()
-        texture_bounds = {
-            texture_path: texture_bounds[texture_path] for texture_path in texture_tuple
-        }
-
-        log.info("Finished creating texture atlas")
-        return texture_atlas, texture_bounds
-
-    return Promise(func)
+            log.info("Finished creating texture atlas")
+            return texture_atlas, texture_bounds
