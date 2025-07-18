@@ -117,6 +117,7 @@ class OpenGLResourcePack(AbstractOpenGLResourcePack):
         ]
 
         def init_gl() -> None:
+            log.debug("Initialising OpenGL resource pack texture.")
             self._context = QOpenGLContext()
             self._context.setShareContext(QOpenGLContext.globalShareContext())
             self._context.create()
@@ -140,6 +141,7 @@ class OpenGLResourcePack(AbstractOpenGLResourcePack):
             self._texture.create()
 
             self._context.doneCurrent()
+            log.debug("Finished initialising OpenGL resource pack texture.")
 
         invoke(init_gl)
 
