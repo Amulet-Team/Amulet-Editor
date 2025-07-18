@@ -190,8 +190,6 @@ class LevelGeometryGLData:
     # Mutable data. All read and writes must be done with the lock.
     # Storage for data related to each chunk.
     chunks: ChunkContainer
-    # The keys of chunks being meshed.
-    processing_chunks: set[ChunkKey]
     # Chunks that have been processed but need initialising in OpenGL.
     processed_chunks: list[ProcessedChunkData]
 
@@ -206,7 +204,6 @@ class LevelGeometryGLData:
         self.program = program
         self.matrix_location = matrix_location
         self.chunks = ChunkContainer()
-        self.processing_chunks = set()
         self.processed_chunks = []
 
     def __del__(self) -> None:
@@ -696,12 +693,15 @@ class LevelGeometry(QObject):
                         chunk_key = None
                         break
                     else:
-                        if chunk_key in gl_data.processing_chunks:
+                        chunk_data = gl_data.chunks.get(chunk_key)
+                        if chunk_data is None:
+                            # has not been generated yet
+                            break
+                        if chunk_data.processing:
                             # Skip if the chunk is being meshed.
                             continue
-                        chunk_data = gl_data.chunks.get(chunk_key)
-                        if chunk_data is None or chunk_data.has_changed():
-                            # has not been generated yet or has changed since it was last generated
+                        if chunk_data.has_changed():
+                            # has changed since it was last generated
                             break
 
                 if chunk_key is None:
@@ -709,8 +709,6 @@ class LevelGeometry(QObject):
                     self._condition.wait()
                     continue
 
-                # Keep track of which chunks are processing
-                gl_data.processing_chunks.add(chunk_key)
                 # Create the chunk data object if it doesn't exist.
                 if chunk_data is None:
                     dimension, cx, cz = chunk_key
@@ -725,6 +723,9 @@ class LevelGeometry(QObject):
                     )
                     chunk_data.changed.connect(self._reset_chunk_finder)
                     gl_data.chunks[chunk_key] = chunk_data
+
+                # Keep track of which chunks are processing
+                chunk_data.processing = True
                 # Add the chunk meshing job.
                 self._start_chunk_mesher(chunk_key, gl_data, chunk_data)
 
@@ -772,7 +773,7 @@ class LevelGeometry(QObject):
         except Exception as e:
             with self._lock:
                 # Remove the chunk key from the processing set.
-                level_gl_data.processing_chunks.remove(chunk_key)
+                chunk_data.processing = False
             display_exception(
                 f"Error meshing chunk {chunk_key}.",
                 error=str(e),
@@ -884,7 +885,7 @@ class LevelGeometry(QObject):
                     log.debug(f"Finished creating OpenGL data for chunk {chunk_key}")
                 finally:
                     # Remove the chunk key from the processing set.
-                    level_gl_data.processing_chunks.remove(chunk_key)
+                    chunk_data.processing = False
             level_gl_data.context.doneCurrent()
             level_gl_data.processed_chunks.clear()
             self._wake_chunk_manager()

@@ -35,7 +35,15 @@ class ChunkData(QObject):
     model_transform: QMatrix4x4
 
     # The OpenGL data.
+    # This will get incremented each time the chunk is changed.
+    chunk_state: int
+    # If chunk and mesh tokens are the same then the mesher does not need to be run.
+    geometry_state: int
+    # None if geometry has not been generated or ChunkGLData if it has.
     geometry: ChunkGLData | None
+
+    # Is this geometry being processed.
+    processing: bool
 
     # Signal emitted when the chunk has changed.
     changed = Signal()
@@ -46,12 +54,12 @@ class ChunkData(QObject):
         self.model_transform = transform
 
         self._lock = RLock()
-        # This will get incremented each time the chunk is changed.
+
         self.chunk_state: int = 0
-        # None if geometry has not been generated or object if it has.
-        # If chunk and mesh tokens are the same then the mesher does not need to be run.
         self.geometry_state: int = -1
         self.geometry = None
+
+        self.processing = False
 
         # Schedule meshing when the chunk changes.
         on_chunk_change = WeakMethod(self.mark_changed)
