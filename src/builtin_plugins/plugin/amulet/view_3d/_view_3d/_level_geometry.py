@@ -873,8 +873,6 @@ class LevelGeometry(QObject):
                         # destroy the old data.
                         old_geometry.vao.destroy()
                         old_geometry.vbo.destroy()
-
-                    changed = True
                 except Exception as e:
                     display_exception(
                         f"Error creating OpenGL data for chunk {chunk_key}.",
