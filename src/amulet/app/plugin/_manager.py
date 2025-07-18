@@ -9,6 +9,7 @@ import os
 from os.path import samefile
 import glob
 import logging
+import gc
 from importlib.util import spec_from_file_location, module_from_spec
 from importlib.metadata import version, packages_distributions
 
@@ -369,6 +370,8 @@ def unload() -> None:
     """
     global _splash_unload_screen
 
+    gc.collect()
+
     log.debug("Unloading plugins")
 
     log.debug("Waiting for plugin lock")
@@ -389,6 +392,8 @@ def unload() -> None:
             time.sleep(sleep_time)
         _splash_unload_screen.close()
         _splash_unload_screen = None
+
+    gc.collect()
 
     log.debug("Finished unloading plugins")
 
