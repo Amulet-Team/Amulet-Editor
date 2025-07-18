@@ -54,8 +54,8 @@ GL_DEPTH_TEST = dynamic_cast(_GL_DEPTH_TEST, IntConstant)
 
 """
 GPU Memory Deallocation
-Context memory must be destroyed when the context is destroyed.
-    self.context().aboutToBeDestroyed.connect(func)
+Context memory must be destroyed before the context is destroyed.
+    self.context().aboutToBeDestroyed.connect(func, Qt.ConnectionType.DirectConnection)
     
 Note that func must be a python function not a method. If it is a method IT WILL NOT BE CALLED.
 I suggest defining a functon in initGL and bind that. Make sure you don't have circular references.
