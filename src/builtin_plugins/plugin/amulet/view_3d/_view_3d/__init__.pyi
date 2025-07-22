@@ -7,7 +7,6 @@ from . import (
     _canvas,
     _chunk_geometry,
     _chunk_mesher,
-    _chunk_mesher_lod0,
     _key_catcher,
     _level_geometry,
     _resource_pack,
