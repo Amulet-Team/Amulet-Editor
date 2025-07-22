@@ -220,7 +220,7 @@ void create_lod0_chunk(
                             float_arr[11] = vert.tint.z * shading;
                             };
                         for (const auto& triangle : part.triangles) {
-                            const auto& bounds = resource_pack.texture_bounds(mesh.textures[triangle.texture_index]);
+                            const auto& bounds = resource_pack.get_texture_bounds(mesh.textures[triangle.texture_index]);
                             add_vert(triangle.vert_index_a, bounds);
                             add_vert(triangle.vert_index_b, bounds);
                             add_vert(triangle.vert_index_c, bounds);

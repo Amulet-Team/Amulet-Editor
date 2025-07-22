@@ -21,15 +21,29 @@ void init_resource_pack_base(py::module m_parent)
 {
     auto m = m_parent.def_submodule("_resource_pack_base");
     py::module::import("amulet.resource_pack");
-    py::class_<Amulet::AbstractOpenGLResourcePack, PyAbstractOpenGLResourcePack>(m, "AbstractOpenGLResourcePack")
-        .def(py::init<>())
-        .def_readwrite("_default_texture_bounds", &Amulet::AbstractOpenGLResourcePack::_default_texture_bounds)
-        .def_readwrite("_texture_bounds", &Amulet::AbstractOpenGLResourcePack::_texture_bounds)
-        .def("texture_bounds", &Amulet::AbstractOpenGLResourcePack::texture_bounds, py::doc("Get the bounding box of a given texture path."))
-        .def("_get_block_model", &Amulet::AbstractOpenGLResourcePack::_get_block_model,
-            py::doc("abstractmethod to load the BlockMesh. Must be implemented by the subclass."))
-        .def("get_block_model", &Amulet::AbstractOpenGLResourcePack::get_block_model,
-            py::doc(
-                "Get the BlockMesh for the given BlockStack.\n"
-                "The Block will be translated to the version format using the previously specified translator."));
+    
+    py::class_<Amulet::AbstractOpenGLResourcePack, PyAbstractOpenGLResourcePack>
+        AbstractOpenGLResourcePack(m, "AbstractOpenGLResourcePack");
+
+    AbstractOpenGLResourcePack.def(py::init<>());
+    AbstractOpenGLResourcePack.def_readwrite(
+        "_default_texture_bounds",
+        &Amulet::AbstractOpenGLResourcePack::_default_texture_bounds);
+    AbstractOpenGLResourcePack.def_readwrite(
+        "_texture_bounds",
+        &Amulet::AbstractOpenGLResourcePack::_texture_bounds);
+    AbstractOpenGLResourcePack.def(
+        "get_texture_bounds",
+        &Amulet::AbstractOpenGLResourcePack::get_texture_bounds,
+        py::doc("Get the bounding box of a given texture path."));
+    AbstractOpenGLResourcePack.def(
+        "_get_block_model",
+        &Amulet::AbstractOpenGLResourcePack::_get_block_model,
+        py::doc("abstractmethod to load the BlockMesh. Must be implemented by the subclass."));
+    AbstractOpenGLResourcePack.def(
+        "get_block_model",
+        &Amulet::AbstractOpenGLResourcePack::get_block_model,
+        py::doc(
+            "Get the BlockMesh for the given BlockStack.\n"
+            "The Block will be translated to the version format using the previously specified translator."));
 }

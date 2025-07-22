@@ -24,7 +24,7 @@ class AbstractOpenGLResourcePack:
         The Block will be translated to the version format using the previously specified translator.
         """
 
-    def texture_bounds(self, arg0: str) -> tuple[float, float, float, float]:
+    def get_texture_bounds(self, arg0: str) -> tuple[float, float, float, float]:
         """
         Get the bounding box of a given texture path.
         """

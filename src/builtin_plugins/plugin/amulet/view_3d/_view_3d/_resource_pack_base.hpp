@@ -24,7 +24,7 @@ public:
     AbstractOpenGLResourcePack() { }
     virtual ~AbstractOpenGLResourcePack() { }
 
-    const std::tuple<float, float, float, float>& texture_bounds(const std::string& texture_path)
+    const std::tuple<float, float, float, float>& get_texture_bounds(const std::string& texture_path)
     {
         const auto& it = _texture_bounds.find(texture_path);
         if (it == _texture_bounds.end()) {
