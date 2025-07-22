@@ -1,9 +1,9 @@
-#include "_chunk_mesher_lod0.hpp"
+#include "_mesh_chunk.hpp"
 
 namespace Amulet {
 
 
-void create_lod0_chunk(
+void mesh_chunk_lod0(
     AbstractOpenGLResourcePack& resource_pack,
     const std::int64_t cx,
     const std::int64_t cz,

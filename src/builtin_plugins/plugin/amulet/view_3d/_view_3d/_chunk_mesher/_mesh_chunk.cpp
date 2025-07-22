@@ -4,8 +4,7 @@
 
 #include <amulet/core/chunk/component/block_component.hpp>
 
-#include "_chunk_mesher.hpp"
-#include "_chunk_mesher_lod0.hpp"
+#include "_mesh_chunk.hpp"
 
 namespace Amulet {
 
@@ -294,7 +293,7 @@ std::pair<std::string, size_t> mesh_chunk(
             auto west = _get_block_component(*dimension, cx - 1, cz);
             std::string opaque_buffer;
             std::string translucent_buffer;
-            create_lod0_chunk(
+            mesh_chunk_lod0(
                 resource_pack,
                 cx,
                 cz,
