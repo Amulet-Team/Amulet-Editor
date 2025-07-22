@@ -28,3 +28,8 @@ class AbstractOpenGLResourcePack:
         """
         Get the bounding box of a given texture path.
         """
+
+    def get_texture_path(self, arg0: str | None, arg1: str) -> str:
+        """
+        Get the absolute path of the image from the relative components.
+        """

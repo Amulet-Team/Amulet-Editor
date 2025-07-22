@@ -6,6 +6,16 @@ namespace py = pybind11;
 class PyAbstractOpenGLResourcePack : public Amulet::AbstractOpenGLResourcePack {
     using Amulet::AbstractOpenGLResourcePack::AbstractOpenGLResourcePack;
 
+    std::string get_texture_path(std::optional<std::string> namespace_, std::string relative_path) override
+    {
+        PYBIND11_OVERRIDE_PURE(
+            std::string, /* Return type */
+            Amulet::AbstractOpenGLResourcePack, /* Parent class */
+            get_texture_path, /* Name of function in C++ (must match Python name) */
+            namespace_, relative_path /* Argument(s) */
+        );
+    }
+
     const Amulet::BlockMesh _get_block_model(const Amulet::BlockStack& block_stack) override
     {
         PYBIND11_OVERRIDE_PURE(
@@ -32,6 +42,10 @@ void init_resource_pack_base(py::module m_parent)
     AbstractOpenGLResourcePack.def_readwrite(
         "_texture_bounds",
         &Amulet::AbstractOpenGLResourcePack::_texture_bounds);
+    AbstractOpenGLResourcePack.def(
+        "get_texture_path",
+        &Amulet::AbstractOpenGLResourcePack::get_texture_path,
+        py::doc("Get the absolute path of the image from the relative components."));
     AbstractOpenGLResourcePack.def(
         "get_texture_bounds",
         &Amulet::AbstractOpenGLResourcePack::get_texture_bounds,

@@ -8,6 +8,7 @@ namespace pyext = Amulet::pybind11_extensions;
 
 void init_resource_pack_base(py::module);
 void init_chunk_mesher(py::module);
+void init_chunk_mesher_lod0(py::module);
 
 void init_module(py::module m)
 {
@@ -16,6 +17,7 @@ void init_module(py::module m)
 
     init_resource_pack_base(m);
     init_chunk_mesher(m);
+    init_chunk_mesher_lod0(m);
 }
 
 PYBIND11_MODULE(_view_3d, m)

@@ -25,7 +25,7 @@
 namespace py = pybind11;
 
 
-void init_chunk_mesher(py::module m_parent)
+void init_chunk_mesher_lod0(py::module m_parent)
 {
 	auto m = m_parent.def_submodule("_chunk_mesher_lod0");
 	py::module::import("amulet.core.palette.block_palette");

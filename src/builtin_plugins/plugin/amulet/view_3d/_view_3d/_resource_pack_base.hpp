@@ -24,6 +24,8 @@ public:
     AbstractOpenGLResourcePack() { }
     virtual ~AbstractOpenGLResourcePack() { }
 
+    virtual std::string get_texture_path(std::optional<std::string> namespace_, std::string relative_path) = 0;
+
     const std::tuple<float, float, float, float>& get_texture_bounds(const std::string& texture_path)
     {
         const auto& it = _texture_bounds.find(texture_path);
