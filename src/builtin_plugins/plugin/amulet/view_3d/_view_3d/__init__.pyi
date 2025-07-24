@@ -6,18 +6,16 @@ from . import (
     _camera,
     _canvas,
     _chunk_geometry,
-    _chunk_mesher,
     _key_catcher,
     _level_geometry,
-    _resource_pack,
-    _resource_pack_base,
     _settings,
-    _textureatlas,
     _view_3d,
     _widget,
+    level,
+    resource_pack,
 )
 
-__all__ = ["View3D", "compiler_config"]
+__all__ = ["View3D", "compiler_config", "level", "resource_pack"]
 
 def _init() -> None: ...
 

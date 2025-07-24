@@ -9,7 +9,7 @@
 #include <amulet/level/abc/dimension.hpp>
 #include <amulet/level/abc/level.hpp>
 
-#include <_view_3d/_resource_pack_base.hpp>
+#include <_view_3d/resource_pack/abc.hpp>
 
 namespace Amulet {
 

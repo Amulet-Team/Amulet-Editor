@@ -45,8 +45,8 @@ from amulet.app.exception import (
     display_exception,
 )
 from ._settings import render_settings
-from ._chunk_mesher import mesh_chunk
-from ._resource_pack import (
+from .level import mesh_chunk
+from .resource_pack import (
     OpenGLResourcePack,
     OpenGLResourcePackHandle,
     get_gl_resource_pack_container,

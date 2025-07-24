@@ -4,7 +4,7 @@
 
 #include <amulet/core/chunk/component/block_component.hpp>
 
-#include "_mesh_chunk.hpp"
+#include "mesh_chunk.hpp"
 
 namespace Amulet {
 

@@ -5,7 +5,7 @@ from PySide6.QtGui import QMatrix4x4
 from PySide6.QtOpenGL import QOpenGLBuffer, QOpenGLTexture, QOpenGLVertexArrayObject
 
 from amulet.level.abc import ChunkHandle
-from ._resource_pack import OpenGLResourcePack
+from .resource_pack import OpenGLResourcePack
 
 
 class ChunkGLData:

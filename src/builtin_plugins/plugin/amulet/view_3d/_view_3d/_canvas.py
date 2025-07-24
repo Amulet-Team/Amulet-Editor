@@ -34,7 +34,7 @@ from plugin.amulet.main_level import get_main_level
 from ._camera import Camera, Location, Rotation
 from ._key_catcher import KeySrc, KeyCatcher
 from ._level_geometry import LevelGeometry
-from ._resource_pack import get_gl_resource_pack_container
+from .resource_pack import get_gl_resource_pack_container
 
 log = logging.getLogger(__name__)
 

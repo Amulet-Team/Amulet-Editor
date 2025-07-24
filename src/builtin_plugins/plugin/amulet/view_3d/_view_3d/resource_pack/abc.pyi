@@ -1,13 +1,14 @@
 from __future__ import annotations
 
+import collections.abc
+import typing
+
 import amulet.core.block
 import amulet.resource_pack.mesh.block
 
 __all__ = ["AbstractOpenGLResourcePack"]
 
 class AbstractOpenGLResourcePack:
-    _default_texture_bounds: tuple[float, float, float, float]
-    _texture_bounds: dict[str, tuple[float, float, float, float]]
     def __init__(self) -> None: ...
     def _get_block_model(
         self, arg0: amulet.core.block.BlockStack
@@ -33,3 +34,31 @@ class AbstractOpenGLResourcePack:
         """
         Get the absolute path of the image from the relative components.
         """
+
+    @property
+    def _default_texture_bounds(self) -> tuple[float, float, float, float]: ...
+    @_default_texture_bounds.setter
+    def _default_texture_bounds(
+        self,
+        arg0: tuple[
+            typing.SupportsFloat,
+            typing.SupportsFloat,
+            typing.SupportsFloat,
+            typing.SupportsFloat,
+        ],
+    ) -> None: ...
+    @property
+    def _texture_bounds(self) -> dict[str, tuple[float, float, float, float]]: ...
+    @_texture_bounds.setter
+    def _texture_bounds(
+        self,
+        arg0: collections.abc.Mapping[
+            str,
+            tuple[
+                typing.SupportsFloat,
+                typing.SupportsFloat,
+                typing.SupportsFloat,
+                typing.SupportsFloat,
+            ],
+        ],
+    ) -> None: ...

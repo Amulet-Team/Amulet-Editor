@@ -6,14 +6,18 @@
 
 #include <amulet/pybind11_extensions/py_module.hpp>
 
-#include "_mesh_chunk.hpp"
+#include <amulet/level/abc/level.hpp>
+#include <amulet/level/abc/dimension.hpp>
+
+#include <_view_3d/level/mesh_chunk.hpp>
+#include <_view_3d/resource_pack/abc.hpp>
 
 namespace py = pybind11;
 namespace pyext = Amulet::pybind11_extensions;
 
-void init_chunk_mesher(py::module m_parent)
+void init_view_3d_level(py::module m_parent)
 {
-    auto m = pyext::def_subpackage(m_parent, "_chunk_mesher");
+    auto m = pyext::def_subpackage(m_parent, "level");
     m.def(
         "mesh_chunk",
         [](

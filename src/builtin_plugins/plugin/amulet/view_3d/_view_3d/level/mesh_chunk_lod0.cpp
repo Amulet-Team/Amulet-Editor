@@ -1,4 +1,4 @@
-#include "_mesh_chunk.hpp"
+#include "mesh_chunk.hpp"
 
 namespace Amulet {
 
