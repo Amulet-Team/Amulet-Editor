@@ -6,10 +6,10 @@
 
 namespace Amulet {
 
-SpiralChunkFinder::SpiralChunkFinder(DimensionId dimension, int cx, int cz, int max_radius)
-    : _dimension(dimension)
-    , _cx(cx)
-    , _cz(cz)
+ChunkFinder::ChunkFinder(DimensionId dimension, int cx, int cz, int max_radius)
+    : dimension(dimension)
+    , cx(cx)
+    , cz(cz)
     , _max_radius(max_radius)
     , _max_steps(0)
     , _steps(0)
@@ -17,54 +17,54 @@ SpiralChunkFinder::SpiralChunkFinder(DimensionId dimension, int cx, int cz, int 
 {
 }
 
-std::optional<std::tuple<DimensionId, int, int>> SpiralChunkFinder::next()
+std::optional<std::tuple<DimensionId, int, int>> ChunkFinder::next()
 {
     if ((_max_radius * 2) < _max_steps) {
         return std::nullopt;
     }
 
-    std::tuple<DimensionId, int, int> result = { _dimension, _cx, _cz };
+    std::tuple<DimensionId, int, int> result = { dimension, cx, cz };
 
     switch (_axis) {
     case Axis::North:
 
         if (_steps == 0) {
             _axis = Axis::East;
-            _cz--;
+            cz--;
             _max_steps += 2;
             _steps = _max_steps - 1;
         } else {
-            _cz--;
+            cz--;
             _steps--;
         }
         break;
     case Axis::East:
         if (_steps == 0) {
             _axis = Axis::South;
-            _cz++;
+            cz++;
             _steps = _max_steps - 1;
         } else {
-            _cx++;
+            cx++;
             _steps--;
         }
         break;
     case Axis::South:
         if (_steps == 0) {
             _axis = Axis::West;
-            _cx--;
+            cx--;
             _steps = _max_steps - 1;
         } else {
-            _cz++;
+            cz++;
             _steps--;
         }
         break;
     case Axis::West:
         if (_steps == 0) {
             _axis = Axis::North;
-            _cz--;
+            cz--;
             _steps = _max_steps - 1;
         } else {
-            _cx--;
+            cx--;
             _steps--;
         }
         break;

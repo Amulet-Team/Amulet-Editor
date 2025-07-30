@@ -10,11 +10,14 @@ namespace Amulet {
 
 class ChunkFinder {
 public:
-    ~ChunkFinder() = default;
-    virtual std::optional<std::tuple<DimensionId, int, int>> next() = 0;
-};
+    DimensionId dimension;
+    std::int64_t cx;
+    std::int64_t cz;
 
-class SpiralChunkFinder : public ChunkFinder {
+    ChunkFinder(DimensionId dimension, int cx, int cz, int max_radius);
+
+    std::optional<std::tuple<DimensionId, int, int>> next();
+
 private:
     enum class Axis {
         East = 0,
@@ -23,18 +26,10 @@ private:
         North = 3
     };
 
-    DimensionId _dimension;
-    std::int64_t _cx;
-    std::int64_t _cz;
     std::int64_t _max_radius; // The maximum radius to generate to
     std::int64_t _max_steps; // Double the radius of the current step
     std::int64_t _steps; // The remaining steps before turning
     Axis _axis; // The axis we are moving in
-
-public:
-    SpiralChunkFinder(DimensionId dimension, int cx, int cz, int max_radius);
-
-    std::optional<std::tuple<DimensionId, int, int>> next() override;
 };
 
 } // namespace Amulet
