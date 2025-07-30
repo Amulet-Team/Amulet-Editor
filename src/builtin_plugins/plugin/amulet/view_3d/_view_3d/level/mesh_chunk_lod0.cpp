@@ -7,10 +7,23 @@ void mesh_chunk_lod0(
     AbstractOpenGLResourcePack& resource_pack,
     const std::int64_t cx,
     const std::int64_t cz,
-    const ChunkData& all_chunk_data,
+    const Amulet::BlockComponentData& self_block_data,
+    const Amulet::BlockComponentData* const north_block_data,
+    const Amulet::BlockComponentData* const east_block_data,
+    const Amulet::BlockComponentData* const south_block_data,
+    const Amulet::BlockComponentData* const west_block_data,
     std::string& opaque_buffer,
     std::string& translucent_buffer)
 {
+    // Borrowed pointers to the block data.
+    std::array<const Amulet::BlockComponentData* const, 5> all_chunk_data = {
+        north_block_data,
+        west_block_data,
+        &self_block_data,
+        east_block_data,
+        south_block_data
+    };
+
     // Borrowed pointers to the mesh object or nullptr if not initialised.
     std::array<std::vector<const BlockMesh*>, 5> all_block_meshes;
 

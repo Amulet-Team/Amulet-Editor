@@ -13,15 +13,15 @@
 
 namespace Amulet {
 
-// North (0, -1), West (-1, 0), Self (0, 0), East (1, 0), South (0, 1)
-// Self pointer must not be nullptr. All others may be nullptr.
-using ChunkData = std::array<const Amulet::BlockComponentData* const, 5>;
-
 void mesh_chunk_lod0(
     AbstractOpenGLResourcePack& resource_pack,
     const std::int64_t cx,
     const std::int64_t cz,
-    const ChunkData& all_chunk_data,
+    const Amulet::BlockComponentData& self_block_data,
+    const Amulet::BlockComponentData* const north_block_data,
+    const Amulet::BlockComponentData* const east_block_data,
+    const Amulet::BlockComponentData* const south_block_data,
+    const Amulet::BlockComponentData* const west_block_data,
     std::string& opaque_buffer,
     std::string& translucent_buffer);
 

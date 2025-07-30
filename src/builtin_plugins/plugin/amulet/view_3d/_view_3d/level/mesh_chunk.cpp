@@ -297,7 +297,11 @@ std::pair<std::string, size_t> mesh_chunk(
                 resource_pack,
                 cx,
                 cz,
-                { north.get(), west.get(), self.get(), east.get(), south.get() },
+                *self,
+                north.get(), 
+                east.get(), 
+                south.get(),
+                west.get(), 
                 opaque_buffer,
                 translucent_buffer);
             buffer = opaque_buffer + translucent_buffer;
