@@ -15,13 +15,15 @@ LevelGeometry::LevelGeometry(std::shared_ptr<Level> level)
 
 LevelGeometry::~LevelGeometry()
 {
+    LevelGeometryImp* impl = _impl;
+
     // Delete later without inheriting QObject
     QTimer* timer = new QTimer();
     timer->moveToThread(QCoreApplication::instance()->thread());
     timer->setSingleShot(true);
-    QObject::connect(timer, &QTimer::timeout, [this, timer]() {
+    QObject::connect(timer, &QTimer::timeout, [impl, timer]() {
         // main thread
-        delete this;
+        delete impl;
         timer->deleteLater();
     });
     QMetaObject::invokeMethod(timer, "start", Qt::QueuedConnection, Q_ARG(int, 0));
