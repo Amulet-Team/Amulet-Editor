@@ -6,6 +6,8 @@
 #include <tuple>
 #include <unordered_map>
 
+#include <QOpenGLTexture>
+
 #include <amulet/core/block/block.hpp>
 
 #include <amulet/resource_pack/mesh/block/block_mesh.hpp>
@@ -53,6 +55,12 @@ public:
             return it2->second;
         }
         return _block_models.emplace(block_stack, _get_block_model(block_stack)).first->second;
+    }
+
+    virtual size_t _get_texture_ptr() = 0;
+
+    QOpenGLTexture* get_texture_ptr() {
+        return (QOpenGLTexture*)(_get_texture_ptr());
     }
 };
 

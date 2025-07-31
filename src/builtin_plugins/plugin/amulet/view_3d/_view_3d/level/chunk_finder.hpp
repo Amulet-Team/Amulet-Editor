@@ -14,9 +14,9 @@ public:
     std::int64_t cx;
     std::int64_t cz;
 
-    ChunkFinder(DimensionId dimension, int cx, int cz, int max_radius);
+    ChunkFinder(DimensionId dimension, std::int64_t cx, std::int64_t cz, std::int64_t max_radius);
 
-    std::optional<std::tuple<DimensionId, int, int>> next();
+    std::optional<std::tuple<DimensionId, std::int64_t, std::int64_t>> next();
 
 private:
     enum class Axis {

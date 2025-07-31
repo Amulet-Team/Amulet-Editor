@@ -6,7 +6,7 @@
 
 namespace Amulet {
 
-ChunkFinder::ChunkFinder(DimensionId dimension, int cx, int cz, int max_radius)
+ChunkFinder::ChunkFinder(DimensionId dimension, std::int64_t cx, std::int64_t cz, std::int64_t max_radius)
     : dimension(dimension)
     , cx(cx)
     , cz(cz)
@@ -17,13 +17,13 @@ ChunkFinder::ChunkFinder(DimensionId dimension, int cx, int cz, int max_radius)
 {
 }
 
-std::optional<std::tuple<DimensionId, int, int>> ChunkFinder::next()
+std::optional<std::tuple<DimensionId, std::int64_t, std::int64_t>> ChunkFinder::next()
 {
     if ((_max_radius * 2) < _max_steps) {
         return std::nullopt;
     }
 
-    std::tuple<DimensionId, int, int> result = { dimension, cx, cz };
+    std::tuple<DimensionId, std::int64_t, std::int64_t> result = { dimension, cx, cz };
 
     switch (_axis) {
     case Axis::North:

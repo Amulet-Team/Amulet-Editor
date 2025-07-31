@@ -5,9 +5,7 @@ from plugin.amulet.view_3d._view_3d._widget import View3D
 from . import (
     _camera,
     _canvas,
-    _chunk_geometry,
     _key_catcher,
-    _level_geometry,
     _settings,
     _view_3d,
     _widget,

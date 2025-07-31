@@ -198,6 +198,9 @@ class OpenGLResourcePack(AbstractOpenGLResourcePack):
         """
         return self._gl_data.texture
 
+    def _get_texture_ptr(self) -> int:
+        return getCppPointer(self.get_texture())[0]
+
     def get_texture_path(self, namespace: Optional[str], relative_path: str) -> str:
         """Get the absolute path of the image from the relative components.
         Useful for getting the id of textures for hard coded textures not connected to a resource pack.

@@ -30,6 +30,15 @@ class PyAbstractOpenGLResourcePack : public Amulet::AbstractOpenGLResourcePack, 
             block_stack /* Argument(s) */
         );
     }
+
+    size_t _get_texture_ptr() override
+    {
+        PYBIND11_OVERRIDE_PURE(
+            size_t, /* Return type */
+            Amulet::AbstractOpenGLResourcePack, /* Parent class */
+            _get_texture_ptr, /* Name of function in C++ (must match Python name) */
+        );
+    }
 };
 
 static void init_abc(py::module m_parent)
@@ -66,6 +75,9 @@ static void init_abc(py::module m_parent)
         py::doc(
             "Get the BlockMesh for the given BlockStack.\n"
             "The Block will be translated to the version format using the previously specified translator."));
+    AbstractOpenGLResourcePack.def(
+        "_get_texture_ptr",
+        &Amulet::AbstractOpenGLResourcePack::_get_texture_ptr);
 }
 
 void init_resource_pack_base(py::module m_parent)

@@ -17,6 +17,7 @@ class AbstractOpenGLResourcePack:
         abstractmethod to load the BlockMesh. Must be implemented by the subclass.
         """
 
+    def _get_texture_ptr(self) -> int: ...
     def get_block_model(
         self, arg0: amulet.core.block.BlockStack
     ) -> amulet.resource_pack.mesh.block.BlockMesh:

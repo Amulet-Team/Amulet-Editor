@@ -1,5 +1,5 @@
 from __future__ import annotations
-from typing import Any, TypeVar
+from typing import Any, TypeVar, SupportsFloat
 import logging
 from math import sin, cos, radians
 
@@ -27,14 +27,24 @@ from OpenGL.GL import (
 
 from amulet.app.exception import CatchExceptionDialog
 from amulet.utils.task_manager import ProgressManager
+from amulet.utils.event import EventToken
+from amulet.level.abc.level import Level
+
 from plugin.amulet.resource_pack._api import get_resource_pack_container
 
 from plugin.amulet.main_level import get_main_level
 
+from ._settings import render_settings
 from ._camera import Camera, Location, Rotation
 from ._key_catcher import KeySrc, KeyCatcher
-from ._level_geometry import LevelGeometry
-from .resource_pack import get_gl_resource_pack_container
+
+# from ._level_geometry import LevelGeometry
+from .level.level_geometry import LevelGeometry
+from .resource_pack import (
+    get_gl_resource_pack_container,
+    OpenGLResourcePackHandle,
+    OpenGLResourcePack,
+)
 
 log = logging.getLogger(__name__)
 
@@ -66,24 +76,31 @@ class CanvasGlData:
     """A container for all canvas OpenGL data."""
 
     render_level: LevelGeometry
+    _gl_resource_pack_handle: OpenGLResourcePackHandle
 
-    def __init__(self, render_level: LevelGeometry) -> None:
-        self.render_level = render_level
+    def __init__(self, level: Level) -> None:
+        self.render_level = LevelGeometry(level)
+        self._gl_resource_pack_handle = get_gl_resource_pack_container(level)
 
     def __del__(self) -> None:
         log.debug("CanvasGlData.__del__")
+
+    def _set_resource_pack(self, resource_pack: OpenGLResourcePack) -> None:
+        self.render_level.set_resource_pack(resource_pack)
 
     def init_gl(self) -> None:
         log.debug("CanvasGlData.init_gl()")
         self.render_level.init_gl()
 
-    def start(self) -> None:
-        log.debug("CanvasGlData.start()")
-        self.render_level.start()
+    def wake(self) -> None:
+        log.debug("CanvasGlData.wake()")
+        # This breaks if it is bound directly to the pyside method
+        self._gl_resource_pack_handle.changed.connect(self._set_resource_pack)
+        self.render_level.wake()
 
-    def stop(self) -> None:
-        log.debug("CanvasGlData.stop()")
-        self.render_level.stop()
+    def sleep(self) -> None:
+        log.debug("CanvasGlData.sleep()")
+        self.render_level.sleep()
 
     def destroy_gl(self) -> None:
         log.debug("CanvasGlData.destroy_gl()")
@@ -118,7 +135,7 @@ class FirstPersonCanvas(QOpenGLWidget, QOpenGLFunctions):
                 "FirstPersonCanvas cannot be constructed when a level does not exist."
             )
         self._level = level
-        self._canvas_gl_data = CanvasGlData(LevelGeometry(self._level))
+        self._canvas_gl_data = CanvasGlData(self._level)
 
         self._camera = Camera()
         self.camera.transform_changed.connect(self.update)
@@ -127,6 +144,8 @@ class FirstPersonCanvas(QOpenGLWidget, QOpenGLFunctions):
         self._mouse_captured = False
 
         self._speed = 1.0
+
+        self._changed_token: EventToken[()] | None = None
 
         self._key_catcher = KeyCatcher()
         self.installEventFilter(self._key_catcher)
@@ -195,7 +214,7 @@ class FirstPersonCanvas(QOpenGLWidget, QOpenGLFunctions):
         def print_msg(msg: str) -> None:
             log.info(msg)
 
-        def print_progress(progress: float) -> None:
+        def print_progress(progress: SupportsFloat) -> None:
             log.info(str(progress))
 
         progress_text_token = progress_manager.register_progress_text_callback(
@@ -209,17 +228,31 @@ class FirstPersonCanvas(QOpenGLWidget, QOpenGLFunctions):
     def showEvent(self, event: QShowEvent) -> None:
         with CatchExceptionDialog("Error showing canvas."):
             log.debug("FirstPersonCanvas.showEvent start")
+
+            # Set attributes. These may have changed while we were sleeping.
+            self._canvas_gl_data.render_level.set_render_distance(
+                render_settings.chunk_load_distance,
+                render_settings.chunk_unload_distance,
+            )
+
             # Repaint every time the geometry changes
-            self._canvas_gl_data.render_level.geometry_changed.connect(self.update)
-            self._canvas_gl_data.start()
+            self._changed_token = (
+                self._canvas_gl_data.render_level.geometry_changed.connect(self.update)
+            )
+
+            self._canvas_gl_data.wake()
             QThreadPool.globalInstance().start(self._load_resource_pack)
             log.debug("FirstPersonCanvas.showEvent end")
 
     def hideEvent(self, event: QHideEvent) -> None:
         with CatchExceptionDialog("Error hiding canvas."):
             log.debug("FirstPersonCanvas.hideEvent start")
-            self._canvas_gl_data.render_level.geometry_changed.disconnect(self.update)
-            self._canvas_gl_data.stop()
+
+            # Disconnect from the geometry changed event
+            self._canvas_gl_data.render_level.geometry_changed.disconnect(self._changed_token)
+            self._changed_token = None
+
+            self._canvas_gl_data.sleep()
             log.debug("FirstPersonCanvas.hideEvent end")
 
     def paintGL(self) -> None:
@@ -233,6 +266,8 @@ class FirstPersonCanvas(QOpenGLWidget, QOpenGLFunctions):
                 # Sometimes it is called when the context is not active.
                 # If we don't skip these cases it crashes the program.
                 return
+
+            log.debug("paintGL")
 
             self.glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT)
             self.glEnable(GL_DEPTH_TEST)

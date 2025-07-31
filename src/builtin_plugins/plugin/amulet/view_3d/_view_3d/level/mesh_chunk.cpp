@@ -256,7 +256,7 @@ static std::shared_ptr<BlockComponentData> _get_block_component(
 std::pair<std::string, size_t> mesh_chunk(
     Level& level,
     AbstractOpenGLResourcePack& resource_pack,
-    DimensionId dimension_id,
+    const DimensionId& dimension_id,
     const std::int64_t cx,
     const std::int64_t cz)
 {

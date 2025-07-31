@@ -28,7 +28,7 @@ void mesh_chunk_lod0(
 std::pair<std::string, size_t> mesh_chunk(
     Level& level,
     AbstractOpenGLResourcePack& resource_pack,
-    DimensionId dimension_id,
+    const DimensionId& dimension_id,
     const std::int64_t cx,
     const std::int64_t cz);
 
