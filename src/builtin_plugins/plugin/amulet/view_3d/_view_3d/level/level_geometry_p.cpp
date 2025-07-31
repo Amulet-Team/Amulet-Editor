@@ -454,7 +454,7 @@ void LevelGeometryImp::_manager()
 
         // Find the next chunk to process.
         std::optional<std::tuple<DimensionId, int, int>> chunk_key;
-        std::shared_ptr<ChunkGeometry> chunk_data;
+        std::shared_ptr<ChunkGeometry> chunk_geometry;
         while (true) {
             // Find one chunk to mesh.
             chunk_key = _chunk_finder.next();
@@ -462,15 +462,15 @@ void LevelGeometryImp::_manager()
                 auto it = _level_gl_data->chunks.find(*chunk_key);
                 if (it == _level_gl_data->chunks.end()) {
                     // has not been generated yet
-                    chunk_data = nullptr;
+                    chunk_geometry = nullptr;
                     break;
                 }
-                chunk_data = it->second;
-                if (chunk_data->processing) {
+                chunk_geometry = it->second;
+                if (chunk_geometry->processing) {
                     // Skip if the chunk is being meshed.
                     continue;
                 }
-                if (chunk_data->has_changed()) {
+                if (chunk_geometry->has_changed()) {
                     // has changed since it was last generated
                     break;
                 }
@@ -493,22 +493,22 @@ void LevelGeometryImp::_manager()
         auto& [dimension, cx, cz] = *chunk_key;
 
         // Create the chunk data object if it doesn't exist.
-        if (!chunk_data) {
+        if (!chunk_geometry) {
             QMatrix4x4 transform;
             transform.translate(cx * 16, 0, cz * 16);
             auto chunk_handle = _level->get_dimension(dimension)->get_chunk_handle(cx, cz);
             chunk_data = std::make_shared<ChunkGeometry>(std::move(chunk_handle), transform);
             // chunk_data.changed.connect(_reset_chunk_finder);
-            _level_gl_data->chunks.emplace(*chunk_key, chunk_data);
+            _level_gl_data->chunks.emplace(*chunk_key, chunk_geometry);
         }
 
         // Keep track of which chunks are processing
-        chunk_data->processing = true;
+        chunk_geometry->processing = true;
         // Increment the worker count
         _worker_count += 1;
         // Add the chunk meshing job.
-        _worker_thread_pool.start([this, dimension, cx, cz, chunk_data]() {
-            _worker(dimension, cx, cz, std::move(chunk_data));
+        _worker_thread_pool.start([this, dimension, cx, cz, chunk_geometry]() {
+            _worker(dimension, cx, cz, std::move(chunk_geometry));
         });
 
         processed_count += 1;
@@ -525,12 +525,12 @@ void LevelGeometryImp::_worker(
     DimensionId dimension,
     std::int64_t cx,
     std::int64_t cz,
-    std::shared_ptr<ChunkGeometry> chunk_data)
+    std::shared_ptr<ChunkGeometry> chunk_geometry)
 {
     // debug(f"Meshing chunk {chunk_key}.");
 
     // Get the chunk state before we start meshing
-    auto chunk_state = chunk_data->get_chunk_state();
+    auto chunk_state = chunk_geometry->get_chunk_state();
 
     // Create a local reference to the resource pack.
     // _gl_resource_pack can get swapped while we are meshing.
@@ -552,7 +552,7 @@ void LevelGeometryImp::_worker(
             std::move(dimension),
             cx,
             cz,
-            std::move(chunk_data),
+            std::move(chunk_geometry),
             chunk_state,
             std::move(buffer),
             vertex_count);
@@ -591,7 +591,7 @@ void LevelGeometryImp::_init_chunks_gl()
         auto* f = QOpenGLContext::currentContext()->functions();
         for (auto& d : _processed_chunks) {
             auto it = _level_gl_data->chunks.find(std::make_tuple(d.dimension, d.cx, d.cz));
-            if (it == _level_gl_data->chunks.end() || d.chunk_data != it->second) {
+            if (it == _level_gl_data->chunks.end() || d.chunk_geometry != it->second) {
                 // The chunk data was removed during meshing.
                 // This could be because we changed dimension or moved away from the chunk.
                 // In these cases just discard the mesh.
@@ -633,7 +633,7 @@ void LevelGeometryImp::_init_chunks_gl()
             vbo.release();
 
             // Update the chunk geometry
-            auto old_geometry = d.chunk_data->set_geometry(d.chunk_state, std::move(geometry));
+            auto old_geometry = d.chunk_geometry->set_geometry(d.chunk_state, std::move(geometry));
             if (old_geometry) {
                 // destroy the old data.
                 old_geometry->vao.destroy();
@@ -642,7 +642,7 @@ void LevelGeometryImp::_init_chunks_gl()
             }
 
             // Mark the processing as finished.
-            d.chunk_data->processing = false;
+            d.chunk_geometry->processing = false;
         }
         _level_gl_data->context->doneCurrent();
         _processed_chunks.clear();

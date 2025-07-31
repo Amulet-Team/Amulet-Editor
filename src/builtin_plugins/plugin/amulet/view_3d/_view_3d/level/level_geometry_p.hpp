@@ -23,7 +23,7 @@ struct ProcessedChunkData {
     DimensionId dimension;
     std::int64_t cx;
     std::int64_t cz;
-    std::shared_ptr<ChunkGeometry> chunk_data;
+    std::shared_ptr<ChunkGeometry> chunk_geometry;
     size_t chunk_state;
     std::string buffer;
     size_t vertex_count;
