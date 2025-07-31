@@ -137,6 +137,11 @@ private:
     bool _is_sleeping();
     bool _is_destroyed();
 
+    // Destroy GL data for the chunk and disconnect events.
+    // This must be called before deleting the ChunkGeometry object.
+    // This must be called on the main thread with the context active.
+    void _destroy_chunk_geometry(ChunkGeometry&);
+
     // Destroy all chunk data.
     // Must be called on the main thread.
     // Must be called with the mutex locked.

@@ -37,7 +37,7 @@ public:
     // Is this geometry being processed.
     bool processing = false;
     // A place for the owner to store a chunk changed token.
-    std::unique_ptr<EventToken<>> changed_token;
+    EventToken<> changed_token;
 
     ChunkGeometry(std::shared_ptr<ChunkHandle>, QMatrix4x4& transform);
 

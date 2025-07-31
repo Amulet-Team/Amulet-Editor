@@ -35,7 +35,6 @@ LevelGeometryImp::LevelGeometryImp(std::shared_ptr<Level> level)
     : _level(std::move(level))
 {
     _worker_thread_pool.setMaxThreadCount(MaxThreadCount);
-    // QObject::connect(this, &LevelGeometryImp::_mesh_ready, this, &LevelGeometryImp::_init_chunks_gl);
 }
 
 void LevelGeometryImp::init_gl()
@@ -342,6 +341,15 @@ void LevelGeometryImp::set_render_distance(std::int64_t load_radius, std::int64_
     }
 }
 
+void LevelGeometryImp::_destroy_chunk_geometry(ChunkGeometry& chunk_geometry)
+{
+    chunk_geometry.chunk_handle->changed.disconnect(chunk_geometry.changed_token);
+    if (chunk_geometry.geometry) {
+        chunk_geometry.geometry->vao.destroy();
+        chunk_geometry.geometry->vbo.destroy();
+    }
+}
+
 void LevelGeometryImp::_clear_chunks()
 {
     debug("LevelGeometry::_clear_chunks()");
@@ -354,11 +362,7 @@ void LevelGeometryImp::_clear_chunks()
     }
     // unload the OpenGL data.
     for (auto& [_, chunk_geometry] : _level_gl_data->chunks) {
-        // chunk.changed.disconnect(self._reset_chunk_finder)
-        if (chunk_geometry->geometry) {
-            chunk_geometry->geometry->vao.destroy();
-            chunk_geometry->geometry->vbo.destroy();
-        }
+        _destroy_chunk_geometry(*chunk_geometry);
     }
     _level_gl_data->chunks.clear();
     _level_gl_data->context->doneCurrent();
@@ -389,11 +393,7 @@ void LevelGeometryImp::_clear_far_chunks()
             abs(_cz - cz));
         if (_unload_radius <= distance || _dimension != dimension) {
             // Unload the chunk
-            // chunk_data.changed.disconnect(self._reset_chunk_finder)
-            if (chunk_geometry->geometry) {
-                chunk_geometry->geometry->vao.destroy();
-                chunk_geometry->geometry->vbo.destroy();
-            }
+            _destroy_chunk_geometry(*chunk_geometry);
             it = chunks.erase(it);
         } else {
             it++;
@@ -497,8 +497,9 @@ void LevelGeometryImp::_manager()
             QMatrix4x4 transform;
             transform.translate(cx * 16, 0, cz * 16);
             auto chunk_handle = _level->get_dimension(dimension)->get_chunk_handle(cx, cz);
-            chunk_data = std::make_shared<ChunkGeometry>(std::move(chunk_handle), transform);
-            // chunk_data.changed.connect(_reset_chunk_finder);
+            chunk_geometry = std::make_shared<ChunkGeometry>(std::move(chunk_handle), transform);
+            chunk_geometry->changed_token = chunk_geometry->chunk_handle->changed.connect(
+                [this]() { _queue_reset_chunk_finder(); });
             _level_gl_data->chunks.emplace(*chunk_key, chunk_geometry);
         }
 
