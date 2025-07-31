@@ -28,7 +28,7 @@ LevelGeometryGLData::LevelGeometryGLData(QOpenGLContext* context)
     surface.create();
 }
 
-static const size_t MaxThreadCount = 4;
+static const size_t MaxThreadCount = std::max(1, std::min(QThread::idealThreadCount() - 1, 4));
 static const size_t ChunkRestartCount = 16;
 
 LevelGeometryImp::LevelGeometryImp(std::shared_ptr<Level> level)
