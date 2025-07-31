@@ -499,7 +499,10 @@ void LevelGeometryImp::_manager()
             auto chunk_handle = _level->get_dimension(dimension)->get_chunk_handle(cx, cz);
             chunk_geometry = std::make_shared<ChunkGeometry>(std::move(chunk_handle), transform);
             chunk_geometry->changed_token = chunk_geometry->chunk_handle->changed.connect(
-                [this]() { _queue_reset_chunk_finder(); });
+                [this]() { 
+                    std::lock_guard lock(_data_mutex);
+                    _queue_reset_chunk_finder(); 
+                });
             _level_gl_data->chunks.emplace(*chunk_key, chunk_geometry);
         }
 
