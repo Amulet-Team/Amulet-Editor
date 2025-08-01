@@ -249,7 +249,9 @@ class FirstPersonCanvas(QOpenGLWidget, QOpenGLFunctions):
             log.debug("FirstPersonCanvas.hideEvent start")
 
             # Disconnect from the geometry changed event
-            self._canvas_gl_data.render_level.geometry_changed.disconnect(self._changed_token)
+            self._canvas_gl_data.render_level.geometry_changed.disconnect(
+                self._changed_token
+            )
             self._changed_token = None
 
             self._canvas_gl_data.sleep()
