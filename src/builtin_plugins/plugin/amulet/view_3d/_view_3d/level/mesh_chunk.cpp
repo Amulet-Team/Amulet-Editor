@@ -253,7 +253,7 @@ static std::shared_ptr<BlockComponentData> _get_block_component(
     }
 }
 
-std::pair<std::string, size_t> mesh_chunk(
+std::tuple<std::string, size_t, std::string, size_t> mesh_chunk(
     Level& level,
     AbstractOpenGLResourcePack& resource_pack,
     const DimensionId& dimension_id,
@@ -268,18 +268,19 @@ std::pair<std::string, size_t> mesh_chunk(
     auto dimension = level.get_dimension(dimension_id);
 
     std::unique_ptr<Chunk> chunk;
-    std::string buffer;
+    std::string opaque_buffer;
+    std::string translucent_buffer;
 
     try {
         chunk = dimension->get_chunk_handle(cx, cz)->get_chunk(std::set<std::string> { BlockComponent::ComponentID });
     } catch (const ChunkDoesNotExist& e) {
         // log.debug(f"Chunk {dimension_id}, {cx}, {cz} does not exist")
-        buffer = _get_empty_geometry(dimension->get_bounds(), resource_pack, cx, cz);
+        opaque_buffer = _get_empty_geometry(dimension->get_bounds(), resource_pack, cx, cz);
     } catch (const ChunkLoadError& e) {
         // log.exception(
         //     f"Error loading chunk {dimension_id}, {cx}, {cz}", exc_info=True
         // )
-        buffer = _get_error_geometry(dimension->get_bounds(), resource_pack, cx, cz);
+        opaque_buffer = _get_error_geometry(dimension->get_bounds(), resource_pack, cx, cz);
     }
 
     if (chunk) {
@@ -291,8 +292,6 @@ std::pair<std::string, size_t> mesh_chunk(
             auto east = _get_block_component(*dimension, cx + 1, cz);
             auto south = _get_block_component(*dimension, cx, cz + 1);
             auto west = _get_block_component(*dimension, cx - 1, cz);
-            std::string opaque_buffer;
-            std::string translucent_buffer;
             mesh_chunk_lod0(
                 resource_pack,
                 cx,
@@ -304,7 +303,6 @@ std::pair<std::string, size_t> mesh_chunk(
                 west.get(), 
                 opaque_buffer,
                 translucent_buffer);
-            buffer = opaque_buffer + translucent_buffer;
         } else {
             // log.debug(
             //     f"Chunk {dimension_id}, {cx}, {cz} does not implement BlockComponent."
@@ -314,9 +312,10 @@ std::pair<std::string, size_t> mesh_chunk(
 
     // log.debug(f"Generated array for {dimension_id}, {cx}, {cz}")
 
-    size_t vertex_count = buffer.size() / (12 * sizeof(float));
+    size_t opaque_vertex_count = opaque_buffer.size() / (12 * sizeof(float));
+    size_t translucent_vertex_count = translucent_buffer.size() / (12 * sizeof(float));
     // log.debug(f"Generated chunk {dimension_id}, {cx}, {cz}")
-    return { buffer, vertex_count };
+    return { opaque_buffer, opaque_vertex_count, translucent_buffer, translucent_vertex_count };
 }
 
 } // namespace Amulet

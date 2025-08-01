@@ -16,9 +16,12 @@ namespace Amulet {
 class ChunkHandle;
 
 struct ChunkGLData {
-    QOpenGLBuffer vbo;
-    size_t vertex_count;
-    QOpenGLVertexArrayObject vao;
+    size_t opaque_vertex_count;
+    QOpenGLBuffer opaque_vbo;
+    QOpenGLVertexArrayObject opaque_vao;
+    size_t translucent_vertex_count;
+    QOpenGLBuffer translucent_vbo;
+    QOpenGLVertexArrayObject translucent_vao;
 };
 
 class ChunkGeometry {

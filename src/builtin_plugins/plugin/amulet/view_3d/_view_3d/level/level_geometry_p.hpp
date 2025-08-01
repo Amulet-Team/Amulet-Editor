@@ -25,8 +25,10 @@ struct ProcessedChunkData {
     std::int64_t cz;
     std::shared_ptr<ChunkGeometry> chunk_geometry;
     size_t chunk_state;
-    std::string buffer;
-    size_t vertex_count;
+    std::string opaque_buffer;
+    size_t opaque_vertex_count;
+    std::string translucent_buffer;
+    size_t translucent_vertex_count;
 };
 
 class LevelGeometryGLData {
@@ -36,6 +38,7 @@ public:
     QOpenGLShaderProgram program;
     int matrix_location;
     std::map<std::tuple<DimensionId, int, int>, std::shared_ptr<ChunkGeometry>> chunks;
+    std::list<std::shared_ptr<ChunkGeometry>> sorted_chunks;
 
     LevelGeometryGLData(QOpenGLContext*);
 };

@@ -25,7 +25,7 @@ void mesh_chunk_lod0(
     std::string& opaque_buffer,
     std::string& translucent_buffer);
 
-std::pair<std::string, size_t> mesh_chunk(
+std::tuple<std::string, size_t, std::string, size_t> mesh_chunk(
     Level& level,
     AbstractOpenGLResourcePack& resource_pack,
     const DimensionId& dimension_id,

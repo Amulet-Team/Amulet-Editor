@@ -244,15 +244,29 @@ void LevelGeometryImp::paint_gl(QMatrix4x4& projection_matrix, QMatrix4x4& view_
     auto& matrix_location = _level_gl_data->matrix_location;
 
     _gl_texture->bind(0);
-    for (auto& [_, chunk_geometry] : _level_gl_data->chunks) {
+    auto& chunks = _level_gl_data->sorted_chunks;
+    for (auto it = chunks.begin(); it != chunks.end(); it++) {
+        auto& chunk_geometry = *it;
         auto& geometry = chunk_geometry->geometry;
         if (geometry) {
             program.setUniformValue(
                 matrix_location,
                 transform * chunk_geometry->model_transform);
-            geometry->vao.bind();
-            f->glDrawArrays(GL_TRIANGLES, 0, geometry->vertex_count);
-            geometry->vao.release();
+            geometry->opaque_vao.bind();
+            f->glDrawArrays(GL_TRIANGLES, 0, geometry->opaque_vertex_count);
+            geometry->opaque_vao.release();
+        }
+    }
+    for (auto it = chunks.rbegin(); it != chunks.rend(); it++) {
+        auto& chunk_geometry = *it;
+        auto& geometry = chunk_geometry->geometry;
+        if (geometry) {
+            program.setUniformValue(
+                matrix_location,
+                transform * chunk_geometry->model_transform);
+            geometry->translucent_vao.bind();
+            f->glDrawArrays(GL_TRIANGLES, 0, geometry->translucent_vertex_count);
+            geometry->translucent_vao.release();
         }
     }
 
@@ -345,8 +359,10 @@ void LevelGeometryImp::_destroy_chunk_geometry(ChunkGeometry& chunk_geometry)
 {
     chunk_geometry.chunk_handle->changed.disconnect(chunk_geometry.changed_token);
     if (chunk_geometry.geometry) {
-        chunk_geometry.geometry->vao.destroy();
-        chunk_geometry.geometry->vbo.destroy();
+        chunk_geometry.geometry->opaque_vao.destroy();
+        chunk_geometry.geometry->opaque_vbo.destroy();
+        chunk_geometry.geometry->translucent_vao.destroy();
+        chunk_geometry.geometry->translucent_vbo.destroy();
     }
 }
 
@@ -365,6 +381,7 @@ void LevelGeometryImp::_clear_chunks()
         _destroy_chunk_geometry(*chunk_geometry);
     }
     _level_gl_data->chunks.clear();
+    _level_gl_data->sorted_chunks.clear();
     _level_gl_data->context->doneCurrent();
     debug("LevelGeometry::_clear_chunks() end");
 }
@@ -400,6 +417,7 @@ void LevelGeometryImp::_clear_far_chunks()
         }
     }
     _level_gl_data->context->doneCurrent();
+    _sort_chunks();
 }
 
 void LevelGeometryImp::_reset_chunk_finder()
@@ -417,7 +435,24 @@ void LevelGeometryImp::_queue_reset_chunk_finder()
     _wake_chunk_manager();
 }
 
-void LevelGeometryImp::_sort_chunks() { }
+void LevelGeometryImp::_sort_chunks()
+{
+    _level_gl_data->sorted_chunks.clear();
+    for (const auto& [_, chunk_geometry] : _level_gl_data->chunks) {
+        _level_gl_data->sorted_chunks.push_back(chunk_geometry);
+    }
+    _level_gl_data->sorted_chunks.sort(
+        [this](
+            const std::shared_ptr<ChunkGeometry>& a,
+            const std::shared_ptr<ChunkGeometry>& b) {
+            return std::max(
+                       std::abs(_cx - a->chunk_handle->get_cx()),
+                       std::abs(_cz - a->chunk_handle->get_cz()))
+                > std::max(
+                    std::abs(_cx - b->chunk_handle->get_cx()),
+                    std::abs(_cz - b->chunk_handle->get_cz()));
+        });
+}
 
 void LevelGeometryImp::_wake_chunk_manager()
 {
@@ -499,11 +534,12 @@ void LevelGeometryImp::_manager()
             auto chunk_handle = _level->get_dimension(dimension)->get_chunk_handle(cx, cz);
             chunk_geometry = std::make_shared<ChunkGeometry>(std::move(chunk_handle), transform);
             chunk_geometry->changed_token = chunk_geometry->chunk_handle->changed.connect(
-                [this]() { 
+                [this]() {
                     std::lock_guard lock(_data_mutex);
-                    _queue_reset_chunk_finder(); 
+                    _queue_reset_chunk_finder();
                 });
             _level_gl_data->chunks.emplace(*chunk_key, chunk_geometry);
+            _sort_chunks();
         }
 
         // Keep track of which chunks are processing
@@ -545,7 +581,7 @@ void LevelGeometryImp::_worker(
     }
 
     // Do the chunk meshing
-    auto [buffer, vertex_count] = mesh_chunk(
+    auto [opaque_buffer, opaque_vertex_count, translucent_buffer, translucent_vertex_count] = mesh_chunk(
         *_level, *resource_pack, dimension, cx, cz);
 
     // queue OpenGL data creation on the main thread.
@@ -558,8 +594,10 @@ void LevelGeometryImp::_worker(
             cz,
             std::move(chunk_geometry),
             chunk_state,
-            std::move(buffer),
-            vertex_count);
+            std::move(opaque_buffer),
+            opaque_vertex_count,
+            std::move(translucent_buffer),
+            translucent_vertex_count);
         if (_processed_chunks.size() == 1) {
             // If it is more than 1 there should be an event pending.
             QTimer* timer = new QTimer();
@@ -603,45 +641,54 @@ void LevelGeometryImp::_init_chunks_gl()
             }
 
             auto geometry = std::make_unique<ChunkGLData>();
-            geometry->vertex_count = d.vertex_count;
-            auto& vao = geometry->vao;
-            auto& vbo = geometry->vbo;
+            geometry->opaque_vertex_count = d.opaque_vertex_count;
+            geometry->translucent_vertex_count = d.translucent_vertex_count;
 
-            // Create the VAO.
-            vao.create();
-            vao.bind();
+            auto init_gl = [f](
+                               QOpenGLVertexArrayObject& vao,
+                               QOpenGLBuffer& vbo,
+                               const std::string& buffer) {
+                // Create the VAO.
+                vao.create();
+                vao.bind();
 
-            // Create and associate the vbo with the vao
-            vbo.create();
-            vbo.bind();
-            vbo.allocate(d.buffer.c_str(), d.buffer.size());
+                // Create and associate the vbo with the vao
+                vbo.create();
+                vbo.bind();
+                vbo.allocate(buffer.c_str(), buffer.size());
 
-            // vertex coord
-            f->glEnableVertexAttribArray(0);
-            f->glVertexAttribPointer(
-                0, 3, GL_FLOAT, GL_FALSE, 12 * sizeof(float), 0);
-            // texture coord
-            f->glEnableVertexAttribArray(1);
-            f->glVertexAttribPointer(
-                1, 2, GL_FLOAT, GL_FALSE, 12 * sizeof(float), (void*)(3 * sizeof(float)));
-            // texture bounds
-            f->glEnableVertexAttribArray(2);
-            f->glVertexAttribPointer(
-                2, 4, GL_FLOAT, GL_FALSE, 12 * sizeof(float), (void*)(5 * sizeof(float)));
-            // tint
-            f->glEnableVertexAttribArray(3);
-            f->glVertexAttribPointer(
-                3, 3, GL_FLOAT, GL_FALSE, 12 * sizeof(float), (void*)(9 * sizeof(float)));
+                // vertex coord
+                f->glEnableVertexAttribArray(0);
+                f->glVertexAttribPointer(
+                    0, 3, GL_FLOAT, GL_FALSE, 12 * sizeof(float), 0);
+                // texture coord
+                f->glEnableVertexAttribArray(1);
+                f->glVertexAttribPointer(
+                    1, 2, GL_FLOAT, GL_FALSE, 12 * sizeof(float), (void*)(3 * sizeof(float)));
+                // texture bounds
+                f->glEnableVertexAttribArray(2);
+                f->glVertexAttribPointer(
+                    2, 4, GL_FLOAT, GL_FALSE, 12 * sizeof(float), (void*)(5 * sizeof(float)));
+                // tint
+                f->glEnableVertexAttribArray(3);
+                f->glVertexAttribPointer(
+                    3, 3, GL_FLOAT, GL_FALSE, 12 * sizeof(float), (void*)(9 * sizeof(float)));
 
-            vao.release();
-            vbo.release();
+                vao.release();
+                vbo.release();
+            };
+
+            init_gl(geometry->opaque_vao, geometry->opaque_vbo, d.opaque_buffer);
+            init_gl(geometry->translucent_vao, geometry->translucent_vbo, d.translucent_buffer);
 
             // Update the chunk geometry
             auto old_geometry = d.chunk_geometry->set_geometry(d.chunk_state, std::move(geometry));
             if (old_geometry) {
                 // destroy the old data.
-                old_geometry->vao.destroy();
-                old_geometry->vbo.destroy();
+                old_geometry->opaque_vao.destroy();
+                old_geometry->opaque_vbo.destroy();
+                old_geometry->translucent_vao.destroy();
+                old_geometry->translucent_vbo.destroy();
                 old_geometry = nullptr;
             }
 
