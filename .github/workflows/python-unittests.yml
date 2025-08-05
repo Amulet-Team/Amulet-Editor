@@ -65,6 +65,7 @@ jobs:
     - name: Install
       env:
         AMULET_FREEZE_COMPILER: 1
+        Qt6_DIR: ${Qt6_DIR}
       run: |
         pip install --only-binary amulet-compiler-version,amulet-leveldb,amulet-utils,amulet-zlib,amulet-nbt,amulet-core,amulet-game,amulet-anvil,amulet-level,amulet-resource-pack -v .[dev]
 
