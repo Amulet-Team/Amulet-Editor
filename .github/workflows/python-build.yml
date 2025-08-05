@@ -41,6 +41,19 @@ jobs:
         resource-pack-password: ${{ secrets.AMULET_RESOURCE_PACK_PYPI_PASSWORD }}
         rest-token: ${{ secrets.GITHUB_TOKEN }}
 
+    - name: Install Qt (Windows)
+      if: matrix.os == 'windows-latest'
+      uses: jurplel/install-qt-action@v4
+      with:
+        version: '6.9.1'
+        arch: 'win64_msvc2022_64'
+
+    - name: Install Qt (Linux/MacOS)
+      if: matrix.os != 'windows-latest'
+      uses: jurplel/install-qt-action@v4
+      with:
+        version: '6.9.1'
+
     - name: Build SDist
       run: |
         python -m build --sdist .
@@ -48,7 +61,6 @@ jobs:
     - name: Build Wheel
       env:
         AMULET_FREEZE_COMPILER: 1
-        Qt6_DIR: ${Qt6_DIR}
       run: |
         python -m build --wheel .
 
