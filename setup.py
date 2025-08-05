@@ -61,7 +61,9 @@ class CMakeBuild(cmdclass.get("build_ext", build_ext)):
 
         qt6_dir = os.environ.get("Qt6_DIR", None)
         if qt6_dir is None:
-            raise RuntimeError("Could not find Qt6 installation. Set Qt6_DIR environment variable.")
+            raise RuntimeError(
+                "Could not find Qt6 installation. Set Qt6_DIR environment variable."
+            )
 
         if subprocess.run(["cmake", "--version"]).returncode:
             raise RuntimeError("Could not find cmake")
