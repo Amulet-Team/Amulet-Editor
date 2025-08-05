@@ -59,6 +59,10 @@ class CMakeBuild(cmdclass.get("build_ext", build_ext)):
             if platform.machine() == "arm64":
                 platform_args.append("-DCMAKE_OSX_ARCHITECTURES=x86_64;arm64")
 
+        qt6_dir = os.environ.get("Qt6_DIR", None)
+        if qt6_dir is None:
+            raise RuntimeError("Could not find Qt6 installation. Set Qt6_DIR environment variable.")
+
         if subprocess.run(["cmake", "--version"]).returncode:
             raise RuntimeError("Could not find cmake")
         with TemporaryDirectory() as tempdir:
@@ -67,6 +71,7 @@ class CMakeBuild(cmdclass.get("build_ext", build_ext)):
                     "cmake",
                     *platform_args,
                     f"-DPYTHON_EXECUTABLE={sys.executable}",
+                    f"-DQt6_DIR={qt6_dir}",
                     f"-Dpybind11_DIR={fix_path(pybind11.get_cmake_dir())}",
                     f"-Damulet_pybind11_extensions_DIR={fix_path(amulet.pybind11_extensions.__path__[0])}",
                     f"-Damulet_io_DIR={fix_path(amulet.io.__path__[0])}",
