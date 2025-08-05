@@ -61,7 +61,6 @@ jobs:
     - name: Build Wheel
       env:
         AMULET_FREEZE_COMPILER: 1
-        Qt6_DIR: ${Qt6_DIR}
       run: |
         python -m build --wheel .
 

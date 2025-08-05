@@ -59,10 +59,10 @@ class CMakeBuild(cmdclass.get("build_ext", build_ext)):
             if platform.machine() == "arm64":
                 platform_args.append("-DCMAKE_OSX_ARCHITECTURES=x86_64;arm64")
 
-        qt6_dir = os.environ.get("Qt6_DIR", None)
+        qt6_dir = os.environ.get("QT_ROOT_DIR", None)
         if qt6_dir is None:
             raise RuntimeError(
-                "Could not find Qt6 installation. Set Qt6_DIR environment variable."
+                "Could not find Qt6 installation. Set QT_ROOT_DIR environment variable."
             )
 
         if subprocess.run(["cmake", "--version"]).returncode:
