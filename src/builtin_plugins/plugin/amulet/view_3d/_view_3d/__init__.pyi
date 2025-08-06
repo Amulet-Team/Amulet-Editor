@@ -15,6 +15,7 @@ from . import (
 
 __all__ = ["View3D", "compiler_config", "level", "resource_pack"]
 
+def _get_qt_version() -> str: ...
 def _init() -> None: ...
 
 compiler_config: dict

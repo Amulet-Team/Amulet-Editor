@@ -1,4 +1,8 @@
+#define QT_NO_SIGNALS_SLOTS_KEYWORDS
+
 #include <pybind11/pybind11.h>
+
+#include <QtGlobal>
 
 #include <amulet/pybind11_extensions/compatibility.hpp>
 #include <amulet/pybind11_extensions/py_module.hpp>
@@ -16,6 +20,10 @@ void init_module(py::module m)
 
     init_resource_pack_base(m);
     init_view_3d_level(m);
+
+    m.def("_get_qt_version", []() { 
+        return py::str(qVersion());
+    });
 }
 
 PYBIND11_MODULE(_view_3d, m)
