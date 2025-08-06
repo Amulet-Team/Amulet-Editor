@@ -1,16 +1,29 @@
-#include "_chunk_mesher_lod0.hpp"
+#include "mesh_chunk.hpp"
 
 namespace Amulet {
 
 
-void create_lod0_chunk(
+void mesh_chunk_lod0(
     AbstractOpenGLResourcePack& resource_pack,
     const std::int64_t cx,
     const std::int64_t cz,
-    const ChunkData& all_chunk_data,
+    const Amulet::BlockComponentData& self_block_data,
+    const Amulet::BlockComponentData* const north_block_data,
+    const Amulet::BlockComponentData* const east_block_data,
+    const Amulet::BlockComponentData* const south_block_data,
+    const Amulet::BlockComponentData* const west_block_data,
     std::string& opaque_buffer,
     std::string& translucent_buffer)
 {
+    // Borrowed pointers to the block data.
+    std::array<const Amulet::BlockComponentData* const, 5> all_chunk_data = {
+        north_block_data,
+        west_block_data,
+        &self_block_data,
+        east_block_data,
+        south_block_data
+    };
+
     // Borrowed pointers to the mesh object or nullptr if not initialised.
     std::array<std::vector<const BlockMesh*>, 5> all_block_meshes;
 
@@ -220,7 +233,7 @@ void create_lod0_chunk(
                             float_arr[11] = vert.tint.z * shading;
                             };
                         for (const auto& triangle : part.triangles) {
-                            const auto& bounds = resource_pack.texture_bounds(mesh.textures[triangle.texture_index]);
+                            const auto& bounds = resource_pack.get_texture_bounds(mesh.textures[triangle.texture_index]);
                             add_vert(triangle.vert_index_a, bounds);
                             add_vert(triangle.vert_index_b, bounds);
                             add_vert(triangle.vert_index_c, bounds);

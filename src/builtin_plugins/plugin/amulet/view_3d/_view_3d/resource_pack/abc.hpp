@@ -6,6 +6,8 @@
 #include <tuple>
 #include <unordered_map>
 
+#include <QOpenGLTexture>
+
 #include <amulet/core/block/block.hpp>
 
 #include <amulet/resource_pack/mesh/block/block_mesh.hpp>
@@ -24,7 +26,9 @@ public:
     AbstractOpenGLResourcePack() { }
     virtual ~AbstractOpenGLResourcePack() { }
 
-    const std::tuple<float, float, float, float>& texture_bounds(const std::string& texture_path)
+    virtual std::string get_texture_path(std::optional<std::string> namespace_, std::string relative_path) = 0;
+
+    const std::tuple<float, float, float, float>& get_texture_bounds(const std::string& texture_path)
     {
         const auto& it = _texture_bounds.find(texture_path);
         if (it == _texture_bounds.end()) {
@@ -51,6 +55,12 @@ public:
             return it2->second;
         }
         return _block_models.emplace(block_stack, _get_block_model(block_stack)).first->second;
+    }
+
+    virtual size_t _get_texture_ptr() = 0;
+
+    QOpenGLTexture* get_texture_ptr() {
+        return (QOpenGLTexture*)(_get_texture_ptr());
     }
 };
 

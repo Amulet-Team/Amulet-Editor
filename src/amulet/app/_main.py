@@ -24,6 +24,8 @@ from PySide6.QtCore import (
 from PySide6.QtWidgets import QApplication
 from PySide6.QtGui import QSurfaceFormat
 
+import amulet.utils.logging
+
 from amulet.app.resource import get_resource_path
 from amulet.app.exception import CatchExceptionDialog
 from amulet.app.localisation import Translator, locale_changed
@@ -106,6 +108,9 @@ def app_main(argv: Sequence[str] | None = None) -> None:
     # Uninstall the message handler at interpreter shutdown so it can't get called.
     # This means that any errors after interpreter shutdown are not logged. TODO is there a way to handle this?
     atexit.register(lambda: qInstallMessageHandler(None))
+
+    # Link the Amulet C++ logging
+    amulet.utils.logging.set_min_log_level(global_args.logging_level)
 
     # When running via pythonw the stderr is None so log directly to the log file
     faulthandler.enable(sys.__stderr__ or log_file)

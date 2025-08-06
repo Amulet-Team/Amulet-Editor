@@ -37,7 +37,7 @@ from amulet.app.exception import display_exception
 from amulet.app.path import cache_directory
 
 from plugin.amulet.resource_pack._api import get_resource_pack_container
-from ._resource_pack_base import AbstractOpenGLResourcePack
+from .abc import AbstractOpenGLResourcePack
 
 log = logging.getLogger(__name__)
 
@@ -197,6 +197,9 @@ class OpenGLResourcePack(AbstractOpenGLResourcePack):
         :return: A QOpenGLTexture instance.
         """
         return self._gl_data.texture
+
+    def _get_texture_ptr(self) -> int:
+        return getCppPointer(self.get_texture())[0]
 
     def get_texture_path(self, namespace: Optional[str], relative_path: str) -> str:
         """Get the absolute path of the image from the relative components.

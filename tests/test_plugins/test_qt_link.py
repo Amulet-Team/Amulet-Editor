@@ -1,0 +1,23 @@
+import unittest
+import sys
+import os
+
+from amulet.app.path._plugin import first_party_plugin_directory
+
+
+class TestQtLink(unittest.TestCase):
+    def setUp(self):
+        sys.path.append(os.path.dirname(first_party_plugin_directory()))
+
+    def tearDown(self):
+        sys.path.remove(os.path.dirname(first_party_plugin_directory()))
+
+    def test_qt_link(self) -> None:
+        from PySide6 import __version__ as qt_version
+        from plugin.amulet.view_3d._view_3d import _get_qt_version
+
+        self.assertEqual(qt_version, _get_qt_version())
+
+
+if __name__ == "__main__":
+    unittest.main()
