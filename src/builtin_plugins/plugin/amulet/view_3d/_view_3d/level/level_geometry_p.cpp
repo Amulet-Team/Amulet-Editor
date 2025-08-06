@@ -21,6 +21,28 @@
 
 namespace Amulet {
 
+ProcessedChunkData::ProcessedChunkData(
+    DimensionId dimension,
+    std::int64_t cx,
+    std::int64_t cz,
+    std::shared_ptr<ChunkGeometry> chunk_geometry,
+    size_t chunk_state,
+    std::string opaque_buffer,
+    size_t opaque_vertex_count,
+    std::string translucent_buffer,
+    size_t translucent_vertex_count)
+    : dimension(std::move(dimension))
+    , cx(cx)
+    , cz(cz)
+    , chunk_geometry(std::move(chunk_geometry))
+    , chunk_state(chunk_state)
+    , opaque_buffer(std::move(opaque_buffer))
+    , opaque_vertex_count(opaque_vertex_count)
+    , translucent_buffer(std::move(translucent_buffer))
+    , translucent_vertex_count(translucent_vertex_count)
+{
+}
+
 LevelGeometryGLData::LevelGeometryGLData(QOpenGLContext* context)
     : context(context)
     , matrix_location(0)

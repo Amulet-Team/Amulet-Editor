@@ -19,7 +19,8 @@
 
 namespace Amulet {
 
-struct ProcessedChunkData {
+class ProcessedChunkData {
+public:
     DimensionId dimension;
     std::int64_t cx;
     std::int64_t cz;
@@ -29,6 +30,17 @@ struct ProcessedChunkData {
     size_t opaque_vertex_count;
     std::string translucent_buffer;
     size_t translucent_vertex_count;
+
+    ProcessedChunkData(
+        DimensionId dimension,
+        std::int64_t cx,
+        std::int64_t cz,
+        std::shared_ptr<ChunkGeometry> chunk_geometry,
+        size_t chunk_state,
+        std::string opaque_buffer,
+        size_t opaque_vertex_count,
+        std::string translucent_buffer,
+        size_t translucent_vertex_count);
 };
 
 class LevelGeometryGLData {
