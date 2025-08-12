@@ -3,7 +3,9 @@ cmake_minimum_required(VERSION 3.13)
 project(amulet_app LANGUAGES CXX)
 
 # Add pybind11
-find_package(pybind11 CONFIG REQUIRED)
+if (NOT TARGET pybind11::module)
+    find_package(pybind11 CONFIG REQUIRED)
+endif()
 
 # Find C++ files
 file(GLOB_RECURSE SOURCES LIST_DIRECTORIES false ${CMAKE_CURRENT_LIST_DIR}/*.cpp)
