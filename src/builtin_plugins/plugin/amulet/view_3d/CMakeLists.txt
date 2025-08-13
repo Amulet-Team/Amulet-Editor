@@ -6,10 +6,18 @@ project(view_3d LANGUAGES CXX)
 find_package(pybind11 CONFIG REQUIRED)
 
 # Add Amulet libraries
-find_package(amulet_pybind11_extensions CONFIG REQUIRED)
-find_package(amulet_core CONFIG REQUIRED)
-find_package(amulet_level CONFIG REQUIRED)
-find_package(amulet_resource_pack CONFIG REQUIRED)
+if (NOT TARGET amulet_pybind11_extensions)
+    find_package(amulet_pybind11_extensions CONFIG REQUIRED)
+endif()
+if (NOT TARGET amulet_core)
+    find_package(amulet_core CONFIG REQUIRED)
+endif()
+if (NOT TARGET amulet_level)
+    find_package(amulet_level CONFIG REQUIRED)
+endif()
+if (NOT TARGET amulet_resource_pack)
+    find_package(amulet_resource_pack CONFIG REQUIRED)
+endif()
 find_package(Qt6 REQUIRED COMPONENTS OpenGL Gui)
 
 # Find C++ files
