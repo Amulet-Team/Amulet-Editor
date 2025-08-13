@@ -72,7 +72,7 @@ def _load_translations() -> None:
     _translator.load_lang(
         QLocale(),
         "",
-        directory=os.path.join(*editor_plugin_path, "_resources", "lang"),
+        directory=os.path.join(editor_plugin_path[0], "_resources", "lang"),
     )
 
 
