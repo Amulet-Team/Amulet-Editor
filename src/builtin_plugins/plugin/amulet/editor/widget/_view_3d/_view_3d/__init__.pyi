@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from plugin.amulet.view_3d._view_3d._widget import View3D
+from plugin.amulet.editor.widget._view_3d._view_3d._widget import View3D
 
 from . import (
     _camera,
@@ -13,7 +13,7 @@ from . import (
     resource_pack,
 )
 
-__all__ = ["View3D", "compiler_config", "level", "resource_pack"]
+__all__: list[str] = ["View3D", "compiler_config", "level", "resource_pack"]
 
 def _get_qt_version() -> str: ...
 def _init() -> None: ...

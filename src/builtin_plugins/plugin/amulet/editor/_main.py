@@ -20,7 +20,7 @@ from amulet.app.localisation import Translator, locale_changed
 from plugin.tablericons import tablericons
 from plugin.amulet.level import get_main_level, set_main_level
 
-from plugin.amulet.editor import __path__ as editor_path
+from plugin.amulet.editor import __path__ as editor_plugin_path
 from plugin.amulet.editor.window._main import (
     get_main_window,
     destroy_main_window,
@@ -28,6 +28,7 @@ from plugin.amulet.editor.window._main import (
 )
 from plugin.amulet.editor.widget._home import HomeWidget
 from plugin.amulet.editor.widget._level_info import LevelInfoWidget
+from plugin.amulet.editor.widget._view_3d import View3D
 from plugin.amulet.editor.widget import register_widget, unregister_widget
 from plugin.amulet.editor.layout import (
     register_layout,
@@ -52,6 +53,8 @@ home_button: ButtonProxy | None = None
 LevelInfoLayoutID = "4de0ebcd-f789-440f-9526-e6cc5d77caff"
 level_info_button: ButtonProxy | None = None
 
+EditorLayoutId = "68817e4c-32e3-43f8-ac61-9d7352c6329d"
+editor_button: ButtonProxy | None = None
 
 def _init_app() -> None:
     app = QApplication.instance()
@@ -60,6 +63,7 @@ def _init_app() -> None:
     app.setApplicationName("Amulet Editor")
     app.setApplicationVersion(__version__)
     app.setWindowIcon(QIcon(get_resource_path("icons/amulet/Icon.ico")))
+    QApplication.setStyle("fusion")
 
 
 def _load_translations() -> None:
@@ -68,15 +72,16 @@ def _load_translations() -> None:
     _translator.load_lang(
         QLocale(),
         "",
-        directory=os.path.join(*editor_path, "_resources", "lang"),
+        directory=os.path.join(*editor_plugin_path, "_resources", "lang"),
     )
 
 
 def _init_editor() -> None:
-    global home_button, level_info_button
+    global home_button, level_info_button, editor_button
 
     register_widget(HomeWidget)
     register_widget(LevelInfoWidget)
+    register_widget(View3D)
 
     register_layout(
         HomeLayoutID,
@@ -115,6 +120,23 @@ def _init_editor() -> None:
         level_info_button.set_name("Level Info")
         level_info_button.click()
 
+        register_layout(
+            EditorLayoutId,
+            LayoutConfig(
+                WindowConfig(
+                    None,
+                    None,
+                    WidgetStackConfig((WidgetConfig(View3D.__qualname__),)),
+                ),
+                (),
+            ),
+        )
+
+        # Set up the 3D View button
+        editor_button = create_layout_button(EditorLayoutId)
+        editor_button.set_icon(tablericons.three_d_cube_sphere)
+        editor_button.set_name("3D Editor")
+
 
 def _destroy_editor() -> None:
     if home_button is not None:
@@ -125,8 +147,13 @@ def _destroy_editor() -> None:
         level_info_button.delete()
         unregister_layout(LevelInfoLayoutID)
 
+    if editor_button is not None:
+        editor_button.delete()
+        unregister_layout(EditorLayoutId)
+
     unregister_widget(HomeWidget)
     unregister_widget(LevelInfoWidget)
+    unregister_widget(View3D)
 
 
 def _main(args: FullArgs) -> None:

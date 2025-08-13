@@ -24,4 +24,4 @@ if (MSVC)
 endif()
 
 add_subdirectory("src/amulet/app")
-add_subdirectory("src/builtin_plugins/plugin/amulet/view_3d")
+add_subdirectory("src/builtin_plugins/plugin/amulet/editor/widget/_view_3d")
