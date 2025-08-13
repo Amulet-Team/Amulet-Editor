@@ -172,7 +172,9 @@ def main() -> None:
     # make plugins importable
     sys.path.append(builtin_plugin_path)
 
-    viewer_plugin_path = get_package_dir("plugin.amulet.editor.widget._view_3d._view_3d")
+    viewer_plugin_path = get_package_dir(
+        "plugin.amulet.editor.widget._view_3d._view_3d"
+    )
     tests_path = os.path.join(root_path, "tests")
     # test_amulet_editor_path = os.path.join(tests_path, "test_amulet_editor")
 
