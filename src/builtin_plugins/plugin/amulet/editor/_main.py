@@ -18,7 +18,7 @@ from amulet.app.exception import CatchExceptionDialog
 from amulet.app.localisation import Translator, locale_changed
 
 from plugin.tablericons import tablericons
-from plugin.amulet.main_level import get_main_level, set_main_level
+from plugin.amulet.level import get_main_level, set_main_level
 
 from plugin.amulet.editor import __path__ as editor_path
 from plugin.amulet.editor.window._main import (

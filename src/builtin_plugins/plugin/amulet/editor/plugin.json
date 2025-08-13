@@ -12,7 +12,7 @@
 			"amulet_editor~=1.0a0"
 		],
 		"plugin": [
-			"amulet.main_level~=1.0",
+			"amulet.level~=1.0",
 			"amulet.inspector~=1.0",
 			"tablericons.tablericons~=1.0"
 		]
