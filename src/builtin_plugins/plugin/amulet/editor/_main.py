@@ -131,11 +131,13 @@ def _init_editor() -> None:
                     None,
                     None,
                     SplitterConfig(
-                        WidgetStackConfig((WidgetConfig(SelectionWidget.__qualname__),)),
+                        WidgetStackConfig(
+                            (WidgetConfig(SelectionWidget.__qualname__),)
+                        ),
                         WidgetStackConfig((WidgetConfig(View3D.__qualname__),)),
                         Qt.Orientation.Horizontal,
-                        0.25
-                    )
+                        0.25,
+                    ),
                 ),
                 (),
             ),
