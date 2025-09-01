@@ -9,7 +9,7 @@
 namespace Amulet {
 
 static std::pair<float, float> _get_bounds(
-    const std::variant<SelectionBox, SelectionGroup>& bounds)
+    const std::variant<SelectionBox, SelectionBoxGroup>& bounds)
 {
     return std::visit(
         [](auto&& arg) -> std::pair<float, float> {
@@ -17,8 +17,8 @@ static std::pair<float, float> _get_bounds(
             if constexpr (std::is_same_v<T, SelectionBox>) {
                 return { arg.min_y(), arg.max_y() };
             } else {
-                static_assert(std::is_same_v<T, SelectionGroup>);
-                const auto& boxes = arg.selection_boxes();
+                static_assert(std::is_same_v<T, SelectionBoxGroup>);
+                const auto& boxes = arg.get_boxes();
                 if (boxes.empty()) {
                     return { 0, 256 };
                 }
@@ -39,7 +39,7 @@ static std::pair<float, float> _get_bounds(
 }
 
 static float _get_min_y(
-    const std::variant<SelectionBox, SelectionGroup>& bounds)
+    const std::variant<SelectionBox, SelectionBoxGroup>& bounds)
 {
     return std::visit(
         [](auto&& arg) -> float {
@@ -47,8 +47,8 @@ static float _get_min_y(
             if constexpr (std::is_same_v<T, SelectionBox>) {
                 return arg.min_y();
             } else {
-                static_assert(std::is_same_v<T, SelectionGroup>);
-                const auto& boxes = arg.selection_boxes();
+                static_assert(std::is_same_v<T, SelectionBoxGroup>);
+                const auto& boxes = arg.get_boxes();
                 if (boxes.empty()) {
                     return 0;
                 }
@@ -65,7 +65,7 @@ static float _get_min_y(
 }
 
 static float _get_max_y(
-    const std::variant<SelectionBox, SelectionGroup>& bounds)
+    const std::variant<SelectionBox, SelectionBoxGroup>& bounds)
 {
     return std::visit(
         [](auto&& arg) -> float {
@@ -73,8 +73,8 @@ static float _get_max_y(
             if constexpr (std::is_same_v<T, SelectionBox>) {
                 return arg.max_y();
             } else {
-                static_assert(std::is_same_v<T, SelectionGroup>);
-                const auto& boxes = arg.selection_boxes();
+                static_assert(std::is_same_v<T, SelectionBoxGroup>);
+                const auto& boxes = arg.get_boxes();
                 if (boxes.empty()) {
                     return 0;
                 }
@@ -160,7 +160,7 @@ static void _create_chunk_plane(float* buffer, float height)
 }
 
 static std::string _create_grid(
-    const std::variant<SelectionBox, SelectionGroup>& level_bounds,
+    const std::variant<SelectionBox, SelectionBoxGroup>& level_bounds,
     AbstractOpenGLResourcePack& resource_pack,
     const std::string& texture_namespace,
     const std::string& texture_path,
@@ -202,7 +202,7 @@ static std::string _create_grid(
 }
 
 static std::string _get_empty_geometry(
-    const std::variant<SelectionBox, SelectionGroup>& level_bounds,
+    const std::variant<SelectionBox, SelectionBoxGroup>& level_bounds,
     AbstractOpenGLResourcePack& resource_pack,
     const std::int64_t cx,
     const std::int64_t cz)
@@ -218,7 +218,7 @@ static std::string _get_empty_geometry(
 }
 
 static std::string _get_error_geometry(
-    std::variant<SelectionBox, SelectionGroup> level_bounds,
+    std::variant<SelectionBox, SelectionBoxGroup> level_bounds,
     AbstractOpenGLResourcePack& resource_pack,
     const std::int64_t cx,
     const std::int64_t cz)
