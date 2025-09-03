@@ -96,7 +96,7 @@ def _init_editor() -> None:
 
     # Set up the home button
     home_button = create_layout_button(HomeLayoutID)
-    home_button.set_icon(tablericons.home)
+    home_button.set_icon(tablericons.outline.home)
     home_button.set_name("Home")
 
     if get_main_level() is None:
@@ -117,7 +117,7 @@ def _init_editor() -> None:
 
         # Set up the home button
         level_info_button = create_layout_button(LevelInfoLayoutID)
-        level_info_button.set_icon(tablericons.file_info)
+        level_info_button.set_icon(tablericons.outline.file_info)
         level_info_button.set_name("Level Info")
         level_info_button.click()
 
@@ -135,7 +135,7 @@ def _init_editor() -> None:
 
         # Set up the 3D View button
         editor_button = create_layout_button(EditorLayoutId)
-        editor_button.set_icon(tablericons.three_d_cube_sphere)
+        editor_button.set_icon(tablericons.outline.cube_3d_sphere)
         editor_button.set_name("3D Editor")
 
 
