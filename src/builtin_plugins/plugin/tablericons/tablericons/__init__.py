@@ -634,7 +634,9 @@ class filled:
     layout_bottombar = _get_path("filled", "layout-bottombar.svg")
     layout_cards = _get_path("filled", "layout-cards.svg")
     layout_dashboard = _get_path("filled", "layout-dashboard.svg")
-    layout_distribute_horizontal = _get_path("filled", "layout-distribute-horizontal.svg")
+    layout_distribute_horizontal = _get_path(
+        "filled", "layout-distribute-horizontal.svg"
+    )
     layout_distribute_vertical = _get_path("filled", "layout-distribute-vertical.svg")
     layout_grid = _get_path("filled", "layout-grid.svg")
     layout_kanban = _get_path("filled", "layout-kanban.svg")
@@ -642,9 +644,13 @@ class filled:
     layout_navbar_collapse = _get_path("filled", "layout-navbar-collapse.svg")
     layout_navbar_expand = _get_path("filled", "layout-navbar-expand.svg")
     layout_navbar = _get_path("filled", "layout-navbar.svg")
-    layout_sidebar_left_collapse = _get_path("filled", "layout-sidebar-left-collapse.svg")
+    layout_sidebar_left_collapse = _get_path(
+        "filled", "layout-sidebar-left-collapse.svg"
+    )
     layout_sidebar_left_expand = _get_path("filled", "layout-sidebar-left-expand.svg")
-    layout_sidebar_right_collapse = _get_path("filled", "layout-sidebar-right-collapse.svg")
+    layout_sidebar_right_collapse = _get_path(
+        "filled", "layout-sidebar-right-collapse.svg"
+    )
     layout_sidebar_right_expand = _get_path("filled", "layout-sidebar-right-expand.svg")
     layout_sidebar_right = _get_path("filled", "layout-sidebar-right.svg")
     layout_sidebar = _get_path("filled", "layout-sidebar.svg")
@@ -868,11 +874,19 @@ class filled:
     square_rounded_check = _get_path("filled", "square-rounded-check.svg")
     square_rounded_chevron_down = _get_path("filled", "square-rounded-chevron-down.svg")
     square_rounded_chevron_left = _get_path("filled", "square-rounded-chevron-left.svg")
-    square_rounded_chevron_right = _get_path("filled", "square-rounded-chevron-right.svg")
+    square_rounded_chevron_right = _get_path(
+        "filled", "square-rounded-chevron-right.svg"
+    )
     square_rounded_chevron_up = _get_path("filled", "square-rounded-chevron-up.svg")
-    square_rounded_chevrons_down = _get_path("filled", "square-rounded-chevrons-down.svg")
-    square_rounded_chevrons_left = _get_path("filled", "square-rounded-chevrons-left.svg")
-    square_rounded_chevrons_right = _get_path("filled", "square-rounded-chevrons-right.svg")
+    square_rounded_chevrons_down = _get_path(
+        "filled", "square-rounded-chevrons-down.svg"
+    )
+    square_rounded_chevrons_left = _get_path(
+        "filled", "square-rounded-chevrons-left.svg"
+    )
+    square_rounded_chevrons_right = _get_path(
+        "filled", "square-rounded-chevrons-right.svg"
+    )
     square_rounded_chevrons_up = _get_path("filled", "square-rounded-chevrons-up.svg")
     square_rounded_letter_a = _get_path("filled", "square-rounded-letter-a.svg")
     square_rounded_letter_b = _get_path("filled", "square-rounded-letter-b.svg")
@@ -989,6 +1003,8 @@ class filled:
     zoom_question = _get_path("filled", "zoom-question.svg")
     zoom_scan = _get_path("filled", "zoom-scan.svg")
     zoom = _get_path("filled", "zoom.svg")
+
+
 class outline:
     a_b_2 = _get_path("outline", "a-b-2.svg")
     a_b_off = _get_path("outline", "a-b-off.svg")
@@ -1440,10 +1456,14 @@ class outline:
     battery_vertical_2 = _get_path("outline", "battery-vertical-2.svg")
     battery_vertical_3 = _get_path("outline", "battery-vertical-3.svg")
     battery_vertical_4 = _get_path("outline", "battery-vertical-4.svg")
-    battery_vertical_charging_2 = _get_path("outline", "battery-vertical-charging-2.svg")
+    battery_vertical_charging_2 = _get_path(
+        "outline", "battery-vertical-charging-2.svg"
+    )
     battery_vertical_charging = _get_path("outline", "battery-vertical-charging.svg")
     battery_vertical_eco = _get_path("outline", "battery-vertical-eco.svg")
-    battery_vertical_exclamation = _get_path("outline", "battery-vertical-exclamation.svg")
+    battery_vertical_exclamation = _get_path(
+        "outline", "battery-vertical-exclamation.svg"
+    )
     battery_vertical_off = _get_path("outline", "battery-vertical-off.svg")
     battery_vertical = _get_path("outline", "battery-vertical.svg")
     battery = _get_path("outline", "battery.svg")
@@ -2431,7 +2451,9 @@ class outline:
     circuit_ammeter = _get_path("outline", "circuit-ammeter.svg")
     circuit_battery = _get_path("outline", "circuit-battery.svg")
     circuit_bulb = _get_path("outline", "circuit-bulb.svg")
-    circuit_capacitor_polarized = _get_path("outline", "circuit-capacitor-polarized.svg")
+    circuit_capacitor_polarized = _get_path(
+        "outline", "circuit-capacitor-polarized.svg"
+    )
     circuit_capacitor = _get_path("outline", "circuit-capacitor.svg")
     circuit_cell_plus = _get_path("outline", "circuit-cell-plus.svg")
     circuit_cell = _get_path("outline", "circuit-cell.svg")
@@ -2851,24 +2873,54 @@ class outline:
     device_ipad_down = _get_path("outline", "device-ipad-down.svg")
     device_ipad_exclamation = _get_path("outline", "device-ipad-exclamation.svg")
     device_ipad_heart = _get_path("outline", "device-ipad-heart.svg")
-    device_ipad_horizontal_bolt = _get_path("outline", "device-ipad-horizontal-bolt.svg")
-    device_ipad_horizontal_cancel = _get_path("outline", "device-ipad-horizontal-cancel.svg")
-    device_ipad_horizontal_check = _get_path("outline", "device-ipad-horizontal-check.svg")
-    device_ipad_horizontal_code = _get_path("outline", "device-ipad-horizontal-code.svg")
+    device_ipad_horizontal_bolt = _get_path(
+        "outline", "device-ipad-horizontal-bolt.svg"
+    )
+    device_ipad_horizontal_cancel = _get_path(
+        "outline", "device-ipad-horizontal-cancel.svg"
+    )
+    device_ipad_horizontal_check = _get_path(
+        "outline", "device-ipad-horizontal-check.svg"
+    )
+    device_ipad_horizontal_code = _get_path(
+        "outline", "device-ipad-horizontal-code.svg"
+    )
     device_ipad_horizontal_cog = _get_path("outline", "device-ipad-horizontal-cog.svg")
-    device_ipad_horizontal_dollar = _get_path("outline", "device-ipad-horizontal-dollar.svg")
-    device_ipad_horizontal_down = _get_path("outline", "device-ipad-horizontal-down.svg")
-    device_ipad_horizontal_exclamation = _get_path("outline", "device-ipad-horizontal-exclamation.svg")
-    device_ipad_horizontal_heart = _get_path("outline", "device-ipad-horizontal-heart.svg")
-    device_ipad_horizontal_minus = _get_path("outline", "device-ipad-horizontal-minus.svg")
+    device_ipad_horizontal_dollar = _get_path(
+        "outline", "device-ipad-horizontal-dollar.svg"
+    )
+    device_ipad_horizontal_down = _get_path(
+        "outline", "device-ipad-horizontal-down.svg"
+    )
+    device_ipad_horizontal_exclamation = _get_path(
+        "outline", "device-ipad-horizontal-exclamation.svg"
+    )
+    device_ipad_horizontal_heart = _get_path(
+        "outline", "device-ipad-horizontal-heart.svg"
+    )
+    device_ipad_horizontal_minus = _get_path(
+        "outline", "device-ipad-horizontal-minus.svg"
+    )
     device_ipad_horizontal_off = _get_path("outline", "device-ipad-horizontal-off.svg")
-    device_ipad_horizontal_pause = _get_path("outline", "device-ipad-horizontal-pause.svg")
+    device_ipad_horizontal_pause = _get_path(
+        "outline", "device-ipad-horizontal-pause.svg"
+    )
     device_ipad_horizontal_pin = _get_path("outline", "device-ipad-horizontal-pin.svg")
-    device_ipad_horizontal_plus = _get_path("outline", "device-ipad-horizontal-plus.svg")
-    device_ipad_horizontal_question = _get_path("outline", "device-ipad-horizontal-question.svg")
-    device_ipad_horizontal_search = _get_path("outline", "device-ipad-horizontal-search.svg")
-    device_ipad_horizontal_share = _get_path("outline", "device-ipad-horizontal-share.svg")
-    device_ipad_horizontal_star = _get_path("outline", "device-ipad-horizontal-star.svg")
+    device_ipad_horizontal_plus = _get_path(
+        "outline", "device-ipad-horizontal-plus.svg"
+    )
+    device_ipad_horizontal_question = _get_path(
+        "outline", "device-ipad-horizontal-question.svg"
+    )
+    device_ipad_horizontal_search = _get_path(
+        "outline", "device-ipad-horizontal-search.svg"
+    )
+    device_ipad_horizontal_share = _get_path(
+        "outline", "device-ipad-horizontal-share.svg"
+    )
+    device_ipad_horizontal_star = _get_path(
+        "outline", "device-ipad-horizontal-star.svg"
+    )
     device_ipad_horizontal_up = _get_path("outline", "device-ipad-horizontal-up.svg")
     device_ipad_horizontal_x = _get_path("outline", "device-ipad-horizontal-x.svg")
     device_ipad_horizontal = _get_path("outline", "device-ipad-horizontal.svg")
@@ -3843,7 +3895,9 @@ class outline:
     layout_collage = _get_path("outline", "layout-collage.svg")
     layout_columns = _get_path("outline", "layout-columns.svg")
     layout_dashboard = _get_path("outline", "layout-dashboard.svg")
-    layout_distribute_horizontal = _get_path("outline", "layout-distribute-horizontal.svg")
+    layout_distribute_horizontal = _get_path(
+        "outline", "layout-distribute-horizontal.svg"
+    )
     layout_distribute_vertical = _get_path("outline", "layout-distribute-vertical.svg")
     layout_grid_add = _get_path("outline", "layout-grid-add.svg")
     layout_grid_remove = _get_path("outline", "layout-grid-remove.svg")
@@ -3857,11 +3911,19 @@ class outline:
     layout_off = _get_path("outline", "layout-off.svg")
     layout_rows = _get_path("outline", "layout-rows.svg")
     layout_sidebar_inactive = _get_path("outline", "layout-sidebar-inactive.svg")
-    layout_sidebar_left_collapse = _get_path("outline", "layout-sidebar-left-collapse.svg")
+    layout_sidebar_left_collapse = _get_path(
+        "outline", "layout-sidebar-left-collapse.svg"
+    )
     layout_sidebar_left_expand = _get_path("outline", "layout-sidebar-left-expand.svg")
-    layout_sidebar_right_collapse = _get_path("outline", "layout-sidebar-right-collapse.svg")
-    layout_sidebar_right_expand = _get_path("outline", "layout-sidebar-right-expand.svg")
-    layout_sidebar_right_inactive = _get_path("outline", "layout-sidebar-right-inactive.svg")
+    layout_sidebar_right_collapse = _get_path(
+        "outline", "layout-sidebar-right-collapse.svg"
+    )
+    layout_sidebar_right_expand = _get_path(
+        "outline", "layout-sidebar-right-expand.svg"
+    )
+    layout_sidebar_right_inactive = _get_path(
+        "outline", "layout-sidebar-right-inactive.svg"
+    )
     layout_sidebar_right = _get_path("outline", "layout-sidebar-right.svg")
     layout_sidebar = _get_path("outline", "layout-sidebar.svg")
     layout = _get_path("outline", "layout.svg")
@@ -5377,13 +5439,25 @@ class outline:
     square_rounded_arrow_right = _get_path("outline", "square-rounded-arrow-right.svg")
     square_rounded_arrow_up = _get_path("outline", "square-rounded-arrow-up.svg")
     square_rounded_check = _get_path("outline", "square-rounded-check.svg")
-    square_rounded_chevron_down = _get_path("outline", "square-rounded-chevron-down.svg")
-    square_rounded_chevron_left = _get_path("outline", "square-rounded-chevron-left.svg")
-    square_rounded_chevron_right = _get_path("outline", "square-rounded-chevron-right.svg")
+    square_rounded_chevron_down = _get_path(
+        "outline", "square-rounded-chevron-down.svg"
+    )
+    square_rounded_chevron_left = _get_path(
+        "outline", "square-rounded-chevron-left.svg"
+    )
+    square_rounded_chevron_right = _get_path(
+        "outline", "square-rounded-chevron-right.svg"
+    )
     square_rounded_chevron_up = _get_path("outline", "square-rounded-chevron-up.svg")
-    square_rounded_chevrons_down = _get_path("outline", "square-rounded-chevrons-down.svg")
-    square_rounded_chevrons_left = _get_path("outline", "square-rounded-chevrons-left.svg")
-    square_rounded_chevrons_right = _get_path("outline", "square-rounded-chevrons-right.svg")
+    square_rounded_chevrons_down = _get_path(
+        "outline", "square-rounded-chevrons-down.svg"
+    )
+    square_rounded_chevrons_left = _get_path(
+        "outline", "square-rounded-chevrons-left.svg"
+    )
+    square_rounded_chevrons_right = _get_path(
+        "outline", "square-rounded-chevrons-right.svg"
+    )
     square_rounded_chevrons_up = _get_path("outline", "square-rounded-chevrons-up.svg")
     square_rounded_letter_a = _get_path("outline", "square-rounded-letter-a.svg")
     square_rounded_letter_b = _get_path("outline", "square-rounded-letter-b.svg")
@@ -5661,8 +5735,12 @@ class outline:
     transfer_out = _get_path("outline", "transfer-out.svg")
     transfer_vertical = _get_path("outline", "transfer-vertical.svg")
     transfer = _get_path("outline", "transfer.svg")
-    transform_point_bottom_left = _get_path("outline", "transform-point-bottom-left.svg")
-    transform_point_bottom_right = _get_path("outline", "transform-point-bottom-right.svg")
+    transform_point_bottom_left = _get_path(
+        "outline", "transform-point-bottom-left.svg"
+    )
+    transform_point_bottom_right = _get_path(
+        "outline", "transform-point-bottom-right.svg"
+    )
     transform_point_top_left = _get_path("outline", "transform-point-top-left.svg")
     transform_point_top_right = _get_path("outline", "transform-point-top-right.svg")
     transform_point = _get_path("outline", "transform-point.svg")
