@@ -4,10 +4,10 @@ import typing
 
 import amulet.level.abc.level
 import amulet.utils.event
-import plugin.amulet.view_3d._view_3d.resource_pack.abc
+import plugin.amulet.editor.widget._view_3d._view_3d.resource_pack.abc
 import PySide6.QtGui
 
-__all__ = ["LevelGeometry"]
+__all__: list[str] = ["LevelGeometry"]
 
 class LevelGeometry:
     def __init__(self, arg0: amulet.level.abc.level.Level) -> None: ...
@@ -23,7 +23,7 @@ class LevelGeometry:
     ) -> None: ...
     def set_resource_pack(
         self,
-        resource_pack: plugin.amulet.view_3d._view_3d.resource_pack.abc.AbstractOpenGLResourcePack,
+        resource_pack: plugin.amulet.editor.widget._view_3d._view_3d.resource_pack.abc.AbstractOpenGLResourcePack,
     ) -> None: ...
     def sleep(self) -> None: ...
     def wake(self) -> None: ...

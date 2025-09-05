@@ -264,6 +264,10 @@ def _init_layout(
         view_container.addWidget(splitter_widget)
         _init_layout(splitter_widget, layout.first)
         _init_layout(splitter_widget, layout.second)
+        left_weight = max(1, min(100, int(100 * layout.weight)))
+        right_weight = 100 - left_weight
+        splitter_widget.setStretchFactor(0, left_weight)
+        splitter_widget.setStretchFactor(1, right_weight)
     elif isinstance(layout, WidgetStackConfig):
         tab_widget = StackedTabWidget()
         view_container.addWidget(tab_widget)

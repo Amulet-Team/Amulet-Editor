@@ -6,7 +6,7 @@ import typing
 import amulet.core.block
 import amulet.resource_pack.mesh.block
 
-__all__ = ["AbstractOpenGLResourcePack"]
+__all__: list[str] = ["AbstractOpenGLResourcePack"]
 
 class AbstractOpenGLResourcePack:
     def __init__(self) -> None: ...

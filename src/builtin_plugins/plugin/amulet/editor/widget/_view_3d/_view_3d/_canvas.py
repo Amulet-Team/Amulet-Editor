@@ -30,15 +30,14 @@ from amulet.utils.task_manager import ProgressManager
 from amulet.utils.event import EventToken
 from amulet.level.abc.level import Level
 
-from plugin.amulet.resource_pack._api import get_resource_pack_container
+from plugin.amulet.resource_pack import get_resource_pack_container
 
-from plugin.amulet.main_level import get_main_level
+from plugin.amulet.level import get_main_level
 
 from ._settings import render_settings
 from ._camera import Camera, Location, Rotation
 from ._key_catcher import KeySrc, KeyCatcher
 
-# from ._level_geometry import LevelGeometry
 from .level.level_geometry import LevelGeometry
 from .resource_pack import (
     get_gl_resource_pack_container,
@@ -197,7 +196,8 @@ class FirstPersonCanvas(QOpenGLWidget, QOpenGLFunctions):
             # Set the start position after OpenGL has been initialised
             # gl_data.render_level.set_dimension(next(iter(self._level.dimension_ids())))
             self._canvas_gl_data.render_level.set_dimension("minecraft:overworld")
-            self.camera.location = Location(0, 0, 0)
+            self.camera.location = Location(0, 1000, 0)
+            self.camera.rotation = Rotation(0, 90)
             log.debug("FirstPersonCanvas.initializeGL end")
 
     def __del__(self) -> None:

@@ -1,8 +1,8 @@
 {
 	"namespace": "amulet",
-	"identifier": "main_level",
+	"identifier": "level",
 	"version": "1.0.0",
-	"name": "Main Level Storage",
+	"name": "Level Storage",
 	"depends": {
 		"python": "~=3.11",
 		"library": [

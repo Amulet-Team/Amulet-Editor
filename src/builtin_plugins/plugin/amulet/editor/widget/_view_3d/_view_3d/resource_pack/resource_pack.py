@@ -36,7 +36,7 @@ from amulet.app.invoke import invoke
 from amulet.app.exception import display_exception
 from amulet.app.path import cache_directory
 
-from plugin.amulet.resource_pack._api import get_resource_pack_container
+from plugin.amulet.resource_pack import get_resource_pack_container
 from .abc import AbstractOpenGLResourcePack
 
 log = logging.getLogger(__name__)

@@ -6,7 +6,7 @@ from amulet.app.cli import spawn_process
 
 from plugin.tablericons import tablericons
 
-from plugin.amulet.main_level import get_main_level
+from plugin.amulet.level import get_main_level
 
 from ._open_world import Ui_OpenWorldPage
 

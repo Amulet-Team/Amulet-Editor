@@ -1,9 +1,9 @@
 #include <pybind11/pybind11.h>
 #include <pybind11/stl.h>
 
-#include <amulet/pybind11_extensions/py_module.hpp>
-
 #include "abc.hpp"
+
+#include <amulet/pybind11_extensions/py_module.hpp>
 
 namespace py = pybind11;
 namespace pyext = Amulet::pybind11_extensions;
