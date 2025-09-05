@@ -98,6 +98,11 @@ class SelectionCoreWidget(QWidget):
         self._button_layout_1 = QHBoxLayout()
         self._layout.addLayout(self._button_layout_1)
 
+        self._clone_button = QPushButton()
+        self._clone_button.setIconSize(QSize(30, 30))
+        self._clone_button.setIcon(QIcon(tablericons.outline.copy))
+        self._clone_button.clicked.connect(self._clone_clicked)
+        self._button_layout_1.addWidget(self._clone_button)
 
         self._delete_button = HeldPushButton(1)
         self._delete_button.setIconSize(QSize(30, 30))
@@ -208,6 +213,17 @@ class SelectionCoreWidget(QWidget):
             )
         selection_plugin.set_selection(selection)
 
+    def _clone_clicked(self) -> None:
+        current_row = self._selection_list.currentRow()
+        with selection_plugin.get_lock():
+            shapes = []
+            for i, item in enumerate(selection_plugin.get_selection()):
+                shapes.append(item)
+                if i == current_row:
+                    shapes.append(item)
+            selection = SelectionShapeGroup(shapes)
+            selection_plugin.set_selection(selection)
+
     def _delete_selection(self) -> None:
         with self._lock:
             selection = SelectionShapeGroup([
@@ -285,6 +301,11 @@ class SelectionCoreWidget(QWidget):
         self._add_ellipsoid_button.setToolTip(
             QCoreApplication.translate(
                 "plugin.amulet.editor.SelectionWidget", "add_ellipsoid_tip", None
+            )
+        )
+        self._clone_button.setToolTip(
+            QCoreApplication.translate(
+                "plugin.amulet.editor.SelectionWidget", "clone_tip", None
             )
         )
         self._clipboard_save.setToolTip(
