@@ -59,10 +59,14 @@ class HeldPushButton(QPushButton):
 
         if self._is_held:
             painter = QPainter(self)
-            width = self.width() * max(0.0, min(1.0, (time.time() - self._start_time - 0.2) / self._dt))
+            width = max(0.0, min(1.0, (time.time() - self._start_time - 0.2) / self._dt))
             painter.setBrush(QColor(100, 180, 255, 120))
             painter.setPen(Qt.PenStyle.NoPen)
-            painter.drawRect(0, 0, int(width), self.height())
+            # TODO: rounded corners?
+            painter.drawRect(0, 0, int(self.width() * width), self.height())
+
+            if width == 1.0:
+                self._timer.stop()
 
     def _on_press(self) -> None:
         self._start_time = time.time()
