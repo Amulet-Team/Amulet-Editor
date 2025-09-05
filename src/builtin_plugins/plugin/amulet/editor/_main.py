@@ -56,6 +56,7 @@ level_info_button: ButtonProxy | None = None
 EditorLayoutId = "68817e4c-32e3-43f8-ac61-9d7352c6329d"
 editor_button: ButtonProxy | None = None
 
+
 def _init_app() -> None:
     app = QApplication.instance()
     if not isinstance(app, QApplication):
