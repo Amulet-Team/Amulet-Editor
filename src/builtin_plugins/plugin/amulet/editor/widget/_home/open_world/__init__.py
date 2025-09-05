@@ -16,7 +16,7 @@ class OpenWorldPage(Ui_OpenWorldPage):
         self, parent: QWidget | None = None, f: Qt.WindowType = Qt.WindowType.Widget
     ):
         super().__init__(parent, f)
-        self.btn_back.setIcon(QIcon(tablericons.arrow_left))
+        self.btn_back.setIcon(QIcon(tablericons.outline.arrow_left))
         self.load_file_button.clicked.connect(self.open_file)
         self.load_directory_button.clicked.connect(self.open_dir)
 

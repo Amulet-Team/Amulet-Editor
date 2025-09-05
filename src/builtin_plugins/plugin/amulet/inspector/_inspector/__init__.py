@@ -59,8 +59,8 @@ class InspectorTool(Ui_InspectionTool):
         self._inspect = False
         self._highlight: Optional[tuple[QWidget, QObject]] = None
 
-        self.inspect_button.setIcon(QIcon(tablericons.click))
-        self.reload_button.setIcon(QIcon(tablericons.refresh))
+        self.inspect_button.setIcon(QIcon(tablericons.outline.click))
+        self.reload_button.setIcon(QIcon(tablericons.outline.refresh))
 
         self.inspect_button.clicked.connect(self.inspect)
         self.reload_button.clicked.connect(self.reload)
