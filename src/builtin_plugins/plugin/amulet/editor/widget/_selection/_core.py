@@ -137,6 +137,26 @@ class SelectionCoreWidget(QWidget):
         self._add_ellipsoid_button.clicked.connect(self._add_ellipsoid)
         self._button_layout_2.addWidget(self._add_ellipsoid_button)
 
+        self._add_cylinder_button = QPushButton()
+        self._add_cylinder_button.setIconSize(QSize(30, 30))
+        self._add_cylinder_button.setIcon(QIcon(tablericons.outline.cylinder_plus))
+        self._add_cylinder_button.setEnabled(False)
+        # self._add_cylinder_button.clicked.connect(self._add_cylinder)
+        self._button_layout_2.addWidget(self._add_cylinder_button)
+
+        self._add_prism_button = QPushButton()
+        self._add_prism_button.setIconSize(QSize(30, 30))
+        self._add_prism_button.setIcon(QIcon(tablericons.outline.prism_plus))
+        self._add_prism_button.setEnabled(False)
+        # self._add_prism_button.clicked.connect(self._add_prism)
+        self._button_layout_2.addWidget(self._add_prism_button)
+
+        self._add_pyramid_button = QPushButton()
+        self._add_pyramid_button.setIconSize(QSize(30, 30))
+        self._add_pyramid_button.setIcon(QIcon(tablericons.outline.pyramid_plus))
+        self._add_pyramid_button.setEnabled(False)
+        # self._add_pyramid_button.clicked.connect(self._add_pyramid)
+        self._button_layout_2.addWidget(self._add_pyramid_button)
 
         self._localise()
 
