@@ -50,4 +50,4 @@ if(NOT DEFINED AMULET_EDITOR_EXT_SRC_DIR)
 endif()
 
 # Install
-install(TARGETS _view_3d DESTINATION ${AMULET_EDITOR_EXT_SRC_DIR}/builtin_plugins/plugin/amulet/editor/widget/_view_3d/_view_3d/_view_3d)
+install(TARGETS _view_3d DESTINATION ${AMULET_EDITOR_EXT_SRC_DIR}/builtin_plugins/plugin/amulet/editor/widget/_view_3d/_view_3d)
