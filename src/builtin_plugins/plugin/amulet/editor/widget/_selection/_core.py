@@ -353,7 +353,7 @@ def _demo():
 
     def set_many_shapes():
         group = SelectionShapeGroup(
-            [SelectionCuboid(-1, -1, -1, 2, 2, 2), SelectionEllipsoid(10, 0, 0, 2)] * 1000
+            [SelectionCuboid(-1, -1, -1, 2, 2, 2), SelectionEllipsoid(10, 0, 0, 2)] * 500
         )
         selection_plugin.set_selection(group)
 
