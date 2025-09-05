@@ -76,7 +76,7 @@ class HeldPushButton(QPushButton):
 
     def _on_release(self) -> None:
         self._is_held = False
-        if self._start_time + self._dt <= time.time():
+        if self._start_time + self._dt + 0.2 <= time.time():
             self._held_completed = True
         self._timer.stop()
 
