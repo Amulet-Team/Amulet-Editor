@@ -82,6 +82,11 @@ class HeldPushButton(QPushButton):
         self.update()
 
 
+CuboidIcon = QIcon(tablericons.outline.cube)
+EllipsoidIcon = QIcon(tablericons.outline.sphere)
+UnknownIcon = QIcon(tablericons.outline.help_triangle)
+
+
 class SelectionCoreWidget(QWidget):
     def __init__(self):
         super().__init__()
@@ -168,7 +173,7 @@ class SelectionCoreWidget(QWidget):
         item = QListWidgetItem()
         item.setData(Qt.ItemDataRole.UserRole, shape)
         if isinstance(shape, SelectionCuboid):
-            item.setIcon(QIcon(tablericons.outline.cube))
+            item.setIcon(CuboidIcon)
             m = shape.matrix
             (sx, sy, sz), (rx, ry, rz), (dx, dy, dz) = m.decompose()
             m2 = Matrix4x4.transformation_matrix(sx, sy, sz, rx, ry, rz, dx, dy, dz)
@@ -188,7 +193,7 @@ class SelectionCoreWidget(QWidget):
                     f")))"
                 )
         elif isinstance(shape, SelectionEllipsoid):
-            item.setIcon(QIcon(tablericons.outline.sphere))
+            item.setIcon(EllipsoidIcon)
             m = shape.matrix
             (sx, sy, sz), (rx, ry, rz), (dx, dy, dz) = m.decompose()
             m2 = Matrix4x4.transformation_matrix(sx, sy, sz, rx, ry, rz, dx, dy, dz)
@@ -204,7 +209,7 @@ class SelectionCoreWidget(QWidget):
                     f")))"
                 )
         else:
-            item.setIcon(QIcon(tablericons.outline.help_triangle))
+            item.setIcon(UnknownIcon)
             text = repr(shape)
         item.setText(text)
         self._selection_list.addItem(item)
