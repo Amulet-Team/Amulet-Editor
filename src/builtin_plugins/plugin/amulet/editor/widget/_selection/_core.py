@@ -95,38 +95,43 @@ class SelectionCoreWidget(QWidget):
         self._selection_list.currentRowChanged.connect(self._gui_selection_index_changed)
         self._layout.addWidget(self._selection_list)
 
-        self._button_layout = QHBoxLayout()
-        self._layout.addLayout(self._button_layout)
+        self._button_layout_1 = QHBoxLayout()
+        self._layout.addLayout(self._button_layout_1)
 
-        self._add_cuboid_button = QPushButton()
-        self._add_cuboid_button.setIconSize(QSize(30, 30))
-        self._add_cuboid_button.setIcon(QIcon(tablericons.outline.cube_plus))
-        self._add_cuboid_button.clicked.connect(self._add_cuboid)
-        self._button_layout.addWidget(self._add_cuboid_button)
-
-        self._add_ellipsoid_button = QPushButton()
-        self._add_ellipsoid_button.setIconSize(QSize(30, 30))
-        self._add_ellipsoid_button.setIcon(QIcon(tablericons.outline.sphere_plus))
-        self._add_ellipsoid_button.clicked.connect(self._add_ellipsoid)
-        self._button_layout.addWidget(self._add_ellipsoid_button)
 
         self._delete_button = HeldPushButton(1)
         self._delete_button.setIconSize(QSize(30, 30))
         self._delete_button.setIcon(QIcon(tablericons.outline.trash))
         self._delete_button.clicked.connect(self._delete_clicked)
-        self._button_layout.addWidget(self._delete_button)
+        self._button_layout_1.addWidget(self._delete_button)
 
         self._clipboard_save = QPushButton()
         self._clipboard_save.setIconSize(QSize(30, 30))
         self._clipboard_save.setIcon(QIcon(tablericons.outline.download))
-        self._clipboard_save.clicked.connect(self._copy_clicked)
-        self._button_layout.addWidget(self._clipboard_save)
+        self._clipboard_save.clicked.connect(self._save_clicked)
+        self._button_layout_1.addWidget(self._clipboard_save)
 
         self._clipboard_load = QPushButton()
         self._clipboard_load.setIconSize(QSize(30, 30))
         self._clipboard_load.setIcon(QIcon(tablericons.outline.upload))
-        self._clipboard_load.clicked.connect(self._paste_clicked)
-        self._button_layout.addWidget(self._clipboard_load)
+        self._clipboard_load.clicked.connect(self._load_clicked)
+        self._button_layout_1.addWidget(self._clipboard_load)
+
+        self._button_layout_2 = QHBoxLayout()
+        self._layout.addLayout(self._button_layout_2)
+
+        self._add_cuboid_button = QPushButton()
+        self._add_cuboid_button.setIconSize(QSize(30, 30))
+        self._add_cuboid_button.setIcon(QIcon(tablericons.outline.cube_plus))
+        self._add_cuboid_button.clicked.connect(self._add_cuboid)
+        self._button_layout_2.addWidget(self._add_cuboid_button)
+
+        self._add_ellipsoid_button = QPushButton()
+        self._add_ellipsoid_button.setIconSize(QSize(30, 30))
+        self._add_ellipsoid_button.setIcon(QIcon(tablericons.outline.sphere_plus))
+        self._add_ellipsoid_button.clicked.connect(self._add_ellipsoid)
+        self._button_layout_2.addWidget(self._add_ellipsoid_button)
+
 
         self._localise()
 
@@ -238,11 +243,11 @@ class SelectionCoreWidget(QWidget):
             selection_plugin.set_selection(selection)
             selection_plugin.set_selection_index(len(selection) - 1)
 
-    def _copy_clicked(self) -> None:
+    def _save_clicked(self) -> None:
         text = selection_plugin.get_selection().serialise()
         QGuiApplication.clipboard().setText(text)
 
-    def _paste_clicked(self) -> None:
+    def _load_clicked(self) -> None:
         with CatchExceptionDialog("Failed parsing selection from clipboard."):
             selection = SelectionShapeGroup.deserialise(
                 QGuiApplication.clipboard().text()
