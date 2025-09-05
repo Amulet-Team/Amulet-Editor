@@ -34,6 +34,19 @@ jobs:
       run: |
         pip install build twine
 
+    - name: Install Qt (Windows)
+      if: matrix.os == 'windows-latest'
+      uses: jurplel/install-qt-action@v4
+      with:
+        version: '6.9.1'
+        arch: 'win64_msvc2022_64'
+
+    - name: Install Qt (Linux/MacOS)
+      if: matrix.os != 'windows-latest'
+      uses: jurplel/install-qt-action@v4
+      with:
+        version: '6.9.1'
+
     - name: Build
       run: |
         python -m build .
