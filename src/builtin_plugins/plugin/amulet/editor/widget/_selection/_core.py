@@ -79,6 +79,7 @@ class HeldPushButton(QPushButton):
         if self._start_time + self._dt + 0.2 <= time.time():
             self._held_completed = True
         self._timer.stop()
+        self.update()
 
 
 class SelectionCoreWidget(QWidget):
