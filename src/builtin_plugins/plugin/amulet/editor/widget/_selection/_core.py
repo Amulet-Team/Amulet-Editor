@@ -90,7 +90,6 @@ UnknownIcon = QIcon(tablericons.outline.help_triangle)
 class SelectionCoreWidget(QWidget):
     def __init__(self):
         super().__init__()
-        self._lock = RLock()
         self._listening = False
 
         self._layout = QVBoxLayout()
@@ -171,7 +170,6 @@ class SelectionCoreWidget(QWidget):
 
     def _add_shape(self, shape: SelectionShape):
         item = QListWidgetItem()
-        item.setData(Qt.ItemDataRole.UserRole, shape)
         if isinstance(shape, SelectionCuboid):
             item.setIcon(CuboidIcon)
             m = shape.matrix
@@ -215,28 +213,14 @@ class SelectionCoreWidget(QWidget):
         self._selection_list.addItem(item)
 
     def _data_selection_changed(self, selection: SelectionShapeGroup) -> None:
-        with self._lock:
-            with QSignalBlocker(self._selection_list):
-                self._selection_list.clear()
-                for shape in selection:
-                    self._add_shape(shape)
-                index = selection_plugin.get_selection_index()
-                if 0 <= index:
-                    self._selection_list.setCurrentRow(index)
-            self._delete_button.setEnabled(bool(selection))
-
-    def _set_selection(self) -> None:
-        with self._lock:
-            selection = SelectionShapeGroup(
-                [
-                    dynamic_cast(
-                        self._selection_list.item(i).data(Qt.ItemDataRole.UserRole),
-                        SelectionShape,
-                    )
-                    for i in range(self._selection_list.count())
-                ]
-            )
-        selection_plugin.set_selection(selection)
+        with QSignalBlocker(self._selection_list):
+            self._selection_list.clear()
+            for shape in selection:
+                self._add_shape(shape)
+            index = selection_plugin.get_selection_index()
+            if 0 <= index:
+                self._selection_list.setCurrentRow(index)
+        self._delete_button.setEnabled(bool(selection))
 
     def _clone_clicked(self) -> None:
         current_row = self._selection_list.currentRow()
@@ -250,21 +234,23 @@ class SelectionCoreWidget(QWidget):
             selection_plugin.set_selection(selection)
 
     def _delete_selection(self) -> None:
-        with self._lock:
+        current_row = self._selection_list.currentRow()
+        with selection_plugin.get_lock():
             selection = SelectionShapeGroup([
                 item for i, item in enumerate(selection_plugin.get_selection())
-                if i != self._selection_list.currentRow()
+                if i != current_row
             ])
             selection_plugin.set_selection(selection)
 
     def _delete_clicked(self) -> None:
-        with self._lock:
+        current_row = self._selection_list.currentRow()
+        with selection_plugin.get_lock():
             if self._delete_button.was_held:
                 selection = SelectionShapeGroup()
             else:
                 selection = SelectionShapeGroup([
                     item for i, item in enumerate(selection_plugin.get_selection())
-                    if i != self._selection_list.currentRow()
+                    if i != current_row
                 ])
             selection_plugin.set_selection(selection)
 
