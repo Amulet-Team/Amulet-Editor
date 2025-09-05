@@ -116,17 +116,17 @@ class SelectionCoreWidget(QWidget):
         self._delete_button.clicked.connect(self._delete_clicked)
         self._button_layout.addWidget(self._delete_button)
 
-        self._copy_button = QPushButton()
-        self._copy_button.setIconSize(QSize(30, 30))
-        self._copy_button.setIcon(QIcon(tablericons.outline.copy))
-        self._copy_button.clicked.connect(self._copy_clicked)
-        self._button_layout.addWidget(self._copy_button)
+        self._clipboard_save = QPushButton()
+        self._clipboard_save.setIconSize(QSize(30, 30))
+        self._clipboard_save.setIcon(QIcon(tablericons.outline.download))
+        self._clipboard_save.clicked.connect(self._copy_clicked)
+        self._button_layout.addWidget(self._clipboard_save)
 
-        self._paste_button = QPushButton()
-        self._paste_button.setIconSize(QSize(30, 30))
-        self._paste_button.setIcon(QIcon(tablericons.outline.clipboard))
-        self._paste_button.clicked.connect(self._paste_clicked)
-        self._button_layout.addWidget(self._paste_button)
+        self._clipboard_load = QPushButton()
+        self._clipboard_load.setIconSize(QSize(30, 30))
+        self._clipboard_load.setIcon(QIcon(tablericons.outline.upload))
+        self._clipboard_load.clicked.connect(self._paste_clicked)
+        self._button_layout.addWidget(self._clipboard_load)
 
         self._localise()
 
@@ -260,16 +260,6 @@ class SelectionCoreWidget(QWidget):
             self._listening = False
 
     def _localise(self) -> None:
-        self._copy_button.setToolTip(
-            QCoreApplication.translate(
-                "plugin.amulet.editor.SelectionWidget", "copy_tip", None
-            )
-        )
-        self._paste_button.setToolTip(
-            QCoreApplication.translate(
-                "plugin.amulet.editor.SelectionWidget", "paste_tip", None
-            )
-        )
         self._add_cuboid_button.setToolTip(
             QCoreApplication.translate(
                 "plugin.amulet.editor.SelectionWidget", "add_cuboid_tip", None
@@ -278,6 +268,16 @@ class SelectionCoreWidget(QWidget):
         self._add_ellipsoid_button.setToolTip(
             QCoreApplication.translate(
                 "plugin.amulet.editor.SelectionWidget", "add_ellipsoid_tip", None
+            )
+        )
+        self._clipboard_save.setToolTip(
+            QCoreApplication.translate(
+                "plugin.amulet.editor.SelectionWidget", "clipboard_save", None
+            )
+        )
+        self._clipboard_load.setToolTip(
+            QCoreApplication.translate(
+                "plugin.amulet.editor.SelectionWidget", "clipboard_load", None
             )
         )
         self._delete_button.setToolTip(
