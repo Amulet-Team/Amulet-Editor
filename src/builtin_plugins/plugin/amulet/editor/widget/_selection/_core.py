@@ -220,7 +220,10 @@ class SelectionCoreWidget(QWidget):
             index = selection_plugin.get_selection_index()
             if 0 <= index:
                 self._selection_list.setCurrentRow(index)
-        self._delete_button.setEnabled(bool(selection))
+
+        has_selection = bool(selection)
+        self._clone_button.setEnabled(has_selection)
+        self._delete_button.setEnabled(has_selection)
 
     def _clone_clicked(self) -> None:
         current_row = self._selection_list.currentRow()
