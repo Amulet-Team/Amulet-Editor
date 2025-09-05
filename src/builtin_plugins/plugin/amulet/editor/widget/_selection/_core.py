@@ -4,7 +4,7 @@ from threading import RLock
 import time
 
 from PySide6.QtCore import Qt, QEvent, QCoreApplication, QSize, QSignalBlocker, QTimer
-from PySide6.QtGui import QShowEvent, QHideEvent, QIcon, QGuiApplication, QPaintEvent, QPainter, QColor
+from PySide6.QtGui import QShowEvent, QHideEvent, QIcon, QGuiApplication, QPaintEvent, QPainter, QColor, QKeyEvent
 from PySide6.QtWidgets import (
     QWidget,
     QVBoxLayout,
@@ -130,6 +130,10 @@ class SelectionCoreWidget(QWidget):
 
         self._localise()
 
+    def keyPressEvent(self, event: QKeyEvent) -> None:
+        if event.key() == Qt.Key.Key_Delete:
+            self._delete_selection()
+
     def _add_shape(self, shape: SelectionShape):
         item = QListWidgetItem()
         item.setData(Qt.ItemDataRole.UserRole, shape)
@@ -198,6 +202,14 @@ class SelectionCoreWidget(QWidget):
                 ]
             )
         selection_plugin.set_selection(selection)
+
+    def _delete_selection(self) -> None:
+        with self._lock:
+            selection = SelectionShapeGroup([
+                item for i, item in enumerate(selection_plugin.get_selection())
+                if i != self._selection_list.currentRow()
+            ])
+            selection_plugin.set_selection(selection)
 
     def _delete_clicked(self) -> None:
         with self._lock:
