@@ -12,6 +12,6 @@ OpenWorldPage.open_directory=Open Directory
 
 plugin.amulet.editor.SelectionWidget.add_cuboid_tip=Add a new cuboid to the group.
 plugin.amulet.editor.SelectionWidget.add_ellipsoid_tip=Add a new ellipsoid to the group.
-plugin.amulet.editor.SelectionWidget.clipboard_save=Save the selection to the clipboard in a human readable format.
-plugin.amulet.editor.SelectionWidget.clipboard_load=Load the selection from the clipboard.
+plugin.amulet.editor.SelectionWidget.clipboard_save_tip=Save the selection to the clipboard in a human readable format.
+plugin.amulet.editor.SelectionWidget.clipboard_load_tip=Load the selection from the clipboard.
 plugin.amulet.editor.SelectionWidget.delete_tip=Click to delete the selected shape from the group. Hold to delete all shapes.

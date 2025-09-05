@@ -284,12 +284,12 @@ class SelectionCoreWidget(QWidget):
         )
         self._clipboard_save.setToolTip(
             QCoreApplication.translate(
-                "plugin.amulet.editor.SelectionWidget", "clipboard_save", None
+                "plugin.amulet.editor.SelectionWidget", "clipboard_save_tip", None
             )
         )
         self._clipboard_load.setToolTip(
             QCoreApplication.translate(
-                "plugin.amulet.editor.SelectionWidget", "clipboard_load", None
+                "plugin.amulet.editor.SelectionWidget", "clipboard_load_tip", None
             )
         )
         self._delete_button.setToolTip(
