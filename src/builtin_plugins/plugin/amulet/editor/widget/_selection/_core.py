@@ -371,7 +371,7 @@ class SelectionCoreWidget(QWidget):
             )
         )
 
-    def changeEvent(self, event, /):
+    def changeEvent(self, event: QEvent) -> None:
         if event.type() == QEvent.Type.LanguageChange:
             self._localise()
 
