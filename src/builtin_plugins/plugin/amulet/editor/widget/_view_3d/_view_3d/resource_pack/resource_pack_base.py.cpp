@@ -86,7 +86,7 @@ void init_resource_pack_base(py::module m_parent)
     
     init_abc(m);
 
-    auto m_wrapper = py::module_::import((m.attr("__name__").cast<std::string>() + ".resource_pack").c_str());
+    auto m_wrapper = py::module::import((m.attr("__name__").cast<std::string>() + ".resource_pack").c_str());
     m.attr("OpenGLResourcePack") = m_wrapper.attr("OpenGLResourcePack");
     m.attr("OpenGLResourcePackHandle") = m_wrapper.attr("OpenGLResourcePackHandle");
     m.attr("get_gl_resource_pack_container") = m_wrapper.attr("get_gl_resource_pack_container");
