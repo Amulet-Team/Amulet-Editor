@@ -30,7 +30,7 @@ from amulet.core.selection import (
 
 from amulet.app.exception import CatchExceptionDialog
 
-import plugin.amulet.selection as selection_plugin
+from plugin.amulet.selection import get_selection_manager
 
 
 class HeldPushButton(QPushButton):
@@ -88,9 +88,11 @@ UnknownIcon = QIcon(tablericons.outline.help_triangle)
 
 
 class SelectionCoreWidget(QWidget):
-    def __init__(self):
+    def __init__(self) -> None:
         super().__init__()
         self._listening = False
+
+        self._selection_manager = get_selection_manager()
 
         self._layout = QVBoxLayout()
         self.setLayout(self._layout)
@@ -168,7 +170,7 @@ class SelectionCoreWidget(QWidget):
         if event.key() == Qt.Key.Key_Delete:
             self._delete_selection()
 
-    def _add_shape(self, shape: SelectionShape):
+    def _add_shape(self, shape: SelectionShape) -> None:
         item = QListWidgetItem()
         if isinstance(shape, SelectionCuboid):
             item.setIcon(CuboidIcon)
@@ -212,12 +214,13 @@ class SelectionCoreWidget(QWidget):
         item.setText(text)
         self._selection_list.addItem(item)
 
-    def _data_selection_changed(self, selection: SelectionShapeGroup) -> None:
+    def _populate_gui(self) -> None:
         with QSignalBlocker(self._selection_list):
+            selection = self._selection_manager.get_selection()
             self._selection_list.clear()
             for shape in selection:
                 self._add_shape(shape)
-            index = selection_plugin.get_selection_index()
+            index = self._selection_manager.get_selection_index()
             if 0 <= index:
                 self._selection_list.setCurrentRow(index)
 
@@ -227,54 +230,54 @@ class SelectionCoreWidget(QWidget):
 
     def _clone_clicked(self) -> None:
         current_row = self._selection_list.currentRow()
-        with selection_plugin.get_lock():
+        with self._selection_manager.get_lock():
             shapes = []
-            for i, item in enumerate(selection_plugin.get_selection()):
+            for i, item in enumerate(self._selection_manager.get_selection()):
                 shapes.append(item)
                 if i == current_row:
                     shapes.append(item)
             selection = SelectionShapeGroup(shapes)
-            selection_plugin.set_selection(selection)
+            self._selection_manager.set_selection(selection)
 
     def _delete_selection(self) -> None:
         current_row = self._selection_list.currentRow()
-        with selection_plugin.get_lock():
+        with self._selection_manager.get_lock():
             selection = SelectionShapeGroup([
-                item for i, item in enumerate(selection_plugin.get_selection())
+                item for i, item in enumerate(self._selection_manager.get_selection())
                 if i != current_row
             ])
-            selection_plugin.set_selection(selection)
+            self._selection_manager.set_selection(selection)
 
     def _delete_clicked(self) -> None:
         current_row = self._selection_list.currentRow()
-        with selection_plugin.get_lock():
+        with self._selection_manager.get_lock():
             if self._delete_button.was_held:
                 selection = SelectionShapeGroup()
             else:
                 selection = SelectionShapeGroup([
-                    item for i, item in enumerate(selection_plugin.get_selection())
+                    item for i, item in enumerate(self._selection_manager.get_selection())
                     if i != current_row
                 ])
-            selection_plugin.set_selection(selection)
+            self._selection_manager.set_selection(selection)
 
     def _add_cuboid(self) -> None:
-        with selection_plugin.get_lock():
+        with self._selection_manager.get_lock():
             selection = SelectionShapeGroup(
-                list(selection_plugin.get_selection()) + [SelectionCuboid(0, 0, 0, 1, 1, 1)]
+                list(self._selection_manager.get_selection()) + [SelectionCuboid(0, 0, 0, 1, 1, 1)]
             )
-            selection_plugin.set_selection(selection)
-            selection_plugin.set_selection_index(len(selection) - 1)
+            self._selection_manager.set_selection(selection)
+            self._selection_manager.set_selection_index(len(selection) - 1)
 
     def _add_ellipsoid(self) -> None:
-        with selection_plugin.get_lock():
+        with self._selection_manager.get_lock():
             selection = SelectionShapeGroup(
-                list(selection_plugin.get_selection()) + [SelectionEllipsoid(0, 0, 0, 0.5)]
+                list(self._selection_manager.get_selection()) + [SelectionEllipsoid(0, 0, 0, 0.5)]
             )
-            selection_plugin.set_selection(selection)
-            selection_plugin.set_selection_index(len(selection) - 1)
+            self._selection_manager.set_selection(selection)
+            self._selection_manager.set_selection_index(len(selection) - 1)
 
     def _save_clicked(self) -> None:
-        text = selection_plugin.get_selection().serialise()
+        text = self._selection_manager.get_selection().serialise()
         QGuiApplication.clipboard().setText(text)
 
     def _load_clicked(self) -> None:
@@ -282,28 +285,28 @@ class SelectionCoreWidget(QWidget):
             selection = SelectionShapeGroup.deserialise(
                 QGuiApplication.clipboard().text()
             )
-            selection_plugin.set_selection(selection)
+            self._selection_manager.set_selection(selection)
 
     def _data_selection_index_changed(self, index: int) -> None:
         if index != self._selection_list.currentRow():
             self._selection_list.setCurrentRow(index)
 
     def _gui_selection_index_changed(self, index: int) -> None:
-        selection_plugin.set_selection_index(index)
+        self._selection_manager.set_selection_index(index)
 
     def showEvent(self, event: QShowEvent, /) -> None:
         if not self._listening:
-            selection_plugin.selection_changed.connect(self._data_selection_changed, Qt.ConnectionType.QueuedConnection)
-            selection_plugin.selection_index_changed.connect(self._data_selection_index_changed, Qt.ConnectionType.QueuedConnection)
+            self._selection_manager.selection_changed.connect(self._populate_gui, Qt.ConnectionType.QueuedConnection)
+            self._selection_manager.selection_index_changed.connect(self._data_selection_index_changed, Qt.ConnectionType.QueuedConnection)
             self._listening = True
-        with selection_plugin.get_lock():
-            self._data_selection_changed(selection_plugin.get_selection())
-            self._data_selection_index_changed(selection_plugin.get_selection_index())
+        with self._selection_manager.get_lock():
+            self._populate_gui()
+            self._data_selection_index_changed(self._selection_manager.get_selection_index())
 
     def hideEvent(self, event: QHideEvent, /) -> None:
         if self._listening:
-            selection_plugin.selection_changed.disconnect(self._data_selection_changed)
-            selection_plugin.selection_index_changed.disconnect(self._data_selection_index_changed)
+            self._selection_manager.selection_changed.disconnect(self._populate_gui)
+            self._selection_manager.selection_index_changed.disconnect(self._data_selection_index_changed)
             self._listening = False
 
     def _localise(self) -> None:
@@ -343,7 +346,7 @@ class SelectionCoreWidget(QWidget):
             self._localise()
 
 
-def _demo():
+def _demo() -> None:
     import os
     from PySide6.QtWidgets import QApplication, QPushButton
     from PySide6.QtCore import QLocale
@@ -355,28 +358,30 @@ def _demo():
     from amulet.app.localisation import Translator
     from plugin.amulet.editor import __path__ as editor_plugin_path
 
-    def set_empty_shapes():
-        selection_plugin.set_selection(SelectionShapeGroup())
+    selection_manager = get_selection_manager()
 
-    def set_shapes():
-        selection_plugin.set_selection(
+    def set_empty_shapes() -> None:
+        selection_manager.set_selection(SelectionShapeGroup())
+
+    def set_shapes() -> None:
+        selection_manager.set_selection(
             SelectionShapeGroup(
                 [SelectionCuboid(-1, -1, -1, 2, 2, 2), SelectionEllipsoid(10, 0, 0, 2)]
             )
         )
 
-    def set_many_shapes():
+    def set_many_shapes() -> None:
         group = SelectionShapeGroup(
             [SelectionCuboid(-1, -1, -1, 2, 2, 2), SelectionEllipsoid(10, 0, 0, 2)] * 500
         )
-        selection_plugin.set_selection(group)
+        selection_manager.set_selection(group)
 
-    def increment_index():
-        size = len(selection_plugin.get_selection())
+    def increment_index() -> None:
+        size = len(selection_manager.get_selection())
         if size:
-            selection_plugin.set_selection_index((selection_plugin.get_selection_index() + 1) % size)
+            selection_manager.set_selection_index((selection_manager.get_selection_index() + 1) % size)
         else:
-            selection_plugin.set_selection_index(0)
+            selection_manager.set_selection_index(0)
 
     class SelectionSetter(QWidget):
         def __init__(self) -> None:
@@ -408,8 +413,8 @@ def _demo():
     # def display_selection_index(index: int) -> None:
     #     print(f"selection_index={index}")
 
-    # selection_plugin.selection_changed.connect(display_selection, Qt.ConnectionType.QueuedConnection)
-    # selection_plugin.selection_index_changed.connect(display_selection_index, Qt.ConnectionType.QueuedConnection)
+    # selection_manager.selection_changed.connect(display_selection, Qt.ConnectionType.QueuedConnection)
+    # selection_manager.selection_index_changed.connect(display_selection_index, Qt.ConnectionType.QueuedConnection)
 
     translator = Translator()
     translator.load_lang(

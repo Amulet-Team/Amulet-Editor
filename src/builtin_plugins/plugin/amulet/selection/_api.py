@@ -1,4 +1,5 @@
 from threading import RLock
+from copy import deepcopy
 
 from PySide6.QtCore import QObject
 from amulet.core.selection import SelectionShapeGroup
@@ -6,7 +7,7 @@ from amulet.app.qt.signal import Signal
 
 
 class SelectionManager(QObject):
-    selection_changed = Signal[SelectionShapeGroup]()
+    selection_changed = Signal[()]()
     selection_index_changed = Signal[int]()
 
     def __init__(self) -> None:
@@ -19,12 +20,12 @@ class SelectionManager(QObject):
         return self._lock
 
     def get_selection(self) -> SelectionShapeGroup:
-        return self._selection
+        return deepcopy(self._selection)
 
     def set_selection(self, selection: SelectionShapeGroup) -> None:
         with self._lock:
-            self._selection = selection
-            self.selection_changed.emit(selection)
+            self._selection = deepcopy(selection)
+            self.selection_changed.emit()
             self.set_selection_index(self._selection_index)
 
     def get_selection_index(self) -> int:
@@ -42,10 +43,6 @@ class SelectionManager(QObject):
 
 
 _manager = SelectionManager()
-get_lock = _manager.get_lock
-get_selection = _manager.get_selection
-set_selection = _manager.set_selection
-selection_changed = _manager.selection_changed
-get_selection_index = _manager.get_selection_index
-set_selection_index = _manager.set_selection_index
-selection_index_changed = _manager.selection_index_changed
+
+def get_selection_manager() -> SelectionManager:
+    return _manager
