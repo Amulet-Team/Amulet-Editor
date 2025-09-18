@@ -44,5 +44,6 @@ class SelectionManager(QObject):
 
 _manager = SelectionManager()
 
+
 def get_selection_manager() -> SelectionManager:
     return _manager

@@ -4,7 +4,16 @@ from threading import RLock
 import time
 
 from PySide6.QtCore import Qt, QEvent, QCoreApplication, QSize, QSignalBlocker, QTimer
-from PySide6.QtGui import QShowEvent, QHideEvent, QIcon, QGuiApplication, QPaintEvent, QPainter, QColor, QKeyEvent
+from PySide6.QtGui import (
+    QShowEvent,
+    QHideEvent,
+    QIcon,
+    QGuiApplication,
+    QPaintEvent,
+    QPainter,
+    QColor,
+    QKeyEvent,
+)
 from PySide6.QtWidgets import (
     QWidget,
     QVBoxLayout,
@@ -59,7 +68,9 @@ class HeldPushButton(QPushButton):
 
         if self._is_held:
             painter = QPainter(self)
-            width = max(0.0, min(1.0, (time.time() - self._start_time - 0.2) / self._dt))
+            width = max(
+                0.0, min(1.0, (time.time() - self._start_time - 0.2) / self._dt)
+            )
             painter.setBrush(QColor(100, 180, 255, 120))
             painter.setPen(Qt.PenStyle.NoPen)
             # TODO: rounded corners?
@@ -98,7 +109,9 @@ class SelectionCoreWidget(QWidget):
         self.setLayout(self._layout)
 
         self._selection_list = QListWidget()
-        self._selection_list.currentRowChanged.connect(self._gui_selection_index_changed)
+        self._selection_list.currentRowChanged.connect(
+            self._gui_selection_index_changed
+        )
         self._layout.addWidget(self._selection_list)
 
         self._button_layout_1 = QHBoxLayout()
@@ -242,10 +255,13 @@ class SelectionCoreWidget(QWidget):
     def _delete_selection(self) -> None:
         current_row = self._selection_list.currentRow()
         with self._selection_manager.get_lock():
-            selection = SelectionShapeGroup([
-                item for i, item in enumerate(self._selection_manager.get_selection())
-                if i != current_row
-            ])
+            selection = SelectionShapeGroup(
+                [
+                    item
+                    for i, item in enumerate(self._selection_manager.get_selection())
+                    if i != current_row
+                ]
+            )
             self._selection_manager.set_selection(selection)
 
     def _delete_clicked(self) -> None:
@@ -254,16 +270,22 @@ class SelectionCoreWidget(QWidget):
             if self._delete_button.was_held:
                 selection = SelectionShapeGroup()
             else:
-                selection = SelectionShapeGroup([
-                    item for i, item in enumerate(self._selection_manager.get_selection())
-                    if i != current_row
-                ])
+                selection = SelectionShapeGroup(
+                    [
+                        item
+                        for i, item in enumerate(
+                            self._selection_manager.get_selection()
+                        )
+                        if i != current_row
+                    ]
+                )
             self._selection_manager.set_selection(selection)
 
     def _add_cuboid(self) -> None:
         with self._selection_manager.get_lock():
             selection = SelectionShapeGroup(
-                list(self._selection_manager.get_selection()) + [SelectionCuboid(0, 0, 0, 1, 1, 1)]
+                list(self._selection_manager.get_selection())
+                + [SelectionCuboid(0, 0, 0, 1, 1, 1)]
             )
             self._selection_manager.set_selection(selection)
             self._selection_manager.set_selection_index(len(selection) - 1)
@@ -271,7 +293,8 @@ class SelectionCoreWidget(QWidget):
     def _add_ellipsoid(self) -> None:
         with self._selection_manager.get_lock():
             selection = SelectionShapeGroup(
-                list(self._selection_manager.get_selection()) + [SelectionEllipsoid(0, 0, 0, 0.5)]
+                list(self._selection_manager.get_selection())
+                + [SelectionEllipsoid(0, 0, 0, 0.5)]
             )
             self._selection_manager.set_selection(selection)
             self._selection_manager.set_selection_index(len(selection) - 1)
@@ -296,17 +319,25 @@ class SelectionCoreWidget(QWidget):
 
     def showEvent(self, event: QShowEvent, /) -> None:
         if not self._listening:
-            self._selection_manager.selection_changed.connect(self._populate_gui, Qt.ConnectionType.QueuedConnection)
-            self._selection_manager.selection_index_changed.connect(self._data_selection_index_changed, Qt.ConnectionType.QueuedConnection)
+            self._selection_manager.selection_changed.connect(
+                self._populate_gui, Qt.ConnectionType.QueuedConnection
+            )
+            self._selection_manager.selection_index_changed.connect(
+                self._data_selection_index_changed, Qt.ConnectionType.QueuedConnection
+            )
             self._listening = True
         with self._selection_manager.get_lock():
             self._populate_gui()
-            self._data_selection_index_changed(self._selection_manager.get_selection_index())
+            self._data_selection_index_changed(
+                self._selection_manager.get_selection_index()
+            )
 
     def hideEvent(self, event: QHideEvent, /) -> None:
         if self._listening:
             self._selection_manager.selection_changed.disconnect(self._populate_gui)
-            self._selection_manager.selection_index_changed.disconnect(self._data_selection_index_changed)
+            self._selection_manager.selection_index_changed.disconnect(
+                self._data_selection_index_changed
+            )
             self._listening = False
 
     def _localise(self) -> None:
@@ -372,14 +403,17 @@ def _demo() -> None:
 
     def set_many_shapes() -> None:
         group = SelectionShapeGroup(
-            [SelectionCuboid(-1, -1, -1, 2, 2, 2), SelectionEllipsoid(10, 0, 0, 2)] * 500
+            [SelectionCuboid(-1, -1, -1, 2, 2, 2), SelectionEllipsoid(10, 0, 0, 2)]
+            * 500
         )
         selection_manager.set_selection(group)
 
     def increment_index() -> None:
         size = len(selection_manager.get_selection())
         if size:
-            selection_manager.set_selection_index((selection_manager.get_selection_index() + 1) % size)
+            selection_manager.set_selection_index(
+                (selection_manager.get_selection_index() + 1) % size
+            )
         else:
             selection_manager.set_selection_index(0)
 
