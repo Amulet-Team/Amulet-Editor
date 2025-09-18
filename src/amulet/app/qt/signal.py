@@ -22,12 +22,12 @@ class SignalInstance(Generic[*Ts]):
         self,
         slot: QSignal | QSlot | Callable[[*Ts], None],
         /,
-        type: Qt.ConnectionType = ...,
+        type: Qt.ConnectionType = Qt.ConnectionType.AutoConnection,
     ) -> QMetaObject.Connection:
         raise RuntimeError("This should never be called")
 
     def disconnect(
-        self, /, slot: QSignal | QSlot | Callable[[*Ts], None] | None = ...
+        self, /, slot: QSignal | QSlot | Callable[[*Ts], None] | None = None
     ) -> bool:
         raise RuntimeError("This should never be called")
 
