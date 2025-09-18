@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import time
+from typing import Callable
 
 from PySide6.QtCore import Qt, QEvent, QCoreApplication, QSize, QSignalBlocker, QTimer
 from PySide6.QtGui import (
@@ -23,6 +24,9 @@ from PySide6.QtWidgets import (
     QSpinBox,
     QGridLayout,
     QLabel,
+    QGridLayout,
+    QDoubleSpinBox,
+    QSizePolicy,
 )
 
 from plugin.tablericons import tablericons
@@ -176,6 +180,34 @@ class SelectionCoreWidget(QWidget):
         # self._add_pyramid_button.clicked.connect(self._add_pyramid)
         self._button_layout_2.addWidget(self._add_pyramid_button)
 
+        self._matrix_layout = QGridLayout()
+        self._layout.addLayout(self._matrix_layout)
+        self._matrix_entry: list[QDoubleSpinBox] = []
+
+        def get_on_matrix_change(i_: int, j_: int) -> Callable[[float], None]:
+            def on_matrix_change(value: float) -> None:
+                with self._selection_manager.get_lock():
+                    selection = self._selection_manager.get_selection()
+                    index = self._selection_manager.get_selection_index()
+                    if 0 <= index < len(selection):
+                        selection[index].matrix.set_element(i_, j_, value)
+                        self._selection_manager.set_selection(selection)
+
+            return on_matrix_change
+
+        for i in range(4):
+            for j in range(4):
+                spin = QDoubleSpinBox()
+                spin.setDecimals(8)
+                spin.setMinimum(-100_000_000)
+                spin.setMaximum(100_000_000)
+                spin.setSizePolicy(
+                    QSizePolicy.Policy.Ignored, spin.sizePolicy().verticalPolicy()
+                )
+                spin.valueChanged.connect(get_on_matrix_change(i, j))
+                self._matrix_layout.addWidget(spin, i, j)
+                self._matrix_entry.append(spin)
+
         self._localise()
 
     def keyPressEvent(self, event: QKeyEvent) -> None:
@@ -239,6 +271,21 @@ class SelectionCoreWidget(QWidget):
         has_selection = bool(selection)
         self._clone_button.setEnabled(has_selection)
         self._delete_button.setEnabled(has_selection)
+        if 0 <= index:
+            self._update_item(selection[index])
+        else:
+            self._update_item(None)
+
+    def _update_item(self, shape: SelectionShape | None) -> None:
+        if shape is None:
+            for spin in self._matrix_entry:
+                spin.setEnabled(False)
+        else:
+            for i in range(4):
+                for j in range(4):
+                    spin = self._matrix_entry[i * 4 + j]
+                    spin.setEnabled(True)
+                    spin.setValue(shape.matrix.get_element(i, j))
 
     def _clone_clicked(self) -> None:
         current_row = self._selection_list.currentRow()
@@ -312,6 +359,10 @@ class SelectionCoreWidget(QWidget):
     def _data_selection_index_changed(self, index: int) -> None:
         if index != self._selection_list.currentRow():
             self._selection_list.setCurrentRow(index)
+        if 0 <= index:
+            self._update_item(self._selection_manager.get_selection()[index])
+        else:
+            self._update_item(None)
 
     def _gui_selection_index_changed(self, index: int) -> None:
         self._selection_manager.set_selection_index(index)
