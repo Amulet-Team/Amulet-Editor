@@ -69,7 +69,7 @@ def get_parser(full: bool) -> ArgumentParser:
     parser.add_argument(
         "--logging_format",
         type=str,
-        help='The logging format to use. Default is "%(levelname)s - %(message)s"',
+        help='The logging format to use. Default is "%%(levelname)s - %%(message)s"',
         action="store",
         dest="logging_format",
         default="%(levelname)s - %(message)s",
