@@ -60,10 +60,10 @@ def get_parser(full: bool) -> ArgumentParser:
     parser.add_argument(
         "--logging_level",
         type=int,
-        help="The logging level to set. CRITICAL=50, ERROR=40, WARNING=30, INFO=20, DEBUG=10. Default is WARNING",
+        help="The logging level to set. CRITICAL=50, ERROR=40, WARNING=30, INFO=20, DEBUG=10. Default is INFO",
         action="store",
         dest="logging_level",
-        default=logging.WARNING,
+        default=logging.INFO,
     )
 
     parser.add_argument(
