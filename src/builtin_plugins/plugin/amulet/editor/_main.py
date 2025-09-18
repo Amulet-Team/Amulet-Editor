@@ -6,7 +6,7 @@ import os
 
 from PySide6.QtWidgets import QApplication
 from PySide6.QtGui import QIcon
-from PySide6.QtCore import QLocale
+from PySide6.QtCore import QLocale, Qt
 
 from amulet.level import get_level
 from amulet.level.loader import LevelLoaderPathToken
@@ -28,6 +28,7 @@ from plugin.amulet.editor.window._main import (
 )
 from plugin.amulet.editor.widget._home import HomeWidget
 from plugin.amulet.editor.widget._level_info import LevelInfoWidget
+from plugin.amulet.editor.widget._selection import SelectionWidget
 from plugin.amulet.editor.widget._view_3d import View3D
 from plugin.amulet.editor.widget import register_widget, unregister_widget
 from plugin.amulet.editor.layout import (
@@ -35,6 +36,7 @@ from plugin.amulet.editor.layout import (
     unregister_layout,
     LayoutConfig,
     WindowConfig,
+    SplitterConfig,
     WidgetStackConfig,
     WidgetConfig,
     create_layout_button,
@@ -82,6 +84,7 @@ def _init_editor() -> None:
 
     register_widget(HomeWidget)
     register_widget(LevelInfoWidget)
+    register_widget(SelectionWidget)
     register_widget(View3D)
 
     register_layout(
@@ -127,7 +130,14 @@ def _init_editor() -> None:
                 WindowConfig(
                     None,
                     None,
-                    WidgetStackConfig((WidgetConfig(View3D.__qualname__),)),
+                    SplitterConfig(
+                        WidgetStackConfig(
+                            (WidgetConfig(SelectionWidget.__qualname__),)
+                        ),
+                        WidgetStackConfig((WidgetConfig(View3D.__qualname__),)),
+                        Qt.Orientation.Horizontal,
+                        0.25,
+                    ),
                 ),
                 (),
             ),
@@ -154,6 +164,7 @@ def _destroy_editor() -> None:
 
     unregister_widget(HomeWidget)
     unregister_widget(LevelInfoWidget)
+    unregister_widget(SelectionWidget)
     unregister_widget(View3D)
 
 

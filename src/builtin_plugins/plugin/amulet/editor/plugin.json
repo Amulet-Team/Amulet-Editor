@@ -19,6 +19,7 @@
 		],
 		"plugin": [
 			"tablericons.tablericons~=3.34",
+			"amulet.selection~=1.0",
 			"amulet.inspector~=1.0",
 			"amulet.resource_pack~=1.0",
 			"amulet.level~=1.0"
