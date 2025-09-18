@@ -103,10 +103,10 @@ def get_parser(full: bool) -> ArgumentParser:
 def parse_global_args(argv: Sequence[str] | None = None) -> GlobalArgs:
     parser = get_parser(False)
     args, _ = parser.parse_known_args(argv)
-    return args  # noqa
+    return args  # type: ignore
 
 
 def parse_args(argv: Sequence[str] | None = None) -> FullArgs:
     parser = get_parser(True)
     args, _ = parser.parse_known_args(argv)
-    return args  # noqa
+    return args  # type: ignore
