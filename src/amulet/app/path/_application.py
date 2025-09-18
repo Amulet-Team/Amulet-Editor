@@ -3,29 +3,45 @@ import os
 from PySide6.QtCore import QStandardPaths
 
 
-DefaultDataDir = os.path.join(
-    QStandardPaths.writableLocation(QStandardPaths.StandardLocation.AppDataLocation),
-    "AmuletTeam",
-    "AmuletEditor",
-    "data",
+DefaultDataDir = os.path.realpath(
+    os.path.join(
+        QStandardPaths.writableLocation(
+            QStandardPaths.StandardLocation.AppDataLocation
+        ),
+        "AmuletTeam",
+        "AmuletEditor",
+        "data",
+    )
 )
-DefaultConfigDir = os.path.join(
-    QStandardPaths.writableLocation(QStandardPaths.StandardLocation.AppDataLocation),
-    "AmuletTeam",
-    "AmuletEditor",
-    "config",
+DefaultConfigDir = os.path.realpath(
+    os.path.join(
+        QStandardPaths.writableLocation(
+            QStandardPaths.StandardLocation.AppDataLocation
+        ),
+        "AmuletTeam",
+        "AmuletEditor",
+        "config",
+    )
 )
-DefaultCacheDir = os.path.join(
-    QStandardPaths.writableLocation(QStandardPaths.StandardLocation.AppDataLocation),
-    "AmuletTeam",
-    "AmuletEditor",
-    "cache",
+DefaultCacheDir = os.path.realpath(
+    os.path.join(
+        QStandardPaths.writableLocation(
+            QStandardPaths.StandardLocation.AppDataLocation
+        ),
+        "AmuletTeam",
+        "AmuletEditor",
+        "cache",
+    )
 )
-DefaultLogDir = os.path.join(
-    QStandardPaths.writableLocation(QStandardPaths.StandardLocation.AppDataLocation),
-    "AmuletTeam",
-    "AmuletEditor",
-    "logs",
+DefaultLogDir = os.path.realpath(
+    os.path.join(
+        QStandardPaths.writableLocation(
+            QStandardPaths.StandardLocation.AppDataLocation
+        ),
+        "AmuletTeam",
+        "AmuletEditor",
+        "logs",
+    )
 )
 
 
