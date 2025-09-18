@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-from threading import RLock
 import time
 
 from PySide6.QtCore import Qt, QEvent, QCoreApplication, QSize, QSignalBlocker, QTimer
