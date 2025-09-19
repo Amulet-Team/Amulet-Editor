@@ -10,6 +10,11 @@ Patches: dict[str, list[tuple[str, str]]] = {
             "def data(self, /) -> bytes | bytearray | memoryview: ...",
             "def data(self) -> bytes: ...",
         ),
+        (
+            # QObject and subclasses
+            f"def parent(self, /) -> PySide6.QtCore.QObject: ...",
+            f"def parent(self, /) -> PySide6.QtCore.QObject | None: ...",
+        )
     ],
     os.path.join(PySide6Path, "QtGui.pyi"): [
         (
@@ -22,6 +27,11 @@ Patches: dict[str, list[tuple[str, str]]] = {
             "def glVertexAttribPointer(self, indx: int, size: int, type: int, normalized: int, stride: int, ptr: int, /) -> None: ...",
             "def glVertexAttribPointer(self, indx: int, size: int, type: int, normalized: int, stride: int, ptr: Shiboken.VoidPtr, /) -> None: ...",
         ),
+        (
+            # Subclasses of QObject
+            f"def parent(self, /) -> PySide6.QtCore.QObject: ...",
+            f"def parent(self, /) -> PySide6.QtCore.QObject | None: ...",
+        )
     ],
     os.path.join(PySide6Path, "QtWidgets.pyi"): [
         (
@@ -36,6 +46,32 @@ Patches: dict[str, list[tuple[str, str]]] = {
             "def itemAt(self, arg__1: int, /) -> PySide6.QtWidgets.QLayoutItem: ...",
             "def itemAt(self, index: int, /) -> PySide6.QtWidgets.QLayoutItem | None: ...",
         ),
+        (
+            # Subclasses of QObject
+            f"def parent(self, /) -> PySide6.QtCore.QObject: ...",
+            f"def parent(self, /) -> PySide6.QtCore.QObject | None: ...",
+        ),
+    ],
+    os.path.join(PySide6Path, "QtHelp.pyi"): [
+        (
+            # Subclasses of QObject
+            f"def parent(self, /) -> PySide6.QtCore.QObject: ...",
+            f"def parent(self, /) -> PySide6.QtCore.QObject | None: ...",
+        )
+    ],
+    os.path.join(PySide6Path, "QtPdf.pyi"): [
+        (
+            # Subclasses of QObject
+            f"def parent(self, /) -> PySide6.QtCore.QObject: ...",
+            f"def parent(self, /) -> PySide6.QtCore.QObject | None: ...",
+        )
+    ],
+    os.path.join(PySide6Path, "QtRemoteObjects.pyi"): [
+        (
+            # Subclasses of QObject
+            f"def parent(self, /) -> PySide6.QtCore.QObject: ...",
+            f"def parent(self, /) -> PySide6.QtCore.QObject | None: ...",
+        )
     ],
 }
 
