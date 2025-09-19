@@ -7,10 +7,10 @@ from amulet.app.path._plugin import first_party_plugin_directory
 
 class TestQtLink(unittest.TestCase):
     def setUp(self):
-        sys.path.append(os.path.dirname(first_party_plugin_directory()))
+        sys.path.append(first_party_plugin_directory())
 
     def tearDown(self):
-        sys.path.remove(os.path.dirname(first_party_plugin_directory()))
+        sys.path.remove(first_party_plugin_directory())
 
     def test_qt_link(self) -> None:
         from PySide6 import __version__ as qt_version

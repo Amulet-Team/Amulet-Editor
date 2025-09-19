@@ -70,7 +70,7 @@ class PluginContainer(ABC):
             return cls2.from_data(
                 plugin_path,
                 plugin_data,
-                os.path.dirname(os.path.dirname(plugin_path))
+                os.path.dirname(os.path.dirname(os.path.dirname(plugin_path)))
                 == first_party_plugin_directory(),
             )
 

@@ -347,6 +347,9 @@ def load() -> None:
 
         # Disable importing from builtin_plugins
         sys.modules["builtin_plugins"] = None  # type: ignore
+        plugin_module = ModuleType("plugin")
+        plugin_module.__path__ = []
+        sys.modules["plugin"] = plugin_module
 
         set_sys_modules(CustomSysModules(sys.modules))
         builtins.__import__ = wrap_importer(builtins.__import__)
@@ -442,7 +445,7 @@ def scan_plugins() -> None:
         # Find and parse all plugins
         for plugin_dir in plugin_dirs():
             for manifest_path in glob.glob(
-                os.path.join(plugin_dir, "*", "*", "plugin.json")
+                os.path.join(glob.escape(plugin_dir), "plugin", "*", "*", "plugin.json")
             ):
                 try:
                     plugin_path = os.path.dirname(manifest_path)
@@ -522,8 +525,18 @@ def _enable_plugin(plugin_uid: LibraryUID) -> None:
                         if os.path.isdir(path):
                             path = os.path.join(path, "__init__.py")
 
+                        plugin_namespace, plugin_identifier = (
+                            plugin_container.data.uid.identifier.split(".")
+                        )
+
+                        module_group_qualname = f"plugin.{plugin_namespace}"
+                        if module_group_qualname not in sys.modules:
+                            group_module = ModuleType(module_group_qualname)
+                            group_module.__path__ = []
+                            sys.modules[module_group_qualname] = group_module
+
                         module_qualname = (
-                            f"plugin.{plugin_container.data.uid.identifier}"
+                            f"plugin.{plugin_namespace}.{plugin_identifier}"
                         )
                         spec = spec_from_file_location(module_qualname, path)
                         if spec is None:
