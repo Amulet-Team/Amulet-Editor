@@ -30,14 +30,15 @@ class QHoverLabel(QLabel):
 
     def showEvent(self, event: QShowEvent) -> None:
         window = self.parentWidget()
-        parent = self._parent
-        pos_gbl = parent.mapToGlobal(QPoint(0, 0))
-        pos_rel = window.mapFromGlobal(pos_gbl)
-        pos_mov = QPoint(
-            pos_rel.x() + parent.width() + 3,
-            pos_rel.y() + (parent.height() - self.height()) // 2,
-        )
-        self.move(pos_mov)
+        if window is not None:
+            parent = self._parent
+            pos_gbl = parent.mapToGlobal(QPoint(0, 0))
+            pos_rel = window.mapFromGlobal(pos_gbl)
+            pos_mov = QPoint(
+                pos_rel.x() + parent.width() + 3,
+                pos_rel.y() + (parent.height() - self.height()) // 2,
+            )
+            self.move(pos_mov)
 
         return super().showEvent(event)
 

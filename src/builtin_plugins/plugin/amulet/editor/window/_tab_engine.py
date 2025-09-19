@@ -306,7 +306,10 @@ class AbstractTabContainerWidget(QWidget):
 
     @property
     def container(self) -> AbstractTabContainer:
-        parent = self.parent().parent()
+        parent = self.parent()
+        if parent is None:
+            raise RuntimeError
+        parent = parent.parent()
         if not isinstance(parent, AbstractTabContainer):
             raise RuntimeError(
                 "Parent of AbstractTabContainerWidget must be AbstractTabContainer"
@@ -314,10 +317,8 @@ class AbstractTabContainerWidget(QWidget):
         return parent
 
     def _get_button_at(self, point: QPoint) -> TabButton | None:
-        child: QObject = self.childAt(point)
-        if child is None:
-            return
-        while child.parent() != self:
+        child: QObject | None = self.childAt(point)
+        while child is not None and child != self:
             child = child.parent()
         if isinstance(child, TabButton):
             return child
@@ -400,7 +401,7 @@ class AbstractTabContainerWidget(QWidget):
         self, point: QPoint
     ) -> Union[None, AbstractTabContainerWidget, AbstractStackedTabWidget]:
         """Get the widget that the dragged widget will be dropped into."""
-        widget: QObject = QApplication.widgetAt(point)
+        widget: QObject | None = QApplication.widgetAt(point)
         while widget is not None:
             if isinstance(
                 widget, (AbstractTabContainerWidget, AbstractStackedTabWidget)
