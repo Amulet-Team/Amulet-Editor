@@ -15,7 +15,7 @@ def first_party_plugin_directory() -> str:
         paths = spec.submodule_search_locations
         if not paths:
             raise RuntimeError
-        _first = os.path.join(paths[0], "plugin")
+        _first = paths[0]
     return _first
 
 
