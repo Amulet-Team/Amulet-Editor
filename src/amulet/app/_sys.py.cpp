@@ -42,7 +42,7 @@ static PyObject** get_modules() {
 static void set_sys_modules(py::object modules){
     PyObject** sys_modules = get_modules();
     PyObject* old_sys_modules = *sys_modules;
-    py::module_::import("sys").attr("modules") = modules;
+    py::module::import("sys").attr("modules") = modules;
     (*sys_modules) = modules.release().ptr();
     Py_XDECREF(old_sys_modules);
 }
