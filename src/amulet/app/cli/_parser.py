@@ -60,16 +60,16 @@ def get_parser(full: bool) -> ArgumentParser:
     parser.add_argument(
         "--logging_level",
         type=int,
-        help="The logging level to set. CRITICAL=50, ERROR=40, WARNING=30, INFO=20, DEBUG=10. Default is WARNING",
+        help="The logging level to set. CRITICAL=50, ERROR=40, WARNING=30, INFO=20, DEBUG=10. Default is INFO",
         action="store",
         dest="logging_level",
-        default=logging.WARNING,
+        default=logging.INFO,
     )
 
     parser.add_argument(
         "--logging_format",
         type=str,
-        help='The logging format to use. Default is "%(levelname)s - %(message)s"',
+        help='The logging format to use. Default is "%%(levelname)s - %%(message)s"',
         action="store",
         dest="logging_format",
         default="%(levelname)s - %(message)s",
@@ -103,10 +103,10 @@ def get_parser(full: bool) -> ArgumentParser:
 def parse_global_args(argv: Sequence[str] | None = None) -> GlobalArgs:
     parser = get_parser(False)
     args, _ = parser.parse_known_args(argv)
-    return args  # noqa
+    return args  # type: ignore
 
 
 def parse_args(argv: Sequence[str] | None = None) -> FullArgs:
     parser = get_parser(True)
     args, _ = parser.parse_known_args(argv)
-    return args  # noqa
+    return args  # type: ignore
