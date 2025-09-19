@@ -14,7 +14,7 @@ Patches: dict[str, list[tuple[str, str]]] = {
             # QObject and subclasses
             f"def parent(self, /) -> PySide6.QtCore.QObject: ...",
             f"def parent(self, /) -> PySide6.QtCore.QObject | None: ...",
-        )
+        ),
     ],
     os.path.join(PySide6Path, "QtGui.pyi"): [
         (
@@ -31,7 +31,7 @@ Patches: dict[str, list[tuple[str, str]]] = {
             # Subclasses of QObject
             f"def parent(self, /) -> PySide6.QtCore.QObject: ...",
             f"def parent(self, /) -> PySide6.QtCore.QObject | None: ...",
-        )
+        ),
     ],
     os.path.join(PySide6Path, "QtWidgets.pyi"): [
         (
