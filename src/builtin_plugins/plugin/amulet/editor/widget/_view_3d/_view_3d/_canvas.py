@@ -3,7 +3,7 @@ from typing import Any, TypeVar, SupportsFloat
 import logging
 from math import sin, cos, radians
 
-from PySide6.QtCore import Qt, QPoint, Slot, QThread, QThreadPool
+from PySide6.QtCore import Qt, QPoint, Slot, QThread, QThreadPool, QObject
 from PySide6.QtGui import (
     QOpenGLFunctions,
     QOpenGLContext,
@@ -25,10 +25,13 @@ from OpenGL.GL import (
     GL_DEPTH_TEST as _GL_DEPTH_TEST,
 )
 
-from amulet.app.exception import CatchExceptionDialog
 from amulet.utils.task_manager import ProgressManager
 from amulet.utils.event import EventToken
+from amulet.utils.matrix import Matrix4x4
 from amulet.level.abc.level import Level
+
+from amulet.app.exception import CatchExceptionDialog
+from amulet.app.qt.signal import Signal
 
 from plugin.amulet.resource_pack import get_resource_pack_container
 
@@ -39,11 +42,14 @@ from ._camera import Camera, Location, Rotation
 from ._key_catcher import KeySrc, KeyCatcher
 
 from .level.level_geometry import LevelGeometry
+from .selection import SelectionGeometry
 from .resource_pack import (
     get_gl_resource_pack_container,
     OpenGLResourcePackHandle,
     OpenGLResourcePack,
 )
+
+from plugin.amulet.selection import get_selection_manager, SelectionManager
 
 log = logging.getLogger(__name__)
 
@@ -71,15 +77,28 @@ I suggest defining a functon in initGL and bind that. Make sure you don't have c
 """
 
 
-class CanvasGlData:
+class CanvasGlData(QObject):
     """A container for all canvas OpenGL data."""
 
     render_level: LevelGeometry
+    _selection_handle: SelectionManager
+    _render_selection: SelectionGeometry
     _gl_resource_pack_handle: OpenGLResourcePackHandle
 
+    _level_change_token: EventToken[()] | None
+    _selection_change_token: EventToken[()] | None
+
+    geometry_changed = Signal[()]()
+
     def __init__(self, level: Level) -> None:
+        super().__init__()
         self.render_level = LevelGeometry(level)
+        self._selection_handle = get_selection_manager()
+        self._render_selection = SelectionGeometry()
         self._gl_resource_pack_handle = get_gl_resource_pack_container(level)
+
+        self._level_change_token = None
+        self._selection_change_token = None
 
     def __del__(self) -> None:
         log.debug("CanvasGlData.__del__")
@@ -90,23 +109,70 @@ class CanvasGlData:
     def init_gl(self) -> None:
         log.debug("CanvasGlData.init_gl()")
         self.render_level.init_gl()
+        self._render_selection.init_gl()
+
+    def _update_selection(self) -> None:
+        self._render_selection.set_selection(self._selection_handle.get_selection())
+
+    def _update_render_distance(self) -> None:
+        self.render_level.set_render_distance(
+            render_settings.chunk_load_distance,
+            render_settings.chunk_unload_distance,
+        )
 
     def wake(self) -> None:
         log.debug("CanvasGlData.wake()")
+
+        # Start listening for changes
+        render_settings.render_distance_changed.connect(self._update_render_distance)
+        self._selection_handle.selection_changed.connect(self._update_selection)
+
+        # Manually update these settings.
+        # They may have changed while we were sleeping.
+        self._update_selection()
+        self._update_render_distance()
+
+        # Listen for geometry changes
+        self._level_change_token = self.render_level.geometry_changed.connect(
+            lambda: self.geometry_changed.emit()
+        )
+        self._selection_change_token = self._render_selection.geometry_changed.connect(
+            lambda: self.geometry_changed.emit()
+        )
+
+        # Listen for the resource pack change event
         # This breaks if it is bound directly to the pyside method
         self._gl_resource_pack_handle.changed.connect(self._set_resource_pack)
+
+        # Wake the level
         self.render_level.wake()
 
     def sleep(self) -> None:
         log.debug("CanvasGlData.sleep()")
+
+        # Sleep the level
         self.render_level.sleep()
+
+        # Stop listening for changes
+        render_settings.render_distance_changed.connect(self._update_render_distance)
+        self._selection_handle.selection_changed.disconnect(self._update_selection)
+
+        # Disconnect geometry change events
+        self.render_level.geometry_changed.disconnect(self._level_change_token)
+        self._level_change_token = None
+        self._render_selection.geometry_changed.disconnect(self._selection_change_token)
+        self._selection_change_token = None
 
     def destroy_gl(self) -> None:
         log.debug("CanvasGlData.destroy_gl()")
         self.render_level.destroy_gl()
+        self._render_selection.destroy_gl()
 
     def paint_gl(self, projection_matrix: QMatrix4x4, view_matrix: QMatrix4x4) -> None:
         self.render_level.paint_gl(projection_matrix, view_matrix)
+        self._render_selection.paint_gl(
+            Matrix4x4(projection_matrix), Matrix4x4(view_matrix)
+        )
 
 
 class FirstPersonCanvas(QOpenGLWidget, QOpenGLFunctions):
@@ -143,8 +209,6 @@ class FirstPersonCanvas(QOpenGLWidget, QOpenGLFunctions):
         self._mouse_captured = False
 
         self._speed = 1.0
-
-        self._changed_token: EventToken[()] | None = None
 
         self._key_catcher = KeyCatcher()
         self.installEventFilter(self._key_catcher)
@@ -196,7 +260,7 @@ class FirstPersonCanvas(QOpenGLWidget, QOpenGLFunctions):
             # Set the start position after OpenGL has been initialised
             # gl_data.render_level.set_dimension(next(iter(self._level.dimension_ids())))
             self._canvas_gl_data.render_level.set_dimension("minecraft:overworld")
-            self.camera.location = Location(0, 1000, 0)
+            self.camera.location = Location(0, 80, 0)
             self.camera.rotation = Rotation(0, 90)
             log.debug("FirstPersonCanvas.initializeGL end")
 
@@ -229,16 +293,8 @@ class FirstPersonCanvas(QOpenGLWidget, QOpenGLFunctions):
         with CatchExceptionDialog("Error showing canvas."):
             log.debug("FirstPersonCanvas.showEvent start")
 
-            # Set attributes. These may have changed while we were sleeping.
-            self._canvas_gl_data.render_level.set_render_distance(
-                render_settings.chunk_load_distance,
-                render_settings.chunk_unload_distance,
-            )
-
             # Repaint every time the geometry changes
-            self._changed_token = (
-                self._canvas_gl_data.render_level.geometry_changed.connect(self.update)
-            )
+            self._canvas_gl_data.geometry_changed.connect(self.update)
 
             self._canvas_gl_data.wake()
             QThreadPool.globalInstance().start(self._load_resource_pack)
@@ -249,10 +305,7 @@ class FirstPersonCanvas(QOpenGLWidget, QOpenGLFunctions):
             log.debug("FirstPersonCanvas.hideEvent start")
 
             # Disconnect from the geometry changed event
-            self._canvas_gl_data.render_level.geometry_changed.disconnect(
-                self._changed_token
-            )
-            self._changed_token = None
+            self._canvas_gl_data.geometry_changed.disconnect(self.update)
 
             self._canvas_gl_data.sleep()
             log.debug("FirstPersonCanvas.hideEvent end")

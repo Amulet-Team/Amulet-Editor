@@ -11,9 +11,16 @@ from . import (
     _widget,
     level,
     resource_pack,
+    selection,
 )
 
-__all__: list[str] = ["View3D", "compiler_config", "level", "resource_pack"]
+__all__: list[str] = [
+    "View3D",
+    "compiler_config",
+    "level",
+    "resource_pack",
+    "selection",
+]
 
 def _get_qt_version() -> str: ...
 def _init() -> None: ...
