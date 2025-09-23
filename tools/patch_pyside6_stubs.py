@@ -6,6 +6,11 @@ PySide6Path = PySide6.__path__[0]
 Patches: dict[str, list[tuple[str, str]]] = {
     os.path.join(PySide6Path, "QtCore.pyi"): [
         (
+            # QTranslator
+            "def translate(self, context: str, sourceText: str, /, disambiguation: str | None = ..., n: int = ...) -> str: ...",
+            "def translate(self, context: str, sourceText: str, /, disambiguation: str | None = ..., n: int = ...) -> str | None: ...",
+        ),
+        (
             # QByteArray
             "def data(self, /) -> bytes | bytearray | memoryview: ...",
             "def data(self) -> bytes: ...",
