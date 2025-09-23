@@ -12,6 +12,7 @@ namespace pyext = Amulet::pybind11_extensions;
 
 void init_resource_pack_base(py::module);
 void init_view_3d_level(py::module);
+void init_view_3d_selection(py::module);
 
 void init_module(py::module m)
 {
@@ -20,6 +21,7 @@ void init_module(py::module m)
 
     init_resource_pack_base(m);
     init_view_3d_level(m);
+    init_view_3d_selection(m);
 
     m.def("_get_qt_version", []() { 
         return py::str(qVersion());

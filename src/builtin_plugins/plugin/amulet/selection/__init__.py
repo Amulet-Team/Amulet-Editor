@@ -1,1 +1,1 @@
-from ._api import get_selection_manager
+from ._api import get_selection_manager, SelectionManager
