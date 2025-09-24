@@ -49,13 +49,13 @@ log = logging.getLogger(__name__)
 # Qt only weekly references this. We must hold a strong reference to stop it getting garbage collected
 _translator: Translator | None = None
 
-HomeLayoutID = "073bfd20-249e-4e0c-ad41-0bcb0c9db89f"
+HomeLayoutID = "amulet.home"
 home_button: ButtonProxy | None = None
 
-LevelInfoLayoutID = "4de0ebcd-f789-440f-9526-e6cc5d77caff"
+LevelInfoLayoutID = "amulet.level_info"
 level_info_button: ButtonProxy | None = None
 
-EditorLayoutId = "68817e4c-32e3-43f8-ac61-9d7352c6329d"
+EditorLayoutId = "amulet.editor"
 editor_button: ButtonProxy | None = None
 
 
