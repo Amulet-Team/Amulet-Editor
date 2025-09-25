@@ -5,8 +5,8 @@ from PySide6.QtGui import QCloseEvent
 from PySide6.QtWidgets import QMainWindow, QWidget
 
 
-from plugin.amulet.editor.window import _main as _main_window
-from plugin.amulet.editor.window._tab_engine import RecursiveSplitter
+from . import _main_window
+from ._tab_engine import RecursiveSplitter
 
 
 class AmuletChildWindow(QMainWindow):

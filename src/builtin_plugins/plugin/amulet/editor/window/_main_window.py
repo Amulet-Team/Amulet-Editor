@@ -8,8 +8,8 @@ from PySide6.QtWidgets import QWidget, QMainWindow, QHBoxLayout
 from plugin.amulet.inspector import show_inspector
 
 from plugin.amulet.editor._signal import destroy_editor
-from plugin.amulet.editor.window._tab_engine import RecursiveSplitter
-from plugin.amulet.editor.window._toolbar import ToolBar, ButtonProxy
+from ._tab_engine import RecursiveSplitter
+from ._toolbar import ToolBar, ButtonProxy
 
 
 # Terminology
