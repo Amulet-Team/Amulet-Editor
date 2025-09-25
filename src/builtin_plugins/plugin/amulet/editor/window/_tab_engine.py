@@ -428,7 +428,6 @@ class TabContainerWidget(QWidget):
                     widget.setParent(None)
 
                     new_splitter = RecursiveSplitter()
-
                     new_splitter.addWidget(widget)
 
                     tab_widget = StackedTabWidget()
@@ -464,7 +463,7 @@ class TabContainerWidget(QWidget):
     ) -> None:
         new_window = _child_window.create_sub_window()
         tab_widget = StackedTabWidget()
-        new_window._view_container.addWidget(tab_widget)
+        new_window._splitter.addWidget(tab_widget)
         tab_widget.add_page(dragged_widget)
         new_window.move(drop_event.globalPosition().toPoint())
         new_window.show()

@@ -40,9 +40,8 @@ class AmuletMainWindow(QMainWindow):
         self._toolbar = ToolBar(self._widget)
         self._layout.addWidget(self._toolbar)
 
-        self._view_container = _tab_engine.RecursiveSplitter(self._widget)
-        self._view_container.setObjectName("view_container")
-        self._layout.addWidget(self._view_container)
+        self._splitter = _tab_engine.RecursiveSplitter(self._widget)
+        self._layout.addWidget(self._splitter)
         self.setCentralWidget(self._widget)
 
         self._localise()
@@ -68,14 +67,14 @@ class AmuletMainWindow(QMainWindow):
     def replace_view_container(
         self, new_view_container: _tab_engine.RecursiveSplitter
     ) -> _tab_engine.RecursiveSplitter:
-        old_view_container = self._view_container
+        old_view_container = self._splitter
         layout_item = self._layout.replaceWidget(
             old_view_container,
             new_view_container,
             options=Qt.FindChildOption.FindDirectChildrenOnly,
         )
         assert old_view_container is layout_item.widget()
-        self._view_container = new_view_container
+        self._splitter = new_view_container
         return old_view_container
 
 

@@ -19,8 +19,8 @@ class AmuletChildWindow(QMainWindow):
         self, parent: QWidget | None = None, flags: Qt.WindowType = Qt.WindowType.Window
     ) -> None:
         super().__init__(parent, flags)
-        self._view_container = _tab_engine.RecursiveSplitter(self)
-        self.setCentralWidget(self._view_container)
+        self._splitter = _tab_engine.RecursiveSplitter(self)
+        self.setCentralWidget(self._splitter)
         self._localise()
 
     def changeEvent(self, event: QEvent) -> None:

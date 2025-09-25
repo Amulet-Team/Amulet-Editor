@@ -203,9 +203,9 @@ def create_layout_button(layout_id: str) -> ButtonProxy:
 
 
 def _populate_widgets_of_type(
-    view_container: RecursiveSplitter, widget_cls: type[TabWidget]
+    splitter: RecursiveSplitter, widget_cls: type[TabWidget]
 ) -> None:
-    for child in view_container.children():
+    for child in splitter.children():
         if isinstance(child, StackedTabWidget):
             for i in range(child.count()):
                 widget = child.get_page(i)
@@ -228,15 +228,15 @@ def populate_widgets(widget_cls: type[TabWidget]) -> None:
     assert (
         current_thread() is main_thread()
     ), "This can only be called from the main thread."
-    _populate_widgets_of_type(get_main_window()._view_container, widget_cls)
+    _populate_widgets_of_type(get_main_window()._splitter, widget_cls)
     for sub_window in _child_window.sub_windows:
-        _populate_widgets_of_type(sub_window._view_container, widget_cls)
+        _populate_widgets_of_type(sub_window._splitter, widget_cls)
 
 
 def _remove_widgets_of_type(
-    view_container: RecursiveSplitter, widget_cls: type[TabWidget]
+    splitter: RecursiveSplitter, widget_cls: type[TabWidget]
 ) -> None:
-    for child in view_container.children():
+    for child in splitter.children():
         if isinstance(child, StackedTabWidget):
             for i in range(child.count()):
                 widget = child.get_page(i)
@@ -255,16 +255,16 @@ def remove_widgets(widget_cls: type[TabWidget]) -> None:
         if hidden_layout is not None:
             _remove_widgets_of_type(hidden_layout.main_window_splitter, widget_cls)
             for sub_window in hidden_layout.sub_windows:
-                _remove_widgets_of_type(sub_window._view_container, widget_cls)
-    _remove_widgets_of_type(get_main_window()._view_container, widget_cls)
+                _remove_widgets_of_type(sub_window._splitter, widget_cls)
+    _remove_widgets_of_type(get_main_window()._splitter, widget_cls)
 
 
 def _init_layout(
-    view_container: RecursiveSplitter, layout: SplitterConfig | WidgetStackConfig
+    splitter: RecursiveSplitter, layout: SplitterConfig | WidgetStackConfig
 ) -> None:
     if isinstance(layout, SplitterConfig):
         splitter_widget = RecursiveSplitter(layout.orientation)
-        view_container.addWidget(splitter_widget)
+        splitter.addWidget(splitter_widget)
         _init_layout(splitter_widget, layout.first)
         _init_layout(splitter_widget, layout.second)
         left_weight = max(1, min(100, int(100 * layout.weight)))
@@ -273,7 +273,7 @@ def _init_layout(
         splitter_widget.setStretchFactor(1, right_weight)
     elif isinstance(layout, WidgetStackConfig):
         tab_widget = StackedTabWidget()
-        view_container.addWidget(tab_widget)
+        splitter.addWidget(tab_widget)
         for widget_config in layout.widgets:
             widget: TabWidget
             try:
@@ -291,11 +291,11 @@ def _init_layout(
 def _init_window(
     window: AmuletMainWindow | _child_window.AmuletChildWindow, config: WindowConfig
 ) -> None:
-    view_container = window._view_container
+    splitter = window._splitter
     # TODO: set window position and size
     layout = config.layout
     # Set up new layout
-    _init_layout(view_container, layout)
+    _init_layout(splitter, layout)
 
 
 def _create_layout(layout_container: LayoutContainer) -> None:
@@ -311,7 +311,7 @@ def _destroy_layout() -> None:
     This is used when resetting the active layout."""
     for sub_window in _child_window.sub_windows:
         sub_window.close()
-    main_view_container = get_main_window()._view_container
+    main_view_container = get_main_window()._splitter
     for index in range(main_view_container.count() - 1, -1, -1):
         widget = main_view_container.widget(index)
         widget.hide()
