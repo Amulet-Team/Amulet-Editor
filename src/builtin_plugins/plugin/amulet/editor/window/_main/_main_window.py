@@ -1,7 +1,6 @@
 from __future__ import annotations
 from typing import TypeAlias
 from threading import Lock
-from enum import Enum
 
 from PySide6.QtGui import QShortcut, QCloseEvent
 from PySide6.QtCore import Qt
@@ -27,14 +26,6 @@ from .._tab_engine import RecursiveSplitter
 
 UID: TypeAlias = str
 UUID: TypeAlias = str
-
-
-class DeletedType(Enum):
-    Deleted = 1
-
-
-Deleted = DeletedType.Deleted
-
 
 # The lock must be acquired before reading/writing the objects below.
 _lock = Lock()
@@ -144,7 +135,7 @@ def destroy_main_window() -> None:
     with _lock:
         if _main_window is not None:
             _main_window.deleteLater()
-            _main_window = Deleted
+            _main_window = None
 
 
 def get_main_window() -> AmuletMainWindow:
