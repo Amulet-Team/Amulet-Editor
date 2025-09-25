@@ -12,12 +12,12 @@ from PySide6.QtCore import Qt, QPoint, QSize
 
 from plugin.amulet.editor._icon import ATooltipIconButton
 
-from plugin.amulet.editor.window._main import (
+from plugin.amulet.editor.window._main_window import (
     AmuletMainWindow,
     get_main_window,
     ButtonProxy,
 )
-from plugin.amulet.editor.window import _child as _child_window
+from plugin.amulet.editor.window import _child_window
 from plugin.amulet.editor.window._tab_engine import TabWidget
 from plugin.amulet.editor.widget import _widget
 from plugin.amulet.editor.window._tab_engine import (
@@ -176,7 +176,7 @@ def activate_layout(layout_id: str) -> None:
             button.click()
         else:
             # If there is no associated button then manually enable it.
-            get_main_window().toolbar.uncheck_layout_buttons()
+            get_main_window()._toolbar.uncheck_layout_buttons()
             _setup_layout(layout_container)
 
 
@@ -191,7 +191,7 @@ def create_layout_button(layout_id: str) -> ButtonProxy:
         layout_container = _get_layout_container(layout_id)
         if layout_container.button_ref() is not None:
             raise ValueError(f"A layout button for id {layout_id} already exists.")
-        button = get_main_window().toolbar.add_layout_button()
+        button = get_main_window()._toolbar.add_layout_button()
         button.clicked.connect(lambda: _setup_layout(layout_container))
         layout_container.button_ref = ref(button)
         # TODO: set up the button
@@ -229,9 +229,9 @@ def populate_widgets(widget_cls: type[TabWidget]) -> None:
     assert (
         current_thread() is main_thread()
     ), "This can only be called from the main thread."
-    _populate_widgets_of_type(get_main_window().view_container, widget_cls)
+    _populate_widgets_of_type(get_main_window()._view_container, widget_cls)
     for sub_window in _child_window.sub_windows:
-        _populate_widgets_of_type(sub_window.view_container, widget_cls)
+        _populate_widgets_of_type(sub_window._view_container, widget_cls)
 
 
 def _remove_widgets_of_type(
@@ -256,8 +256,8 @@ def remove_widgets(widget_cls: type[TabWidget]) -> None:
         if hidden_layout is not None:
             _remove_widgets_of_type(hidden_layout.main_window_splitter, widget_cls)
             for sub_window in hidden_layout.sub_windows:
-                _remove_widgets_of_type(sub_window.view_container, widget_cls)
-    _remove_widgets_of_type(get_main_window().view_container, widget_cls)
+                _remove_widgets_of_type(sub_window._view_container, widget_cls)
+    _remove_widgets_of_type(get_main_window()._view_container, widget_cls)
 
 
 def _init_layout(
@@ -292,7 +292,7 @@ def _init_layout(
 def _init_window(
     window: AmuletMainWindow | _child_window.AmuletChildWindow, config: WindowConfig
 ) -> None:
-    view_container = window.view_container
+    view_container = window._view_container
     # TODO: set window position and size
     layout = config.layout
     # Set up new layout
@@ -312,7 +312,7 @@ def _destroy_layout() -> None:
     This is used when resetting the active layout."""
     for sub_window in _child_window.sub_windows:
         sub_window.close()
-    main_view_container = get_main_window().view_container
+    main_view_container = get_main_window()._view_container
     for index in range(main_view_container.count() - 1, -1, -1):
         widget = main_view_container.widget(index)
         widget.hide()

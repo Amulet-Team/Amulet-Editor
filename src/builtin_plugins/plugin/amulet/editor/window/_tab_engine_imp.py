@@ -7,8 +7,8 @@ from ._tab_engine import (
     AbstractStackedTabWidget,
     TabWidget,
 )
-from plugin.amulet.editor.window import _main as _main_window
-from plugin.amulet.editor.window import _child as _child_window
+from plugin.amulet.editor.window import _main_window
+from plugin.amulet.editor.window import _child_window
 
 
 class TabContainerWidget(AbstractTabContainerWidget):
@@ -20,7 +20,7 @@ class TabContainerWidget(AbstractTabContainerWidget):
     ) -> None:
         new_window = _child_window.create_sub_window()
         tab_widget = StackedTabWidget()
-        new_window.view_container.addWidget(tab_widget)
+        new_window._view_container.addWidget(tab_widget)
         tab_widget.add_page(dragged_widget)
         new_window.move(drop_event.globalPosition().toPoint())
         new_window.show()
