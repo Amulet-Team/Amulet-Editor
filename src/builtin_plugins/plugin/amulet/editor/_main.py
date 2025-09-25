@@ -22,6 +22,7 @@ from plugin.amulet.level import get_main_level, set_main_level
 
 from plugin.amulet.editor import __path__ as editor_plugin_path
 from plugin.amulet.editor.window._main import (
+    init_main_window,
     get_main_window,
     destroy_main_window,
     ButtonProxy,
@@ -194,6 +195,9 @@ def _main(args: FullArgs) -> None:
     _load_translations()
     QApplication.installTranslator(_translator)
     locale_changed.connect(_load_translations)
+
+    # Initialise the main window
+    init_main_window()
 
     # Register widgets and layouts
     _init_editor()

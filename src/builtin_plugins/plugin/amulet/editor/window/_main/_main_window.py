@@ -38,7 +38,7 @@ Deleted = DeletedType.Deleted
 
 # The lock must be acquired before reading/writing the objects below.
 _lock = Lock()
-_main_window: None | AmuletMainWindow | DeletedType = None
+_main_window: AmuletMainWindow | None = None
 
 
 class AmuletMainWindow(Ui_AmuletMainWindow):
@@ -60,7 +60,7 @@ class AmuletMainWindow(Ui_AmuletMainWindow):
     def closeEvent(self, event: QCloseEvent) -> None:
         global _main_window
         destroy_editor.emit()
-        _main_window = Deleted
+        _main_window = None
 
     # def activate_view(self, view_cls: type[View]):
     #     """
@@ -131,21 +131,26 @@ class AmuletMainWindow(Ui_AmuletMainWindow):
         return old_view_container
 
 
-def get_main_window() -> AmuletMainWindow:
-    """Get the main window instance.
-    This is a private function that must not be used outside of this plugin."""
+def init_main_window() -> None:
     global _main_window
     with _lock:
-        if _main_window is None:
-            _main_window = AmuletMainWindow()
-        elif isinstance(_main_window, DeletedType):
-            raise RuntimeError("AmuletMainWindow has been deleted.")
-        return _main_window
+        if _main_window is not None:
+            raise RuntimeError("AmuletMainWindow has already been initialised")
+        _main_window = AmuletMainWindow()
 
 
 def destroy_main_window() -> None:
     global _main_window
     with _lock:
-        if isinstance(_main_window, AmuletMainWindow):
+        if _main_window is not None:
             _main_window.deleteLater()
             _main_window = Deleted
+
+
+def get_main_window() -> AmuletMainWindow:
+    """Get the main window instance.
+    This is a private function that must not be used outside of this plugin."""
+    with _lock:
+        if _main_window is None:
+            raise RuntimeError("AmuletMainWindow has not been initialised.")
+        return _main_window
