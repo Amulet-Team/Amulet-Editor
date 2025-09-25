@@ -22,9 +22,8 @@ from plugin.amulet.editor.window._tab_engine import TabWidget
 from plugin.amulet.editor.widget import _widget
 from plugin.amulet.editor.window._tab_engine import (
     RecursiveSplitter,
-    AbstractStackedTabWidget,
+    StackedTabWidget,
 )
-from plugin.amulet.editor.window._tab_engine_imp import StackedTabWidget
 
 
 # my_namespace.my_layout
@@ -207,7 +206,7 @@ def _populate_widgets_of_type(
     view_container: RecursiveSplitter, widget_cls: type[TabWidget]
 ) -> None:
     for child in view_container.children():
-        if isinstance(child, AbstractStackedTabWidget):
+        if isinstance(child, StackedTabWidget):
             for i in range(child.count()):
                 widget = child.get_page(i)
                 if (
@@ -238,7 +237,7 @@ def _remove_widgets_of_type(
     view_container: RecursiveSplitter, widget_cls: type[TabWidget]
 ) -> None:
     for child in view_container.children():
-        if isinstance(child, AbstractStackedTabWidget):
+        if isinstance(child, StackedTabWidget):
             for i in range(child.count()):
                 widget = child.get_page(i)
                 if isinstance(widget, widget_cls):

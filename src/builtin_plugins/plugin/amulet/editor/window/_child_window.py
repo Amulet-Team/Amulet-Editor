@@ -6,7 +6,7 @@ from PySide6.QtWidgets import QMainWindow, QWidget
 
 
 from . import _main_window
-from ._tab_engine import RecursiveSplitter
+from . import _tab_engine
 
 
 class AmuletChildWindow(QMainWindow):
@@ -19,7 +19,7 @@ class AmuletChildWindow(QMainWindow):
         self, parent: QWidget | None = None, flags: Qt.WindowType = Qt.WindowType.Window
     ) -> None:
         super().__init__(parent, flags)
-        self._view_container = RecursiveSplitter(self)
+        self._view_container = _tab_engine.RecursiveSplitter(self)
         self.setCentralWidget(self._view_container)
         self._localise()
 
