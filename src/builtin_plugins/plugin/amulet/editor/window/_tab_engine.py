@@ -299,9 +299,7 @@ class TabContainerWidget(QWidget):
             raise RuntimeError
         parent = parent.parent()
         if not isinstance(parent, TabContainer):
-            raise RuntimeError(
-                "Parent of TabContainerWidget must be TabContainer"
-            )
+            raise RuntimeError("Parent of TabContainerWidget must be TabContainer")
         return parent
 
     def _get_button_at(self, point: QPoint) -> TabButton | None:
@@ -391,9 +389,7 @@ class TabContainerWidget(QWidget):
         """Get the widget that the dragged widget will be dropped into."""
         widget: QObject | None = QApplication.widgetAt(point)
         while widget is not None:
-            if isinstance(
-                widget, (TabContainerWidget, StackedTabWidget)
-            ):
+            if isinstance(widget, (TabContainerWidget, StackedTabWidget)):
                 return widget
             widget = widget.parent()
         return None
@@ -560,9 +556,7 @@ class TabBar(QWidget):
     def tab_widget(self) -> StackedTabWidget:
         parent = self.parent()
         if not isinstance(parent, StackedTabWidget):
-            raise RuntimeError(
-                "Parent of TabBar must be StackedTabWidget"
-            )
+            raise RuntimeError("Parent of TabBar must be StackedTabWidget")
         return parent
 
     def _check_size(self) -> None:
@@ -743,9 +737,7 @@ class StackedTabWidget(QWidget):
     def splitter(self) -> RecursiveSplitter:
         parent = self.parent()
         if not isinstance(parent, RecursiveSplitter):
-            raise RuntimeError(
-                "Parent of StackedTabWidget must be RecursiveSplitter"
-            )
+            raise RuntimeError("Parent of StackedTabWidget must be RecursiveSplitter")
         return parent
 
 
