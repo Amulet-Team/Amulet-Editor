@@ -37,11 +37,13 @@ class AmuletMainWindow(QMainWindow):
         super().__init__()
         self._widget = QWidget(self)
         self._layout = QHBoxLayout(self._widget)
+
         self._toolbar = ToolBar(self._widget)
         self._layout.addWidget(self._toolbar)
 
-        self._splitter = _tab_engine.RecursiveSplitter(self._widget)
+        self._splitter = _tab_engine.RecursiveSplitter()
         self._layout.addWidget(self._splitter)
+
         self.setCentralWidget(self._widget)
 
         self._localise()

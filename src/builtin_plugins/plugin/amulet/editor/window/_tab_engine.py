@@ -742,28 +742,8 @@ class StackedTabWidget(QWidget):
 
 
 class RecursiveSplitter(QSplitter):
-    @overload
-    def __init__(
-        self, orientation: Qt.Orientation, parent: QWidget | None = None
-    ) -> None: ...
-    @overload
-    def __init__(self, parent: QWidget | None = None) -> None: ...
-    def __init__(self, *args: Any, **kwargs: Any) -> None:
-        super().__init__(*args, **kwargs)
+    """A specialisation of QSplitter"""
+
+    def __init__(self) -> None:
+        super().__init__()
         self.setChildrenCollapsible(False)
-
-    def addWidget(self, widget: StackedTabWidget | RecursiveSplitter) -> None:  # type: ignore
-        if not isinstance(widget, (StackedTabWidget, RecursiveSplitter)):
-            raise TypeError(
-                "widget must be an instance of TabArea or RecursiveSplitter"
-            )
-        super().addWidget(widget)
-
-    def insertWidget(
-        self, index: int, widget: StackedTabWidget | RecursiveSplitter  # type: ignore
-    ) -> None:
-        if not isinstance(widget, (StackedTabWidget, RecursiveSplitter)):
-            raise TypeError(
-                "widget must be an instance of TabArea or RecursiveSplitter"
-            )
-        super().insertWidget(index, widget)

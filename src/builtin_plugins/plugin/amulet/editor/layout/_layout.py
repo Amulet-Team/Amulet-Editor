@@ -263,7 +263,8 @@ def _init_layout(
     splitter: RecursiveSplitter, layout: SplitterConfig | WidgetStackConfig
 ) -> None:
     if isinstance(layout, SplitterConfig):
-        splitter_widget = RecursiveSplitter(layout.orientation)
+        splitter_widget = RecursiveSplitter()
+        splitter_widget.setOrientation(layout.orientation)
         splitter.addWidget(splitter_widget)
         _init_layout(splitter_widget, layout.first)
         _init_layout(splitter_widget, layout.second)

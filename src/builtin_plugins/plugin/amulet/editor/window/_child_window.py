@@ -19,7 +19,7 @@ class AmuletChildWindow(QMainWindow):
         self, parent: QWidget | None = None, flags: Qt.WindowType = Qt.WindowType.Window
     ) -> None:
         super().__init__(parent, flags)
-        self._splitter = _tab_engine.RecursiveSplitter(self)
+        self._splitter = _tab_engine.RecursiveSplitter()
         self.setCentralWidget(self._splitter)
         self._localise()
 
