@@ -168,7 +168,9 @@ class ToolBar(QFrame):
         return button
 
     def uncheck_layout_buttons(self) -> None:
-        self._layout_button_group.checkedButton().setChecked(False)
+        button = self._layout_button_group.checkedButton()
+        if button is not None:
+            button.setChecked(False)
 
     def add_static_button(self) -> ATooltipIconButton:
         """Add a button to the toolbar."""
