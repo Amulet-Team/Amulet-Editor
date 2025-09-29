@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from abc import ABC, abstractmethod
-from typing import Self, Callable, TYPE_CHECKING
+from typing import Self, TYPE_CHECKING
 
 from PySide6.QtWidgets import (
     QWidget,
@@ -31,12 +31,6 @@ class TabWidget(ABC):
         The unique identifier for this tab widget class.
         Eg my_namespace.my_plugin.my_widget
         """
-        raise NotImplementedError
-
-    @classmethod
-    @abstractmethod
-    def create(cls) -> Self:
-        """Create an instance of this class."""
         raise NotImplementedError
 
     @final
