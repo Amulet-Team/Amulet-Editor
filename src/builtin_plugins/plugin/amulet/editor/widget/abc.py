@@ -1,16 +1,20 @@
 from __future__ import annotations
 
 from abc import ABC, abstractmethod
-from typing import Self, Callable
+from typing import Self, Callable, TYPE_CHECKING
 
 from PySide6.QtWidgets import (
     QWidget,
     QPushButton,
 )
 
+if TYPE_CHECKING:
+    from plugin.amulet.editor.window._tab_widget import TabData
+
+
 class TabWidget(ABC):
     def __init__(self) -> None:
-        self._private_clicked: Callable[[], None] | None = None
+        self._private_tab_data: TabData | None = None
         self._tab = QPushButton()
         self._tab.setCheckable(True)
 

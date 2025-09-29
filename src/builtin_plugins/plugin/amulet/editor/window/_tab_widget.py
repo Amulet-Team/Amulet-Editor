@@ -1,6 +1,8 @@
 """Widgets that make up the recursive tab framework."""
 from __future__ import annotations
 
+from typing import Callable
+
 from PySide6.QtCore import Qt, QSize, QEvent, QObject, QTimer
 from PySide6.QtGui import (
     QWheelEvent,
@@ -29,7 +31,12 @@ from amulet.app.qt.signal import Signal
 from plugin.amulet.editor.widget.abc import TabWidget
 
 
-class HorizontalScrollArea(QScrollArea):
+class TabContainerWidget(QWidget):
+    """Subclass of QWidget so it can be found in the hierarchy."""
+    pass
+
+
+class HorizontalScrollableTabArea(QScrollArea):
     """
     A horizontal scrollable area.
     This a specialisation of QScrollArea that:
@@ -41,7 +48,7 @@ class HorizontalScrollArea(QScrollArea):
 
     def __init__(self) -> None:
         super().__init__()
-        self._widget = QWidget()
+        self._widget = TabContainerWidget()
 
         self._layout = QHBoxLayout(self._widget)
         self._layout.setContentsMargins(0, 0, 0, 0)
@@ -87,11 +94,9 @@ class HorizontalScrollArea(QScrollArea):
         self.horizontalScrollBar().setValue(self.horizontalScrollBar().value() + 60)
 
     def sizeHint(self) -> QSize:
-        print("sizeHint", self._child_layout.sizeHint())
         return QSize(0, self._child_layout.sizeHint().height())
 
     def minimumSizeHint(self, /) -> QSize:
-        print("minimumSizeHint", self._child_layout.sizeHint())
         return QSize(0, self._child_layout.sizeHint().height())
 
     def wheelEvent(self, event: QWheelEvent) -> None:
@@ -146,6 +151,27 @@ class TemporaryNewTabWidget(QWidget):
         self._layout.addWidget(QLabel("This is a placeholder new tab GUI."))
 
 
+class TabData:
+    click_event: Callable[[], None] | None
+    drag_manager: TabDragManager
+
+    def __init__(
+        self,
+        click_event: Callable[[], None],
+        drag_manager: TabDragManager
+    ) -> None:
+        self.click_event = click_event
+        self.drag_manager = drag_manager
+
+
+def get_tab_data(tab_widget: TabWidget) -> TabData | None:
+    return tab_widget._private_tab_data
+
+
+def set_tab_data(tab_widget: TabWidget, data: TabData | None) -> None:
+    tab_widget._private_tab_data = data
+
+
 class TabWidgetStack(QWidget):
     """A custom class that behaves like a QTabWidget"""
 
@@ -173,7 +199,7 @@ class TabWidgetStack(QWidget):
         self._tab_bar_meta_layout.addWidget(self._plus_button)
         self._plus_button.setFixedWidth(self._plus_button.sizeHint().height())
 
-        self._tab_container = HorizontalScrollArea()
+        self._tab_container = HorizontalScrollableTabArea()
         self._tab_bar_meta_layout.addWidget(self._tab_container)
         self._tab_bar_layout = self._tab_container.child_layout()
 
@@ -253,7 +279,7 @@ class TabWidgetStack(QWidget):
 
     def _add_tab_widget(self, tab_widget: TabWidget) -> None:
         """Add a TabWidget instance to this stack."""
-        if tab_widget._private_clicked is not None:
+        if get_tab_data(tab_widget) is not None:
             raise RuntimeError(
                 "TabWidget has not been removed from previous TabWidgetStack"
             )
@@ -271,12 +297,19 @@ class TabWidgetStack(QWidget):
             self._tab_container.ensureWidgetVisible(tab, 0, 0)
             self._stacked_widget.setCurrentWidget(widget)
 
-        tab.clicked.connect(on_click)
-        tab_widget._private_clicked = on_click
+        drag_manager = TabDragManager(tab_widget)
+        tab.installEventFilter(drag_manager)
 
-    def _remove_tab_widget(self, tab_widget: TabWidget) -> None:
-        """Remove a TabWidget instance from this stack."""
-        if tab_widget._private_clicked is None:
+        tab.clicked.connect(on_click)
+        set_tab_data(tab_widget, TabData(
+            on_click,
+            drag_manager
+        ))
+
+    def _steal_tab_widget(self, tab_widget: TabWidget) -> None:
+        """Remove the tab and widget but do not remove the drag event listener."""
+        tab_data = get_tab_data(tab_widget)
+        if tab_data is None:
             raise RuntimeError("TabWidget is not in this TabWidgetStack")
 
         tab = tab_widget.tab
@@ -286,15 +319,32 @@ class TabWidgetStack(QWidget):
         del self._tabs[widget]
 
         self._tab_bar_layout.removeWidget(tab)
+        tab.setParent(None)
         self._stacked_widget.removeWidget(widget)
+        widget.setParent(None)
 
-        tab.clicked.disconnect(tab_widget._private_clicked)
+        if tab_data.click_event is not None:
+            tab.clicked.disconnect(tab_data.click_event)
+            tab_data.click_event = None
+
         self._button_group.removeButton(tab)
 
-    def _remove_tab(self, tab: QPushButton) -> TabWidget:
-        tab_widget = self._tabs[tab]
-        self._remove_tab_widget(tab_widget)
-        return tab_widget
+    def _remove_tab_widget(self, tab_widget: TabWidget) -> None:
+        """
+        Remove a TabWidget instance from this stack.
+        This also removes all functionality
+        """
+        self._steal_tab_widget(tab_widget)
+        tab_data = get_tab_data(tab_widget)
+        if tab_data is None:
+            raise RuntimeError("TabWidget is not in this TabWidgetStack")
+        tab_widget.tab.removeEventFilter(tab_data.drag_manager)
+        set_tab_data(tab_widget, None)
+
+    # def _remove_tab(self, tab: QPushButton) -> TabWidget:
+    #     tab_widget = self._tabs[tab]
+    #     self._remove_tab_widget(tab_widget)
+    #     return tab_widget
 
     def _tab_widgets(self) -> list[TabWidget]:
         """
@@ -306,26 +356,24 @@ class TabWidgetStack(QWidget):
             item = self._tab_bar_layout.itemAt(i)
             if item is None:
                 continue
-            widget = item.widget()
-            if widget is None:
+            tab = item.widget()
+            if tab is None:
                 continue
-            tab_widget = self._tabs.get(widget)
+            tab_widget = self._tabs.get(tab)
             if tab_widget is None:
                 continue
             tab_widgets.append(tab_widget)
         return tab_widgets
 
 
-def tab_widget_stack(button: QPushButton) -> TabWidgetStack:
-    """Get the TabWidgetStack that contains the button."""
-    widget = button
-    for _ in range(4):
-        widget = widget.parent()
-        if widget is None:
-            raise RuntimeError(f"Error finding TabWidgetStack containing button {button}")
-    if not isinstance(widget, TabWidgetStack):
-        raise RuntimeError(f"Error finding TabWidgetStack containing button {button}")
-    return widget
+def get_tab_widget_stack(widget: QWidget) -> TabWidgetStack:
+    """Get the TabWidgetStack that contains this widget."""
+    widget_ = widget
+    while widget_ is not None:
+        if isinstance(widget_, TabWidgetStack):
+            return widget_
+        widget_ = widget_.parent()
+    raise RuntimeError(f"{widget} is not in a TabWidgetStack")
 
 
 class RecursiveSplitter(QSplitter):
@@ -334,3 +382,6 @@ class RecursiveSplitter(QSplitter):
     def __init__(self) -> None:
         super().__init__()
         self.setChildrenCollapsible(False)
+
+
+from ._tab_drag import TabDragManager
