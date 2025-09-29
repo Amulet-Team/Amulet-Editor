@@ -226,7 +226,7 @@ class TabDragManager(QObject):
         point = event.globalPosition().toPoint()
 
         # Move the tap to the new mouse location
-        self._tab.move(point)
+        self._tab.move(point + QPoint(1, 1))
 
         # Find the widget under the mouse
         widget = self._get_drop_widget_at(point)
