@@ -8,6 +8,8 @@ from PySide6.QtWidgets import (
     QPushButton,
 )
 
+from runtime_final import final
+
 if TYPE_CHECKING:
     from plugin.amulet.editor.window._tab_widget import TabData
 
@@ -37,6 +39,7 @@ class TabWidget(ABC):
         """Create an instance of this class."""
         raise NotImplementedError
 
+    @final
     @property
     def tab(self) -> QPushButton:
         """
