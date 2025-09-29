@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 from abc import ABC, abstractmethod
-from typing import TYPE_CHECKING
 
 from PySide6.QtWidgets import (
     QWidget,
@@ -10,9 +9,6 @@ from PySide6.QtWidgets import (
 
 from runtime_final import final
 
-if TYPE_CHECKING:
-    from plugin.amulet.editor.window._tab_widget import TabData
-
 
 class TabButton(QPushButton):
     pass
@@ -20,7 +16,6 @@ class TabButton(QPushButton):
 
 class TabWidget(ABC):
     def __init__(self) -> None:
-        self._private_tab_data: TabData | None = None
         self._tab = TabButton()
         self._tab.setCheckable(True)
 

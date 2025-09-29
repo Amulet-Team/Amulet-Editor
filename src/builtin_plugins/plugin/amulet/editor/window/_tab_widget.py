@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from typing import Callable
+from weakref import ref
 
 from PySide6.QtCore import Qt, QSize, QEvent, QObject, QTimer
 from PySide6.QtGui import (
@@ -30,6 +31,26 @@ from PySide6.QtWidgets import (
 from amulet.app.qt.signal import Signal
 
 from plugin.amulet.editor.widget.abc import TabWidget
+
+
+class TabWidgetMeta:
+    # The TabWidget instance
+    tab_widget: TabWidget
+
+    # The callable bound to the tab
+    click_event: Callable[[], None] | None
+
+    # The drag manager bound to the tab
+    drag_manager: TabDragManager | None
+
+    # A callable that returns the TabWidgetStack the TabWidget is bound to.
+    bound_widget: Callable[[], TabWidgetStack | None]
+
+    def __init__(self, tab_widget: TabWidget) -> None:
+        self.tab_widget = tab_widget
+        self.click_event = None
+        self.drag_manager = None
+        self.bound_widget = lambda: None
 
 
 class TabContainerWidget(QWidget):
@@ -153,25 +174,6 @@ class TemporaryNewTabWidget(QWidget):
         self._layout.addWidget(QLabel("This is a placeholder new tab GUI."))
 
 
-class TabData:
-    click_event: Callable[[], None] | None
-    drag_manager: TabDragManager
-
-    def __init__(
-        self, click_event: Callable[[], None], drag_manager: TabDragManager
-    ) -> None:
-        self.click_event = click_event
-        self.drag_manager = drag_manager
-
-
-def get_tab_data(tab_widget: TabWidget) -> TabData | None:
-    return tab_widget._private_tab_data
-
-
-def set_tab_data(tab_widget: TabWidget, data: TabData | None) -> None:
-    tab_widget._private_tab_data = data
-
-
 class WidgetStack(QStackedWidget):
     pass
 
@@ -184,7 +186,7 @@ class TabWidgetStack(QWidget):
         self.setAcceptDrops(True)
 
         # Convert from the button to the storage class
-        self._tabs = dict[QWidget, TabWidget]()
+        self._tabs = dict[QWidget, TabWidgetMeta]()
 
         self._layout = QVBoxLayout(self)
         self._layout.setContentsMargins(0, 0, 0, 0)
@@ -282,16 +284,17 @@ class TabWidgetStack(QWidget):
         self._on_resize()
         super().resizeEvent(event)
 
-    def _insert_tab_widget(self, index: int, tab_widget: TabWidget) -> None:
+    def _insert_tab_widget(self, index: int, tab_widget_meta: TabWidgetMeta) -> None:
         """Insert a TabWidget instance to this stack."""
-        if get_tab_data(tab_widget) is not None:
+        if tab_widget_meta.bound_widget() is not None:
             raise RuntimeError(
                 "TabWidget has not been removed from previous TabWidgetStack"
             )
 
+        tab_widget = tab_widget_meta.tab_widget
         tab = tab_widget.tab
         self._button_group.addButton(tab)
-        self._tabs[tab] = tab_widget
+        self._tabs[tab] = tab_widget_meta
         self._tab_bar_layout.insertWidget(index, tab)
 
         widget = tab_widget.widget
@@ -301,22 +304,24 @@ class TabWidgetStack(QWidget):
             self._tab_container.ensureWidgetVisible(tab, 0, 0)
             self._stacked_widget.setCurrentWidget(widget)
 
-        drag_manager = TabDragManager(tab_widget)
+        drag_manager = TabDragManager(tab_widget_meta)
         tab.installEventFilter(drag_manager)
 
         tab.clicked.connect(on_click)
-        set_tab_data(tab_widget, TabData(on_click, drag_manager))
+        tab_widget_meta.click_event = on_click
+        tab_widget_meta.drag_manager = drag_manager
+        tab_widget_meta.bound_widget = ref(self)
 
-    def _add_tab_widget(self, tab_widget: TabWidget) -> None:
+    def _add_tab_widget(self, tab_widget: TabWidgetMeta) -> None:
         """Append a TabWidget instance to this stack."""
         self._insert_tab_widget(-1, tab_widget)
 
-    def _steal_tab_widget(self, tab_widget: TabWidget) -> None:
+    def _steal_tab_widget(self, tab_widget_meta: TabWidgetMeta) -> None:
         """Remove the tab and widget but do not remove the drag event listener."""
-        tab_data = get_tab_data(tab_widget)
-        if tab_data is None:
-            raise RuntimeError("TabWidget is not in this TabWidgetStack")
+        if tab_widget_meta.bound_widget() is not self:
+            raise RuntimeError("TabWidget is not bound to this TabWidgetStack")
 
+        tab_widget = tab_widget_meta.tab_widget
         tab = tab_widget.tab
         widget = tab_widget.widget
 
@@ -342,23 +347,23 @@ class TabWidgetStack(QWidget):
         self._stacked_widget.removeWidget(widget)
         widget.setParent(None)
 
-        if tab_data.click_event is not None:
-            tab.clicked.disconnect(tab_data.click_event)
-            tab_data.click_event = None
+        if tab_widget_meta.click_event is not None:
+            tab.clicked.disconnect(tab_widget_meta.click_event)
+            tab_widget_meta.click_event = None
 
         self._button_group.removeButton(tab)
 
-    def _remove_tab_widget(self, tab_widget: TabWidget) -> None:
+    def _remove_tab_widget(self, tab_widget_meta: TabWidgetMeta) -> None:
         """
         Remove a TabWidget instance from this stack.
         This also removes all functionality
         """
-        self._steal_tab_widget(tab_widget)
-        tab_data = get_tab_data(tab_widget)
-        if tab_data is None:
-            raise RuntimeError("TabWidget is not in this TabWidgetStack")
-        tab_widget.tab.removeEventFilter(tab_data.drag_manager)
-        set_tab_data(tab_widget, None)
+        self._steal_tab_widget(tab_widget_meta)
+        tab_widget = tab_widget_meta.tab_widget
+        if tab_widget_meta.drag_manager is not None:
+            tab_widget.tab.removeEventFilter(tab_widget_meta.drag_manager)
+            tab_widget_meta.drag_manager = None
+        tab_widget_meta.bound_widget = lambda: None
 
     def _get_tabs(self) -> list[QPushButton]:
         tabs = []
@@ -370,7 +375,7 @@ class TabWidgetStack(QWidget):
                     tabs.append(tab)
         return tabs
 
-    def _get_tab_widgets(self) -> list[TabWidget]:
+    def _get_tab_widgets(self) -> list[TabWidgetMeta]:
         """
         Get all the TabWidget instances in this stack.
         They are ordered based on the order in the tab bar.

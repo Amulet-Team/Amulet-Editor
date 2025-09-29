@@ -62,6 +62,7 @@ class TabContainerOverlay(QWidget):
 
         def tab_x_pos(tab: TabButton) -> int:
             return tab.x()
+
         tabs = sorted(parent.findChildren(TabButton), key=tab_x_pos)
 
         cursor_point = QCursor.pos() - parent.mapToGlobal(QPoint(0, 0))
@@ -233,10 +234,10 @@ class ExternalHoverState:
 class TabDragManager(QObject):
     """A class to manage the dragging of a tab."""
 
-    def __init__(self, tab_widget: TabWidget) -> None:
+    def __init__(self, tab_widget_meta: TabWidgetMeta) -> None:
         super().__init__()
-        self._tab_widget = tab_widget
-        self._tab = tab_widget.tab
+        self._tab_widget_meta = tab_widget_meta
+        self._tab = tab_widget_meta.tab_widget.tab
 
         self._drag_start_point: QPoint | None = None
         self._dragging = False
@@ -253,7 +254,7 @@ class TabDragManager(QObject):
 
         # Remove button and widget
         stack = get_tab_widget_stack(self._tab)
-        stack._steal_tab_widget(self._tab_widget)
+        stack._steal_tab_widget(self._tab_widget_meta)
 
         # Set tab styling
         self._tab.setWindowFlags(Qt.WindowType.FramelessWindowHint)
@@ -321,7 +322,8 @@ class TabDragManager(QObject):
         # disconnect from button events
         self._tab.releaseMouse()
         self._tab.removeEventFilter(self)
-        set_tab_data(self._tab_widget, None)
+        self._tab_widget_meta.drag_manager = None
+        self._tab_widget_meta.bound_widget = lambda: None
 
         # Reset button styling
         self._tab.setAttribute(Qt.WidgetAttribute.WA_TransparentForMouseEvents, False)
@@ -335,13 +337,13 @@ class TabDragManager(QObject):
             index = hover_state.overlay.index
             if index is None:
                 index = -1
-            stack_widget._insert_tab_widget(index, self._tab_widget)
+            stack_widget._insert_tab_widget(index, self._tab_widget_meta)
         elif isinstance(hover_state, SplitterHoverState):
             hover_state.overlay.close()
             drop_area = hover_state.overlay.drop_area
             stack_widget = get_tab_widget_stack(hover_state.hover_widget)
             if drop_area is None or drop_area == SplitterDropOverlay.DropArea.Middle:
-                stack_widget._add_tab_widget(self._tab_widget)
+                stack_widget._add_tab_widget(self._tab_widget_meta)
             # TODO: split the splitter
             pass
         elif isinstance(hover_state, ExternalHoverState):
@@ -381,6 +383,6 @@ class TabDragManager(QObject):
 from ._tab_widget import (
     WidgetStack,
     TabContainerWidget,
+    TabWidgetMeta,
     get_tab_widget_stack,
-    set_tab_data,
 )
