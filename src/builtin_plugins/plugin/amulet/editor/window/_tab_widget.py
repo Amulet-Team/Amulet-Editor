@@ -1,4 +1,5 @@
 """Widgets that make up the recursive tab framework."""
+
 from __future__ import annotations
 
 from typing import Callable
@@ -33,6 +34,7 @@ from plugin.amulet.editor.widget.abc import TabWidget
 
 class TabContainerWidget(QWidget):
     """Subclass of QWidget so it can be found in the hierarchy."""
+
     pass
 
 
@@ -156,9 +158,7 @@ class TabData:
     drag_manager: TabDragManager
 
     def __init__(
-        self,
-        click_event: Callable[[], None],
-        drag_manager: TabDragManager
+        self, click_event: Callable[[], None], drag_manager: TabDragManager
     ) -> None:
         self.click_event = click_event
         self.drag_manager = drag_manager
@@ -301,10 +301,7 @@ class TabWidgetStack(QWidget):
         tab.installEventFilter(drag_manager)
 
         tab.clicked.connect(on_click)
-        set_tab_data(tab_widget, TabData(
-            on_click,
-            drag_manager
-        ))
+        set_tab_data(tab_widget, TabData(on_click, drag_manager))
 
     def _steal_tab_widget(self, tab_widget: TabWidget) -> None:
         """Remove the tab and widget but do not remove the drag event listener."""

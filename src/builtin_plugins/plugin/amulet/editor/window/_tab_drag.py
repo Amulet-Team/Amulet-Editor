@@ -1,11 +1,20 @@
 """Classes to facilitate dragging tabs."""
+
 from __future__ import annotations
 from typing import TYPE_CHECKING, Any
 
 from enum import IntEnum
 
 from PySide6.QtCore import QObject, QEvent, QPoint, QSize, Qt
-from PySide6.QtGui import QMouseEvent, QPaintEvent, QPainter, QColor, QResizeEvent, QPolygon, QCursor
+from PySide6.QtGui import (
+    QMouseEvent,
+    QPaintEvent,
+    QPainter,
+    QColor,
+    QResizeEvent,
+    QPolygon,
+    QCursor,
+)
 from PySide6.QtWidgets import QWidget, QApplication
 
 from plugin.amulet.editor.widget.abc import TabWidget
@@ -150,7 +159,9 @@ class SplitterDropOverlay(QWidget):
 
 
 class TabBarHoverState:
-    def __init__(self, widget: TabContainerWidget, overlay: TabContainerOverlay) -> None:
+    def __init__(
+        self, widget: TabContainerWidget, overlay: TabContainerOverlay
+    ) -> None:
         self.hover_widget = widget
         self.overlay = overlay
 
@@ -168,6 +179,7 @@ class ExternalHoverState:
 
 class TabDragManager(QObject):
     """A class to manage the dragging of a tab."""
+
     def __init__(self, tab_widget: TabWidget) -> None:
         super().__init__()
         self._tab_widget = tab_widget
@@ -176,7 +188,9 @@ class TabDragManager(QObject):
         self._drag_start_point: QPoint | None = None
         self._dragging = False
 
-        self._hover_state: TabBarHoverState | SplitterHoverState | ExternalHoverState | None = None
+        self._hover_state: (
+            TabBarHoverState | SplitterHoverState | ExternalHoverState | None
+        ) = None
 
     def __del__(self) -> None:
         print("TabDragManager.__del__()")
@@ -197,7 +211,9 @@ class TabDragManager(QObject):
         self._tab.show()
         self._tab.grabMouse()
 
-    def _get_drop_widget_at(self, point: QPoint) -> TabWidgetStack | TabContainerWidget | None:
+    def _get_drop_widget_at(
+        self, point: QPoint
+    ) -> TabWidgetStack | TabContainerWidget | None:
         widget: QObject | None = QApplication.widgetAt(point)
         while widget is not None:
             if isinstance(widget, (TabWidgetStack, TabContainerWidget)):
@@ -279,7 +295,10 @@ class TabDragManager(QObject):
         elif event.type() == QEvent.Type.MouseMove:
             if self._dragging:
                 self._drag(event)
-            elif self._drag_start_point is not None and 5 < (self._drag_start_point - event.pos()).manhattanLength():
+            elif (
+                self._drag_start_point is not None
+                and 5 < (self._drag_start_point - event.pos()).manhattanLength()
+            ):
                 self._dragging = True
                 self._drag_start(event)
                 self._drag(event)
@@ -296,4 +315,10 @@ class TabDragManager(QObject):
                 self._mouse_event(event)
         return False
 
-from ._tab_widget import TabWidgetStack, TabContainerWidget, get_tab_widget_stack, set_tab_data
+
+from ._tab_widget import (
+    TabWidgetStack,
+    TabContainerWidget,
+    get_tab_widget_stack,
+    set_tab_data,
+)
