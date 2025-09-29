@@ -336,24 +336,26 @@ class TabWidgetStack(QWidget):
         tab_widget.tab.removeEventFilter(tab_data.drag_manager)
         set_tab_data(tab_widget, None)
 
+    def _get_tabs(self) -> list[QPushButton]:
+        tabs = []
+        for i in range(self._tab_bar_layout.count()):
+            item = self._tab_bar_layout.itemAt(i)
+            if item is not None:
+                tab = item.widget()
+                if isinstance(tab, QPushButton):
+                    tabs.append(tab)
+        return tabs
 
-    def _tab_widgets(self) -> list[TabWidget]:
+    def _get_tab_widgets(self) -> list[TabWidget]:
         """
         Get all the TabWidget instances in this stack.
         They are ordered based on the order in the tab bar.
         """
         tab_widgets = []
-        for i in range(self._tab_bar_layout.count()):
-            item = self._tab_bar_layout.itemAt(i)
-            if item is None:
-                continue
-            tab = item.widget()
-            if tab is None:
-                continue
+        for tab in self._get_tabs():
             tab_widget = self._tabs.get(tab)
-            if tab_widget is None:
-                continue
-            tab_widgets.append(tab_widget)
+            if tab_widget is not None:
+                tab_widgets.append(tab_widget)
         return tab_widgets
 
 
