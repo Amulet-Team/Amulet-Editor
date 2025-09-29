@@ -1,7 +1,6 @@
 """Classes to facilitate dragging tabs."""
 
 from __future__ import annotations
-from typing import TYPE_CHECKING, Any
 
 from enum import IntEnum
 
@@ -144,8 +143,9 @@ class SplitterDropOverlay(QWidget):
         self.drop_area = None
 
         for drop, poly in zip(self.DropArea, self.polygons):
-            if self.drop_area is None and poly.containsPoint(
-                cursor_point, Qt.FillRule.OddEvenFill
+            if self.drop_area is None and (
+                poly.containsPoint(cursor_point, Qt.FillRule.OddEvenFill)
+                or drop is self.DropArea.Middle
             ):
                 painter.setBrush(QColor(115, 215, 255, 190))
                 painter.drawPolygon(poly)
@@ -283,7 +283,7 @@ class TabDragManager(QObject):
         elif isinstance(hover_state, SplitterHoverState):
             hover_state.overlay.close()
             drop_area = hover_state.overlay.drop_area
-            if drop_area == SplitterDropOverlay.DropArea.Middle:
+            if drop_area is None or drop_area == SplitterDropOverlay.DropArea.Middle:
                 hover_state.hover_widget._add_tab_widget(self._tab_widget)
             # TODO: split the splitter
             pass
