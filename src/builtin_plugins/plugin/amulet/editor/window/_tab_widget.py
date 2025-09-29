@@ -172,6 +172,10 @@ def set_tab_data(tab_widget: TabWidget, data: TabData | None) -> None:
     tab_widget._private_tab_data = data
 
 
+class WidgetStack(QStackedWidget):
+    pass
+
+
 class TabWidgetStack(QWidget):
     """A custom class that behaves like a QTabWidget"""
 
@@ -184,6 +188,7 @@ class TabWidgetStack(QWidget):
 
         self._layout = QVBoxLayout(self)
         self._layout.setContentsMargins(0, 0, 0, 0)
+        self._layout.setSpacing(0)
 
         self._tab_bar_meta_layout = QHBoxLayout()
         self._tab_bar_meta_layout.setContentsMargins(0, 0, 0, 0)
@@ -213,7 +218,7 @@ class TabWidgetStack(QWidget):
         self._right_button.clicked.connect(self._tab_container.scroll_right)
         self._right_button.setFixedWidth(self._right_button.sizeHint().height())
 
-        self._stacked_widget = QStackedWidget()
+        self._stacked_widget = WidgetStack()
         self._layout.addWidget(self._stacked_widget, 1)
 
         self._new_tab_widget = TemporaryNewTabWidget()
@@ -277,8 +282,8 @@ class TabWidgetStack(QWidget):
         self._on_resize()
         super().resizeEvent(event)
 
-    def _add_tab_widget(self, tab_widget: TabWidget) -> None:
-        """Add a TabWidget instance to this stack."""
+    def _insert_tab_widget(self, index: int, tab_widget: TabWidget) -> None:
+        """Insert a TabWidget instance to this stack."""
         if get_tab_data(tab_widget) is not None:
             raise RuntimeError(
                 "TabWidget has not been removed from previous TabWidgetStack"
@@ -287,7 +292,7 @@ class TabWidgetStack(QWidget):
         tab = tab_widget.tab
         self._button_group.addButton(tab)
         self._tabs[tab] = tab_widget
-        self._tab_bar_layout.addWidget(tab)
+        self._tab_bar_layout.insertWidget(index, tab)
 
         widget = tab_widget.widget
         self._stacked_widget.addWidget(widget)
@@ -301,6 +306,10 @@ class TabWidgetStack(QWidget):
 
         tab.clicked.connect(on_click)
         set_tab_data(tab_widget, TabData(on_click, drag_manager))
+
+    def _add_tab_widget(self, tab_widget: TabWidget) -> None:
+        """Append a TabWidget instance to this stack."""
+        self._insert_tab_widget(-1, tab_widget)
 
     def _steal_tab_widget(self, tab_widget: TabWidget) -> None:
         """Remove the tab and widget but do not remove the drag event listener."""

@@ -12,10 +12,14 @@ if TYPE_CHECKING:
     from plugin.amulet.editor.window._tab_widget import TabData
 
 
+class TabButton(QPushButton):
+    pass
+
+
 class TabWidget(ABC):
     def __init__(self) -> None:
         self._private_tab_data: TabData | None = None
-        self._tab = QPushButton()
+        self._tab = TabButton()
         self._tab.setCheckable(True)
 
     @staticmethod
