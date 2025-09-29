@@ -313,6 +313,21 @@ class TabWidgetStack(QWidget):
 
         del self._tabs[tab]
 
+        if tab is self._button_group.checkedButton():
+            # Find another tab to enable
+            tabs = self._get_tabs()
+            try:
+                i = tabs.index(tab)
+            except ValueError:
+                i = -1
+            if i <= 0:
+                if i + 1 < len(tabs):
+                    tabs[i + 1].click()
+                else:
+                    self._plus_button.click()
+            else:
+                tabs[i - 1].click()
+
         self._tab_bar_layout.removeWidget(tab)
         tab.setParent(None)
         self._stacked_widget.removeWidget(widget)
