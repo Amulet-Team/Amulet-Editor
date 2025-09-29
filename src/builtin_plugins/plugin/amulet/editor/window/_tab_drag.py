@@ -249,15 +249,18 @@ class TabDragManager(QObject):
 
         if self._hover_state is None:
             if widget is None:
-                overlay = CuboidDropOverlay(point, QSize(400, 400))
+                self._hover_state = ExternalHoverState(
+                    CuboidDropOverlay(point, QSize(400, 400))
+                )
                 self._tab.raise_()
-                self._hover_state = ExternalHoverState(overlay)
             elif isinstance(widget, TabContainerWidget):
-                overlay = TabContainerOverlay(widget)
-                self._hover_state = TabBarHoverState(widget, overlay)
+                self._hover_state = TabBarHoverState(
+                    widget, TabContainerOverlay(widget)
+                )
             elif isinstance(widget, TabWidgetStack):
-                overlay = SplitterDropOverlay(widget)
-                self._hover_state = SplitterHoverState(widget, overlay)
+                self._hover_state = SplitterHoverState(
+                    widget, SplitterDropOverlay(widget)
+                )
 
     def _drag_stop(self, event: QMouseEvent) -> None:
         print("Drop")

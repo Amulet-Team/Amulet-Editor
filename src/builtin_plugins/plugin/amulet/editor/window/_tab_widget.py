@@ -365,7 +365,7 @@ class TabWidgetStack(QWidget):
 
 def get_tab_widget_stack(widget: QWidget) -> TabWidgetStack:
     """Get the TabWidgetStack that contains this widget."""
-    widget_ = widget
+    widget_: QObject | None = widget
     while widget_ is not None:
         if isinstance(widget_, TabWidgetStack):
             return widget_
