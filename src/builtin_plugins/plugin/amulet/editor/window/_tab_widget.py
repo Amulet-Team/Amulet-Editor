@@ -179,7 +179,7 @@ class TabWidgetStack(QWidget):
         super().__init__()
         self.setAcceptDrops(True)
 
-        # Convert from the button and widget to the storage class
+        # Convert from the button to the storage class
         self._tabs = dict[QWidget, TabWidget]()
 
         self._layout = QVBoxLayout(self)
@@ -290,7 +290,6 @@ class TabWidgetStack(QWidget):
         self._tab_bar_layout.addWidget(tab)
 
         widget = tab_widget.widget
-        self._tabs[widget] = tab_widget
         self._stacked_widget.addWidget(widget)
 
         def on_click() -> None:
@@ -313,7 +312,6 @@ class TabWidgetStack(QWidget):
         widget = tab_widget.widget
 
         del self._tabs[tab]
-        del self._tabs[widget]
 
         self._tab_bar_layout.removeWidget(tab)
         tab.setParent(None)
@@ -338,10 +336,6 @@ class TabWidgetStack(QWidget):
         tab_widget.tab.removeEventFilter(tab_data.drag_manager)
         set_tab_data(tab_widget, None)
 
-    # def _remove_tab(self, tab: QPushButton) -> TabWidget:
-    #     tab_widget = self._tabs[tab]
-    #     self._remove_tab_widget(tab_widget)
-    #     return tab_widget
 
     def _tab_widgets(self) -> list[TabWidget]:
         """
