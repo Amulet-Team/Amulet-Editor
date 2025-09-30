@@ -15,4 +15,4 @@ def _init() -> None:
 
 _init()
 
-from ._widget import View3D
+from ._widget import View3DWidget, View3DWidgetIdentifier

@@ -1,45 +1,24 @@
 from __future__ import annotations
 
-from abc import ABC, abstractmethod
+from PySide6.QtGui import QIcon
+from PySide6.QtWidgets import QWidget
 
-from PySide6.QtWidgets import (
-    QWidget,
-    QPushButton,
-)
-
-from runtime_final import final
+from amulet.app.qt.signal import Signal
 
 
-class TabButton(QPushButton):
-    pass
-
-
-class TabWidget(ABC):
-    def __init__(self) -> None:
-        self._tab = TabButton()
-        self._tab.setCheckable(True)
-
-    @staticmethod
-    @abstractmethod
-    def identifier() -> str:
-        """
-        The unique identifier for this tab widget class.
-        Eg my_namespace.my_plugin.my_widget
-        """
-        raise NotImplementedError
-
-    @final
+class TabWidget(QWidget):
     @property
-    def tab(self) -> QPushButton:
-        """
-        The tab to display in the tab bar.
-        You must set the text and may set an icon.
-        Please keep other formatting to a minimum.
-        """
-        return self._tab
+    def title(self) -> str:
+        """The title to display in the tab."""
+        return ""
+
+    # Emit this signal to notify that the title has changed
+    title_changed = Signal[str]()
 
     @property
-    @abstractmethod
-    def widget(self) -> QWidget:
-        """The widget associated with the tab."""
-        raise NotImplementedError
+    def icon(self) -> QIcon:
+        """The icon to display in the tab."""
+        return QIcon()
+
+    # Emit this signal to notify that the icon has changed
+    icon_changed = Signal[QIcon | None]()

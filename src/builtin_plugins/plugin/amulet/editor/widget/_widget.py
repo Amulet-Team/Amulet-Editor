@@ -2,82 +2,56 @@
 
 from threading import Lock
 
-from PySide6.QtWidgets import QVBoxLayout, QLabel
-from PySide6.QtCore import Qt
-
-from plugin.amulet.editor.window._tab_engine import TabWidget
 from plugin.amulet.editor.layout import _layout
+from .abc import TabWidget
 
 # Maps the classes qualified name to the class.
 lock = Lock()
 _widget_classes: dict[str, type[TabWidget]] = {}
 
 
-def is_registered_widget(widget_cls: type[TabWidget]) -> bool:
-    with lock:
-        return widget_cls.__qualname__ in _widget_classes
-
-
-def register_widget(widget_cls: type[TabWidget]) -> None:
+def register_tab_widget(widget_identifier: str, widget_cls: type[TabWidget]) -> None:
     """
     Register a widget class.
 
+    :param widget_identifier: The identifier for this widget type. Eg my_namespace.my_plugin.MyWidget
     :param widget_cls: The widget class to register.
     """
+    if not issubclass(widget_cls, TabWidget):
+        raise TypeError("widget_cls must be a subclass of TabWidget")
     with lock:
-        if not issubclass(widget_cls, TabWidget):
-            raise TypeError("widget must be a subclass of TabWidget")
-        if widget_cls.__qualname__ in _widget_classes:
+        if widget_identifier in _widget_classes:
             raise ValueError(
-                f"TabWidget type {widget_cls} has already been registered."
+                f"TabWidget type {widget_identifier} has already been registered."
             )
-        _widget_classes[widget_cls.__qualname__] = widget_cls
-        _layout.populate_widgets(widget_cls)
+        _widget_classes[widget_identifier] = widget_cls
+        _layout.populate_widgets(widget_identifier, widget_cls)
 
 
-def unregister_widget(widget_cls: type[TabWidget]) -> None:
+def unregister_tab_widget(widget_identifier: str) -> None:
     """
-    Unregister a widget.
+    Unregister a widget class.
 
-    :param widget_cls: The widget class to unregister.
+    :param widget_identifier: The identifier for the widget type. Eg my_namespace.my_plugin.MyWidget
     :return:
     """
-    qualname = widget_cls.__qualname__
     with lock:
-        if qualname not in _widget_classes:
-            raise ValueError(f"TabWidget type {widget_cls} has not been registered.")
-        del _widget_classes[qualname]
-        _layout.remove_widgets(widget_cls)
+        if widget_identifier not in _widget_classes:
+            raise ValueError(
+                f"TabWidget type {widget_identifier} has not been registered."
+            )
+        del _widget_classes[widget_identifier]
+        _layout.remove_widgets(widget_identifier)
 
 
-def get_widget_cls(widget_qualname: str) -> type[TabWidget]:
+def get_tab_widget_cls(widget_identifier: str) -> type[TabWidget]:
     """Get the registered widget from its qualified name.
 
     For internal use by this plugin only.
 
-    :param widget_qualname: The qualified name of the widget.
+    :param widget_identifier: The identifier for this widget type. Eg my_namespace.my_plugin.MyWidget
     :raises KeyError: if the widget has not been registered yet.
     :return:
     """
     with lock:
-        return _widget_classes[widget_qualname]
-
-
-class MissingWidget(TabWidget):
-    def __init__(self, qualname: str) -> None:
-        super().__init__()
-        self._qualname = qualname
-        label = QLabel(qualname)
-        label.setAlignment(Qt.AlignmentFlag.AlignCenter)
-        layout_ = QVBoxLayout()
-        layout_.addWidget(label)
-        self.setLayout(layout_)
-
-    @property
-    def qual_name(self) -> str:
-        return self._qualname
-
-    @property
-    def name(self) -> str:
-        # TODO: convert this to a translation key
-        return self._qualname
+        return _widget_classes[widget_identifier]

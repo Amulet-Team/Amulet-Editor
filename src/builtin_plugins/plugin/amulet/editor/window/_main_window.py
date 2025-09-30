@@ -8,7 +8,7 @@ from PySide6.QtWidgets import QWidget, QMainWindow, QHBoxLayout
 from plugin.amulet.inspector import show_inspector
 
 from plugin.amulet.editor._signal import destroy_editor
-from . import _tab_engine
+from . import _tab_widget
 from ._toolbar import ToolBar, ButtonProxy
 
 
@@ -41,7 +41,7 @@ class AmuletMainWindow(QMainWindow):
         self._toolbar = ToolBar(self._widget)
         self._layout.addWidget(self._toolbar)
 
-        self._splitter = _tab_engine.RecursiveSplitter()
+        self._splitter = _tab_widget.RecursiveSplitter()
         self._layout.addWidget(self._splitter)
 
         self.setCentralWidget(self._widget)
@@ -67,8 +67,8 @@ class AmuletMainWindow(QMainWindow):
         _main_window = None
 
     def replace_view_container(
-        self, new_view_container: _tab_engine.RecursiveSplitter
-    ) -> _tab_engine.RecursiveSplitter:
+        self, new_view_container: _tab_widget.RecursiveSplitter
+    ) -> _tab_widget.RecursiveSplitter:
         old_view_container = self._splitter
         layout_item = self._layout.replaceWidget(
             old_view_container,

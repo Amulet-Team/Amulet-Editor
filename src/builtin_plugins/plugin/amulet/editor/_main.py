@@ -27,11 +27,17 @@ from plugin.amulet.editor.window._main_window import (
     destroy_main_window,
     ButtonProxy,
 )
-from plugin.amulet.editor.widget._home import HomeWidget
-from plugin.amulet.editor.widget._level_info import LevelInfoWidget
-from plugin.amulet.editor.widget._selection import SelectionWidget
-from plugin.amulet.editor.widget._view_3d import View3D
-from plugin.amulet.editor.widget import register_widget, unregister_widget
+from plugin.amulet.editor.widget._home import HomeWidget, HomeWidgetIdentifier
+from plugin.amulet.editor.widget._level_info import (
+    LevelInfoWidget,
+    LevelInfoWidgetIdentifier,
+)
+from plugin.amulet.editor.widget._selection import (
+    SelectionWidget,
+    SelectionWidgetIdentifier,
+)
+from plugin.amulet.editor.widget._view_3d import View3DWidget, View3DWidgetIdentifier
+from plugin.amulet.editor.widget import register_tab_widget, unregister_tab_widget
 from plugin.amulet.editor.layout import (
     register_layout,
     unregister_layout,
@@ -83,16 +89,16 @@ def _load_translations() -> None:
 def _init_editor() -> None:
     global home_button, level_info_button, editor_button
 
-    register_widget(HomeWidget)
-    register_widget(LevelInfoWidget)
-    register_widget(SelectionWidget)
-    register_widget(View3D)
+    register_tab_widget(HomeWidgetIdentifier, HomeWidget)
+    register_tab_widget(LevelInfoWidgetIdentifier, LevelInfoWidget)
+    register_tab_widget(SelectionWidgetIdentifier, SelectionWidget)
+    register_tab_widget(View3DWidgetIdentifier, View3DWidget)
 
     register_layout(
         HomeLayoutID,
         LayoutConfig(
             WindowConfig(
-                None, None, WidgetStackConfig((WidgetConfig(HomeWidget.__qualname__),))
+                None, None, WidgetStackConfig((WidgetConfig(HomeWidgetIdentifier),))
             ),
             (),
         ),
@@ -113,7 +119,7 @@ def _init_editor() -> None:
                 WindowConfig(
                     None,
                     None,
-                    WidgetStackConfig((WidgetConfig(LevelInfoWidget.__qualname__),)),
+                    WidgetStackConfig((WidgetConfig(LevelInfoWidgetIdentifier),)),
                 ),
                 (),
             ),
@@ -132,10 +138,8 @@ def _init_editor() -> None:
                     None,
                     None,
                     SplitterConfig(
-                        WidgetStackConfig(
-                            (WidgetConfig(SelectionWidget.__qualname__),)
-                        ),
-                        WidgetStackConfig((WidgetConfig(View3D.__qualname__),)),
+                        WidgetStackConfig((WidgetConfig(SelectionWidgetIdentifier),)),
+                        WidgetStackConfig((WidgetConfig(View3DWidgetIdentifier),)),
                         Qt.Orientation.Horizontal,
                         0.25,
                     ),
@@ -163,10 +167,10 @@ def _destroy_editor() -> None:
         editor_button.delete()
         unregister_layout(EditorLayoutId)
 
-    unregister_widget(HomeWidget)
-    unregister_widget(LevelInfoWidget)
-    unregister_widget(SelectionWidget)
-    unregister_widget(View3D)
+    unregister_tab_widget(HomeWidgetIdentifier)
+    unregister_tab_widget(LevelInfoWidgetIdentifier)
+    unregister_tab_widget(SelectionWidgetIdentifier)
+    unregister_tab_widget(View3DWidgetIdentifier)
 
 
 def _main(args: FullArgs) -> None:

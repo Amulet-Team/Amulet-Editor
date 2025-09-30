@@ -1,9 +1,6 @@
 # Public functions and classes
-from .widget import register_widget, unregister_widget
-from .window import (
-    ButtonProxy,
-    TabWidget,
-)
+from .widget import register_tab_widget, unregister_tab_widget, TabWidget
+from .window import ButtonProxy
 from .layout import (
     SplitterConfig,
     WidgetConfig,

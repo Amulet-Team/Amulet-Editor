@@ -13,6 +13,7 @@ from PySide6.QtGui import (
     QEnterEvent,
     QShowEvent,
     QResizeEvent,
+    QIcon,
 )
 from PySide6.QtWidgets import (
     QApplication,
@@ -32,25 +33,48 @@ from amulet.app.qt.signal import Signal
 
 from plugin.amulet.editor.widget.abc import TabWidget
 
+from . import _tab_drag
+
+
+class TabButton(QPushButton):
+    pass
+
 
 class TabWidgetMeta:
-    # The TabWidget instance
-    tab_widget: TabWidget
+    # The identifier for the stored widget class
+    identifier: str
 
-    # The callable bound to the tab
-    click_event: Callable[[], None] | None
+    # The tab displayed in the tab bar
+    tab: TabButton
+
+    # The TabWidget instance
+    widget: TabWidget
+
+    # The callable bound to the tab click signal
+    tab_click_event: Callable[[], None] | None
 
     # The drag manager bound to the tab
-    drag_manager: TabDragManager | None
+    tab_drag_manager: _tab_drag.TabDragManager | None
 
     # A callable that returns the TabWidgetStack the TabWidget is bound to.
     bound_widget: Callable[[], TabWidgetStack | None]
 
-    def __init__(self, tab_widget: TabWidget) -> None:
-        self.tab_widget = tab_widget
-        self.click_event = None
-        self.drag_manager = None
+    def __init__(self, identifier: str, tab_widget: TabWidget) -> None:
+        self.identifier = identifier
+        self.tab = TabButton(tab_widget.icon, tab_widget.title)
+        self.tab.setCheckable(True)
+        tab_widget.title_changed.connect(self._on_title_change)
+        tab_widget.icon_changed.connect(self._on_icon_change)
+        self.widget = tab_widget
+        self.tab_click_event = None
+        self.tab_drag_manager = None
         self.bound_widget = lambda: None
+
+    def _on_title_change(self, title: str) -> None:
+        self.tab.setText(title)
+
+    def _on_icon_change(self, icon: QIcon) -> None:
+        self.tab.setIcon(icon)
 
 
 class TabContainerWidget(QWidget):
@@ -291,26 +315,29 @@ class TabWidgetStack(QWidget):
                 "TabWidget has not been removed from previous TabWidgetStack"
             )
 
-        tab_widget = tab_widget_meta.tab_widget
-        tab = tab_widget.tab
+        tab = tab_widget_meta.tab
+        widget = tab_widget_meta.widget
+
         self._button_group.addButton(tab)
         self._tabs[tab] = tab_widget_meta
         self._tab_bar_layout.insertWidget(index, tab)
 
-        widget = tab_widget.widget
         self._stacked_widget.addWidget(widget)
 
-        def on_click() -> None:
-            self._tab_container.ensureWidgetVisible(tab, 0, 0)
-            self._stacked_widget.setCurrentWidget(widget)
+        self_ref = ref(self)
 
-        drag_manager = TabDragManager(tab_widget_meta)
+        def on_click() -> None:
+            if self_ := self_ref():
+                self_._tab_container.ensureWidgetVisible(tab, 0, 0)
+                self_._stacked_widget.setCurrentWidget(widget)
+
+        drag_manager = _tab_drag.TabDragManager(tab_widget_meta)
         tab.installEventFilter(drag_manager)
 
         tab.clicked.connect(on_click)
-        tab_widget_meta.click_event = on_click
-        tab_widget_meta.drag_manager = drag_manager
-        tab_widget_meta.bound_widget = ref(self)
+        tab_widget_meta.tab_click_event = on_click
+        tab_widget_meta.tab_drag_manager = drag_manager
+        tab_widget_meta.bound_widget = self_ref
 
     def _add_tab_widget(self, tab_widget: TabWidgetMeta) -> None:
         """Append a TabWidget instance to this stack."""
@@ -321,9 +348,8 @@ class TabWidgetStack(QWidget):
         if tab_widget_meta.bound_widget() is not self:
             raise RuntimeError("TabWidget is not bound to this TabWidgetStack")
 
-        tab_widget = tab_widget_meta.tab_widget
-        tab = tab_widget.tab
-        widget = tab_widget.widget
+        tab = tab_widget_meta.tab
+        widget = tab_widget_meta.widget
 
         del self._tabs[tab]
 
@@ -347,9 +373,9 @@ class TabWidgetStack(QWidget):
         self._stacked_widget.removeWidget(widget)
         widget.setParent(None)
 
-        if tab_widget_meta.click_event is not None:
-            tab.clicked.disconnect(tab_widget_meta.click_event)
-            tab_widget_meta.click_event = None
+        if tab_widget_meta.tab_click_event is not None:
+            tab.clicked.disconnect(tab_widget_meta.tab_click_event)
+            tab_widget_meta.tab_click_event = None
 
         self._button_group.removeButton(tab)
 
@@ -359,11 +385,27 @@ class TabWidgetStack(QWidget):
         This also removes all functionality
         """
         self._steal_tab_widget(tab_widget_meta)
-        tab_widget = tab_widget_meta.tab_widget
-        if tab_widget_meta.drag_manager is not None:
-            tab_widget.tab.removeEventFilter(tab_widget_meta.drag_manager)
-            tab_widget_meta.drag_manager = None
+        if tab_widget_meta.tab_drag_manager is not None:
+            tab_widget_meta.tab.removeEventFilter(tab_widget_meta.tab_drag_manager)
+            tab_widget_meta.tab_drag_manager = None
         tab_widget_meta.bound_widget = lambda: None
+
+    def _replace_widget(
+        self, tab_widget_meta_old: TabWidgetMeta, tab_widget_meta_new: TabWidgetMeta
+    ) -> None:
+        """Replace the tab widget with another"""
+        # Find the old tab index
+        i = self._get_tab_widgets().index(tab_widget_meta_old)
+
+        # insert the new tab
+        self._insert_tab_widget(i, tab_widget_meta_new)
+
+        # Activate the new tab if the old one was active
+        if self._button_group.checkedButton() is tab_widget_meta_old.tab:
+            tab_widget_meta_new.tab.click()
+
+        # Remove the old widget
+        self._remove_tab_widget(tab_widget_meta_old)
 
     def _get_tabs(self) -> list[QPushButton]:
         tabs = []
@@ -404,6 +446,3 @@ class RecursiveSplitter(QSplitter):
     def __init__(self) -> None:
         super().__init__()
         self.setChildrenCollapsible(False)
-
-
-from ._tab_drag import TabDragManager
