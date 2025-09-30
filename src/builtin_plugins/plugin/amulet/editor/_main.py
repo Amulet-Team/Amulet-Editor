@@ -73,7 +73,6 @@ def _init_app() -> None:
     app.setApplicationName("Amulet Editor")
     app.setApplicationVersion(__version__)
     app.setWindowIcon(QIcon(get_resource_path("icons/amulet/Icon.ico")))
-    QApplication.setStyle("fusion")
 
 
 def _load_translations() -> None:
