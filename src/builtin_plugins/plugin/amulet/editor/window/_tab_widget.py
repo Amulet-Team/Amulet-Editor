@@ -4,6 +4,7 @@ from __future__ import annotations
 
 from typing import Callable
 from weakref import ref
+import logging
 
 from PySide6.QtCore import Qt, QSize, QEvent, QObject, QTimer
 from PySide6.QtGui import (
@@ -34,6 +35,8 @@ from amulet.app.qt.signal import Signal
 from plugin.amulet.editor.widget.abc import TabWidget
 
 from . import _tab_drag
+
+log = logging.getLogger(__name__)
 
 
 class TabButton(QPushButton):
@@ -255,6 +258,11 @@ class TabWidgetStack(QWidget):
 
         self._tab_container.child_size_change.connect(self._on_resize)
 
+    # Emitted when the stack is empty (the stack will still have the default add widget)
+    last_tab_removed = Signal["TabWidgetStack"]()
+
+    split = Signal["TabWidgetStack", "TabWidgetStack", _tab_drag.DropArea]()
+
     def showEvent(self, event: QShowEvent) -> None:
         super().showEvent(event)
         # Make sure a widget is visible
@@ -331,7 +339,7 @@ class TabWidgetStack(QWidget):
                 self_._tab_container.ensureWidgetVisible(tab, 0, 0)
                 self_._stacked_widget.setCurrentWidget(widget)
 
-        drag_manager = _tab_drag.TabDragManager(tab_widget_meta)
+        drag_manager = _tab_drag.TabDragManager(self, tab_widget_meta)
         tab.installEventFilter(drag_manager)
 
         tab.clicked.connect(on_click)
@@ -379,16 +387,23 @@ class TabWidgetStack(QWidget):
 
         self._button_group.removeButton(tab)
 
+    def _disconnect_tab_widget(
+        self, tab_widget_meta: TabWidgetMeta, cleanup: bool = True
+    ) -> None:
+        if tab_widget_meta.tab_drag_manager is not None:
+            tab_widget_meta.tab.removeEventFilter(tab_widget_meta.tab_drag_manager)
+            tab_widget_meta.tab_drag_manager = None
+        tab_widget_meta.bound_widget = lambda: None
+        if cleanup and not self._tabs:
+            self.last_tab_removed.emit(self)
+
     def _remove_tab_widget(self, tab_widget_meta: TabWidgetMeta) -> None:
         """
         Remove a TabWidget instance from this stack.
         This also removes all functionality
         """
         self._steal_tab_widget(tab_widget_meta)
-        if tab_widget_meta.tab_drag_manager is not None:
-            tab_widget_meta.tab.removeEventFilter(tab_widget_meta.tab_drag_manager)
-            tab_widget_meta.tab_drag_manager = None
-        tab_widget_meta.bound_widget = lambda: None
+        self._disconnect_tab_widget(tab_widget_meta)
 
     def _replace_widget(
         self, tab_widget_meta_old: TabWidgetMeta, tab_widget_meta_new: TabWidgetMeta
@@ -406,6 +421,9 @@ class TabWidgetStack(QWidget):
 
         # Remove the old widget
         self._remove_tab_widget(tab_widget_meta_old)
+
+    def _is_empty(self) -> bool:
+        return not self._tabs
 
     def _get_tabs(self) -> list[QPushButton]:
         tabs = []
@@ -446,3 +464,112 @@ class RecursiveSplitter(QSplitter):
     def __init__(self) -> None:
         super().__init__()
         self.setChildrenCollapsible(False)
+        self._children: list[QWidget] = []
+
+    # Emitted when the penultimate child is removed
+    penultimate_child_removed = Signal["RecursiveSplitter"]()
+
+    def _on_last_tab_removed(self, stack: TabWidgetStack) -> None:
+        log.debug(f"RecursiveSplitter._on_last_tab_removed({self}, {stack})")
+        self.remove_widget(stack).deleteLater()
+
+    def _on_split(
+        self, old_widget: TabWidgetStack, new_widget: TabWidgetStack, direction: _tab_drag.DropArea
+    ) -> None:
+        log.debug(f"RecursiveSplitter._on_split({self}, {old_widget}, {new_widget}, {direction})")
+        index = self.indexOf(old_widget)
+        splitter = RecursiveSplitter()
+        if old_widget is not self.replaceWidget(index, splitter):
+            raise RuntimeError()
+
+        assert splitter.parent() is self
+
+        # Put the widgets in the splitter
+        splitter.setOrientation(
+            Qt.Orientation.Vertical
+            if direction in (_tab_drag.DropArea.Top, _tab_drag.DropArea.Bottom)
+            else Qt.Orientation.Horizontal
+        )
+        splitter.addWidget(old_widget)
+        splitter.insertWidget(
+            int(direction in (_tab_drag.DropArea.Right, _tab_drag.DropArea.Bottom)),
+            new_widget,
+        )
+
+        splitter.setSizes([1] * splitter.count())
+
+        assert old_widget.parent() is splitter
+        assert new_widget.parent() is splitter
+        assert splitter.parent() is self
+        log.debug("RecursiveSplitter erm hello?")
+
+    def _on_sub_penultimate_child_removed(self, splitter: RecursiveSplitter) -> None:
+        """The penultimate child of a child splitter was removed. Replace the splitter with its child."""
+        log.debug(
+            f"RecursiveSplitter._on_sub_penultimate_child_removed({self}, {splitter})"
+        )
+        sizes = self.sizes()
+        child = splitter.remove_index(0)
+        index = self.indexOf(splitter)
+        self.insertWidget(index, child)
+        self.remove_widget(splitter).deleteLater()
+        self.setSizes(sizes)
+
+    def _bind_events(self, widget: QWidget) -> None:
+        log.debug(f"RecursiveSplitter._bind_events({self}, {widget})")
+        if isinstance(widget, RecursiveSplitter):
+            widget.penultimate_child_removed.connect(
+                self._on_sub_penultimate_child_removed
+            )
+        elif isinstance(widget, TabWidgetStack):
+            widget.last_tab_removed.connect(self._on_last_tab_removed)
+            widget.split.connect(self._on_split)
+
+    def _unbind_events(self, widget: QWidget) -> None:
+        log.debug(f"RecursiveSplitter._unbind_events({self}, {widget})")
+        if isinstance(widget, RecursiveSplitter):
+            widget.penultimate_child_removed.disconnect(
+                self._on_sub_penultimate_child_removed
+            )
+        elif isinstance(widget, TabWidgetStack):
+            widget.last_tab_removed.disconnect(self._on_last_tab_removed)
+            widget.split.disconnect(self._on_split)
+
+    def addWidget(self, widget: QWidget, /) -> None:
+        log.debug(f"RecursiveSplitter.addWidget({self}, {widget})")
+        super().addWidget(widget)
+        self._bind_events(widget)
+        self._children.append(widget)
+
+    def insertWidget(self, index: int, widget: QWidget, /) -> None:
+        log.debug(f"RecursiveSplitter.insertWidget({self}, {index}, {widget})")
+        super().insertWidget(index, widget)
+        self._bind_events(widget)
+        self._children.append(widget)
+
+    def replaceWidget(self, index: int, widget: QWidget, /) -> QWidget:
+        log.debug(f"RecursiveSplitter.replaceWidget({self}, {index}, {widget})")
+        old_widget = super().replaceWidget(index, widget)
+        if old_widget is None:
+            raise RuntimeError(f"There is no widget at index {index}")
+        self._unbind_events(old_widget)
+        self._bind_events(widget)
+        self._children.remove(old_widget)
+        self._children.append(widget)
+        return old_widget
+
+    def remove_widget(self, widget: QWidget, /) -> QWidget:
+        """Hide and orphan the widget."""
+        log.debug(f"RecursiveSplitter.remove_widget({self}, {widget})")
+        self._children.remove(widget)
+        widget.setParent(None)
+        self._unbind_events(widget)
+        if self.count() == 1:
+            # Notify the listener that there is only one child left
+            self.penultimate_child_removed.emit(self)
+        return widget
+
+    def remove_index(self, index: int, /) -> QWidget:
+        """Hide and orphan the widget at the given index."""
+        log.debug(f"RecursiveSplitter.remove_index({self}, {index}, {self})")
+        return self.remove_widget(self.widget(index))

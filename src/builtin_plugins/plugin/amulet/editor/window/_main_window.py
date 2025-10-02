@@ -1,14 +1,16 @@
 from __future__ import annotations
 from threading import Lock
+import logging
 
 from PySide6.QtGui import QShortcut, QCloseEvent
 from PySide6.QtCore import Qt, QEvent, QCoreApplication
-from PySide6.QtWidgets import QWidget, QMainWindow, QHBoxLayout
+from PySide6.QtWidgets import QWidget, QMainWindow, QHBoxLayout, QVBoxLayout
 
 from plugin.amulet.inspector import show_inspector
 
 from plugin.amulet.editor._signal import destroy_editor
 from . import _tab_widget
+from . import _tab_drag
 from ._toolbar import ToolBar, ButtonProxy
 
 
@@ -26,6 +28,8 @@ from ._toolbar import ToolBar, ButtonProxy
 _lock = Lock()
 _main_window: AmuletMainWindow | None = None
 
+log = logging.getLogger(__name__)
+
 
 class AmuletMainWindow(QMainWindow):
     """
@@ -33,23 +37,118 @@ class AmuletMainWindow(QMainWindow):
     It contains a toolbar and a tab widget engine.
     """
 
+    _widget: _tab_widget.TabWidgetStack | _tab_widget.RecursiveSplitter
+
     def __init__(self) -> None:
         super().__init__()
-        self._widget = QWidget(self)
-        self._layout = QHBoxLayout(self._widget)
+        self._central_widget = QWidget(self)
+        self._central_layout = QHBoxLayout(self._central_widget)
+        self._central_layout.setContentsMargins(4, 4, 4, 4)
+        self._central_layout.setSpacing(4)
 
-        self._toolbar = ToolBar(self._widget)
-        self._layout.addWidget(self._toolbar)
+        self._toolbar = ToolBar(self._central_widget)
+        self._central_layout.addWidget(self._toolbar)
 
-        self._splitter = _tab_widget.RecursiveSplitter()
-        self._layout.addWidget(self._splitter)
+        self._layout = QVBoxLayout()
+        self._central_layout.addLayout(self._layout, 1)
 
-        self.setCentralWidget(self._widget)
+        self._widget = _tab_widget.RecursiveSplitter()
+        self._bind_events(self._widget)
+        self._layout.addWidget(self._widget)
+
+        self.setCentralWidget(self._central_widget)
 
         self._localise()
 
         f12 = QShortcut(Qt.Key.Key_F12, self)
         f12.activated.connect(lambda: show_inspector(self))
+
+    def _bind_events(
+        self, widget: _tab_widget.TabWidgetStack | _tab_widget.RecursiveSplitter
+    ) -> None:
+        log.debug(f"AmuletMainWindow._bind_events({widget})")
+        if isinstance(widget, _tab_widget.TabWidgetStack):
+            widget.split.connect(self._on_split)
+        else:
+            widget.penultimate_child_removed.connect(self._on_penultimate_child_removed)
+
+    def _unbind_events(
+        self, widget: _tab_widget.TabWidgetStack | _tab_widget.RecursiveSplitter
+    ) -> None:
+        log.debug(f"AmuletMainWindow._unbind_events({widget})")
+        if isinstance(widget, _tab_widget.TabWidgetStack):
+            widget.split.disconnect(self._on_split)
+        else:
+            widget.penultimate_child_removed.disconnect(
+                self._on_penultimate_child_removed
+            )
+
+    def _on_penultimate_child_removed(self) -> None:
+        log.debug(f"AmuletMainWindow._on_penultimate_child_removed()")
+        # Switch from a splitter to a stack
+        if isinstance(self._widget, _tab_widget.RecursiveSplitter):
+            old_widget = self._widget
+            new_widget = old_widget.remove_index(0)
+            if not isinstance(
+                new_widget, (_tab_widget.TabWidgetStack, _tab_widget.RecursiveSplitter)
+            ):
+                raise TypeError()
+
+            # Remove the old widget
+            self._unbind_events(old_widget)
+
+            # Add the new widget
+            self._widget = new_widget
+            self._bind_events(new_widget)
+            self._layout.addWidget(new_widget)
+            old_widget.deleteLater()
+
+    def _on_split(
+        self, old_widget: _tab_widget.TabWidgetStack, new_widget: _tab_widget.TabWidgetStack, direction: _tab_drag.DropArea
+    ) -> None:
+        log.debug(f"AmuletMainWindow._on_split()")
+        # Switch from a stack to a splitter
+        if isinstance(self._widget, _tab_widget.TabWidgetStack):
+            # Remove the old widget
+            assert old_widget is self._widget
+            self._unbind_events(old_widget)
+            old_widget.setParent(None)
+
+            # Create the new widget
+            self._widget = splitter = _tab_widget.RecursiveSplitter()
+            self._bind_events(splitter)
+            self._layout.removeWidget(old_widget)
+            self._layout.addWidget(splitter)
+
+            # Put the widgets in the splitter
+            splitter.setOrientation(
+                Qt.Orientation.Vertical
+                if direction in (_tab_drag.DropArea.Top, _tab_drag.DropArea.Bottom)
+                else Qt.Orientation.Horizontal
+            )
+            splitter.addWidget(old_widget)
+            splitter.insertWidget(
+                int(direction in (_tab_drag.DropArea.Right, _tab_drag.DropArea.Bottom)),
+                new_widget,
+            )
+
+            splitter.setSizes([1] * splitter.count())
+
+            assert old_widget.parent() is splitter
+            assert new_widget.parent() is splitter
+            assert splitter.parent() is self._central_widget
+            log.debug("AmuletMainWindow erm hello?")
+
+    def _replace_widget(
+        self, new_widget: _tab_widget.TabWidgetStack | _tab_widget.RecursiveSplitter
+    ) -> _tab_widget.TabWidgetStack | _tab_widget.RecursiveSplitter:
+        old_widget = self._widget
+        self._unbind_events(old_widget)
+        self._layout.removeWidget(old_widget)
+        self._layout.addWidget(new_widget)
+        self._bind_events(new_widget)
+        self._widget = new_widget
+        return old_widget
 
     def changeEvent(self, event: QEvent) -> None:
         super().changeEvent(event)
@@ -65,19 +164,6 @@ class AmuletMainWindow(QMainWindow):
         global _main_window
         destroy_editor.emit()
         _main_window = None
-
-    def replace_view_container(
-        self, new_view_container: _tab_widget.RecursiveSplitter
-    ) -> _tab_widget.RecursiveSplitter:
-        old_view_container = self._splitter
-        layout_item = self._layout.replaceWidget(
-            old_view_container,
-            new_view_container,
-            options=Qt.FindChildOption.FindDirectChildrenOnly,
-        )
-        assert old_view_container is layout_item.widget()
-        self._splitter = new_view_container
-        return old_view_container
 
 
 def init_main_window() -> None:

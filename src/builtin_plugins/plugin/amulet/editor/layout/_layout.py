@@ -8,11 +8,9 @@ from dataclasses import dataclass
 import re
 from weakref import ref
 
-from PySide6.QtCore import Qt, QPoint, QSize
+from PySide6.QtCore import Qt, QPoint, QSize, QObject
 
 from plugin.amulet.editor._icon import ATooltipIconButton
-
-# from plugin.amulet.editor.window._child_window import AmuletChildWindow, sub_windows, create_sub_window
 
 from plugin.amulet.editor.widget import _missing
 from plugin.amulet.editor.widget import _widget
@@ -71,7 +69,7 @@ class LayoutConfig:
 class HiddenLayout:
     """Storage for layout UI elements when not active."""
 
-    main_window_splitter: _tab_widget.RecursiveSplitter
+    main_window_splitter: _tab_widget.TabWidgetStack | _tab_widget.RecursiveSplitter
     sub_windows: tuple[_child_window.AmuletChildWindow, ...]
 
 
@@ -198,29 +196,29 @@ def create_layout_button(layout_id: str) -> _main_window.ButtonProxy:
 
 
 def _populate_widgets_of_type(
-    splitter: _tab_widget.RecursiveSplitter,
+    tab_widget: QObject,
     widget_identifier: str,
     widget_cls: type[_widget.TabWidget],
 ) -> None:
-    for child in splitter.children():
-        if isinstance(child, _tab_widget.TabWidgetStack):
-            for tab_widget_meta in child._get_tab_widgets():
-                # If it is a missing widget
-                if tab_widget_meta.identifier == _missing.MissingTabIdentifier:
-                    widget = tab_widget_meta.widget
-                    if (
-                        isinstance(widget, _missing.MissingWidget)
-                        and widget.identifier == widget_identifier
-                    ):
-                        # Replace the placeholder with the real widget
-                        child._replace_widget(
-                            tab_widget_meta,
-                            _tab_widget.TabWidgetMeta(widget_identifier, widget_cls()),
-                        )
-                        tab_widget_meta.tab.deleteLater()
-                        tab_widget_meta.widget.deleteLater()
-        elif isinstance(child, _tab_widget.RecursiveSplitter):
-            _populate_widgets_of_type(child, widget_identifier, widget_cls)
+    if isinstance(tab_widget, _tab_widget.TabWidgetStack):
+        for tab_widget_meta in tab_widget._get_tab_widgets():
+            # If it is a missing widget
+            if tab_widget_meta.identifier == _missing.MissingTabIdentifier:
+                widget = tab_widget_meta.widget
+                if (
+                    isinstance(widget, _missing.MissingWidget)
+                    and widget.identifier == widget_identifier
+                ):
+                    # Replace the placeholder with the real widget
+                    tab_widget._replace_widget(
+                        tab_widget_meta,
+                        _tab_widget.TabWidgetMeta(widget_identifier, widget_cls()),
+                    )
+                    tab_widget_meta.tab.deleteLater()
+                    tab_widget_meta.widget.deleteLater()
+    elif isinstance(tab_widget, _tab_widget.RecursiveSplitter):
+        for child_tab_widget in tab_widget.children():
+            _populate_widgets_of_type(child_tab_widget, widget_identifier, widget_cls)
 
 
 def populate_widgets(
@@ -234,29 +232,27 @@ def populate_widgets(
         current_thread() is main_thread()
     ), "This can only be called from the main thread."
     _populate_widgets_of_type(
-        _main_window.get_main_window()._splitter, widget_identifier, widget_cls
+        _main_window.get_main_window()._widget, widget_identifier, widget_cls
     )
     for sub_window in _child_window.sub_windows:
-        _populate_widgets_of_type(sub_window._splitter, widget_identifier, widget_cls)
+        _populate_widgets_of_type(sub_window._widget, widget_identifier, widget_cls)
 
 
-def _remove_widgets_of_type(
-    splitter: _tab_widget.RecursiveSplitter, widget_identifier: str
-) -> None:
-    for child in splitter.children():
-        if isinstance(child, _tab_widget.TabWidgetStack):
-            for tab_widget_meta in child._get_tab_widgets():
-                if tab_widget_meta.identifier == widget_identifier:
-                    child._replace_widget(
-                        tab_widget_meta,
-                        _tab_widget.TabWidgetMeta(
-                            widget_identifier, _missing.MissingWidget(widget_identifier)
-                        ),
-                    )
-                    tab_widget_meta.tab.deleteLater()
-                    tab_widget_meta.widget.deleteLater()
-        elif isinstance(child, _tab_widget.RecursiveSplitter):
-            _remove_widgets_of_type(child, widget_identifier)
+def _remove_widgets_of_type(tab_widget: QObject, widget_identifier: str) -> None:
+    if isinstance(tab_widget, _tab_widget.TabWidgetStack):
+        for tab_widget_meta in tab_widget._get_tab_widgets():
+            if tab_widget_meta.identifier == widget_identifier:
+                tab_widget._replace_widget(
+                    tab_widget_meta,
+                    _tab_widget.TabWidgetMeta(
+                        widget_identifier, _missing.MissingWidget(widget_identifier)
+                    ),
+                )
+                tab_widget_meta.tab.deleteLater()
+                tab_widget_meta.widget.deleteLater()
+    elif isinstance(tab_widget, _tab_widget.RecursiveSplitter):
+        for child_tab_widget in tab_widget.children():
+            _remove_widgets_of_type(child_tab_widget, widget_identifier)
 
 
 def remove_widgets(widget_identifier: str) -> None:
@@ -268,26 +264,25 @@ def remove_widgets(widget_identifier: str) -> None:
                 hidden_layout.main_window_splitter, widget_identifier
             )
             for sub_window in hidden_layout.sub_windows:
-                _remove_widgets_of_type(sub_window._splitter, widget_identifier)
-    _remove_widgets_of_type(_main_window.get_main_window()._splitter, widget_identifier)
+                _remove_widgets_of_type(sub_window._widget, widget_identifier)
+    _remove_widgets_of_type(_main_window.get_main_window()._widget, widget_identifier)
 
 
 def _init_layout(
-    splitter: _tab_widget.RecursiveSplitter, layout: SplitterConfig | WidgetStackConfig
-) -> None:
+    layout: SplitterConfig | WidgetStackConfig,
+) -> _tab_widget.TabWidgetStack | _tab_widget.RecursiveSplitter:
     if isinstance(layout, SplitterConfig):
         splitter_widget = _tab_widget.RecursiveSplitter()
         splitter_widget.setOrientation(layout.orientation)
-        splitter.addWidget(splitter_widget)
-        _init_layout(splitter_widget, layout.first)
-        _init_layout(splitter_widget, layout.second)
+        splitter_widget.addWidget(_init_layout(layout.first))
+        splitter_widget.addWidget(_init_layout(layout.second))
         left_weight = max(1, min(100, int(100 * layout.weight)))
         right_weight = 100 - left_weight
         splitter_widget.setStretchFactor(0, left_weight)
         splitter_widget.setStretchFactor(1, right_weight)
+        return splitter_widget
     elif isinstance(layout, WidgetStackConfig):
         tab_widget = _tab_widget.TabWidgetStack()
-        splitter.addWidget(tab_widget)
         for widget_config in layout.widgets:
             try:
                 widget_cls = _widget.get_tab_widget_cls(widget_config.identifier)
@@ -302,27 +297,22 @@ def _init_layout(
                 )
 
             tab_widget._add_tab_widget(tab_widget_meta)
+        return tab_widget
     else:
         raise RuntimeError(f"Unknown layout type {type(layout)}")
-
-
-def _init_window(
-    window: _main_window.AmuletMainWindow | _child_window.AmuletChildWindow,
-    config: WindowConfig,
-) -> None:
-    splitter = window._splitter
-    # TODO: set window position and size
-    layout = config.layout
-    # Set up new layout
-    _init_layout(splitter, layout)
 
 
 def _create_layout(layout_container: LayoutContainer) -> None:
     """Initialisation of the layout."""
     layout_config = layout_container.layout_config
-    _init_window(_main_window.get_main_window(), layout_config.main_window)
+    # TODO: set window position and size
+    _main_window.get_main_window()._replace_widget(
+        _init_layout(layout_config.main_window.layout)
+    ).deleteLater()
     for config in layout_config.sub_windows:
-        _init_window(_child_window.create_sub_window(), config)
+        _child_window.create_sub_window(
+            _init_layout(config.layout),
+        )
 
 
 def _destroy_layout() -> None:
@@ -330,11 +320,11 @@ def _destroy_layout() -> None:
     This is used when resetting the active layout."""
     for sub_window in _child_window.sub_windows:
         sub_window.close()
-    main_view_container = _main_window.get_main_window()._splitter
-    for index in range(main_view_container.count() - 1, -1, -1):
-        widget = main_view_container.widget(index)
-        widget.hide()
-        widget.deleteLater()
+    widget = _main_window.get_main_window()._replace_widget(
+        _tab_widget.RecursiveSplitter()
+    )
+    widget.hide()
+    widget.deleteLater()
 
 
 def _setup_layout(new_layout_container: LayoutContainer) -> None:
@@ -363,15 +353,13 @@ def _setup_layout(new_layout_container: LayoutContainer) -> None:
     if hidden_layout is None:
         # Layout was not active before
         # Create from scratch
-        old_main_view_container = main_window.replace_view_container(
+        old_main_view_container = main_window._replace_widget(
             _tab_widget.RecursiveSplitter()
         )
         _create_layout(new_layout_container)
     else:
         new_main_view_container = hidden_layout.main_window_splitter
-        old_main_view_container = main_window.replace_view_container(
-            new_main_view_container
-        )
+        old_main_view_container = main_window._replace_widget(new_main_view_container)
         new_main_view_container.show()
         for sub_window in hidden_layout.sub_windows:
             sub_window.show()
