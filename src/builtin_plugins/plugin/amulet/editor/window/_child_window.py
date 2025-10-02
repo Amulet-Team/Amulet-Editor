@@ -84,7 +84,10 @@ class AmuletChildWindow(QMainWindow):
             self.setCentralWidget(new_widget)
 
     def _on_split(
-        self, old_widget: _tab_widget.TabWidgetStack, new_widget: _tab_widget.TabWidgetStack, direction: _tab_drag.DropArea
+        self,
+        old_widget: _tab_widget.TabWidgetStack,
+        new_widget: _tab_widget.TabWidgetStack,
+        direction: _tab_drag.DropArea,
     ) -> None:
         log.debug(f"AmuletChildWindow._on_split({self}, {new_widget}, {direction})")
         # Switch from a stack to a splitter

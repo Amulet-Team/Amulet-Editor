@@ -385,7 +385,11 @@ class TabDragManager(QObject):
             old_stack_widget._disconnect_tab_widget(
                 self._tab_widget_meta, old_stack_widget is not stack_widget
             )
-            if drop_area is None or drop_area == DropArea.Middle or stack_widget._is_empty():
+            if (
+                drop_area is None
+                or drop_area == DropArea.Middle
+                or stack_widget._is_empty()
+            ):
                 stack_widget._add_tab_widget(self._tab_widget_meta)
             else:
                 new_stack_widget = _tab_widget.TabWidgetStack()

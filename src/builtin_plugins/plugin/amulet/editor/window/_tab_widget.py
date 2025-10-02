@@ -474,9 +474,14 @@ class RecursiveSplitter(QSplitter):
         self.remove_widget(stack).deleteLater()
 
     def _on_split(
-        self, old_widget: TabWidgetStack, new_widget: TabWidgetStack, direction: _tab_drag.DropArea
+        self,
+        old_widget: TabWidgetStack,
+        new_widget: TabWidgetStack,
+        direction: _tab_drag.DropArea,
     ) -> None:
-        log.debug(f"RecursiveSplitter._on_split({self}, {old_widget}, {new_widget}, {direction})")
+        log.debug(
+            f"RecursiveSplitter._on_split({self}, {old_widget}, {new_widget}, {direction})"
+        )
         index = self.indexOf(old_widget)
         splitter = RecursiveSplitter()
         if old_widget is not self.replaceWidget(index, splitter):
