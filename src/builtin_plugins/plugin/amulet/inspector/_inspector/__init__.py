@@ -129,7 +129,7 @@ class InspectorTool(Ui_InspectionTool):
             print("Selected object no longer exists.")
         else:
             with CatchExceptionDialog("Error running user code.", suppress=False):
-                eval(self.code_editor.toPlainText(), {}, {"obj": obj})
+                exec(self.code_editor.toPlainText(), {}, {"self": obj})
 
 
 def show_inspector(parent: QWidget | None = None) -> None:
