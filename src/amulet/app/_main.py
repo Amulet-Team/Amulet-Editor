@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import threading
 from typing import Callable, TypeAlias, Any, Union
-from types import FrameType
+from types import FrameType, TracebackType
 from collections.abc import Sequence
 import sys
 import os
@@ -11,6 +11,7 @@ from datetime import datetime
 import faulthandler
 from io import TextIOWrapper
 import atexit
+import traceback
 
 from PySide6.QtCore import (
     Qt,
@@ -34,6 +35,7 @@ import amulet.app.plugin._manager as plugin_manager
 from amulet.app.cli._parser import parse_global_args, parse_args
 from amulet.app.cli._command import run_command
 from amulet.app.path._application import init_paths, logging_directory
+from amulet.app.exception import display_exception
 
 TraceFunction: TypeAlias = Callable[[FrameType, str, Any], Union["TraceFunction", None]]
 
@@ -108,6 +110,18 @@ def app_main(argv: Sequence[str] | None = None) -> None:
     # Uninstall the message handler at interpreter shutdown so it can't get called.
     # This means that any errors after interpreter shutdown are not logged. TODO is there a way to handle this?
     atexit.register(lambda: qInstallMessageHandler(None))
+
+    def error_handler(
+        exc_type: type[BaseException],
+        exc_value: BaseException,
+        exc_tb: TracebackType | None,
+    ) -> None:
+        log.error("Unhandled exception", exc_info=(exc_type, exc_value, exc_tb))
+        display_exception(
+            "Unhandled exception", "", "".join(traceback.format_tb(exc_tb))
+        )
+
+    sys.excepthook = error_handler
 
     # Link the Amulet C++ logging
     amulet.utils.logging.set_min_log_level(global_args.logging_level)

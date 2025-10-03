@@ -1,4 +1,6 @@
 from __future__ import annotations
+
+import traceback
 from typing import Any, TypeVar, SupportsFloat
 import logging
 from math import sin, cos, radians
@@ -30,7 +32,7 @@ from amulet.utils.event import EventToken
 from amulet.utils.matrix import Matrix4x4
 from amulet.level.abc.level import Level
 
-from amulet.app.exception import CatchExceptionDialog
+from amulet.app.exception import CatchExceptionDialog, display_exception
 from amulet.app.qt.signal import Signal
 
 from plugin.amulet.resource_pack import get_resource_pack_container
@@ -193,6 +195,8 @@ class FirstPersonCanvas(QOpenGLWidget, QOpenGLFunctions):
             raise RuntimeError("FirstPersonCanvas must be constructed in main thread")
         QOpenGLWidget.__init__(self, parent)
         QOpenGLFunctions.__init__(self)
+        self._initialised = False
+        self._errors: set[str] = set()
 
         level = get_main_level()
         if level is None:
@@ -262,6 +266,7 @@ class FirstPersonCanvas(QOpenGLWidget, QOpenGLFunctions):
             self._canvas_gl_data.render_level.set_dimension("minecraft:overworld")
             self.camera.location = Location(0, 80, 0)
             self.camera.rotation = Rotation(0, 90)
+            self._initialised = True
             log.debug("FirstPersonCanvas.initializeGL end")
 
     def __del__(self) -> None:
@@ -292,6 +297,8 @@ class FirstPersonCanvas(QOpenGLWidget, QOpenGLFunctions):
     def showEvent(self, event: QShowEvent) -> None:
         with CatchExceptionDialog("Error showing canvas."):
             log.debug("FirstPersonCanvas.showEvent start")
+            if not self._initialised:
+                return
 
             # Repaint every time the geometry changes
             self._canvas_gl_data.geometry_changed.connect(self.update)
@@ -303,6 +310,8 @@ class FirstPersonCanvas(QOpenGLWidget, QOpenGLFunctions):
     def hideEvent(self, event: QHideEvent) -> None:
         with CatchExceptionDialog("Error hiding canvas."):
             log.debug("FirstPersonCanvas.hideEvent start")
+            if not self._initialised:
+                return
 
             # Disconnect from the geometry changed event
             self._canvas_gl_data.geometry_changed.disconnect(self.update)
@@ -312,9 +321,10 @@ class FirstPersonCanvas(QOpenGLWidget, QOpenGLFunctions):
 
     def paintGL(self) -> None:
         """Private paint method called by the QOpenGLWidget"""
-        with CatchExceptionDialog("Error rendering OpenGL frame."):
+        try:
             if (
-                not self.isVisible()
+                not self._initialised
+                or not self.isVisible()
                 or QOpenGLContext.currentContext() is not self.context() is not None
             ):
                 # Sometimes paintGL is run before initializeGL or when the window is not visible.
@@ -330,6 +340,14 @@ class FirstPersonCanvas(QOpenGLWidget, QOpenGLFunctions):
             self._canvas_gl_data.paint_gl(
                 self.camera.intrinsic_matrix, self.camera.extrinsic_matrix
             )
+        except Exception as e:
+            log.exception(e)
+            traceback_string = "".join(traceback.format_tb(e.__traceback__))
+            if traceback_string not in self._errors:
+                self._errors.add(traceback_string)
+                display_exception(
+                    "Error rendering OpenGL frame.", str(e), traceback_string
+                )
 
     def resizeGL(self, width: float, height: float) -> None:
         """Private resize method called by the QOpenGLWidget"""
