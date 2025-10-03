@@ -1,9 +1,12 @@
 from amulet.app import __version__
 
-from PySide6.QtWidgets import QWidget
+from PySide6.QtWidgets import QWidget, QStyleFactory, QApplication
 from PySide6.QtCore import Qt, QLocale
 from PySide6.QtGui import QImage, QPixmap
+
 from amulet.app.resource import get_resource_path
+from amulet.app.localisation import set_locale
+
 from ._home import Ui_HomePage
 
 
@@ -45,6 +48,16 @@ def _get_locales() -> tuple[tuple[tuple[str, QLocale], ...], int]:
     return _locales
 
 
+PrettyStyleNames = {
+    "windows11": "Windows 11",
+    "windowsvista": "Windows Vista",
+    "windows": "Windows (Legacy)",
+    "fusion": "Fusion",
+    "macos": "macOS",
+    "android": "Android",
+}
+
+
 class HomePage(Ui_HomePage):
     def __init__(
         self, parent: QWidget | None = None, f: Qt.WindowType = Qt.WindowType.Widget
@@ -59,5 +72,50 @@ class HomePage(Ui_HomePage):
         # TODO: work out why some character sets cannot be displayed
         locales, index = _get_locales()
         for text, locale in locales:
-            self.cbo_language.addItem(text, userData=locale)
-        self.cbo_language.setCurrentIndex(index)
+            self._language.addItem(text, userData=locale)
+        self._language.setCurrentIndex(index)
+        self._language.currentIndexChanged.connect(self._language_changed)
+
+        index = 0
+        for i, style in enumerate(QStyleFactory.keys()):
+            self._style.addItem(
+                PrettyStyleNames.get(style.lower(), style), userData=style
+            )
+            if style == QApplication.style().name():
+                index = i
+        self._style.currentIndexChanged.connect(self._style_changed)
+        self._style.setCurrentIndex(index)
+
+        self._colour_scheme.clicked.connect(self._colour_scheme_changed)
+        self._colour_scheme.setChecked(
+            QApplication.styleHints().colorScheme() == Qt.ColorScheme.Dark
+        )
+        self._set_colour_scheme_label()
+
+    def _language_changed(self) -> None:
+        set_locale(self._language.currentData())
+
+    def _style_changed(self) -> None:
+        style = self._style.currentData()
+        if style != QApplication.style().name():
+            QApplication.setStyle(style)
+
+    def _colour_scheme_changed(self, is_dark: bool) -> None:
+        self._set_colour_scheme_label()
+        scheme = Qt.ColorScheme.Dark if is_dark else Qt.ColorScheme.Light
+        hints = QApplication.styleHints()
+        if scheme != hints.colorScheme():
+            hints.setColorScheme(scheme)
+
+    def _set_colour_scheme_label(self) -> None:
+        self._colour_scheme.setText(
+            QApplication.translate(
+                "HomePage",
+                "dark_mode" if self._colour_scheme.isChecked() else "light_mode",
+                None,
+            )
+        )
+
+    def _localise(self) -> None:
+        super()._localise()
+        self._set_colour_scheme_label()
