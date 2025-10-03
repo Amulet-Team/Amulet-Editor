@@ -6,10 +6,10 @@ from amulet.app.path._plugin import first_party_plugin_directory
 
 
 class TestQtLink(unittest.TestCase):
-    def setUp(self):
+    def setUp(self) -> None:
         sys.path.append(first_party_plugin_directory())
 
-    def tearDown(self):
+    def tearDown(self) -> None:
         sys.path.remove(first_party_plugin_directory())
 
     def test_qt_link(self) -> None:
