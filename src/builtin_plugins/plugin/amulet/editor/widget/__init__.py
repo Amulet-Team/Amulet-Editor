@@ -1,1 +1,2 @@
-from ._widget import is_registered_widget, register_widget, unregister_widget
+from ._widget import register_tab_widget, unregister_tab_widget
+from .abc import TabWidget

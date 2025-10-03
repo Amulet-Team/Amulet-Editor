@@ -1,1 +1,1 @@
-from ._widget import SelectionWidget
+from ._widget import SelectionWidget, SelectionWidgetIdentifier

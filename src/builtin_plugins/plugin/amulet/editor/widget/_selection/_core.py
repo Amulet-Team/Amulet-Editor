@@ -509,7 +509,6 @@ def _demo() -> None:
 
     app = QApplication()
     QCoreApplication.installTranslator(translator)
-    app.setStyle("fusion")
 
     widget1 = SelectionCoreWidget()
     widget1.show()

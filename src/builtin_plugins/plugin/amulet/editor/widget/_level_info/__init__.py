@@ -5,15 +5,20 @@ from typing import Optional
 from PySide6.QtCore import Qt
 from PySide6.QtWidgets import QWidget, QVBoxLayout
 
-from plugin.amulet.editor.window import TabWidget
+from plugin.amulet.editor.widget.abc import TabWidget
+
+
+LevelInfoWidgetIdentifier = "amulet.editor.LevelInfoWidget"
 
 
 class LevelInfoWidget(TabWidget):
-    name = "LevelInfo"
-
     def __init__(
         self, parent: Optional[QWidget] = None, f: Qt.WindowType = Qt.WindowType.Widget
     ):
         super().__init__(parent, f)
         self._layout = QVBoxLayout(self)
         self._layout.setContentsMargins(0, 0, 0, 0)
+
+    @property
+    def title(self) -> str:
+        return "Level Info"

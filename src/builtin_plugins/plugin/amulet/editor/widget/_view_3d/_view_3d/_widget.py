@@ -5,14 +5,15 @@ from typing import Optional
 from PySide6.QtCore import Qt
 from PySide6.QtWidgets import QWidget, QVBoxLayout
 
-from plugin.amulet.editor import TabWidget
+from plugin.amulet.editor.widget.abc import TabWidget
 
 from ._canvas import FirstPersonCanvas
 
 
-class View3D(TabWidget):
-    name = "3D View"
+View3DWidgetIdentifier = "amulet.editor.View3DWidget"
 
+
+class View3DWidget(TabWidget):
     def __init__(
         self, parent: Optional[QWidget] = None, f: Qt.WindowType = Qt.WindowType.Widget
     ):
@@ -20,3 +21,7 @@ class View3D(TabWidget):
         self._layout = QVBoxLayout(self)
         self._layout.setContentsMargins(0, 0, 0, 0)
         self._layout.addWidget(FirstPersonCanvas())
+
+    @property
+    def title(self) -> str:
+        return "3D View"

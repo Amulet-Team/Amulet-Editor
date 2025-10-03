@@ -1,2 +1,1 @@
-from ._main import ButtonProxy
-from ._tab_engine import TabWidget
+from ._toolbar import ButtonProxy

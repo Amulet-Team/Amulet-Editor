@@ -134,10 +134,10 @@ class CanvasGlData(QObject):
 
         # Listen for geometry changes
         self._level_change_token = self.render_level.geometry_changed.connect(
-            lambda: self.geometry_changed.emit()
+            self.geometry_changed.emit
         )
         self._selection_change_token = self._render_selection.geometry_changed.connect(
-            lambda: self.geometry_changed.emit()
+            self.geometry_changed.emit
         )
 
         # Listen for the resource pack change event
