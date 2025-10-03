@@ -71,6 +71,12 @@ def _compile_ui_file(ui_path: str) -> str | None:
     super_name = super_element.attrib["class"]
 
     # Run some postprocessing
+    # Remove the version number
+    py = re.sub(
+        r"## Created by: Qt User Interface Compiler version .*",
+        "## Created by: Qt User Interface Compiler",
+        py,
+    )
     # Remove comments. The ones generated do not add anything
     py = re.sub(r"\r?\n\s*#(?!#).*", "\n", py)
     # Remove all duplicate line breaks
