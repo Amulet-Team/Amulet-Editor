@@ -40,6 +40,11 @@ Patches: dict[str, list[tuple[str, str]]] = {
     ],
     os.path.join(PySide6Path, "QtWidgets.pyi"): [
         (
+            # QButtonGroup
+            "def checkedButton(self, /) -> PySide6.QtWidgets.QAbstractButton: ...",
+            "def checkedButton(self, /) -> PySide6.QtWidgets.QAbstractButton | None: ...",
+        ),
+        (
             # QLayoutItem
             "    def spacerItem(self, /) -> PySide6.QtWidgets.QSpacerItem: ...\n"
             "    def widget(self, /) -> PySide6.QtWidgets.QWidget: ...",
@@ -47,9 +52,32 @@ Patches: dict[str, list[tuple[str, str]]] = {
             "    def widget(self, /) -> PySide6.QtWidgets.QWidget | None: ...",
         ),
         (
+            # QScrollArea
+            "    def widget(self, /) -> PySide6.QtWidgets.QWidget: ...\n"
+            "    def widgetResizable(self, /) -> bool: ...",
+            "    def widget(self, /) -> PySide6.QtWidgets.QWidget | None: ...\n"
+            "    def widgetResizable(self, /) -> bool: ...",
+        ),
+        (
+            # QSplitter
+            "def replaceWidget(self, index: int, widget: PySide6.QtWidgets.QWidget, /) -> PySide6.QtWidgets.QWidget: ...",
+            "def replaceWidget(self, index: int, widget: PySide6.QtWidgets.QWidget, /) -> PySide6.QtWidgets.QWidget | None: ...",
+        ),
+        (
             # QStackedLayout
             "def itemAt(self, arg__1: int, /) -> PySide6.QtWidgets.QLayoutItem: ...",
             "def itemAt(self, index: int, /) -> PySide6.QtWidgets.QLayoutItem | None: ...",
+        ),
+        (
+            # QStackedLayout
+            "    @typing.overload\n"
+            "    def widget(self, /) -> PySide6.QtWidgets.QWidget: ...\n"
+            "    @typing.overload\n"
+            "    def widget(self, arg__1: int, /) -> PySide6.QtWidgets.QWidget: ...\n",
+            "    @typing.overload\n"
+            "    def widget(self, /) -> PySide6.QtWidgets.QWidget | None: ...\n"
+            "    @typing.overload\n"
+            "    def widget(self, arg__1: int, /) -> PySide6.QtWidgets.QWidget | None: ...\n",
         ),
         (
             # Subclasses of QObject
