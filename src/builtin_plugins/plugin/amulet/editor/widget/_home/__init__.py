@@ -6,8 +6,6 @@ from PySide6.QtWidgets import QWidget, QVBoxLayout
 from .home import HomePage
 from .open_world import OpenWorldPage
 
-from amulet.app.localisation import set_locale
-
 from plugin.amulet.editor.widget.abc import TabWidget
 
 
@@ -41,12 +39,6 @@ class HomeWidget(TabWidget):
         # page.crd_new_project.clicked.connect(
         #     partial(self.set_menu_page, NewProjectMenu)
         # )
-
-        @Slot(int)
-        def _locale_change(index: int) -> None:
-            set_locale(page.cbo_language.currentData())
-
-        page.cbo_language.currentIndexChanged.connect(_locale_change)
         self._set_central_widget(page)
 
     def _set_open_world_page(self) -> None:

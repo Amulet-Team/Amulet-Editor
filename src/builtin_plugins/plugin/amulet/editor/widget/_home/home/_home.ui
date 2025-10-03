@@ -32,7 +32,7 @@
    <item>
     <spacer name="_left_spacer">
      <property name="orientation">
-      <enum>Qt::Horizontal</enum>
+      <enum>Qt::Orientation::Horizontal</enum>
      </property>
      <property name="sizeHint" stdset="0">
       <size>
@@ -59,7 +59,7 @@
      <item>
       <spacer name="_top_spacer">
        <property name="orientation">
-        <enum>Qt::Vertical</enum>
+        <enum>Qt::Orientation::Vertical</enum>
        </property>
        <property name="sizeHint" stdset="0">
         <size>
@@ -87,7 +87,7 @@
         <string notr="true"/>
        </property>
        <property name="alignment">
-        <set>Qt::AlignCenter</set>
+        <set>Qt::AlignmentFlag::AlignCenter</set>
        </property>
       </widget>
      </item>
@@ -97,7 +97,7 @@
         <string>amulet_editor</string>
        </property>
        <property name="alignment">
-        <set>Qt::AlignCenter</set>
+        <set>Qt::AlignmentFlag::AlignCenter</set>
        </property>
        <property name="subfamily" stdset="0">
         <string notr="true">semi_light</string>
@@ -113,7 +113,7 @@
         <string notr="true"/>
        </property>
        <property name="alignment">
-        <set>Qt::AlignCenter</set>
+        <set>Qt::AlignmentFlag::AlignCenter</set>
        </property>
        <property name="color" stdset="0">
         <string notr="true">secondary</string>
@@ -127,12 +127,12 @@
       </widget>
      </item>
      <item>
-      <spacer name="_middel_spacer">
+      <spacer name="_middle_spacer">
        <property name="orientation">
-        <enum>Qt::Vertical</enum>
+        <enum>Qt::Orientation::Vertical</enum>
        </property>
        <property name="sizeType">
-        <enum>QSizePolicy::Fixed</enum>
+        <enum>QSizePolicy::Policy::Fixed</enum>
        </property>
        <property name="sizeHint" stdset="0">
         <size>
@@ -143,30 +143,64 @@
       </spacer>
      </item>
      <item>
-      <layout class="QGridLayout" name="_button_layout" columnstretch="1,0">
-       <item row="1" column="0" colspan="2">
-        <widget class="QComboBox" name="cbo_language"/>
+      <layout class="QVBoxLayout" name="_widget_layout">
+       <item>
+        <layout class="QHBoxLayout" name="_open_layout">
+         <item>
+          <spacer name="horizontalSpacer">
+           <property name="orientation">
+            <enum>Qt::Orientation::Horizontal</enum>
+           </property>
+           <property name="sizeType">
+            <enum>QSizePolicy::Policy::Fixed</enum>
+           </property>
+           <property name="sizeHint" stdset="0">
+            <size>
+             <width>3</width>
+             <height>0</height>
+            </size>
+           </property>
+          </spacer>
+         </item>
+         <item>
+          <widget class="QLabel" name="_lbl_open_level">
+           <property name="text">
+            <string>lbl_open_level</string>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <widget class="QPushButton" name="btn_open_world">
+           <property name="text">
+            <string>btn_open_level</string>
+           </property>
+          </widget>
+         </item>
+        </layout>
        </item>
-       <item row="0" column="1">
-        <widget class="QPushButton" name="btn_open_world">
-         <property name="text">
-          <string>btn_open_level</string>
-         </property>
-        </widget>
+       <item>
+        <widget class="QComboBox" name="_language"/>
        </item>
-       <item row="0" column="0">
-        <widget class="QLabel" name="_lbl_open_level">
-         <property name="text">
-          <string>lbl_open_level</string>
-         </property>
-        </widget>
+       <item>
+        <layout class="QHBoxLayout" name="_theme_layout">
+         <item>
+          <widget class="QComboBox" name="_style"/>
+         </item>
+         <item>
+          <widget class="QPushButton" name="_colour_scheme">
+           <property name="checkable">
+            <bool>true</bool>
+           </property>
+          </widget>
+         </item>
+        </layout>
        </item>
       </layout>
      </item>
      <item>
       <spacer name="_bottom_spacer">
        <property name="orientation">
-        <enum>Qt::Vertical</enum>
+        <enum>Qt::Orientation::Vertical</enum>
        </property>
        <property name="sizeHint" stdset="0">
         <size>
@@ -181,7 +215,7 @@
    <item>
     <spacer name="_right_spacer">
      <property name="orientation">
-      <enum>Qt::Horizontal</enum>
+      <enum>Qt::Orientation::Horizontal</enum>
      </property>
      <property name="sizeHint" stdset="0">
       <size>
