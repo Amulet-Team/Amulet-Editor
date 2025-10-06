@@ -76,3 +76,9 @@ def set_style(identifier: str) -> None:
         else:
             style = factory()
         QApplication.setStyle(style)
+
+
+from ._amulet import AmuletStyle
+
+register_style("amulet", "Amulet", AmuletStyle)
+set_style("amulet")
