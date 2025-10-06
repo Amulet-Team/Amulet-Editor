@@ -16,8 +16,9 @@ from PySide6.QtGui import (
     QCursor,
     QGuiApplication,
     QMatrix4x4,
+    QResizeEvent,
 )
-from PySide6.QtWidgets import QWidget
+from PySide6.QtWidgets import QWidget, QVBoxLayout, QLabel, QProgressBar, QHBoxLayout
 from PySide6.QtOpenGLWidgets import QOpenGLWidget
 
 from OpenGL.constant import IntConstant
@@ -233,6 +234,26 @@ class FirstPersonCanvas(QOpenGLWidget, QOpenGLFunctions):
         self._resource_pack_handle = get_resource_pack_handle(self._level)
         self._gl_resource_pack_handle = get_gl_resource_pack_handle(self._level)
         self._gl_resource_pack: OpenGLResourcePack | None = None
+
+        self._loading_overlay = QWidget(self)
+        self._loading_layout = QVBoxLayout(self._loading_overlay)
+        self._loading_overlay.hide()
+        self._loading_layout.addStretch(1)
+
+        self._loading_text_layout = QHBoxLayout()
+        self._loading_layout.addLayout(self._loading_text_layout)
+        self._loading_text = QLabel()
+        self._loading_text.setStyleSheet("font-size: 50px")
+        self._loading_text_layout.addStretch(1)
+        self._loading_text_layout.addWidget(self._loading_text)
+        self._loading_text_layout.addStretch(1)
+
+        self._loading_bar = QProgressBar()
+        self._loading_bar.setStyleSheet("font-size: 30px")
+        self._loading_layout.addWidget(self._loading_bar)
+
+        self._loading_layout.addStretch(1)
+
         log.debug(f"FirstPersonCanvas.__init__({self}) end")
 
     def initializeGL(self) -> None:
@@ -280,27 +301,67 @@ class FirstPersonCanvas(QOpenGLWidget, QOpenGLFunctions):
             progress_manager = ProgressManager()
 
             def print_msg(msg: str) -> None:
-                log.info(msg)
+                self._progress_text_changed.emit(msg)
 
             def print_progress(progress: SupportsFloat) -> None:
-                log.info(str(progress))
+                self._progress_changed.emit(float(progress))
 
             progress_text_token = progress_manager.register_progress_text_callback(
                 print_msg
             )
             progress_token = progress_manager.register_progress_callback(print_progress)
-            gl_resource_pack = self._gl_resource_pack_handle.get_gl_resource_pack(
-                progress_manager
-            )
-            if gl_resource_pack is not self._gl_resource_pack:
-                self._gl_resource_pack = gl_resource_pack
-                invoke(lambda: self._canvas_gl_data.set_resource_pack(gl_resource_pack))
-            progress_manager.unregister_progress_text_callback(progress_text_token)
-            progress_manager.unregister_progress_callback(progress_token)
-            log.debug(f"FirstPersonCanvas._load_resource_pack({self}) end")
+            try:
+                gl_resource_pack = self._gl_resource_pack_handle.get_gl_resource_pack(
+                    progress_manager
+                )
+            except Exception:
+                raise
+            else:
+                if gl_resource_pack is not self._gl_resource_pack:
+                    self._gl_resource_pack = gl_resource_pack
+                    invoke(
+                        lambda: self._canvas_gl_data.set_resource_pack(gl_resource_pack)
+                    )
+            finally:
+                progress_manager.unregister_progress_text_callback(progress_text_token)
+                progress_manager.unregister_progress_callback(progress_token)
+                self._loading_finished.emit()
+                log.debug(f"FirstPersonCanvas._load_resource_pack({self}) end")
+
+    def _show_loading_overlay(self) -> None:
+        self._loading_overlay.show()
+        self._loading_overlay.move(self.pos())
+        self._loading_overlay.resize(self.size())
+        self._loading_text.setText("")
+        self._loading_bar.setValue(0)
 
     def _queue_load_resource_pack(self) -> None:
         QThreadPool.globalInstance().start(self._load_resource_pack)
+
+    _progress_changed = Signal[float]()
+
+    def _on_progress_changed(self, progress: float) -> None:
+        if not self._loading_overlay.isVisible():
+            self._show_loading_overlay()
+        self._loading_bar.setValue(int(100 * progress))
+
+    _progress_text_changed = Signal[str]()
+
+    def _on_progress_text_changed(self, text: str) -> None:
+        if not self._loading_overlay.isVisible():
+            self._show_loading_overlay()
+        self._loading_text.setText(text)
+
+    _loading_finished = Signal[()]()
+
+    def _hide_loading_overlay(self) -> None:
+        self._loading_overlay.hide()
+
+    def resizeEvent(self, event: QResizeEvent) -> None:
+        super().resizeEvent(event)
+        if self._loading_overlay.isVisible():
+            self._loading_overlay.move(self.pos())
+            self._loading_overlay.resize(self.size())
 
     def showEvent(self, event: QShowEvent) -> None:
         with CatchExceptionDialog("Error showing canvas."):
@@ -315,6 +376,10 @@ class FirstPersonCanvas(QOpenGLWidget, QOpenGLFunctions):
             self._gl_resource_pack_handle.changing.connect(
                 self._queue_load_resource_pack
             )
+
+            self._progress_changed.connect(self._on_progress_changed)
+            self._progress_text_changed.connect(self._on_progress_text_changed)
+            self._loading_finished.connect(self._hide_loading_overlay)
 
             self._canvas_gl_data.wake()
             self._queue_load_resource_pack()
@@ -333,6 +398,10 @@ class FirstPersonCanvas(QOpenGLWidget, QOpenGLFunctions):
             self._gl_resource_pack_handle.changing.disconnect(
                 self._queue_load_resource_pack
             )
+
+            self._progress_changed.disconnect(self._on_progress_changed)
+            self._progress_text_changed.disconnect(self._on_progress_text_changed)
+            self._loading_finished.disconnect(self._hide_loading_overlay)
 
             self._canvas_gl_data.sleep()
             log.debug(f"FirstPersonCanvas.hideEvent({self}) end")
