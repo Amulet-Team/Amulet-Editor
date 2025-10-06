@@ -33,10 +33,10 @@ from amulet.resource_pack.abc import BaseResourcePackManager
 from ._textureatlas import create_atlas
 
 from amulet.app.invoke import invoke
-from amulet.app.exception import display_exception
+from amulet.app.exception import display_exception, CatchExceptionDialog
 from amulet.app.path import cache_directory
 
-from plugin.amulet.resource_pack import get_resource_pack_container
+from plugin.amulet.resource_pack import get_resource_pack_handle
 from .abc import AbstractOpenGLResourcePack
 
 log = logging.getLogger(__name__)
@@ -232,15 +232,14 @@ class OpenGLResourcePack(AbstractOpenGLResourcePack):
 class OpenGLResourcePackHandle(QObject):
     # Emitted when the underlying resource pack has changed and a call to get_gl_resource_pack is required.
     changing = Signal()
-    # Emitted when the resource pack has changed.
-    changed = Signal(OpenGLResourcePack)
 
     def __init__(self, level: Level) -> None:
         super().__init__()
         self._level = ref[Level](level)
         self._condition = Condition(Lock())
 
-        self._resource_pack_container = get_resource_pack_container(level)
+        self._resource_pack_container = get_resource_pack_handle(level)
+        self._resource_pack: BaseResourcePackManager | None = None
         self._gl_resource_pack: OpenGLResourcePack | None = None
         self._load_progress_manager: AbstractProgressManager | None = None
 
@@ -251,14 +250,15 @@ class OpenGLResourcePackHandle(QObject):
         progress_manager: AbstractProgressManager = VoidProgressManager(),
     ) -> OpenGLResourcePack:
         with self._condition:
-            if self._load_progress_manager is not None:
+            self_progress_manager = self._load_progress_manager
+            if self_progress_manager is not None:
                 # The resource pack is being loaded by another call.
                 # Connect the progress managers
-                progress_token = self._load_progress_manager.register_progress_callback(
+                progress_token = self_progress_manager.register_progress_callback(
                     progress_manager.update_progress
                 )
                 progress_text_token = (
-                    self._load_progress_manager.register_progress_text_callback(
+                    self_progress_manager.register_progress_text_callback(
                         progress_manager.update_progress_text
                     )
                 )
@@ -267,8 +267,8 @@ class OpenGLResourcePackHandle(QObject):
                 while self._load_progress_manager is not None:
                     self._condition.wait()
 
-                self._load_progress_manager.unregister_progress_callback(progress_token)
-                self._load_progress_manager.unregister_progress_text_callback(
+                self_progress_manager.unregister_progress_callback(progress_token)
+                self_progress_manager.unregister_progress_text_callback(
                     progress_text_token
                 )
 
@@ -313,25 +313,27 @@ class OpenGLResourcePackHandle(QObject):
             # Loading succeeded
             with self._condition:
                 self._load_progress_manager = None
+                self._resource_pack = resource_pack
                 self._gl_resource_pack = gl_resource_pack
                 self._condition.notify_all()
             log.debug(f"Loaded OpenGL resource pack for level {level}")
-            self.changed.emit(gl_resource_pack)
             return self._gl_resource_pack
 
     def _resource_pack_changed(self) -> None:
         def _reset_and_notify() -> None:
-            with self._condition:
-                # Wait until the first call completes. Note that it may fail.
-                # TODO: support canceling so we don't need to wait
-                while self._load_progress_manager is not None:
-                    self._condition.wait()
-                # Invalidate the previous resource pack
-                self._gl_resource_pack = None
+            with CatchExceptionDialog("Error resetting OpenGL resource pack."):
+                with self._condition:
+                    # Wait until the first call completes. Note that it may fail.
+                    # TODO: support canceling so we don't need to wait
+                    while self._load_progress_manager is not None:
+                        self._condition.wait()
 
-            # Notify listeners that the underlying resource pack has changed.
-            # A call to get_gl_resource_pack is required to get the new opengl resource pack.
-            self.changing.emit()
+                    # Invalidate the previous resource pack
+                    self._gl_resource_pack = None
+
+                # Notify listeners that the underlying resource pack has changed.
+                # A call to get_gl_resource_pack is required to get the new opengl resource pack.
+                self.changing.emit()
 
         QThreadPool.globalInstance().start(_reset_and_notify)
 
@@ -342,7 +344,7 @@ _level_data: WeakKeyDictionary[Level, ref[OpenGLResourcePackHandle]] = (
 )
 
 
-def get_gl_resource_pack_container(level: Level) -> OpenGLResourcePackHandle:
+def get_gl_resource_pack_handle(level: Level) -> OpenGLResourcePackHandle:
     """
     Get a handle to the OpenGL resource pack for this level.
     The caller must store a strong reference to this object.

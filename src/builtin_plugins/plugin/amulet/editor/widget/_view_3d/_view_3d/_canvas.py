@@ -33,9 +33,10 @@ from amulet.utils.matrix import Matrix4x4
 from amulet.level.abc.level import Level
 
 from amulet.app.exception import CatchExceptionDialog, display_exception
+from amulet.app.invoke import invoke
 from amulet.app.qt.signal import Signal
 
-from plugin.amulet.resource_pack import get_resource_pack_container
+from plugin.amulet.resource_pack import get_resource_pack_handle
 
 from plugin.amulet.level import get_main_level
 
@@ -46,7 +47,7 @@ from ._key_catcher import KeySrc, KeyCatcher
 from .level.level_geometry import LevelGeometry
 from .selection import SelectionGeometry
 from .resource_pack import (
-    get_gl_resource_pack_container,
+    get_gl_resource_pack_handle,
     OpenGLResourcePackHandle,
     OpenGLResourcePack,
 )
@@ -85,7 +86,6 @@ class CanvasGlData(QObject):
     render_level: LevelGeometry
     _selection_handle: SelectionManager
     _render_selection: SelectionGeometry
-    _gl_resource_pack_handle: OpenGLResourcePackHandle
 
     _level_change_token: EventToken[()] | None
     _selection_change_token: EventToken[()] | None
@@ -97,7 +97,6 @@ class CanvasGlData(QObject):
         self.render_level = LevelGeometry(level)
         self._selection_handle = get_selection_manager()
         self._render_selection = SelectionGeometry()
-        self._gl_resource_pack_handle = get_gl_resource_pack_container(level)
 
         self._level_change_token = None
         self._selection_change_token = None
@@ -105,7 +104,7 @@ class CanvasGlData(QObject):
     def __del__(self) -> None:
         log.debug("CanvasGlData.__del__")
 
-    def _set_resource_pack(self, resource_pack: OpenGLResourcePack) -> None:
+    def set_resource_pack(self, resource_pack: OpenGLResourcePack) -> None:
         self.render_level.set_resource_pack(resource_pack)
 
     def init_gl(self) -> None:
@@ -141,10 +140,6 @@ class CanvasGlData(QObject):
         self._selection_change_token = self._render_selection.geometry_changed.connect(
             self.geometry_changed.emit
         )
-
-        # Listen for the resource pack change event
-        # This breaks if it is bound directly to the pyside method
-        self._gl_resource_pack_handle.changed.connect(self._set_resource_pack)
 
         # Wake the level
         self.render_level.wake()
@@ -235,8 +230,9 @@ class FirstPersonCanvas(QOpenGLWidget, QOpenGLFunctions):
             self._down, (KeySrc.Keyboard, Qt.Key.Key_Semicolon), frozenset(), 10
         )
 
-        self._resource_pack_container = get_resource_pack_container(self._level)
-        self._gl_resource_pack_container = get_gl_resource_pack_container(self._level)
+        self._resource_pack_handle = get_resource_pack_handle(self._level)
+        self._gl_resource_pack_handle = get_gl_resource_pack_handle(self._level)
+        self._gl_resource_pack: OpenGLResourcePack | None = None
         log.debug(f"FirstPersonCanvas.__init__({self}) end")
 
     def initializeGL(self) -> None:
@@ -278,22 +274,33 @@ class FirstPersonCanvas(QOpenGLWidget, QOpenGLFunctions):
         return self._camera
 
     def _load_resource_pack(self) -> None:
-        # TODO: connect this to the GUI
-        progress_manager = ProgressManager()
+        with CatchExceptionDialog("Error loading resource pack."):
+            log.debug(f"FirstPersonCanvas._load_resource_pack({self})")
+            # TODO: connect this to the GUI
+            progress_manager = ProgressManager()
 
-        def print_msg(msg: str) -> None:
-            log.info(msg)
+            def print_msg(msg: str) -> None:
+                log.info(msg)
 
-        def print_progress(progress: SupportsFloat) -> None:
-            log.info(str(progress))
+            def print_progress(progress: SupportsFloat) -> None:
+                log.info(str(progress))
 
-        progress_text_token = progress_manager.register_progress_text_callback(
-            print_msg
-        )
-        progress_token = progress_manager.register_progress_callback(print_progress)
-        self._gl_resource_pack_container.get_gl_resource_pack(progress_manager)
-        progress_manager.unregister_progress_text_callback(progress_text_token)
-        progress_manager.unregister_progress_callback(progress_token)
+            progress_text_token = progress_manager.register_progress_text_callback(
+                print_msg
+            )
+            progress_token = progress_manager.register_progress_callback(print_progress)
+            gl_resource_pack = self._gl_resource_pack_handle.get_gl_resource_pack(
+                progress_manager
+            )
+            if gl_resource_pack is not self._gl_resource_pack:
+                self._gl_resource_pack = gl_resource_pack
+                invoke(lambda: self._canvas_gl_data.set_resource_pack(gl_resource_pack))
+            progress_manager.unregister_progress_text_callback(progress_text_token)
+            progress_manager.unregister_progress_callback(progress_token)
+            log.debug(f"FirstPersonCanvas._load_resource_pack({self}) end")
+
+    def _queue_load_resource_pack(self) -> None:
+        QThreadPool.globalInstance().start(self._load_resource_pack)
 
     def showEvent(self, event: QShowEvent) -> None:
         with CatchExceptionDialog("Error showing canvas."):
@@ -304,8 +311,11 @@ class FirstPersonCanvas(QOpenGLWidget, QOpenGLFunctions):
             # Repaint every time the geometry changes
             self._canvas_gl_data.geometry_changed.connect(self.update)
 
+            # Set the resource pack when it changes
+            self._gl_resource_pack_handle.changing.connect(self._queue_load_resource_pack)
+
             self._canvas_gl_data.wake()
-            QThreadPool.globalInstance().start(self._load_resource_pack)
+            self._queue_load_resource_pack()
             log.debug("FirstPersonCanvas.showEvent end")
 
     def hideEvent(self, event: QHideEvent) -> None:
@@ -316,6 +326,9 @@ class FirstPersonCanvas(QOpenGLWidget, QOpenGLFunctions):
 
             # Disconnect from the geometry changed event
             self._canvas_gl_data.geometry_changed.disconnect(self.update)
+
+            # Disconnect from resource pack changing event
+            self._gl_resource_pack_handle.changing.disconnect(self._queue_load_resource_pack)
 
             self._canvas_gl_data.sleep()
             log.debug(f"FirstPersonCanvas.hideEvent({self}) end")
