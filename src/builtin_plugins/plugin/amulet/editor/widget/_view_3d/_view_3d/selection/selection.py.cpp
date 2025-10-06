@@ -47,6 +47,7 @@ void init_view_3d_selection(py::module m_parent)
     SelectionGeometry.def(
         "set_selection",
         &Amulet::SelectionGeometry::set_selection,
+        py::call_guard<py::gil_scoped_release>(),
         py::doc("Set the new selection shape group.\nThis is thread safe."),
         py::arg("selection_group"));
 }
