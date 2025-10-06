@@ -1,11 +1,12 @@
 from amulet.app import __version__
 
-from PySide6.QtWidgets import QWidget, QStyleFactory, QApplication
+from PySide6.QtWidgets import QWidget, QApplication
 from PySide6.QtCore import Qt, QLocale
 from PySide6.QtGui import QImage, QPixmap
 
 from amulet.app.resource import get_resource_path
 from amulet.app.localisation import set_locale
+from amulet.app.style import get_current_style_identifier, get_valid_styles, set_style
 
 from ._home import Ui_HomePage
 
@@ -48,16 +49,6 @@ def _get_locales() -> tuple[tuple[tuple[str, QLocale], ...], int]:
     return _locales
 
 
-PrettyStyleNames = {
-    "windows11": "Windows 11",
-    "windowsvista": "Windows Vista",
-    "windows": "Windows (Legacy)",
-    "fusion": "Fusion",
-    "macos": "macOS",
-    "android": "Android",
-}
-
-
 class HomePage(Ui_HomePage):
     def __init__(
         self, parent: QWidget | None = None, f: Qt.WindowType = Qt.WindowType.Widget
@@ -76,12 +67,17 @@ class HomePage(Ui_HomePage):
         self._language.setCurrentIndex(index)
         self._language.currentIndexChanged.connect(self._language_changed)
 
+        # Get the valid styles sorted alphabetically by name.
+        def alphasort(key: tuple[str, str]) -> tuple[str, str]:
+            return key[1].lower(), key[1].swapcase()
+
+        styles = sorted(get_valid_styles().items(), key=alphasort)
+
+        active_style = get_current_style_identifier()
         index = 0
-        for i, style in enumerate(QStyleFactory.keys()):
-            self._style.addItem(
-                PrettyStyleNames.get(style.lower(), style), userData=style
-            )
-            if style == QApplication.style().name():
+        for i, (style_id, style_name) in enumerate(styles):
+            self._style.addItem(style_name, userData=style_id)
+            if style_id == active_style:
                 index = i
         self._style.currentIndexChanged.connect(self._style_changed)
         self._style.setCurrentIndex(index)
@@ -97,8 +93,8 @@ class HomePage(Ui_HomePage):
 
     def _style_changed(self) -> None:
         style = self._style.currentData()
-        if style != QApplication.style().name():
-            QApplication.setStyle(style)
+        if style != get_current_style_identifier():
+            set_style(style)
 
     def _colour_scheme_changed(self, is_dark: bool) -> None:
         self._set_colour_scheme_label()
