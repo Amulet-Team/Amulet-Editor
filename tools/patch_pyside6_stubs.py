@@ -80,6 +80,20 @@ Patches: dict[str, list[tuple[str, str]]] = {
             "    def widget(self, arg__1: int, /) -> PySide6.QtWidgets.QWidget | None: ...\n",
         ),
         (
+            # QStyleOption
+            "    def initFrom(self, w: PySide6.QtWidgets.QWidget, /) -> None: ...\n\n\n",
+            "    def initFrom(self, w: PySide6.QtWidgets.QWidget, /) -> None: ...\n"
+            "    \n"
+            "    direction: PySide6.QtCore.Qt.LayoutDirection\n"
+            "    fontMetrics: PySide6.QtGui.QFontMetrics\n"
+            "    palette: PySide6.QtGui.QPalette\n"
+            "    rect: PySide6.QtCore.QRect\n"
+            "    state: PySide6.QtWidgets.QStyle.StateFlag\n"
+            "    styleObject: QObject\n"
+            "    type: int\n"
+            "    version: int\n\n\n",
+        ),
+        (
             # Subclasses of QObject
             f"def parent(self, /) -> PySide6.QtCore.QObject: ...",
             f"def parent(self, /) -> PySide6.QtCore.QObject | None: ...",
