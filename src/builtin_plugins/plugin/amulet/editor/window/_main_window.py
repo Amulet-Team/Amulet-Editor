@@ -117,6 +117,13 @@ class AmuletMainWindow(QMainWindow):
             self._unbind_events(old_widget)
             old_widget.setParent(None)
 
+            is_vertical = direction in (
+                _tab_drag.DropArea.Top,
+                _tab_drag.DropArea.Bottom,
+            )
+            is_last = direction in (_tab_drag.DropArea.Right, _tab_drag.DropArea.Bottom)
+            size = (old_widget.height() if is_vertical else old_widget.width()) // 2
+
             # Create the new widget
             self._widget = splitter = _tab_widget.RecursiveSplitter()
             self._bind_events(splitter)
@@ -125,22 +132,16 @@ class AmuletMainWindow(QMainWindow):
 
             # Put the widgets in the splitter
             splitter.setOrientation(
-                Qt.Orientation.Vertical
-                if direction in (_tab_drag.DropArea.Top, _tab_drag.DropArea.Bottom)
-                else Qt.Orientation.Horizontal
+                Qt.Orientation.Vertical if is_vertical else Qt.Orientation.Horizontal
             )
             splitter.addWidget(old_widget)
-            splitter.insertWidget(
-                int(direction in (_tab_drag.DropArea.Right, _tab_drag.DropArea.Bottom)),
-                new_widget,
-            )
+            splitter.insertWidget(int(is_last), new_widget)
 
-            splitter.setSizes([1] * splitter.count())
+            splitter.setSizes([size, size])
 
             assert old_widget.parent() is splitter
             assert new_widget.parent() is splitter
             assert splitter.parent() is self._central_widget
-            log.debug("AmuletMainWindow erm hello?")
 
     def _replace_widget(
         self, new_widget: _tab_widget.TabWidgetStack | _tab_widget.RecursiveSplitter

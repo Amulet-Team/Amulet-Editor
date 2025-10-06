@@ -482,6 +482,9 @@ class RecursiveSplitter(QSplitter):
         log.debug(
             f"RecursiveSplitter._on_split({self}, {old_widget}, {new_widget}, {direction})"
         )
+
+        self_sizes = self.sizes()
+
         index = self.indexOf(old_widget)
         splitter = RecursiveSplitter()
         if old_widget is not self.replaceWidget(index, splitter):
@@ -489,24 +492,23 @@ class RecursiveSplitter(QSplitter):
 
         assert splitter.parent() is self
 
+        is_vertical = direction in (_tab_drag.DropArea.Top, _tab_drag.DropArea.Bottom)
+        is_last = direction in (_tab_drag.DropArea.Right, _tab_drag.DropArea.Bottom)
+        size = (old_widget.height() if is_vertical else old_widget.width()) // 2
+
         # Put the widgets in the splitter
         splitter.setOrientation(
-            Qt.Orientation.Vertical
-            if direction in (_tab_drag.DropArea.Top, _tab_drag.DropArea.Bottom)
-            else Qt.Orientation.Horizontal
+            Qt.Orientation.Vertical if is_vertical else Qt.Orientation.Horizontal
         )
         splitter.addWidget(old_widget)
-        splitter.insertWidget(
-            int(direction in (_tab_drag.DropArea.Right, _tab_drag.DropArea.Bottom)),
-            new_widget,
-        )
+        splitter.insertWidget(int(is_last), new_widget)
 
-        splitter.setSizes([1] * splitter.count())
+        self.setSizes(self_sizes)
+        splitter.setSizes([size, size])
 
         assert old_widget.parent() is splitter
         assert new_widget.parent() is splitter
         assert splitter.parent() is self
-        log.debug("RecursiveSplitter erm hello?")
 
     def _on_sub_penultimate_child_removed(self, splitter: RecursiveSplitter) -> None:
         """The penultimate child of a child splitter was removed. Replace the splitter with its child."""
