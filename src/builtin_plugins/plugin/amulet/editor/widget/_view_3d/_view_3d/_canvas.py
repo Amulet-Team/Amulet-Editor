@@ -312,7 +312,9 @@ class FirstPersonCanvas(QOpenGLWidget, QOpenGLFunctions):
             self._canvas_gl_data.geometry_changed.connect(self.update)
 
             # Set the resource pack when it changes
-            self._gl_resource_pack_handle.changing.connect(self._queue_load_resource_pack)
+            self._gl_resource_pack_handle.changing.connect(
+                self._queue_load_resource_pack
+            )
 
             self._canvas_gl_data.wake()
             self._queue_load_resource_pack()
@@ -328,7 +330,9 @@ class FirstPersonCanvas(QOpenGLWidget, QOpenGLFunctions):
             self._canvas_gl_data.geometry_changed.disconnect(self.update)
 
             # Disconnect from resource pack changing event
-            self._gl_resource_pack_handle.changing.disconnect(self._queue_load_resource_pack)
+            self._gl_resource_pack_handle.changing.disconnect(
+                self._queue_load_resource_pack
+            )
 
             self._canvas_gl_data.sleep()
             log.debug(f"FirstPersonCanvas.hideEvent({self}) end")
