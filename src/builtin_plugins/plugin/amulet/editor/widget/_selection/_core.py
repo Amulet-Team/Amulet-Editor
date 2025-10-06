@@ -109,6 +109,7 @@ class SelectionCoreWidget(QWidget):
         self._selection_manager = get_selection_manager()
 
         self._layout = QVBoxLayout()
+        self._layout.setContentsMargins(0, 0, 0, 0)
         self.setLayout(self._layout)
 
         self._selection_list = QListWidget()
