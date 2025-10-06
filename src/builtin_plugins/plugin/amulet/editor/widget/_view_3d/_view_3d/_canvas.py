@@ -206,8 +206,7 @@ class FirstPersonCanvas(QOpenGLWidget, QOpenGLFunctions):
         self.camera.transform_changed.connect(self.update)
         self.camera.location_changed.connect(self._on_move)
         self._start_pos = QPoint()
-        self._mouse_captured = False
-
+        self._right_clicked = False
         self._speed = 1.0
 
         self._key_catcher = KeyCatcher()
@@ -442,14 +441,14 @@ class FirstPersonCanvas(QOpenGLWidget, QOpenGLFunctions):
         self.camera.set_perspective_projection(45, width / height, 0.01, 10_000)
 
     def mousePressEvent(self, event: QMouseEvent) -> None:
-        if event.buttons() & Qt.MouseButton.RightButton:
-            self._mouse_captured = True
+        if not self._right_clicked and event.buttons() & Qt.MouseButton.RightButton:
+            self._right_clicked = True
             self._start_pos = event.globalPosition().toPoint()
             self.setFocus()
             QGuiApplication.setOverrideCursor(QCursor(Qt.CursorShape.BlankCursor))
 
     def mouseMoveEvent(self, event: QMouseEvent) -> None:
-        if event.buttons() & Qt.MouseButton.RightButton:
+        if self._right_clicked:
             pos = event.globalPosition().toPoint()
             dx = pos.x() - self._start_pos.x()
             dy = pos.y() - self._start_pos.y()
@@ -464,8 +463,8 @@ class FirstPersonCanvas(QOpenGLWidget, QOpenGLFunctions):
             self._start_pos = QCursor.pos()
 
     def mouseReleaseEvent(self, event: QMouseEvent) -> None:
-        if self._mouse_captured:
-            self._mouse_captured = False
+        if self._right_clicked and not event.buttons() & Qt.MouseButton.RightButton:
+            self._right_clicked = False
             QGuiApplication.restoreOverrideCursor()
 
     def wheelEvent(self, event: QWheelEvent) -> None:
