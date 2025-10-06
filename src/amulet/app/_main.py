@@ -122,6 +122,7 @@ def app_main(argv: Sequence[str] | None = None) -> None:
         )
 
     sys.excepthook = error_handler
+    threading.excepthook = error_handler
 
     # Link the Amulet C++ logging
     amulet.utils.logging.set_min_log_level(global_args.logging_level)
