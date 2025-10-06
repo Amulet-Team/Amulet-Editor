@@ -46,10 +46,8 @@ def display_exception(title: str = "", error: str = "", traceback: str = "") -> 
         Dialogs.append(dialog)
 
         def on_finish() -> None:
-            print(Dialogs)
             Dialogs.remove(dialog)
             dialog.deleteLater()
-            print(Dialogs)
 
         dialog.finished.connect(on_finish)
         dialog.open()
