@@ -16,8 +16,9 @@ from PySide6.QtGui import (
     QCursor,
     QGuiApplication,
     QMatrix4x4,
+    QResizeEvent,
 )
-from PySide6.QtWidgets import QWidget
+from PySide6.QtWidgets import QWidget, QVBoxLayout, QLabel, QProgressBar, QHBoxLayout
 from PySide6.QtOpenGLWidgets import QOpenGLWidget
 
 from OpenGL.constant import IntConstant
@@ -33,9 +34,10 @@ from amulet.utils.matrix import Matrix4x4
 from amulet.level.abc.level import Level
 
 from amulet.app.exception import CatchExceptionDialog, display_exception
+from amulet.app.invoke import invoke
 from amulet.app.qt.signal import Signal
 
-from plugin.amulet.resource_pack import get_resource_pack_container
+from plugin.amulet.resource_pack import get_resource_pack_handle
 
 from plugin.amulet.level import get_main_level
 
@@ -46,7 +48,7 @@ from ._key_catcher import KeySrc, KeyCatcher
 from .level.level_geometry import LevelGeometry
 from .selection import SelectionGeometry
 from .resource_pack import (
-    get_gl_resource_pack_container,
+    get_gl_resource_pack_handle,
     OpenGLResourcePackHandle,
     OpenGLResourcePack,
 )
@@ -85,7 +87,6 @@ class CanvasGlData(QObject):
     render_level: LevelGeometry
     _selection_handle: SelectionManager
     _render_selection: SelectionGeometry
-    _gl_resource_pack_handle: OpenGLResourcePackHandle
 
     _level_change_token: EventToken[()] | None
     _selection_change_token: EventToken[()] | None
@@ -97,7 +98,6 @@ class CanvasGlData(QObject):
         self.render_level = LevelGeometry(level)
         self._selection_handle = get_selection_manager()
         self._render_selection = SelectionGeometry()
-        self._gl_resource_pack_handle = get_gl_resource_pack_container(level)
 
         self._level_change_token = None
         self._selection_change_token = None
@@ -105,11 +105,11 @@ class CanvasGlData(QObject):
     def __del__(self) -> None:
         log.debug("CanvasGlData.__del__")
 
-    def _set_resource_pack(self, resource_pack: OpenGLResourcePack) -> None:
+    def set_resource_pack(self, resource_pack: OpenGLResourcePack) -> None:
         self.render_level.set_resource_pack(resource_pack)
 
     def init_gl(self) -> None:
-        log.debug("CanvasGlData.init_gl()")
+        log.debug(f"CanvasGlData.init_gl({self})")
         self.render_level.init_gl()
         self._render_selection.init_gl()
 
@@ -123,7 +123,7 @@ class CanvasGlData(QObject):
         )
 
     def wake(self) -> None:
-        log.debug("CanvasGlData.wake()")
+        log.debug(f"CanvasGlData.wake({self})")
 
         # Start listening for changes
         render_settings.render_distance_changed.connect(self._update_render_distance)
@@ -142,15 +142,11 @@ class CanvasGlData(QObject):
             self.geometry_changed.emit
         )
 
-        # Listen for the resource pack change event
-        # This breaks if it is bound directly to the pyside method
-        self._gl_resource_pack_handle.changed.connect(self._set_resource_pack)
-
         # Wake the level
         self.render_level.wake()
 
     def sleep(self) -> None:
-        log.debug("CanvasGlData.sleep()")
+        log.debug(f"CanvasGlData.sleep({self})")
 
         # Sleep the level
         self.render_level.sleep()
@@ -166,7 +162,7 @@ class CanvasGlData(QObject):
         self._selection_change_token = None
 
     def destroy_gl(self) -> None:
-        log.debug("CanvasGlData.destroy_gl()")
+        log.debug(f"CanvasGlData.destroy_gl()")
         self.render_level.destroy_gl()
         self._render_selection.destroy_gl()
 
@@ -190,7 +186,7 @@ class FirstPersonCanvas(QOpenGLWidget, QOpenGLFunctions):
     _canvas_gl_data: CanvasGlData
 
     def __init__(self, parent: QWidget | None = None) -> None:
-        log.debug("FirstPersonCanvas.__init__ start")
+        log.debug("FirstPersonCanvas.__init__()")
         if not QThread.isMainThread():
             raise RuntimeError("FirstPersonCanvas must be constructed in main thread")
         QOpenGLWidget.__init__(self, parent)
@@ -235,20 +231,42 @@ class FirstPersonCanvas(QOpenGLWidget, QOpenGLFunctions):
             self._down, (KeySrc.Keyboard, Qt.Key.Key_Semicolon), frozenset(), 10
         )
 
-        self._resource_pack_container = get_resource_pack_container(self._level)
-        self._gl_resource_pack_container = get_gl_resource_pack_container(self._level)
-        log.debug("FirstPersonCanvas.__init__ end")
+        self._resource_pack_handle = get_resource_pack_handle(self._level)
+        self._gl_resource_pack_handle = get_gl_resource_pack_handle(self._level)
+        self._gl_resource_pack: OpenGLResourcePack | None = None
+
+        self._loading_overlay = QWidget(self)
+        self._loading_layout = QVBoxLayout(self._loading_overlay)
+        self._loading_overlay.hide()
+        self._loading_layout.addStretch(1)
+
+        self._loading_text_layout = QHBoxLayout()
+        self._loading_layout.addLayout(self._loading_text_layout)
+        self._loading_text = QLabel()
+        self._loading_text.setStyleSheet("font-size: 50px")
+        self._loading_text_layout.addStretch(1)
+        self._loading_text_layout.addWidget(self._loading_text)
+        self._loading_text_layout.addStretch(1)
+
+        self._loading_bar = QProgressBar()
+        self._loading_bar.setStyleSheet("font-size: 30px")
+        self._loading_layout.addWidget(self._loading_bar)
+
+        self._loading_layout.addStretch(1)
+
+        log.debug(f"FirstPersonCanvas.__init__({self}) end")
 
     def initializeGL(self) -> None:
         """Private initialisation method called by the QOpenGLWidget"""
         with CatchExceptionDialog("Error initialising OpenGL."):
-            log.debug("FirstPersonCanvas.initializeGL start")
+            log.debug(f"FirstPersonCanvas.initializeGL({self})")
 
             # Destroy OpenGL data upon context destruction.
             # This does not work if destroy_gl is connected directly to aboutToBeDestroyed and I don't know why.
             gl_data = self._canvas_gl_data
 
             def on_context_destruction() -> None:
+                log.debug("FirstPersonCanvas.canvas().aboutToBeDestroyed")
                 gl_data.destroy_gl()
 
             self.context().aboutToBeDestroyed.connect(
@@ -267,7 +285,7 @@ class FirstPersonCanvas(QOpenGLWidget, QOpenGLFunctions):
             self.camera.location = Location(0, 80, 0)
             self.camera.rotation = Rotation(0, 90)
             self._initialised = True
-            log.debug("FirstPersonCanvas.initializeGL end")
+            log.debug(f"FirstPersonCanvas.initializeGL({self}) end")
 
     def __del__(self) -> None:
         log.debug("FirstPersonCanvas.__del__")
@@ -277,47 +295,116 @@ class FirstPersonCanvas(QOpenGLWidget, QOpenGLFunctions):
         return self._camera
 
     def _load_resource_pack(self) -> None:
-        # TODO: connect this to the GUI
-        progress_manager = ProgressManager()
+        with CatchExceptionDialog("Error loading resource pack."):
+            log.debug(f"FirstPersonCanvas._load_resource_pack({self})")
+            # TODO: connect this to the GUI
+            progress_manager = ProgressManager()
 
-        def print_msg(msg: str) -> None:
-            log.info(msg)
+            def print_msg(msg: str) -> None:
+                self._progress_text_changed.emit(msg)
 
-        def print_progress(progress: SupportsFloat) -> None:
-            log.info(str(progress))
+            def print_progress(progress: SupportsFloat) -> None:
+                self._progress_changed.emit(float(progress))
 
-        progress_text_token = progress_manager.register_progress_text_callback(
-            print_msg
-        )
-        progress_token = progress_manager.register_progress_callback(print_progress)
-        self._gl_resource_pack_container.get_gl_resource_pack(progress_manager)
-        progress_manager.unregister_progress_text_callback(progress_text_token)
-        progress_manager.unregister_progress_callback(progress_token)
+            progress_text_token = progress_manager.register_progress_text_callback(
+                print_msg
+            )
+            progress_token = progress_manager.register_progress_callback(print_progress)
+            try:
+                gl_resource_pack = self._gl_resource_pack_handle.get_gl_resource_pack(
+                    progress_manager
+                )
+            except Exception:
+                raise
+            else:
+                if gl_resource_pack is not self._gl_resource_pack:
+                    self._gl_resource_pack = gl_resource_pack
+                    invoke(
+                        lambda: self._canvas_gl_data.set_resource_pack(gl_resource_pack)
+                    )
+            finally:
+                progress_manager.unregister_progress_text_callback(progress_text_token)
+                progress_manager.unregister_progress_callback(progress_token)
+                self._loading_finished.emit()
+                log.debug(f"FirstPersonCanvas._load_resource_pack({self}) end")
+
+    def _show_loading_overlay(self) -> None:
+        self._loading_overlay.show()
+        self._loading_overlay.move(self.pos())
+        self._loading_overlay.resize(self.size())
+        self._loading_text.setText("")
+        self._loading_bar.setValue(0)
+
+    def _queue_load_resource_pack(self) -> None:
+        QThreadPool.globalInstance().start(self._load_resource_pack)
+
+    _progress_changed = Signal[float]()
+
+    def _on_progress_changed(self, progress: float) -> None:
+        if not self._loading_overlay.isVisible():
+            self._show_loading_overlay()
+        self._loading_bar.setValue(int(100 * progress))
+
+    _progress_text_changed = Signal[str]()
+
+    def _on_progress_text_changed(self, text: str) -> None:
+        if not self._loading_overlay.isVisible():
+            self._show_loading_overlay()
+        self._loading_text.setText(text)
+
+    _loading_finished = Signal[()]()
+
+    def _hide_loading_overlay(self) -> None:
+        self._loading_overlay.hide()
+
+    def resizeEvent(self, event: QResizeEvent) -> None:
+        super().resizeEvent(event)
+        if self._loading_overlay.isVisible():
+            self._loading_overlay.move(self.pos())
+            self._loading_overlay.resize(self.size())
 
     def showEvent(self, event: QShowEvent) -> None:
         with CatchExceptionDialog("Error showing canvas."):
-            log.debug("FirstPersonCanvas.showEvent start")
+            log.debug(f"FirstPersonCanvas.showEvent({self})")
             if not self._initialised:
                 return
 
             # Repaint every time the geometry changes
             self._canvas_gl_data.geometry_changed.connect(self.update)
 
+            # Set the resource pack when it changes
+            self._gl_resource_pack_handle.changing.connect(
+                self._queue_load_resource_pack
+            )
+
+            self._progress_changed.connect(self._on_progress_changed)
+            self._progress_text_changed.connect(self._on_progress_text_changed)
+            self._loading_finished.connect(self._hide_loading_overlay)
+
             self._canvas_gl_data.wake()
-            QThreadPool.globalInstance().start(self._load_resource_pack)
+            self._queue_load_resource_pack()
             log.debug("FirstPersonCanvas.showEvent end")
 
     def hideEvent(self, event: QHideEvent) -> None:
         with CatchExceptionDialog("Error hiding canvas."):
-            log.debug("FirstPersonCanvas.hideEvent start")
+            log.debug(f"FirstPersonCanvas.hideEvent({self})")
             if not self._initialised:
                 return
 
             # Disconnect from the geometry changed event
             self._canvas_gl_data.geometry_changed.disconnect(self.update)
 
+            # Disconnect from resource pack changing event
+            self._gl_resource_pack_handle.changing.disconnect(
+                self._queue_load_resource_pack
+            )
+
+            self._progress_changed.disconnect(self._on_progress_changed)
+            self._progress_text_changed.disconnect(self._on_progress_text_changed)
+            self._loading_finished.disconnect(self._hide_loading_overlay)
+
             self._canvas_gl_data.sleep()
-            log.debug("FirstPersonCanvas.hideEvent end")
+            log.debug(f"FirstPersonCanvas.hideEvent({self}) end")
 
     def paintGL(self) -> None:
         """Private paint method called by the QOpenGLWidget"""
@@ -332,7 +419,7 @@ class FirstPersonCanvas(QOpenGLWidget, QOpenGLFunctions):
                 # If we don't skip these cases it crashes the program.
                 return
 
-            log.debug("paintGL")
+            log.debug(f"FirstPersonCanvas.paintGL({self})")
 
             self.glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT)
             self.glEnable(GL_DEPTH_TEST)
@@ -351,7 +438,7 @@ class FirstPersonCanvas(QOpenGLWidget, QOpenGLFunctions):
 
     def resizeGL(self, width: float, height: float) -> None:
         """Private resize method called by the QOpenGLWidget"""
-        log.debug("FirstPersonCanvas.resizeGL")
+        log.debug(f"FirstPersonCanvas.resizeGL({self}, {width}, {height})")
         self.camera.set_perspective_projection(45, width / height, 0.01, 10_000)
 
     def mousePressEvent(self, event: QMouseEvent) -> None:

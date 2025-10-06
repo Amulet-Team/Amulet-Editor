@@ -23,7 +23,7 @@ from amulet.resource_pack.java.download_resources import (
 log = logging.getLogger(__name__)
 
 
-class ResourcePackContainer(QObject):
+class ResourcePackHandle(QObject):
     # Emitted when the resource pack has changed.
     changed = Signal(BaseResourcePackManager)
 
@@ -34,7 +34,7 @@ class ResourcePackContainer(QObject):
         self._load_progress_manager: AbstractProgressManager | None = None
 
     def __del__(self) -> None:
-        log.debug("ResourcePackContainer.__del__")
+        log.debug("ResourcePackHandle.__del__")
 
     def get_resource_pack(
         self,
@@ -114,7 +114,6 @@ class ResourcePackContainer(QObject):
                 self._resource_pack = resource_pack
                 self._condition.notify_all()
             log.debug("Loaded resource pack.")
-            self.changed.emit(resource_pack)
             return resource_pack
 
     def set_resource_pack(self, resource_pack: BaseResourcePackManager) -> None:
@@ -133,16 +132,18 @@ class ResourcePackContainer(QObject):
             # TODO: add the ability to cancel the loading operation so we don't need to wait for it to finish.
             while self._load_progress_manager is not None:
                 self._condition.wait()
+            if resource_pack is self._resource_pack:
+                return
             self._resource_pack = resource_pack
         self.changed.emit(self._resource_pack)
 
 
 _lock = Lock()
-_level_data: WeakKeyDictionary[Level, ResourcePackContainer] = WeakKeyDictionary()
+_level_data: WeakKeyDictionary[Level, ResourcePackHandle] = WeakKeyDictionary()
 
 
-def get_resource_pack_container(level: Level) -> ResourcePackContainer:
+def get_resource_pack_handle(level: Level) -> ResourcePackHandle:
     with _lock:
         if level not in _level_data:
-            _level_data[level] = ResourcePackContainer()
+            _level_data[level] = ResourcePackHandle()
         return _level_data[level]
