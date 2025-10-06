@@ -161,7 +161,7 @@ class CanvasGlData(QObject):
         self._selection_change_token = None
 
     def destroy_gl(self) -> None:
-        log.debug(f"CanvasGlData.destroy_gl({self})")
+        log.debug(f"CanvasGlData.destroy_gl()")
         self.render_level.destroy_gl()
         self._render_selection.destroy_gl()
 
