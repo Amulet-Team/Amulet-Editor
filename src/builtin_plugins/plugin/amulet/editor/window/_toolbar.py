@@ -7,7 +7,7 @@ from PySide6.QtCore import QSize, Qt
 from PySide6.QtGui import QMouseEvent
 from PySide6.QtWidgets import QFrame, QWidget, QVBoxLayout, QHBoxLayout, QButtonGroup
 
-from plugin.amulet.editor._icon import ATooltipIconButton
+from plugin.amulet.editor._toolbar_button import ToolbarButton
 from amulet.app.exception import display_exception
 
 
@@ -19,19 +19,19 @@ class ButtonProxy:
     This is also used to access and remove the button.
     """
 
-    def __init__(self, button: ATooltipIconButton) -> None:
+    def __init__(self, button: ToolbarButton) -> None:
         """
         :param button: The button to wrap.
         :param on_delete: A function to call just before deleting the button.
         """
-        self._button: ATooltipIconButton | None = button
+        self._button: ToolbarButton | None = button
         self._on_click: Callable[[], None] | None = None
         weak_destroy = WeakMethod(self._destroy)
         self._finalise = finalize(
             self, lambda: (destroy := weak_destroy()) and destroy()
         )
 
-    def _get_button(self) -> ATooltipIconButton:
+    def _get_button(self) -> ToolbarButton:
         if self._button is None:
             raise RuntimeError("The button has already been destroyed.")
         return self._button
@@ -157,9 +157,9 @@ class ToolBar(QFrame):
         self._layout_button_group = QButtonGroup()
         self._lock = RLock()
 
-    def add_layout_button(self) -> ATooltipIconButton:
+    def add_layout_button(self) -> ToolbarButton:
         """Add a button to the toolbar."""
-        button = ATooltipIconButton()
+        button = ToolbarButton()
         button.setFixedSize(QSize(40, 40))
         button.setIconSize(QSize(30, 30))
         button.setCheckable(True)
@@ -172,9 +172,9 @@ class ToolBar(QFrame):
         if button is not None:
             button.setChecked(False)
 
-    def add_static_button(self) -> ATooltipIconButton:
+    def add_static_button(self) -> ToolbarButton:
         """Add a button to the toolbar."""
-        button = ATooltipIconButton()
+        button = ToolbarButton()
         button.setFixedSize(QSize(40, 40))
         button.setIconSize(QSize(30, 30))
         self._lyt_static_buttons.insertWidget(1, button)
