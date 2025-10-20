@@ -5,6 +5,7 @@ import logging
 from PySide6.QtGui import QShortcut, QCloseEvent
 from PySide6.QtCore import Qt, QEvent, QCoreApplication
 from PySide6.QtWidgets import QWidget, QMainWindow, QHBoxLayout, QVBoxLayout
+from PySide6.QtOpenGLWidgets import QOpenGLWidget
 
 from plugin.amulet.inspector import show_inspector
 
@@ -57,6 +58,10 @@ class AmuletMainWindow(QMainWindow):
         self._layout.addWidget(self._widget)
 
         self.setCentralWidget(self._central_widget)
+
+        # This is here to stop the window closing and reopening when the first QOpenGLWidget is added.
+        self._dummy_gl_widget = QOpenGLWidget(self)
+        self._dummy_gl_widget.hide()
 
         self._localise()
 
