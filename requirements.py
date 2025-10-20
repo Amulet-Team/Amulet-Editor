@@ -8,14 +8,14 @@ PYBIND11_REQUIREMENT = "==3.0.0"
 AMULET_PYBIND11_EXTENSIONS_REQUIREMENT = "~=1.2.0.0a0"
 AMULET_IO_REQUIREMENT = "~=1.0"
 AMULET_LEVELDB_REQUIREMENT = "~=3.0.4.0a0"
-AMULET_UTILS_REQUIREMENT = "~=1.1.3.0a2"
+AMULET_UTILS_REQUIREMENT = "~=1.1.3.0a0"
 AMULET_ZLIB_REQUIREMENT = "~=1.0.8.0a0"
 AMULET_NBT_REQUIREMENT = "~=5.0.2.0a0"
-AMULET_CORE_REQUIREMENT = "~=2.0.5.0a1"
-AMULET_GAME_REQUIREMENT = "~=1.0.2.0a0"
-AMULET_ANVIL_REQUIREMENT = "~=1.0.2.0a0"
-AMULET_LEVEL_REQUIREMENT = "~=1.0.2.0a0"
-AMULET_RESOURCE_PACK_REQUIREMENT = "~=1.0.2.0a0"
+AMULET_CORE_REQUIREMENT = "~=2.0.6.0a0"
+AMULET_RESOURCE_PACK_REQUIREMENT = "~=1.0.2.0a2"
+AMULET_GAME_REQUIREMENT = "~=1.0.2.0a2"
+AMULET_ANVIL_REQUIREMENT = "~=1.0.3.0a0"
+AMULET_LEVEL_REQUIREMENT = "~=1.0.3.0a0"
 NUMPY_REQUIREMENT = "~=2.0"
 PIL_REQUIREMENT = "~=11.3"
 OPENGL_REQUIREMENT = "~=3.1"
@@ -55,6 +55,9 @@ if os.environ.get("AMULET_CORE_REQUIREMENT", None):
         f"{AMULET_CORE_REQUIREMENT},{os.environ['AMULET_CORE_REQUIREMENT']}"
     )
 
+if os.environ.get("AMULET_RESOURCE_PACK_REQUIREMENT", None):
+    AMULET_RESOURCE_PACK_REQUIREMENT = f"{AMULET_RESOURCE_PACK_REQUIREMENT},{os.environ['AMULET_RESOURCE_PACK_REQUIREMENT']}"
+
 if os.environ.get("AMULET_GAME_REQUIREMENT", None):
     AMULET_GAME_REQUIREMENT = (
         f"{AMULET_GAME_REQUIREMENT},{os.environ['AMULET_GAME_REQUIREMENT']}"
@@ -69,9 +72,6 @@ if os.environ.get("AMULET_LEVEL_REQUIREMENT", None):
     AMULET_LEVEL_REQUIREMENT = (
         f"{AMULET_LEVEL_REQUIREMENT},{os.environ['AMULET_LEVEL_REQUIREMENT']}"
     )
-
-if os.environ.get("AMULET_RESOURCE_PACK_REQUIREMENT", None):
-    AMULET_RESOURCE_PACK_REQUIREMENT = f"{AMULET_RESOURCE_PACK_REQUIREMENT},{os.environ['AMULET_RESOURCE_PACK_REQUIREMENT']}"
 
 
 def get_specifier_set(version_str: str) -> str:
@@ -140,6 +140,15 @@ else:
     AMULET_CORE_REQUIREMENT = get_specifier_set(amulet.core.__version__)
 
 try:
+    import amulet.resource_pack
+except ImportError:
+    pass
+else:
+    AMULET_RESOURCE_PACK_REQUIREMENT = get_specifier_set(
+        amulet.resource_pack.__version__
+    )
+
+try:
     import amulet.game
 except ImportError:
     pass
@@ -160,15 +169,6 @@ except ImportError:
 else:
     AMULET_LEVEL_REQUIREMENT = get_specifier_set(amulet.level.__version__)
 
-try:
-    import amulet.resource_pack
-except ImportError:
-    pass
-else:
-    AMULET_RESOURCE_PACK_REQUIREMENT = get_specifier_set(
-        amulet.resource_pack.__version__
-    )
-
 
 def get_build_dependencies() -> list:
     return [
@@ -181,10 +181,10 @@ def get_build_dependencies() -> list:
         f"amulet-zlib{AMULET_ZLIB_REQUIREMENT}",
         f"amulet-nbt{AMULET_NBT_REQUIREMENT}",
         f"amulet-core{AMULET_CORE_REQUIREMENT}",
+        f"amulet-resource-pack{AMULET_RESOURCE_PACK_REQUIREMENT}",
         f"amulet-game{AMULET_GAME_REQUIREMENT}",
         f"amulet-anvil{AMULET_ANVIL_REQUIREMENT}",
         f"amulet-level{AMULET_LEVEL_REQUIREMENT}",
-        f"amulet-resource-pack{AMULET_RESOURCE_PACK_REQUIREMENT}",
     ] * (not os.environ.get("AMULET_SKIP_COMPILE", None))
 
 
@@ -200,10 +200,10 @@ def get_runtime_dependencies() -> list[str]:
         f"amulet-zlib{AMULET_ZLIB_REQUIREMENT}",
         f"amulet-nbt{AMULET_NBT_REQUIREMENT}",
         f"amulet-core{AMULET_CORE_REQUIREMENT}",
+        f"amulet-resource-pack{AMULET_RESOURCE_PACK_REQUIREMENT}",
         f"amulet-game{AMULET_GAME_REQUIREMENT}",
         f"amulet-anvil{AMULET_ANVIL_REQUIREMENT}",
         f"amulet-level{AMULET_LEVEL_REQUIREMENT}",
-        f"amulet-resource-pack{AMULET_RESOURCE_PACK_REQUIREMENT}",
         f"numpy{NUMPY_REQUIREMENT}",
         f"pillow{PIL_REQUIREMENT}",
         f"PyOpenGL{OPENGL_REQUIREMENT}",
