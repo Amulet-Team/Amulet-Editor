@@ -11,7 +11,7 @@ from PySide6.QtGui import QColor, QPainter
 
 
 class AmuletStyle(QProxyStyle):
-    def __init__(self):
+    def __init__(self) -> None:
         super().__init__("fusion")
 
     def drawControl(
