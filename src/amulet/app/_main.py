@@ -4,6 +4,7 @@ import threading
 from typing import Callable, TypeAlias, Any, Union
 from types import FrameType, TracebackType
 from collections.abc import Sequence
+from threading import ExceptHookArgs
 import sys
 import os
 import logging
@@ -113,16 +114,24 @@ def app_main(argv: Sequence[str] | None = None) -> None:
 
     def error_handler(
         exc_type: type[BaseException],
-        exc_value: BaseException,
+        exc_value: BaseException | None,
         exc_tb: TracebackType | None,
     ) -> None:
+        if exc_value is None:
+            return
         log.error("Unhandled exception", exc_info=(exc_type, exc_value, exc_tb))
         display_exception(
-            "Unhandled exception", "", "".join(traceback.format_tb(exc_tb))
+            "Unhandled exception",
+            "",
+            "".join(traceback.format_exception(exc_type, exc_value, exc_tb)),
         )
 
     sys.excepthook = error_handler
-    threading.excepthook = error_handler
+
+    def thread_error_handler(args: ExceptHookArgs) -> None:
+        error_handler(args.exc_type, args.exc_value, args.exc_traceback)
+
+    threading.excepthook = thread_error_handler
 
     # Link the Amulet C++ logging
     amulet.utils.logging.set_min_log_level(global_args.logging_level)
