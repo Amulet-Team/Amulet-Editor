@@ -10,7 +10,7 @@ from weakref import ref
 
 from PySide6.QtCore import Qt, QPoint, QSize, QObject
 
-from plugin.amulet.editor._icon import ATooltipIconButton
+from plugin.amulet.editor._toolbar_button import ToolbarButton
 
 from plugin.amulet.editor.widget import _missing
 from plugin.amulet.editor.widget import _widget
@@ -78,8 +78,8 @@ class LayoutContainer:
     layout_id: str
     default_config: LayoutConfig
     layout_config: LayoutConfig
-    button_ref: Callable[[], ATooltipIconButton | None] = cast(
-        Callable[[], ATooltipIconButton | None], lambda: None
+    button_ref: Callable[[], ToolbarButton | None] = cast(
+        Callable[[], ToolbarButton | None], lambda: None
     )
     hidden_layout: HiddenLayout | None = None
 
