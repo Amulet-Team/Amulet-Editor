@@ -257,13 +257,12 @@ def main() -> None:
         pyi = EqPattern.sub(eq_sub_func, pyi)
         pyi = pyi.replace("**kwargs)", "**kwargs: typing.Any)")
         pyi_split = [l.rstrip("\r") for l in pyi.split("\n")]
-        for hidden_import in []:
+        for hidden_import in ["typing", "types"]:
             if hidden_import in pyi and f"import {hidden_import}" not in pyi_split:
-                pyi_split.insert(2, f"import {hidden_import}")
-        if "import typing" not in pyi_split:
-            pyi_split.insert(2, "import typing")
-        if "import types" not in pyi_split:
-            pyi_split.insert(2, "import types")
+                pyi_split.insert(
+                    pyi_split.index("from __future__ import annotations") + 1,
+                    f"import {hidden_import}",
+                )
         pyi = "\n".join(pyi_split)
         with open(stub_path, "w", encoding="utf-8") as f:
             f.write(pyi)

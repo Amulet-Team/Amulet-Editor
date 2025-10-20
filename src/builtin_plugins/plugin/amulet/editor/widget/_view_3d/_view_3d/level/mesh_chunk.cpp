@@ -233,7 +233,7 @@ static std::string _get_error_geometry(
         ((cx + cz) % 2 ? std::array<float, 3> { 1.0, 1.0, 1.0 } : std::array<float, 3> { 0.8, 0.8, 0.8 }));
 }
 
-static std::shared_ptr<BlockComponentData> _get_block_component(
+static std::shared_ptr<BlockStorage> _get_block_component(
     Dimension& dimension,
     const std::int64_t cx,
     const std::int64_t cz)
@@ -247,7 +247,7 @@ static std::shared_ptr<BlockComponentData> _get_block_component(
 
     auto* block_component = dynamic_cast<BlockComponent*>(chunk.get());
     if (block_component) {
-        return block_component->get_block();
+        return block_component->get_block_storage();
     } else {
         return nullptr;
     }
@@ -287,7 +287,7 @@ std::tuple<std::string, size_t, std::string, size_t> mesh_chunk(
         auto* block_component = dynamic_cast<BlockComponent*>(chunk.get());
         if (block_component) {
             // log.debug(f"Creating geometry for chunk {dimension_id}, {cx}, {cz}")
-            auto self = block_component->get_block();
+            auto self = block_component->get_block_storage();
             auto north = _get_block_component(*dimension, cx, cz - 1);
             auto east = _get_block_component(*dimension, cx + 1, cz);
             auto south = _get_block_component(*dimension, cx, cz + 1);

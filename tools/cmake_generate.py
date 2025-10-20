@@ -10,10 +10,10 @@ import amulet.leveldb
 import amulet.utils
 import amulet.nbt
 import amulet.core
+import amulet.resource_pack
 import amulet.game
 import amulet.anvil
 import amulet.level
-import amulet.resource_pack
 
 
 def fix_path(path: str) -> str:
@@ -50,10 +50,10 @@ def main():
             f"-Damulet_utils_DIR={fix_path(amulet.utils.__path__[0])}",
             f"-Damulet_nbt_DIR={fix_path(amulet.nbt.__path__[0])}",
             f"-Damulet_core_DIR={fix_path(amulet.core.__path__[0])}",
+            f"-Damulet_resource_pack_DIR={fix_path(amulet.resource_pack.__path__[0])}",
             f"-Damulet_game_DIR={fix_path(amulet.game.__path__[0])}",
             f"-Damulet_anvil_DIR={fix_path(amulet.anvil.__path__[0])}",
             f"-Damulet_level_DIR={fix_path(amulet.level.__path__[0])}",
-            f"-Damulet_resource_pack_DIR={fix_path(amulet.resource_pack.__path__[0])}",
             f"-DAMULET_EDITOR_SRC_DIR={fix_path(os.path.join(RootDir, 'src'))}",
             f"-DCMAKE_INSTALL_PREFIX=install",
             f"-DBUILD_AMULET_EDITOR_TESTS=ON",
