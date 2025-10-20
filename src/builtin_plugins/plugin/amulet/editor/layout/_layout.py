@@ -2,7 +2,7 @@
 Registering layouts, adding layout buttons and enabling layouts"""
 
 from __future__ import annotations
-from typing import Callable, cast, TYPE_CHECKING
+from typing import Callable, cast
 from threading import Lock, current_thread, main_thread
 from dataclasses import dataclass
 import re
@@ -10,8 +10,7 @@ from weakref import ref
 
 from PySide6.QtCore import Qt, QPoint, QSize, QObject
 
-if TYPE_CHECKING:
-    from plugin.amulet.editor._toolbar_button import ToolbarButton
+from plugin.amulet.editor._toolbar_button import ToolbarButton
 
 from plugin.amulet.editor.widget import _missing
 from plugin.amulet.editor.widget import _widget
