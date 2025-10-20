@@ -45,6 +45,16 @@ Patches: dict[str, list[tuple[str, str]]] = {
             "def checkedButton(self, /) -> PySide6.QtWidgets.QAbstractButton | None: ...",
         ),
         (
+            # QLayout
+            "def takeAt(self, arg__1: int, /) -> PySide6.QtWidgets.QLayoutItem: ...",
+            "def takeAt(self, index: int, /) -> PySide6.QtWidgets.QLayoutItem | None: ...",
+        ),
+        (
+            # QLayout
+            "def takeAt(self, index: int, /) -> PySide6.QtWidgets.QLayoutItem: ...",
+            "def takeAt(self, index: int, /) -> PySide6.QtWidgets.QLayoutItem | None: ...",
+        ),
+        (
             # QLayoutItem
             "    def spacerItem(self, /) -> PySide6.QtWidgets.QSpacerItem: ...\n"
             "    def widget(self, /) -> PySide6.QtWidgets.QWidget: ...",
