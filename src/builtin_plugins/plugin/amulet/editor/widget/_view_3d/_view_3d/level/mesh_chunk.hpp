@@ -17,11 +17,11 @@ void mesh_chunk_lod0(
     AbstractOpenGLResourcePack& resource_pack,
     const std::int64_t cx,
     const std::int64_t cz,
-    const Amulet::BlockComponentData& self_block_data,
-    const Amulet::BlockComponentData* const north_block_data,
-    const Amulet::BlockComponentData* const east_block_data,
-    const Amulet::BlockComponentData* const south_block_data,
-    const Amulet::BlockComponentData* const west_block_data,
+    const Amulet::BlockStorage& self_block_data,
+    const Amulet::BlockStorage* const north_block_data,
+    const Amulet::BlockStorage* const east_block_data,
+    const Amulet::BlockStorage* const south_block_data,
+    const Amulet::BlockStorage* const west_block_data,
     std::string& opaque_buffer,
     std::string& translucent_buffer);
 

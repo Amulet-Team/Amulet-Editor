@@ -7,16 +7,16 @@ void mesh_chunk_lod0(
     AbstractOpenGLResourcePack& resource_pack,
     const std::int64_t cx,
     const std::int64_t cz,
-    const Amulet::BlockComponentData& self_block_data,
-    const Amulet::BlockComponentData* const north_block_data,
-    const Amulet::BlockComponentData* const east_block_data,
-    const Amulet::BlockComponentData* const south_block_data,
-    const Amulet::BlockComponentData* const west_block_data,
+    const Amulet::BlockStorage& self_block_data,
+    const Amulet::BlockStorage* const north_block_data,
+    const Amulet::BlockStorage* const east_block_data,
+    const Amulet::BlockStorage* const south_block_data,
+    const Amulet::BlockStorage* const west_block_data,
     std::string& opaque_buffer,
     std::string& translucent_buffer)
 {
     // Borrowed pointers to the block data.
-    std::array<const Amulet::BlockComponentData* const, 5> all_chunk_data = {
+    std::array<const Amulet::BlockStorage* const, 5> all_chunk_data = {
         north_block_data,
         west_block_data,
         &self_block_data,
@@ -29,7 +29,7 @@ void mesh_chunk_lod0(
 
     // Resize mesh vectors to fit all the blocks in the palette.
     for (size_t i = 0; i < 5; i++) {
-        const Amulet::BlockComponentData* block_component = all_chunk_data[i];
+        const Amulet::BlockStorage* block_component = all_chunk_data[i];
         if (block_component) {
             all_block_meshes[i].resize(block_component->get_palette().size());
         }
