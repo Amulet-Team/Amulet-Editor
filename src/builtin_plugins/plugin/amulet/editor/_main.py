@@ -36,6 +36,7 @@ from .widget._selection import (
     SelectionWidget,
     SelectionWidgetIdentifier,
 )
+from .widget._block_inspect import BlockEditWidget, BlockEditWidgetIdentifier
 from .widget._view_3d import View3DWidget, View3DWidgetIdentifier
 from .widget import register_tab_widget, unregister_tab_widget
 from .layout import (
@@ -65,6 +66,9 @@ level_info_button: ButtonProxy | None = None
 EditorLayoutId = "amulet.editor"
 editor_button: ButtonProxy | None = None
 
+BlockEditLayoutId = "amulet.block_editor"
+block_edit_button: ButtonProxy | None = None
+
 
 def _init_app() -> None:
     app = QApplication.instance()
@@ -86,11 +90,15 @@ def _load_translations() -> None:
 
 
 def _init_editor() -> None:
-    global home_button, level_info_button, editor_button
+    global home_button
+    global level_info_button
+    global editor_button
+    global block_edit_button
 
     register_tab_widget(HomeWidgetIdentifier, HomeWidget)
     register_tab_widget(LevelInfoWidgetIdentifier, LevelInfoWidget)
     register_tab_widget(SelectionWidgetIdentifier, SelectionWidget)
+    register_tab_widget(BlockEditWidgetIdentifier, BlockEditWidget)
     register_tab_widget(View3DWidgetIdentifier, View3DWidget)
 
     register_layout(
@@ -152,6 +160,27 @@ def _init_editor() -> None:
         editor_button.set_icon(tablericons.outline.cube_3d_sphere)
         editor_button.set_name("3D Editor")
 
+        register_layout(
+            BlockEditLayoutId,
+            LayoutConfig(
+                WindowConfig(
+                    None,
+                    None,
+                    SplitterConfig(
+                        WidgetStackConfig((WidgetConfig(BlockEditWidgetIdentifier),)),
+                        WidgetStackConfig((WidgetConfig(View3DWidgetIdentifier),)),
+                        Qt.Orientation.Horizontal,
+                        0.1,
+                    ),
+                ),
+                (),
+            ),
+        )
+
+        block_edit_button = create_layout_button(BlockEditLayoutId)
+        block_edit_button.set_icon(tablericons.outline.cube)
+        block_edit_button.set_name("Block Editor")
+
 
 def _destroy_editor() -> None:
     if home_button is not None:
@@ -166,9 +195,14 @@ def _destroy_editor() -> None:
         editor_button.delete()
         unregister_layout(EditorLayoutId)
 
+    if block_edit_button is not None:
+        block_edit_button.delete()
+        unregister_layout(BlockEditLayoutId)
+
     unregister_tab_widget(HomeWidgetIdentifier)
     unregister_tab_widget(LevelInfoWidgetIdentifier)
     unregister_tab_widget(SelectionWidgetIdentifier)
+    unregister_tab_widget(BlockEditWidgetIdentifier)
     unregister_tab_widget(View3DWidgetIdentifier)
 
 
