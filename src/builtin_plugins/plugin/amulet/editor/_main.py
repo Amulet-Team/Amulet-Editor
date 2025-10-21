@@ -20,25 +20,25 @@ from amulet.app.localisation import Translator, locale_changed
 from plugin.tablericons import tablericons
 from plugin.amulet.level import get_main_level, set_main_level
 
-from plugin.amulet.editor import __path__ as editor_plugin_path
-from plugin.amulet.editor.window._main_window import (
+from . import __path__ as editor_plugin_path
+from .window._main_window import (
     init_main_window,
     get_main_window,
     destroy_main_window,
     ButtonProxy,
 )
-from plugin.amulet.editor.widget._home import HomeWidget, HomeWidgetIdentifier
-from plugin.amulet.editor.widget._level_info import (
+from .widget._home import HomeWidget, HomeWidgetIdentifier
+from .widget._level_info import (
     LevelInfoWidget,
     LevelInfoWidgetIdentifier,
 )
-from plugin.amulet.editor.widget._selection import (
+from .widget._selection import (
     SelectionWidget,
     SelectionWidgetIdentifier,
 )
-from plugin.amulet.editor.widget._view_3d import View3DWidget, View3DWidgetIdentifier
-from plugin.amulet.editor.widget import register_tab_widget, unregister_tab_widget
-from plugin.amulet.editor.layout import (
+from .widget._view_3d import View3DWidget, View3DWidgetIdentifier
+from .widget import register_tab_widget, unregister_tab_widget
+from .layout import (
     register_layout,
     unregister_layout,
     LayoutConfig,
@@ -48,7 +48,7 @@ from plugin.amulet.editor.layout import (
     WidgetConfig,
     create_layout_button,
 )
-from plugin.amulet.editor._signal import init_editor, destroy_editor
+from ._signal import init_editor, destroy_editor
 
 log = logging.getLogger(__name__)
 
