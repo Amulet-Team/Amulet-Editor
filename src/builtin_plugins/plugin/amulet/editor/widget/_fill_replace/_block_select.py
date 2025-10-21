@@ -94,8 +94,8 @@ class BlockSelect(QWidget):
 
     def _update_block(self, version: GameVersion) -> None:
         log.debug("Updating block")
-        while item := self._properties_layout.takeAt(0):
-            if widget := item.widget():
+        while (item := self._properties_layout.takeAt(0)) is not None:
+            if (widget := item.widget()) is not None:
                 widget.deleteLater()
         try:
             spec = version.block.get_specification(self._namespace_select.currentText(), self._base_name_select.currentText())
