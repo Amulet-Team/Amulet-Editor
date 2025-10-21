@@ -118,3 +118,31 @@ class BlockSelect(QWidget):
             else:
                 self._snbt_input.show()
                 self._snbt_input.setText(spec.nbt.snbt)
+
+
+def main() -> None:
+    from PySide6.QtWidgets import QApplication
+
+    logging.basicConfig(level=logging.DEBUG, force=True)
+
+    app = QApplication()
+
+    window = QWidget()
+    layout_1 = QVBoxLayout(window)
+    layout_1.setContentsMargins(0, 0, 0, 0)
+    layout_2 = QHBoxLayout()
+    layout_2.setContentsMargins(0, 0, 0, 0)
+    layout_1.addLayout(layout_2)
+    layout_1.addStretch(1)
+
+    widget = BlockSelect()
+    layout_2.addWidget(widget)
+    layout_2.addStretch(1)
+
+    window.show()
+
+    app.exec()
+
+
+if __name__ == "__main__":
+    main()
