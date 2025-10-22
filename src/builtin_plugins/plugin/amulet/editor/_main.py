@@ -65,6 +65,14 @@ level_info_button: ButtonProxy | None = None
 SelectLayoutId = "amulet.editor"
 select_button: ButtonProxy | None = None
 
+BrushLayoutId = "amulet.brush"
+brush_button: ButtonProxy | None = None
+
+ChunkLayoutId = "amulet.chunk"
+chunk_button: ButtonProxy | None = None
+
+ConvertLayoutId = "amulet.convert"
+convert_button: ButtonProxy | None = None
 
 def _init_app() -> None:
     app = QApplication.instance()
@@ -86,7 +94,12 @@ def _load_translations() -> None:
 
 
 def _init_editor() -> None:
-    global home_button, level_info_button, editor_button
+    global home_button
+    global level_info_button
+    global select_button
+    global brush_button
+    global chunk_button
+    global convert_button
 
     register_tab_widget(HomeWidgetIdentifier, HomeWidget)
     register_tab_widget(LevelInfoWidgetIdentifier, LevelInfoWidget)
@@ -153,6 +166,59 @@ def _init_editor() -> None:
         select_button.set_name("Select")
 
 
+        register_layout(
+            BrushLayoutId,
+            LayoutConfig(
+                WindowConfig(
+                    None,
+                    None,
+                    SplitterConfig(
+                        WidgetStackConfig((WidgetConfig(SelectionWidgetIdentifier),)),
+                        WidgetStackConfig((WidgetConfig(View3DWidgetIdentifier),)),
+                        Qt.Orientation.Horizontal,
+                        0.1,
+                    ),
+                ),
+                (),
+            ),
+        )
+
+        brush_button = create_layout_button(BrushLayoutId)
+        brush_button.set_icon(tablericons.outline.brush)
+        brush_button.set_name("Brush")
+
+        register_layout(
+            ChunkLayoutId,
+            LayoutConfig(
+                WindowConfig(
+                    None,
+                    None,
+                    WidgetStackConfig((WidgetConfig(View3DWidgetIdentifier),)),
+                ),
+                (),
+            ),
+        )
+
+        chunk_button = create_layout_button(ChunkLayoutId)
+        chunk_button.set_icon(tablericons.filled.stack_3)
+        chunk_button.set_name("Chunk")
+
+        register_layout(
+            ConvertLayoutId,
+            LayoutConfig(
+                WindowConfig(
+                    None,
+                    None,
+                    WidgetStackConfig((WidgetConfig(View3DWidgetIdentifier),)),
+                ),
+                (),
+            ),
+        )
+
+        chunk_button = create_layout_button(ConvertLayoutId)
+        chunk_button.set_icon(tablericons.filled.arrow_big_right_lines)
+        chunk_button.set_name("Convert")
+
 def _destroy_editor() -> None:
     if home_button is not None:
         home_button.delete()
@@ -165,6 +231,18 @@ def _destroy_editor() -> None:
     if select_button is not None:
         select_button.delete()
         unregister_layout(SelectLayoutId)
+
+    if brush_button is not None:
+        brush_button.delete()
+        unregister_layout(BrushLayoutId)
+
+    if chunk_button is not None:
+        chunk_button.delete()
+        unregister_layout(ChunkLayoutId)
+
+    if convert_button is not None:
+        convert_button.delete()
+        unregister_layout(ConvertLayoutId)
 
     unregister_tab_widget(HomeWidgetIdentifier)
     unregister_tab_widget(LevelInfoWidgetIdentifier)
