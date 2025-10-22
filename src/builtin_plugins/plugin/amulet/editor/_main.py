@@ -74,6 +74,7 @@ chunk_button: ButtonProxy | None = None
 ConvertLayoutId = "amulet.convert"
 convert_button: ButtonProxy | None = None
 
+
 def _init_app() -> None:
     app = QApplication.instance()
     if not isinstance(app, QApplication):
@@ -165,7 +166,6 @@ def _init_editor() -> None:
         select_button.set_icon(tablericons.outline.cube_3d_sphere)
         select_button.set_name("Select")
 
-
         register_layout(
             BrushLayoutId,
             LayoutConfig(
@@ -218,6 +218,7 @@ def _init_editor() -> None:
         chunk_button = create_layout_button(ConvertLayoutId)
         chunk_button.set_icon(tablericons.filled.arrow_big_right_lines)
         chunk_button.set_name("Convert")
+
 
 def _destroy_editor() -> None:
     if home_button is not None:
