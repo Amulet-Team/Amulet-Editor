@@ -31,14 +31,14 @@ class TreeWidgetItem(QTreeWidgetItem):
 class Overlay(QWidget):
     """A class to implement cuboid highlighting."""
 
-    def __init__(self, origin: QPoint, size: QSize) -> None:
-        super().__init__()
+    def __init__(self, parent: QWidget) -> None:
+        super().__init__(parent)
         self.setWindowFlags(Qt.WindowType.FramelessWindowHint)
         self.setAttribute(Qt.WidgetAttribute.WA_TranslucentBackground)
         self.setAttribute(Qt.WidgetAttribute.WA_TransparentForMouseEvents)
 
-        self.move(origin)
-        self.resize(size)
+        self.move(QPoint())
+        self.resize(parent.size())
         self.show()
 
     def paintEvent(self, event: QPaintEvent) -> None:
@@ -106,9 +106,7 @@ class InspectorTool(Ui_InspectionTool):
                 else:
                     self._remove_highlight()
 
-            self._highlight = widget, Overlay(
-                widget.mapToGlobal(QPoint()), widget.size()
-            )
+            self._highlight = widget, Overlay(widget)
         else:
             super().mouseMoveEvent(event)
 
