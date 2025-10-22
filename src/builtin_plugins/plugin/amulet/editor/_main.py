@@ -20,25 +20,25 @@ from amulet.app.localisation import Translator, locale_changed
 from plugin.tablericons import tablericons
 from plugin.amulet.level import get_main_level, set_main_level
 
-from plugin.amulet.editor import __path__ as editor_plugin_path
-from plugin.amulet.editor.window._main_window import (
+from . import __path__ as editor_plugin_path
+from .window._main_window import (
     init_main_window,
     get_main_window,
     destroy_main_window,
     ButtonProxy,
 )
-from plugin.amulet.editor.widget._home import HomeWidget, HomeWidgetIdentifier
-from plugin.amulet.editor.widget._level_info import (
+from .widget._home import HomeWidget, HomeWidgetIdentifier
+from .widget._level_info import (
     LevelInfoWidget,
     LevelInfoWidgetIdentifier,
 )
-from plugin.amulet.editor.widget._selection import (
+from .widget._selection import (
     SelectionWidget,
     SelectionWidgetIdentifier,
 )
-from plugin.amulet.editor.widget._view_3d import View3DWidget, View3DWidgetIdentifier
-from plugin.amulet.editor.widget import register_tab_widget, unregister_tab_widget
-from plugin.amulet.editor.layout import (
+from .widget._view_3d import View3DWidget, View3DWidgetIdentifier
+from .widget import register_tab_widget, unregister_tab_widget
+from .layout import (
     register_layout,
     unregister_layout,
     LayoutConfig,
@@ -48,7 +48,7 @@ from plugin.amulet.editor.layout import (
     WidgetConfig,
     create_layout_button,
 )
-from plugin.amulet.editor._signal import init_editor, destroy_editor
+from ._signal import init_editor, destroy_editor
 
 log = logging.getLogger(__name__)
 
@@ -62,8 +62,17 @@ home_button: ButtonProxy | None = None
 LevelInfoLayoutID = "amulet.level_info"
 level_info_button: ButtonProxy | None = None
 
-EditorLayoutId = "amulet.editor"
-editor_button: ButtonProxy | None = None
+SelectLayoutId = "amulet.editor"
+select_button: ButtonProxy | None = None
+
+BrushLayoutId = "amulet.brush"
+brush_button: ButtonProxy | None = None
+
+ChunkLayoutId = "amulet.chunk"
+chunk_button: ButtonProxy | None = None
+
+ConvertLayoutId = "amulet.convert"
+convert_button: ButtonProxy | None = None
 
 
 def _init_app() -> None:
@@ -86,7 +95,12 @@ def _load_translations() -> None:
 
 
 def _init_editor() -> None:
-    global home_button, level_info_button, editor_button
+    global home_button
+    global level_info_button
+    global select_button
+    global brush_button
+    global chunk_button
+    global convert_button
 
     register_tab_widget(HomeWidgetIdentifier, HomeWidget)
     register_tab_widget(LevelInfoWidgetIdentifier, LevelInfoWidget)
@@ -131,7 +145,7 @@ def _init_editor() -> None:
         level_info_button.click()
 
         register_layout(
-            EditorLayoutId,
+            SelectLayoutId,
             LayoutConfig(
                 WindowConfig(
                     None,
@@ -140,7 +154,7 @@ def _init_editor() -> None:
                         WidgetStackConfig((WidgetConfig(SelectionWidgetIdentifier),)),
                         WidgetStackConfig((WidgetConfig(View3DWidgetIdentifier),)),
                         Qt.Orientation.Horizontal,
-                        0.25,
+                        0.1,
                     ),
                 ),
                 (),
@@ -148,9 +162,62 @@ def _init_editor() -> None:
         )
 
         # Set up the 3D View button
-        editor_button = create_layout_button(EditorLayoutId)
-        editor_button.set_icon(tablericons.outline.cube_3d_sphere)
-        editor_button.set_name("3D Editor")
+        select_button = create_layout_button(SelectLayoutId)
+        select_button.set_icon(tablericons.outline.cube_3d_sphere)
+        select_button.set_name("Select")
+
+        register_layout(
+            BrushLayoutId,
+            LayoutConfig(
+                WindowConfig(
+                    None,
+                    None,
+                    SplitterConfig(
+                        WidgetStackConfig((WidgetConfig(SelectionWidgetIdentifier),)),
+                        WidgetStackConfig((WidgetConfig(View3DWidgetIdentifier),)),
+                        Qt.Orientation.Horizontal,
+                        0.1,
+                    ),
+                ),
+                (),
+            ),
+        )
+
+        brush_button = create_layout_button(BrushLayoutId)
+        brush_button.set_icon(tablericons.outline.brush)
+        brush_button.set_name("Brush")
+
+        register_layout(
+            ChunkLayoutId,
+            LayoutConfig(
+                WindowConfig(
+                    None,
+                    None,
+                    WidgetStackConfig((WidgetConfig(View3DWidgetIdentifier),)),
+                ),
+                (),
+            ),
+        )
+
+        chunk_button = create_layout_button(ChunkLayoutId)
+        chunk_button.set_icon(tablericons.filled.stack_3)
+        chunk_button.set_name("Chunk")
+
+        register_layout(
+            ConvertLayoutId,
+            LayoutConfig(
+                WindowConfig(
+                    None,
+                    None,
+                    WidgetStackConfig((WidgetConfig(View3DWidgetIdentifier),)),
+                ),
+                (),
+            ),
+        )
+
+        chunk_button = create_layout_button(ConvertLayoutId)
+        chunk_button.set_icon(tablericons.filled.arrow_big_right_lines)
+        chunk_button.set_name("Convert")
 
 
 def _destroy_editor() -> None:
@@ -162,9 +229,21 @@ def _destroy_editor() -> None:
         level_info_button.delete()
         unregister_layout(LevelInfoLayoutID)
 
-    if editor_button is not None:
-        editor_button.delete()
-        unregister_layout(EditorLayoutId)
+    if select_button is not None:
+        select_button.delete()
+        unregister_layout(SelectLayoutId)
+
+    if brush_button is not None:
+        brush_button.delete()
+        unregister_layout(BrushLayoutId)
+
+    if chunk_button is not None:
+        chunk_button.delete()
+        unregister_layout(ChunkLayoutId)
+
+    if convert_button is not None:
+        convert_button.delete()
+        unregister_layout(ConvertLayoutId)
 
     unregister_tab_widget(HomeWidgetIdentifier)
     unregister_tab_widget(LevelInfoWidgetIdentifier)
