@@ -63,8 +63,17 @@ home_button: ButtonProxy | None = None
 LevelInfoLayoutID = "amulet.level_info"
 level_info_button: ButtonProxy | None = None
 
-EditorLayoutId = "amulet.editor"
-editor_button: ButtonProxy | None = None
+SelectLayoutId = "amulet.editor"
+select_button: ButtonProxy | None = None
+
+BrushLayoutId = "amulet.brush"
+brush_button: ButtonProxy | None = None
+
+ChunkLayoutId = "amulet.chunk"
+chunk_button: ButtonProxy | None = None
+
+ConvertLayoutId = "amulet.convert"
+convert_button: ButtonProxy | None = None
 
 BlockEditLayoutId = "amulet.block_editor"
 block_edit_button: ButtonProxy | None = None
@@ -92,8 +101,11 @@ def _load_translations() -> None:
 def _init_editor() -> None:
     global home_button
     global level_info_button
-    global editor_button
     global block_edit_button
+    global select_button
+    global brush_button
+    global chunk_button
+    global convert_button
 
     register_tab_widget(HomeWidgetIdentifier, HomeWidget)
     register_tab_widget(LevelInfoWidgetIdentifier, LevelInfoWidget)
@@ -139,7 +151,7 @@ def _init_editor() -> None:
         level_info_button.click()
 
         register_layout(
-            EditorLayoutId,
+            SelectLayoutId,
             LayoutConfig(
                 WindowConfig(
                     None,
@@ -148,7 +160,7 @@ def _init_editor() -> None:
                         WidgetStackConfig((WidgetConfig(SelectionWidgetIdentifier),)),
                         WidgetStackConfig((WidgetConfig(View3DWidgetIdentifier),)),
                         Qt.Orientation.Horizontal,
-                        0.25,
+                        0.1,
                     ),
                 ),
                 (),
@@ -156,9 +168,62 @@ def _init_editor() -> None:
         )
 
         # Set up the 3D View button
-        editor_button = create_layout_button(EditorLayoutId)
-        editor_button.set_icon(tablericons.outline.cube_3d_sphere)
-        editor_button.set_name("3D Editor")
+        select_button = create_layout_button(SelectLayoutId)
+        select_button.set_icon(tablericons.outline.cube_3d_sphere)
+        select_button.set_name("Select")
+
+        register_layout(
+            BrushLayoutId,
+            LayoutConfig(
+                WindowConfig(
+                    None,
+                    None,
+                    SplitterConfig(
+                        WidgetStackConfig((WidgetConfig(SelectionWidgetIdentifier),)),
+                        WidgetStackConfig((WidgetConfig(View3DWidgetIdentifier),)),
+                        Qt.Orientation.Horizontal,
+                        0.1,
+                    ),
+                ),
+                (),
+            ),
+        )
+
+        brush_button = create_layout_button(BrushLayoutId)
+        brush_button.set_icon(tablericons.outline.brush)
+        brush_button.set_name("Brush")
+
+        register_layout(
+            ChunkLayoutId,
+            LayoutConfig(
+                WindowConfig(
+                    None,
+                    None,
+                    WidgetStackConfig((WidgetConfig(View3DWidgetIdentifier),)),
+                ),
+                (),
+            ),
+        )
+
+        chunk_button = create_layout_button(ChunkLayoutId)
+        chunk_button.set_icon(tablericons.filled.stack_3)
+        chunk_button.set_name("Chunk")
+
+        register_layout(
+            ConvertLayoutId,
+            LayoutConfig(
+                WindowConfig(
+                    None,
+                    None,
+                    WidgetStackConfig((WidgetConfig(View3DWidgetIdentifier),)),
+                ),
+                (),
+            ),
+        )
+
+        chunk_button = create_layout_button(ConvertLayoutId)
+        chunk_button.set_icon(tablericons.filled.arrow_big_right_lines)
+        chunk_button.set_name("Convert")
 
         register_layout(
             BlockEditLayoutId,
@@ -191,9 +256,21 @@ def _destroy_editor() -> None:
         level_info_button.delete()
         unregister_layout(LevelInfoLayoutID)
 
-    if editor_button is not None:
-        editor_button.delete()
-        unregister_layout(EditorLayoutId)
+    if select_button is not None:
+        select_button.delete()
+        unregister_layout(SelectLayoutId)
+
+    if brush_button is not None:
+        brush_button.delete()
+        unregister_layout(BrushLayoutId)
+
+    if chunk_button is not None:
+        chunk_button.delete()
+        unregister_layout(ChunkLayoutId)
+
+    if convert_button is not None:
+        convert_button.delete()
+        unregister_layout(ConvertLayoutId)
 
     if block_edit_button is not None:
         block_edit_button.delete()
