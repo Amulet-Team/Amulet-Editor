@@ -37,6 +37,7 @@ from plugin.amulet.editor.widget._selection import (
     SelectionWidgetIdentifier,
 )
 from plugin.amulet.editor.widget._view_3d import View3DWidget, View3DWidgetIdentifier
+from .widget._fill_replace import FillReplaceWidget, FillReplaceWidgetIdentifier
 from plugin.amulet.editor.widget import register_tab_widget, unregister_tab_widget
 from plugin.amulet.editor.layout import (
     register_layout,
@@ -65,6 +66,9 @@ level_info_button: ButtonProxy | None = None
 EditorLayoutId = "amulet.editor"
 editor_button: ButtonProxy | None = None
 
+FillLayoutId = "amulet.fill"
+fill_button: ButtonProxy | None = None
+
 
 def _init_app() -> None:
     app = QApplication.instance()
@@ -86,12 +90,16 @@ def _load_translations() -> None:
 
 
 def _init_editor() -> None:
-    global home_button, level_info_button, editor_button
+    global home_button
+    global level_info_button
+    global editor_button
+    global fill_button
 
     register_tab_widget(HomeWidgetIdentifier, HomeWidget)
     register_tab_widget(LevelInfoWidgetIdentifier, LevelInfoWidget)
     register_tab_widget(SelectionWidgetIdentifier, SelectionWidget)
     register_tab_widget(View3DWidgetIdentifier, View3DWidget)
+    register_tab_widget(FillReplaceWidgetIdentifier, FillReplaceWidget)
 
     register_layout(
         HomeLayoutID,
@@ -152,6 +160,31 @@ def _init_editor() -> None:
         editor_button.set_icon(tablericons.outline.cube_3d_sphere)
         editor_button.set_name("3D Editor")
 
+        register_layout(
+            FillLayoutId,
+            LayoutConfig(
+                WindowConfig(
+                    None,
+                    None,
+                    SplitterConfig(
+                        WidgetStackConfig((WidgetConfig(SelectionWidgetIdentifier),)),
+                        SplitterConfig(
+                            WidgetStackConfig((WidgetConfig(View3DWidgetIdentifier),)),
+                            WidgetStackConfig((WidgetConfig(FillReplaceWidgetIdentifier),)),
+                            Qt.Orientation.Horizontal,
+                            0.9,
+                        ),
+                        Qt.Orientation.Horizontal,
+                        0.1,
+                    ),
+                ),
+                (),
+            ),
+        )
+
+        fill_button = create_layout_button(FillLayoutId)
+        fill_button.set_icon(tablericons.outline.bucket_droplet)
+        fill_button.set_name("Fill")
 
 def _destroy_editor() -> None:
     if home_button is not None:
@@ -166,10 +199,15 @@ def _destroy_editor() -> None:
         editor_button.delete()
         unregister_layout(EditorLayoutId)
 
+    if fill_button is not None:
+        fill_button.delete()
+        unregister_layout(FillLayoutId)
+
     unregister_tab_widget(HomeWidgetIdentifier)
     unregister_tab_widget(LevelInfoWidgetIdentifier)
     unregister_tab_widget(SelectionWidgetIdentifier)
     unregister_tab_widget(View3DWidgetIdentifier)
+    unregister_tab_widget(FillReplaceWidgetIdentifier)
 
 
 def _main(args: FullArgs) -> None:
