@@ -36,8 +36,9 @@ from .widget._selection import (
     SelectionWidget,
     SelectionWidgetIdentifier,
 )
-from .widget._block_inspect import BlockEditWidget, BlockEditWidgetIdentifier
 from .widget._view_3d import View3DWidget, View3DWidgetIdentifier
+from .widget._block_inspect import BlockEditWidget, BlockEditWidgetIdentifier
+from .widget._fill_replace import FillReplaceWidget, FillReplaceWidgetIdentifier
 from .widget import register_tab_widget, unregister_tab_widget
 from .layout import (
     register_layout,
@@ -78,6 +79,9 @@ convert_button: ButtonProxy | None = None
 BlockEditLayoutId = "amulet.block_editor"
 block_edit_button: ButtonProxy | None = None
 
+FillLayoutId = "amulet.fill"
+fill_button: ButtonProxy | None = None
+
 
 def _init_app() -> None:
     app = QApplication.instance()
@@ -101,8 +105,9 @@ def _load_translations() -> None:
 def _init_editor() -> None:
     global home_button
     global level_info_button
-    global block_edit_button
     global select_button
+    global block_edit_button
+    global fill_button
     global brush_button
     global chunk_button
     global convert_button
@@ -112,6 +117,7 @@ def _init_editor() -> None:
     register_tab_widget(SelectionWidgetIdentifier, SelectionWidget)
     register_tab_widget(BlockEditWidgetIdentifier, BlockEditWidget)
     register_tab_widget(View3DWidgetIdentifier, View3DWidget)
+    register_tab_widget(FillReplaceWidgetIdentifier, FillReplaceWidget)
 
     register_layout(
         HomeLayoutID,
@@ -246,6 +252,34 @@ def _init_editor() -> None:
         block_edit_button.set_icon(tablericons.outline.cube)
         block_edit_button.set_name("Block Editor")
 
+        register_layout(
+            FillLayoutId,
+            LayoutConfig(
+                WindowConfig(
+                    None,
+                    None,
+                    SplitterConfig(
+                        WidgetStackConfig((WidgetConfig(SelectionWidgetIdentifier),)),
+                        SplitterConfig(
+                            WidgetStackConfig((WidgetConfig(View3DWidgetIdentifier),)),
+                            WidgetStackConfig(
+                                (WidgetConfig(FillReplaceWidgetIdentifier),)
+                            ),
+                            Qt.Orientation.Horizontal,
+                            0.9,
+                        ),
+                        Qt.Orientation.Horizontal,
+                        0.1,
+                    ),
+                ),
+                (),
+            ),
+        )
+
+        fill_button = create_layout_button(FillLayoutId)
+        fill_button.set_icon(tablericons.outline.bucket_droplet)
+        fill_button.set_name("Fill")
+
 
 def _destroy_editor() -> None:
     if home_button is not None:
@@ -276,11 +310,16 @@ def _destroy_editor() -> None:
         block_edit_button.delete()
         unregister_layout(BlockEditLayoutId)
 
+    if fill_button is not None:
+        fill_button.delete()
+        unregister_layout(FillLayoutId)
+
     unregister_tab_widget(HomeWidgetIdentifier)
     unregister_tab_widget(LevelInfoWidgetIdentifier)
     unregister_tab_widget(SelectionWidgetIdentifier)
     unregister_tab_widget(BlockEditWidgetIdentifier)
     unregister_tab_widget(View3DWidgetIdentifier)
+    unregister_tab_widget(FillReplaceWidgetIdentifier)
 
 
 def _main(args: FullArgs) -> None:

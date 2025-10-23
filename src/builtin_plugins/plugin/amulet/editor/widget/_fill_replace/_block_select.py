@@ -6,17 +6,14 @@ from PySide6.QtWidgets import (
     QComboBox,
     QVBoxLayout,
     QHBoxLayout,
-    QGridLayout,
     QLabel,
-    QLineEdit,
     QTextEdit,
 )
 
-from amulet.nbt import read_snbt, ByteTag, ShortTag, IntTag, LongTag, StringTag
-
-from amulet.core.block import Block, BlockStack
-from amulet.core.block_entity import BlockEntity
+from amulet.core.block import Block
 from amulet.core.version import VersionNumber
+
+from amulet.nbt import read_snbt, ByteTag, ShortTag, IntTag, LongTag, StringTag
 
 from amulet.game import get_game_platforms, get_game_versions, get_game_version
 from amulet.game.abc import GameVersion
@@ -63,11 +60,9 @@ class PropertySelect(QWidget):
             self._property.setCurrentIndex(index)
 
 
-class BlockEdit(QWidget):
-    # def __init__(self, is_extra_block: bool) -> None:
-    def __init__(self) -> None:
+class BlockSelect(QWidget):
+    def __init__(self, show_block_entity: bool = True) -> None:
         super().__init__()
-        # self._is_extra_block = is_extra_block
 
         self._layout = QVBoxLayout(self)
         self._layout.setContentsMargins(0, 0, 0, 0)
@@ -79,7 +74,6 @@ class BlockEdit(QWidget):
         self._layout.addWidget(self._versions_select)
 
         self._namespace_select = QComboBox()
-        self._namespace_select.setEditable(True)
         self._layout.addWidget(self._namespace_select)
 
         self._base_name_select = QComboBox()
@@ -93,9 +87,10 @@ class BlockEdit(QWidget):
         self._properties_layout = QVBoxLayout()
         self._properties_layout_container.addLayout(self._properties_layout)
 
-        # self._snbt_input = QTextEdit()
-        # self._layout.addWidget(self._snbt_input)
-        # self._snbt_input.setVisible(not self._is_extra_block)
+        self._show_block_entity = show_block_entity
+        self._snbt_input = QTextEdit()
+        self._snbt_input.setVisible(self._show_block_entity)
+        self._layout.addWidget(self._snbt_input)
 
         self._layout.addStretch(1)
 
@@ -118,62 +113,19 @@ class BlockEdit(QWidget):
             self.get_properties(),
         )
 
-    def set_block(self, block: Block) -> None:
-        with QSignalBlocker(self._platform_select):
-            self.set_platform(block.platform)
-        self._update_version()
-        with QSignalBlocker(self._versions_select):
-            self.set_version(block.version)
-        game_version = self._get_game_version()
-        self._update_namespace(game_version)
-        with QSignalBlocker(self._namespace_select):
-            self.set_namespace(block.namespace)
-        self._update_base_name(game_version)
-        with QSignalBlocker(self._base_name_select):
-            self.set_base_name(block.base_name)
-        self._update_block(game_version)
-        self.set_properties(block.properties)
-
     def get_platform(self) -> str:
         return self._platform_select.currentText()
-
-    def set_platform(self, platform: str) -> None:
-        index = self._platform_select.findText(platform)
-        if index == -1:
-            raise RuntimeError(f"Platform {platform} not found.")
-        self._platform_select.setCurrentIndex(index)
 
     def get_version(self) -> VersionNumber:
         return VersionNumber(
             *[int(arg) for arg in self._versions_select.currentText().split(".")]
         )
 
-    def set_version(self, version: VersionNumber) -> None:
-        index = self._versions_select.findData(version)
-        if index == -1:
-            self._versions_select.setCurrentText(str(version))
-        else:
-            self._versions_select.setCurrentIndex(index)
-
     def get_namespace(self) -> str:
         return self._namespace_select.currentText()
 
-    def set_namespace(self, namespace: str) -> None:
-        index = self._namespace_select.findData(namespace)
-        if index == -1:
-            self._namespace_select.setCurrentText(namespace)
-        else:
-            self._namespace_select.setCurrentIndex(index)
-
     def get_base_name(self) -> str:
         return self._base_name_select.currentText()
-
-    def set_base_name(self, base_name: str) -> None:
-        index = self._base_name_select.findData(base_name)
-        if index == -1:
-            self._base_name_select.setCurrentText(base_name)
-        else:
-            self._base_name_select.setCurrentIndex(index)
 
     def _get_property_widgets(self) -> list[PropertySelect]:
         widgets: list[PropertySelect] = []
@@ -193,25 +145,13 @@ class BlockEdit(QWidget):
             for widget in self._get_property_widgets()
         }
 
-    def set_properties(self, properties: dict[str, Block.PropertyValue]) -> None:
-        widgets: dict[str, PropertySelect] = {
-            widget.get_name(): widget for widget in self._get_property_widgets()
-        }
-        for name, value in properties.items():
-            widget = widgets.get(name)
-            if widget is None:
-                continue
-            if value is not None:
-                widget.set_value(value)
-            else:
-                # TODO: populate the GUI with this somehow?
-                continue
-
     def _get_game_version(self) -> GameVersion:
-        return get_game_version(self.get_platform(), self.get_version())
+        return get_game_version(
+            self._platform_select.currentText(), self._versions_select.currentData()
+        )
 
     def _on_platform_change(self) -> None:
-        self._update_version_recursive()
+        self._update_version()
 
     def _update_version(self) -> None:
         log.debug("Updating version")
@@ -219,17 +159,16 @@ class BlockEdit(QWidget):
             self._versions_select.clear()
             for version in sorted(
                 game_version.min_version
-                for game_version in get_game_versions(self.get_platform())
+                for game_version in get_game_versions(
+                    self._platform_select.currentText()
+                )
             ):
                 self._versions_select.addItem(str(version), version)
             self._versions_select.setCurrentIndex(self._versions_select.count() - 1)
-
-    def _update_version_recursive(self) -> None:
-        self._update_version()
-        self._update_namespace_recursive(self._get_game_version())
+        self._update_namespace(self._get_game_version())
 
     def _on_version_change(self) -> None:
-        self._update_namespace_recursive(self._get_game_version())
+        self._update_namespace(self._get_game_version())
 
     def _update_namespace(self, version: GameVersion) -> None:
         log.debug("Updating namespace")
@@ -237,25 +176,19 @@ class BlockEdit(QWidget):
             self._namespace_select.clear()
             self._namespace_select.addItems(sorted(version.block.namespaces()))
             self._namespace_select.setCurrentIndex(0)
-
-    def _update_namespace_recursive(self, version: GameVersion) -> None:
-        self._update_namespace(version)
-        self._update_base_name_recursive(version)
+        self._update_base_name(version)
 
     def _on_namespace_change(self) -> None:
-        self._update_base_name_recursive(self._get_game_version())
+        self._update_base_name(self._get_game_version())
 
     def _update_base_name(self, version: GameVersion) -> None:
         log.debug("Updating base name")
         with QSignalBlocker(self._base_name_select):
             self._base_name_select.clear()
             self._base_name_select.addItems(
-                sorted(version.block.base_names(self.get_namespace()))
+                sorted(version.block.base_names(self._namespace_select.currentText()))
             )
             self._base_name_select.setCurrentIndex(0)
-
-    def _update_base_name_recursive(self, version: GameVersion) -> None:
-        self._update_base_name(version)
         self._update_block(version)
 
     def _on_base_name_change(self) -> None:
@@ -268,7 +201,8 @@ class BlockEdit(QWidget):
                 widget.deleteLater()
         try:
             spec = version.block.get_specification(
-                self.get_namespace(), self.get_base_name()
+                self._namespace_select.currentText(),
+                self._base_name_select.currentText(),
             )
         except KeyError:
             pass
@@ -285,12 +219,13 @@ class BlockEdit(QWidget):
                 property_widget = PropertySelect(name, states, index)
                 self._properties_layout.addWidget(property_widget)
 
-            # if self._is_extra_block or spec.nbt is None:
-            #     self._snbt_input.hide()
-            #     self._snbt_input.clear()
-            # else:
-            #     self._snbt_input.show()
-            #     self._snbt_input.setText(spec.nbt.snbt)
+            if self._show_block_entity:
+                if spec.nbt is None:
+                    self._snbt_input.hide()
+                    self._snbt_input.clear()
+                else:
+                    self._snbt_input.show()
+                    self._snbt_input.setText(read_snbt(spec.nbt.snbt).to_snbt("    "))
 
 
 def main() -> None:
@@ -308,7 +243,7 @@ def main() -> None:
     layout_1.addLayout(layout_2)
     layout_1.addStretch(1)
 
-    widget = BlockEdit()
+    widget = BlockSelect()
     layout_2.addWidget(widget)
     layout_2.addStretch(1)
 
