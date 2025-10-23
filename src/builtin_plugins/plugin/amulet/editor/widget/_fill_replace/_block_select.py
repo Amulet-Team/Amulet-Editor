@@ -10,6 +10,9 @@ from PySide6.QtWidgets import (
     QTextEdit,
 )
 
+from amulet.core.block import Block
+from amulet.core.version import VersionNumber
+
 from amulet.nbt import read_snbt, ByteTag, ShortTag, IntTag, LongTag, StringTag
 
 from amulet.game import get_game_platforms, get_game_versions, get_game_version
@@ -100,6 +103,47 @@ class BlockSelect(QWidget):
             platform for platform in get_game_platforms() if platform != "universal"
         ]
         self._platform_select.addItems(platforms)
+
+    def get_block(self) -> Block:
+        return Block(
+            self.get_platform(),
+            self.get_version(),
+            self.get_namespace(),
+            self.get_base_name(),
+            self.get_properties(),
+        )
+
+    def get_platform(self) -> str:
+        return self._platform_select.currentText()
+
+    def get_version(self) -> VersionNumber:
+        return VersionNumber(
+            *[int(arg) for arg in self._versions_select.currentText().split(".")]
+        )
+
+    def get_namespace(self) -> str:
+        return self._namespace_select.currentText()
+
+    def get_base_name(self) -> str:
+        return self._base_name_select.currentText()
+
+    def _get_property_widgets(self) -> list[PropertySelect]:
+        widgets: list[PropertySelect] = []
+        for i in range(0, self._properties_layout.count()):
+            item = self._properties_layout.itemAt(i)
+            if item is None:
+                raise RuntimeError
+            widget = item.widget()
+            if not isinstance(widget, PropertySelect):
+                raise RuntimeError
+            widgets.append(widget)
+        return widgets
+
+    def get_properties(self) -> dict[str, Block.PropertyValue]:
+        return {
+            widget.get_name(): widget.get_value()
+            for widget in self._get_property_widgets()
+        }
 
     def _get_game_version(self) -> GameVersion:
         return get_game_version(
