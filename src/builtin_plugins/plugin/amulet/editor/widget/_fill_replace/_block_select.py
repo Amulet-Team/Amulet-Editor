@@ -1,7 +1,15 @@
 import logging
 
 from PySide6.QtCore import QSignalBlocker
-from PySide6.QtWidgets import QWidget, QComboBox, QVBoxLayout, QHBoxLayout, QGridLayout, QLabel, QTextEdit
+from PySide6.QtWidgets import (
+    QWidget,
+    QComboBox,
+    QVBoxLayout,
+    QHBoxLayout,
+    QGridLayout,
+    QLabel,
+    QTextEdit,
+)
 
 from amulet.game import get_game_platforms, get_game_versions, get_game_version
 from amulet.game.abc import GameVersion
@@ -50,7 +58,9 @@ class BlockSelect(QWidget):
         self._platform_select.addItems(platforms)
 
     def _get_game_version(self) -> GameVersion:
-        return get_game_version(self._platform_select.currentText(), self._versions_select.currentData())
+        return get_game_version(
+            self._platform_select.currentText(), self._versions_select.currentData()
+        )
 
     def _on_platform_change(self) -> None:
         self._update_version()
@@ -61,7 +71,9 @@ class BlockSelect(QWidget):
             self._versions_select.clear()
             for version in sorted(
                 game_version.min_version
-                for game_version in get_game_versions(self._platform_select.currentText())
+                for game_version in get_game_versions(
+                    self._platform_select.currentText()
+                )
             ):
                 self._versions_select.addItem(str(version), version)
             self._versions_select.setCurrentIndex(self._versions_select.count() - 1)
@@ -85,7 +97,9 @@ class BlockSelect(QWidget):
         log.debug("Updating base name")
         with QSignalBlocker(self._base_name_select):
             self._base_name_select.clear()
-            self._base_name_select.addItems(sorted(version.block.base_names(self._namespace_select.currentText())))
+            self._base_name_select.addItems(
+                sorted(version.block.base_names(self._namespace_select.currentText()))
+            )
             self._base_name_select.setCurrentIndex(0)
         self._update_block(version)
 
@@ -98,7 +112,10 @@ class BlockSelect(QWidget):
             if (widget := item.widget()) is not None:
                 widget.deleteLater()
         try:
-            spec = version.block.get_specification(self._namespace_select.currentText(), self._base_name_select.currentText())
+            spec = version.block.get_specification(
+                self._namespace_select.currentText(),
+                self._base_name_select.currentText(),
+            )
         except KeyError:
             pass
         else:

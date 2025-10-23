@@ -262,7 +262,9 @@ def _init_editor() -> None:
                         WidgetStackConfig((WidgetConfig(SelectionWidgetIdentifier),)),
                         SplitterConfig(
                             WidgetStackConfig((WidgetConfig(View3DWidgetIdentifier),)),
-                            WidgetStackConfig((WidgetConfig(FillReplaceWidgetIdentifier),)),
+                            WidgetStackConfig(
+                                (WidgetConfig(FillReplaceWidgetIdentifier),)
+                            ),
                             Qt.Orientation.Horizontal,
                             0.9,
                         ),
@@ -277,6 +279,7 @@ def _init_editor() -> None:
         fill_button = create_layout_button(FillLayoutId)
         fill_button.set_icon(tablericons.outline.bucket_droplet)
         fill_button.set_name("Fill")
+
 
 def _destroy_editor() -> None:
     if home_button is not None:
