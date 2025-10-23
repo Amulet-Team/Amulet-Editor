@@ -11,7 +11,7 @@ from PySide6.QtWidgets import (
 
 from plugin.amulet.editor.widget.abc import TabWidget
 
-from ._block_stack_select import BlockStackSelect
+from ._block_select import BlockSelect
 
 
 FillReplaceWidgetIdentifier = "amulet.editor.FillReplaceWidget"
@@ -23,7 +23,7 @@ class FillWidget(QWidget):
         self._layout = QVBoxLayout(self)
         self._layout.setContentsMargins(0, 0, 0, 0)
 
-        self._block_stack_select = BlockStackSelect()
+        self._block_stack_select = BlockSelect()
         self._layout.addWidget(self._block_stack_select)
 
 
@@ -38,7 +38,7 @@ class FindWidget(QWidget):
         self._find_label.setStyleSheet("font-size: 15px")
         self._layout.addWidget(self._find_label)
 
-        self._block_stack_select = BlockStackSelect()
+        self._block_stack_select = BlockSelect(False)
         self._layout.addWidget(self._block_stack_select)
 
         self._splitter = QFrame()

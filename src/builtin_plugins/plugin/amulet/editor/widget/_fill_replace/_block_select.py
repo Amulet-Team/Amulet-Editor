@@ -58,7 +58,7 @@ class PropertySelect(QWidget):
 
 
 class BlockSelect(QWidget):
-    def __init__(self) -> None:
+    def __init__(self, show_block_entity: bool = True) -> None:
         super().__init__()
 
         self._layout = QVBoxLayout(self)
@@ -84,7 +84,9 @@ class BlockSelect(QWidget):
         self._properties_layout = QVBoxLayout()
         self._properties_layout_container.addLayout(self._properties_layout)
 
+        self._show_block_entity = show_block_entity
         self._snbt_input = QTextEdit()
+        self._snbt_input.setVisible(self._show_block_entity)
         self._layout.addWidget(self._snbt_input)
 
         self._layout.addStretch(1)
@@ -173,12 +175,13 @@ class BlockSelect(QWidget):
                 property_widget = PropertySelect(name, states, index)
                 self._properties_layout.addWidget(property_widget)
 
-            if spec.nbt is None:
-                self._snbt_input.hide()
-                self._snbt_input.clear()
-            else:
-                self._snbt_input.show()
-                self._snbt_input.setText(spec.nbt.snbt)
+            if self._show_block_entity:
+                if spec.nbt is None:
+                    self._snbt_input.hide()
+                    self._snbt_input.clear()
+                else:
+                    self._snbt_input.show()
+                    self._snbt_input.setText(read_snbt(spec.nbt.snbt).to_snbt("    "))
 
 
 def main() -> None:
