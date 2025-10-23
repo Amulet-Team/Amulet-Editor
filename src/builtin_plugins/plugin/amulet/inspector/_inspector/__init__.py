@@ -2,8 +2,8 @@ from typing import Optional
 from weakref import ref
 
 from PySide6.QtWidgets import QTreeWidgetItem, QApplication, QWidget
-from PySide6.QtCore import QObject, QRect, QEvent, QPoint, Qt
-from PySide6.QtGui import QMouseEvent, QPainter, QColor, QIcon, QCloseEvent
+from PySide6.QtCore import QObject, QPoint, QSize, Qt
+from PySide6.QtGui import QMouseEvent, QPainter, QColor, QIcon, QCloseEvent, QPaintEvent
 
 from amulet.app.exception import CatchExceptionDialog
 from plugin.tablericons import tablericons
@@ -28,24 +28,25 @@ class TreeWidgetItem(QTreeWidgetItem):
                 self.addChild(item)
 
 
-class CustomDraw(QObject):
-    def __init__(self, target: QWidget) -> None:
-        super().__init__(target)
-        self.target = target
-        self.background = target.grab()
-        self.target.installEventFilter(self)
+class Overlay(QWidget):
+    """A class to implement cuboid highlighting."""
 
-    def eventFilter(self, obj: QObject, event: QEvent) -> bool:
-        if obj == self.target and event.type() == QEvent.Type.Paint:
-            painter = QPainter(self.target)
-            painter.drawPixmap(QPoint(0, 0), self.background)
-            painter.fillRect(
-                QRect(0, 0, painter.device().width(), painter.device().height()),
-                QColor(115, 215, 255, 128),
-            )
-            painter.end()
-            return True
-        return super().eventFilter(obj, event)
+    def __init__(self, parent: QWidget) -> None:
+        super().__init__(parent)
+        self.setWindowFlags(Qt.WindowType.FramelessWindowHint)
+        self.setAttribute(Qt.WidgetAttribute.WA_TranslucentBackground)
+        self.setAttribute(Qt.WidgetAttribute.WA_TransparentForMouseEvents)
+
+        self.move(QPoint())
+        self.resize(parent.size())
+        self.show()
+
+    def paintEvent(self, event: QPaintEvent) -> None:
+        painter = QPainter(self)
+        painter.setBrush(QColor(115, 215, 255, 128))
+        painter.setPen(QColor(115, 215, 255))
+        painter.drawRect(self.rect())
+        painter.end()
 
 
 _inspector = None
@@ -57,7 +58,7 @@ class InspectorTool(Ui_InspectionTool):
     ) -> None:
         super().__init__(parent, f)
         self._inspect = False
-        self._highlight: Optional[tuple[QWidget, QObject]] = None
+        self._highlight: tuple[QWidget, Overlay] | None = None
 
         self.inspect_button.setIcon(QIcon(tablericons.outline.click))
         self.reload_button.setIcon(QIcon(tablericons.outline.refresh))
@@ -87,9 +88,8 @@ class InspectorTool(Ui_InspectionTool):
 
     def _remove_highlight(self) -> None:
         if self._highlight is not None:
-            widget, filt = self._highlight
-            widget.removeEventFilter(filt)
-            widget.update()
+            widget, overlay = self._highlight
+            overlay.deleteLater()
             self._highlight = None
 
     def mouseMoveEvent(self, event: QMouseEvent) -> None:
@@ -99,15 +99,14 @@ class InspectorTool(Ui_InspectionTool):
                 return
             if widget.topLevelWidget() is self:
                 return
+
             if self._highlight is not None:
                 if self._highlight[0] is widget:
                     return
                 else:
                     self._remove_highlight()
 
-            filt = CustomDraw(widget)
-            widget.update()
-            self._highlight = widget, filt
+            self._highlight = widget, Overlay(widget)
         else:
             super().mouseMoveEvent(event)
 
