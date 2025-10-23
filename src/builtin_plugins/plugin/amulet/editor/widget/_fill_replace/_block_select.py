@@ -6,15 +6,55 @@ from PySide6.QtWidgets import (
     QComboBox,
     QVBoxLayout,
     QHBoxLayout,
-    QGridLayout,
     QLabel,
     QTextEdit,
 )
+
+from amulet.nbt import read_snbt, ByteTag, ShortTag, IntTag, LongTag, StringTag
 
 from amulet.game import get_game_platforms, get_game_versions, get_game_version
 from amulet.game.abc import GameVersion
 
 log = logging.getLogger(__name__)
+
+
+class PropertySelect(QWidget):
+    def __init__(self, name: str, values: list[str], index: int) -> None:
+        super().__init__()
+
+        self._layout = QHBoxLayout(self)
+        self._layout.setContentsMargins(0, 0, 0, 0)
+
+        self._name = QLabel(text=name)
+        self._layout.addWidget(self._name)
+
+        self._property = QComboBox()
+        self._property.addItems(values)
+        self._property.setCurrentIndex(index)
+        self._layout.addWidget(self._property)
+
+    def get_name(self) -> str:
+        return self._name.text()
+
+    def set_name(self, value: str) -> None:
+        self._name.setText(value)
+
+    def get_value(self) -> ByteTag | ShortTag | IntTag | LongTag | StringTag:
+        text = self._property.currentText()
+        nbt = read_snbt(text)
+        if isinstance(nbt, (ByteTag, ShortTag, IntTag, LongTag, StringTag)):
+            return nbt
+        raise RuntimeError(
+            f"Property value must be a ByteTag, ShortTag, IntTag, LongTag or StringTag, got {nbt}"
+        )
+
+    def set_value(
+        self, value: ByteTag | ShortTag | IntTag | LongTag | StringTag
+    ) -> None:
+        snbt = value.to_snbt()
+        index = self._property.findText(snbt)
+        if index != -1:
+            self._property.setCurrentIndex(index)
 
 
 class BlockSelect(QWidget):
@@ -41,11 +81,13 @@ class BlockSelect(QWidget):
         self._layout.addLayout(self._properties_layout_container)
 
         self._properties_layout_container.addSpacing(20)
-        self._properties_layout = QGridLayout()
+        self._properties_layout = QVBoxLayout()
         self._properties_layout_container.addLayout(self._properties_layout)
 
         self._snbt_input = QTextEdit()
         self._layout.addWidget(self._snbt_input)
+
+        self._layout.addStretch(1)
 
         self._platform_select.currentIndexChanged.connect(self._on_platform_change)
         self._versions_select.currentIndexChanged.connect(self._on_version_change)
@@ -121,13 +163,15 @@ class BlockSelect(QWidget):
         else:
             properties = spec.properties
             for property_index, (name, prop_spec) in enumerate(properties.items()):
-                self._properties_layout.addWidget(QLabel(name), property_index, 0)
-                combo = QComboBox()
+                states: list[str] = []
+                index = 0
                 for state_index, state in enumerate(prop_spec.states):
-                    combo.addItem(state.to_snbt(), state)
+                    states.append(state.to_snbt())
                     if state == prop_spec.default:
-                        combo.setCurrentIndex(state_index)
-                self._properties_layout.addWidget(combo, property_index, 1)
+                        index = state_index
+
+                property_widget = PropertySelect(name, states, index)
+                self._properties_layout.addWidget(property_widget)
 
             if spec.nbt is None:
                 self._snbt_input.hide()

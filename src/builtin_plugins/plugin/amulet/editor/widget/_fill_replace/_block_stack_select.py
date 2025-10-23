@@ -8,3 +8,7 @@ class BlockStackSelect(QWidget):
         super().__init__()
 
         self._layout = QVBoxLayout(self)
+        self._layout.setContentsMargins(0, 0, 0, 0)
+
+        self._base_block = BlockSelect()
+        self._layout.addWidget(self._base_block)
