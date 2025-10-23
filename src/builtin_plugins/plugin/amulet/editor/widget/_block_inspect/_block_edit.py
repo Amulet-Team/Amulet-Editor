@@ -29,6 +29,7 @@ class PropertySelect(QWidget):
         super().__init__()
 
         self._layout = QHBoxLayout(self)
+        self._layout.setContentsMargins(0, 0, 0, 0)
 
         self._name = QLabel(text=name)
         self._layout.addWidget(self._name)
@@ -95,6 +96,8 @@ class BlockEdit(QWidget):
         # self._snbt_input = QTextEdit()
         # self._layout.addWidget(self._snbt_input)
         # self._snbt_input.setVisible(not self._is_extra_block)
+
+        self._layout.addStretch(1)
 
         self._platform_select.currentIndexChanged.connect(self._on_platform_change)
         self._versions_select.currentIndexChanged.connect(self._on_version_change)
