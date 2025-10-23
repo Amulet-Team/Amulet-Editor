@@ -112,5 +112,8 @@ class FillReplaceWidget(TabWidget):
         self._find_widget.show()
 
     def _run_clicked(self) -> None:
-        find_block = None if self._fill_button.isChecked() else self._find_widget.get_block()
+        if self._fill_button.isChecked():
+            find_block = None
+        else:
+            find_block = self._find_widget.get_block()
         fill_block(self._fill_widget.get_block(), find_block)

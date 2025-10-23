@@ -7,7 +7,10 @@ from amulet.core.chunk.component import BlockComponent
 from plugin.amulet.selection import get_selection_manager
 from plugin.amulet.level import get_main_level
 
-def get_chunk_boxes(boxes: SelectionBoxGroup, sub_chunk_size: int) -> dict[tuple[int, int], list[SelectionBox]]:
+
+def get_chunk_boxes(
+    boxes: SelectionBoxGroup, sub_chunk_size: int
+) -> dict[tuple[int, int], list[SelectionBox]]:
     chunk_boxes: dict[tuple[int, int], list[SelectionBox]] = {}
 
     # TODO: Can this be a generator?
@@ -25,6 +28,7 @@ def get_chunk_boxes(boxes: SelectionBoxGroup, sub_chunk_size: int) -> dict[tuple
 
     return chunk_boxes
 
+
 def fill_block(block: Block, find_block: Block | None = None) -> None:
     level = get_main_level()
     if level is None:
@@ -36,17 +40,27 @@ def fill_block(block: Block, find_block: Block | None = None) -> None:
         for (cx, cz), boxes in chunk_boxes.items():
             dimension = level.get_dimension("minecraft:overworld")
             chunk_handle = dimension.get_chunk_handle(cx, cz)
-            with chunk_handle.lock(thread_mode=(ThreadAccessMode.ReadWrite, ThreadShareMode.SharedReadOnly)):
+            with chunk_handle.lock(
+                thread_mode=(ThreadAccessMode.ReadWrite, ThreadShareMode.SharedReadOnly)
+            ):
                 chunk = chunk_handle.get_chunk([BlockComponent.ComponentID])
                 if isinstance(chunk, BlockComponent):
                     block_storage = chunk.block_storage
                     palette = block_storage.palette
                     sections = block_storage.sections
-                    if sections.array_shape != (sub_chunk_size, sub_chunk_size, sub_chunk_size):
+                    if sections.array_shape != (
+                        sub_chunk_size,
+                        sub_chunk_size,
+                        sub_chunk_size,
+                    ):
                         raise RuntimeError("Unexpected section shape")
                     # TODO: convert the block if it is not in the correct format
                     block_index = palette.block_stack_to_index(BlockStack(block))
-                    find_block_index = None if find_block is None else palette.block_stack_to_index(BlockStack(find_block))
+                    find_block_index = (
+                        None
+                        if find_block is None
+                        else palette.block_stack_to_index(BlockStack(find_block))
+                    )
                     for box in boxes:
                         min_cy = box.min_y // sub_chunk_size
                         max_cy = (box.max_y - 1) // sub_chunk_size
@@ -62,9 +76,13 @@ def fill_block(block: Block, find_block: Block | None = None) -> None:
                             max_dy = max_y - cy * sub_chunk_size
                             min_dz = box.min_z - cz * sub_chunk_size
                             max_dz = box.max_z - cz * sub_chunk_size
-                            sub_section = section[min_dx:max_dx, min_dy:max_dy, min_dz:max_dz]
+                            sub_section = section[
+                                min_dx:max_dx, min_dy:max_dy, min_dz:max_dz
+                            ]
                             if find_block_index is None:
                                 sub_section.fill(block_index)
                             else:
-                                sub_section[sub_section == find_block_index] = block_index
+                                sub_section[sub_section == find_block_index] = (
+                                    block_index
+                                )
                 chunk_handle.set_chunk(chunk)
