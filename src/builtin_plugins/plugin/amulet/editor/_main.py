@@ -329,11 +329,11 @@ def _main(args: FullArgs) -> None:
     _init_app()
 
     # Load the level
-    if args.command is None:
+    level_path = args.level_path
+    if level_path is None:
         set_main_level(None)
     else:
         log.debug("Loading level.")
-        level_path = args.level_path
         with CatchExceptionDialog(
             f"Failed loading level at path {level_path}", suppress=False
         ):
