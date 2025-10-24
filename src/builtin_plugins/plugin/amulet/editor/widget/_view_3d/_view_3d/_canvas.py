@@ -40,9 +40,10 @@ from amulet.app.qt.signal import Signal
 from plugin.amulet.resource_pack import get_resource_pack_handle
 
 from plugin.amulet.level import get_main_level
+from plugin.amulet.camera import get_camera_extrinsics, Location, Rotation
 
 from ._settings import render_settings
-from ._camera import Camera, Location, Rotation
+from ._camera import Camera
 from ._key_catcher import KeySrc, KeyCatcher
 
 from .level.level_geometry import LevelGeometry
@@ -202,12 +203,11 @@ class FirstPersonCanvas(QOpenGLWidget, QOpenGLFunctions):
         self._level = level
         self._canvas_gl_data = CanvasGlData(self._level)
 
-        self._camera = Camera()
-        self.camera.transform_changed.connect(self.update)
-        self.camera.location_changed.connect(self._on_move)
+        self._camera = Camera(
+            get_camera_extrinsics(Location(0, 80, 0), Rotation(0, 90))
+        )
         self._start_pos = QPoint()
         self._right_clicked = False
-        self._speed = 1.0
 
         self._key_catcher = KeyCatcher()
         self.installEventFilter(self._key_catcher)
@@ -281,8 +281,6 @@ class FirstPersonCanvas(QOpenGLWidget, QOpenGLFunctions):
             # Set the start position after OpenGL has been initialised
             # gl_data.render_level.set_dimension(next(iter(self._level.dimension_ids())))
             self._canvas_gl_data.render_level.set_dimension("minecraft:overworld")
-            self.camera.location = Location(0, 80, 0)
-            self.camera.rotation = Rotation(0, 90)
             self._initialised = True
             log.debug(f"FirstPersonCanvas.initializeGL({self}) end")
 
@@ -368,6 +366,11 @@ class FirstPersonCanvas(QOpenGLWidget, QOpenGLFunctions):
             if not self._initialised:
                 return
 
+            # Update the chunk load position when the camera moves
+            self.camera.location_changed.connect(self._on_move)
+            # Repaint when the camera transform changes
+            self.camera.transform_changed.connect(self.update)
+
             # Repaint every time the geometry changes
             self._canvas_gl_data.geometry_changed.connect(self.update)
 
@@ -384,11 +387,18 @@ class FirstPersonCanvas(QOpenGLWidget, QOpenGLFunctions):
             self._queue_load_resource_pack()
             log.debug("FirstPersonCanvas.showEvent end")
 
+            self._on_move()
+            self.update()
+
     def hideEvent(self, event: QHideEvent) -> None:
         with CatchExceptionDialog("Error hiding canvas."):
             log.debug(f"FirstPersonCanvas.hideEvent({self})")
             if not self._initialised:
                 return
+
+            # Disconnect from camera events
+            self.camera.transform_changed.disconnect(self.update)
+            self.camera.location_changed.disconnect(self._on_move)
 
             # Disconnect from the geometry changed event
             self._canvas_gl_data.geometry_changed.disconnect(self.update)
@@ -438,7 +448,7 @@ class FirstPersonCanvas(QOpenGLWidget, QOpenGLFunctions):
     def resizeGL(self, width: float, height: float) -> None:
         """Private resize method called by the QOpenGLWidget"""
         log.debug(f"FirstPersonCanvas.resizeGL({self}, {width}, {height})")
-        self.camera.set_perspective_projection(45, width / height, 0.01, 10_000)
+        self.camera.set_perspective_projection(70, width / height, 0.01, 10_000)
 
     def mousePressEvent(self, event: QMouseEvent) -> None:
         if not self._right_clicked and event.buttons() & Qt.MouseButton.RightButton:
@@ -481,7 +491,9 @@ class FirstPersonCanvas(QOpenGLWidget, QOpenGLFunctions):
         x, y, z = self.camera.location
         azimuth = radians(self.camera.rotation.azimuth + angle)
         self.camera.location = Location(
-            x - sin(azimuth) * self._speed * dt, y, z + cos(azimuth) * self._speed * dt
+            x - sin(azimuth) * self.camera.speed * dt,
+            y,
+            z + cos(azimuth) * self.camera.speed * dt,
         )
 
     @Slot()
@@ -503,17 +515,17 @@ class FirstPersonCanvas(QOpenGLWidget, QOpenGLFunctions):
     @Slot()
     def _up(self, dt: float) -> None:
         x, y, z = self.camera.location
-        self.camera.location = Location(x, y + self._speed * dt, z)
+        self.camera.location = Location(x, y + self.camera.speed * dt, z)
 
     @Slot()
     def _down(self, dt: float) -> None:
         x, y, z = self.camera.location
-        self.camera.location = Location(x, y - self._speed * dt, z)
+        self.camera.location = Location(x, y - self.camera.speed * dt, z)
 
     @Slot()
     def _faster(self) -> None:
-        self._speed *= 1.1
+        self.camera.speed *= 1.1
 
     @Slot()
     def _slower(self) -> None:
-        self._speed /= 1.1
+        self.camera.speed /= 1.1
