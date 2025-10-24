@@ -206,7 +206,6 @@ class FirstPersonCanvas(QOpenGLWidget, QOpenGLFunctions):
         self._camera = Camera(get_camera_extrinsics(Location(0, 80, 0), Rotation(0, 90)))
         self._start_pos = QPoint()
         self._right_clicked = False
-        self._speed = 1.0
 
         self._key_catcher = KeyCatcher()
         self.installEventFilter(self._key_catcher)
@@ -490,7 +489,7 @@ class FirstPersonCanvas(QOpenGLWidget, QOpenGLFunctions):
         x, y, z = self.camera.location
         azimuth = radians(self.camera.rotation.azimuth + angle)
         self.camera.location = Location(
-            x - sin(azimuth) * self._speed * dt, y, z + cos(azimuth) * self._speed * dt
+            x - sin(azimuth) * self.camera.speed * dt, y, z + cos(azimuth) * self.camera.speed * dt
         )
 
     @Slot()
@@ -512,17 +511,17 @@ class FirstPersonCanvas(QOpenGLWidget, QOpenGLFunctions):
     @Slot()
     def _up(self, dt: float) -> None:
         x, y, z = self.camera.location
-        self.camera.location = Location(x, y + self._speed * dt, z)
+        self.camera.location = Location(x, y + self.camera.speed * dt, z)
 
     @Slot()
     def _down(self, dt: float) -> None:
         x, y, z = self.camera.location
-        self.camera.location = Location(x, y - self._speed * dt, z)
+        self.camera.location = Location(x, y - self.camera.speed * dt, z)
 
     @Slot()
     def _faster(self) -> None:
-        self._speed *= 1.1
+        self.camera.speed *= 1.1
 
     @Slot()
     def _slower(self) -> None:
-        self._speed /= 1.1
+        self.camera.speed /= 1.1

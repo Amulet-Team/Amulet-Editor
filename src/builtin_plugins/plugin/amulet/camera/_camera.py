@@ -40,6 +40,7 @@ class CameraExtrinsics(QObject):
 
     # Private variables
     _bounds: Bounds
+    _speed: float
     # Extrinsic attrs
     _location: Location
     _rotation: Rotation
@@ -48,6 +49,7 @@ class CameraExtrinsics(QObject):
 
     __slots__ = (
         "_bounds",
+        "_speed",
         "_location",
         "_rotation",
         "_extrinsic_matrix",
@@ -63,8 +65,9 @@ class CameraExtrinsics(QObject):
             1_000_000_000,
             1_000_000_000,
         )
-        self._location = None
-        self._rotation = None
+        self._speed = 1.0
+        self._location = location
+        self._rotation = rotation
         self._matrix = None
 
     def _clamp_location(self, location: Location) -> Location:
@@ -73,6 +76,15 @@ class CameraExtrinsics(QObject):
             min(max(self._bounds.min_y, location.y), self._bounds.max_y),
             min(max(self._bounds.min_z, location.z), self._bounds.max_z),
         )
+
+    @property
+    def speed(self) -> float:
+        """The speed of the camera in blocks per second."""
+        return self._speed
+
+    @speed.setter
+    def speed(self, speed: float) -> None:
+        self._speed = speed
 
     @property
     def location(self) -> Location:

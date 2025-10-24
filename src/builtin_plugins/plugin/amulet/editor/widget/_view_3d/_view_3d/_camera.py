@@ -38,6 +38,15 @@ class Camera(QObject):
         self._extrinsics.transform_changed.connect(self.transform_changed)
 
     @property
+    def speed(self) -> float:
+        """The speed of the camera in blocks per second."""
+        return self._extrinsics.speed
+
+    @speed.setter
+    def speed(self, speed: float) -> None:
+        self._extrinsics.speed = speed
+
+    @property
     def location(self) -> Location:
         """The location of the camera. (x, y, z)"""
         return self._extrinsics.location
