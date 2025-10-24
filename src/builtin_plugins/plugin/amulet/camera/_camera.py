@@ -175,7 +175,9 @@ class CameraExtrinsics(QObject):
 _camera: CameraExtrinsics | None = None
 
 
-def get_camera_extrinsics(default_location: Location, default_rotation: Rotation) -> CameraExtrinsics:
+def get_camera_extrinsics(
+    default_location: Location, default_rotation: Rotation
+) -> CameraExtrinsics:
     global _camera
     if _camera is None:
         _camera = CameraExtrinsics(default_location, default_rotation)

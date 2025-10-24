@@ -203,7 +203,9 @@ class FirstPersonCanvas(QOpenGLWidget, QOpenGLFunctions):
         self._level = level
         self._canvas_gl_data = CanvasGlData(self._level)
 
-        self._camera = Camera(get_camera_extrinsics(Location(0, 80, 0), Rotation(0, 90)))
+        self._camera = Camera(
+            get_camera_extrinsics(Location(0, 80, 0), Rotation(0, 90))
+        )
         self._start_pos = QPoint()
         self._right_clicked = False
 
@@ -489,7 +491,9 @@ class FirstPersonCanvas(QOpenGLWidget, QOpenGLFunctions):
         x, y, z = self.camera.location
         azimuth = radians(self.camera.rotation.azimuth + angle)
         self.camera.location = Location(
-            x - sin(azimuth) * self.camera.speed * dt, y, z + cos(azimuth) * self.camera.speed * dt
+            x - sin(azimuth) * self.camera.speed * dt,
+            y,
+            z + cos(azimuth) * self.camera.speed * dt,
         )
 
     @Slot()
