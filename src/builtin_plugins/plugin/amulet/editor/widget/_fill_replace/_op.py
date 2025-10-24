@@ -4,6 +4,8 @@ from amulet.core.block import Block, BlockStack
 from amulet.core.selection import SelectionBoxGroup, SelectionBox
 from amulet.core.chunk.component import BlockComponent
 
+from amulet.game import get_game_version
+
 from plugin.amulet.selection import get_selection_manager
 from plugin.amulet.level import get_main_level
 
@@ -37,6 +39,7 @@ def fill_block(block: Block, find_block: Block | None = None) -> None:
     sub_chunk_size = level.sub_chunk_size
     chunk_boxes = get_chunk_boxes(selection.voxelise(), sub_chunk_size)
     with level.lock(thread_mode=(ThreadAccessMode.ReadWrite, ThreadShareMode.Unique)):
+        max_version = level.max_game_version
         for (cx, cz), boxes in chunk_boxes.items():
             dimension = level.get_dimension("minecraft:overworld")
             chunk_handle = dimension.get_chunk_handle(cx, cz)
@@ -54,7 +57,33 @@ def fill_block(block: Block, find_block: Block | None = None) -> None:
                         sub_chunk_size,
                     ):
                         raise RuntimeError("Unexpected section shape")
-                    # TODO: convert the block if it is not in the correct format
+
+                    target_platform = palette.version_range.platform
+                    target_max_version = min(
+                        max_version, palette.version_range.max_version
+                    )
+
+                    def get_converted_block(block_: Block) -> Block:
+                        if (
+                            block_.platform == target_platform
+                            and palette.version_range.min_version
+                            <= block_.version
+                            <= target_max_version
+                        ):
+                            return block_
+                        game_version = get_game_version(block_.platform, block_.version)
+                        block, _, _ = game_version.block.translate(
+                            target_platform, target_max_version, block_
+                        )
+                        if isinstance(block, Block):
+                            return block
+                        # TODO: How should we handle this?
+                        raise RuntimeError("Block converted to an entity")
+
+                    block = get_converted_block(block)
+                    if find_block is not None:
+                        find_block = get_converted_block(find_block)
+
                     block_index = palette.block_stack_to_index(BlockStack(block))
                     find_block_index = (
                         None
