@@ -202,6 +202,9 @@ class FirstPersonCanvas(QOpenGLWidget, QOpenGLFunctions):
         self._initialised = False
         self._errors: set[str] = set()
 
+        # hideEvent can be called twice without a call to showEvent
+        self._shown = False
+
         level = get_main_level()
         if level is None:
             raise RuntimeError(
@@ -424,11 +427,12 @@ class FirstPersonCanvas(QOpenGLWidget, QOpenGLFunctions):
 
             self._on_move()
             self.update()
+            self._shown = True
 
     def hideEvent(self, event: QHideEvent) -> None:
         with CatchExceptionDialog("Error hiding canvas."):
             log.debug(f"FirstPersonCanvas.hideEvent({self})")
-            if not self._initialised:
+            if not self._initialised or not self._shown:
                 return
 
             # Disconnect from camera events
@@ -448,6 +452,7 @@ class FirstPersonCanvas(QOpenGLWidget, QOpenGLFunctions):
             self._loading_finished.disconnect(self._hide_loading_overlay)
 
             self._canvas_gl_data.sleep()
+            self._shown = False
             log.debug(f"FirstPersonCanvas.hideEvent({self}) end")
 
     def paintGL(self) -> None:
