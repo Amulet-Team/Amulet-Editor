@@ -40,7 +40,6 @@ class ResourcePackHandle(QObject):
             tuple[AbstractProgressManager, AbstractCancelManager] | None
         ) = None
 
-
     def get_resource_pack(
         self,
         progress_manager: AbstractProgressManager = VoidProgressManager(),

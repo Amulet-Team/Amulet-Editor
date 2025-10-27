@@ -30,7 +30,13 @@ from OpenGL.GL import (
     GL_DEPTH_TEST as _GL_DEPTH_TEST,
 )
 
-from amulet.utils.task_manager import AbstractProgressManager, ProgressManager, AbstractCancelManager, CancelManager, TaskCancelled
+from amulet.utils.task_manager import (
+    AbstractProgressManager,
+    ProgressManager,
+    AbstractCancelManager,
+    CancelManager,
+    TaskCancelled,
+)
 from amulet.utils.event import EventToken
 from amulet.utils.matrix import Matrix4x4
 from amulet.level.abc.level import Level
@@ -236,7 +242,9 @@ class FirstPersonCanvas(QOpenGLWidget, QOpenGLFunctions):
         self._gl_resource_pack: OpenGLResourcePack | None = None
 
         self._rp_load_condition = Condition()
-        self._rp_load_managers: tuple[AbstractProgressManager, AbstractCancelManager] | None = None
+        self._rp_load_managers: (
+            tuple[AbstractProgressManager, AbstractCancelManager] | None
+        ) = None
 
         self._loading_overlay = QWidget(self)
         self._loading_layout = QVBoxLayout(self._loading_overlay)
