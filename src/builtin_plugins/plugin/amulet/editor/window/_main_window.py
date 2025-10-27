@@ -2,14 +2,16 @@ from __future__ import annotations
 from threading import Lock
 import logging
 
-from PySide6.QtGui import QShortcut, QCloseEvent
+from PySide6.QtGui import QShortcut, QCloseEvent, QAction
 from PySide6.QtCore import Qt, QEvent, QCoreApplication
-from PySide6.QtWidgets import QWidget, QMainWindow, QHBoxLayout, QVBoxLayout
+from PySide6.QtWidgets import QWidget, QMainWindow, QHBoxLayout, QVBoxLayout, QMenu
 from PySide6.QtOpenGLWidgets import QOpenGLWidget
 
 from plugin.amulet.inspector import show_inspector
 
 from plugin.amulet.editor._signal import destroy_editor
+from plugin.amulet.level import get_main_level
+
 from . import _tab_widget
 from . import _tab_drag
 from ._toolbar import ToolBar, ButtonProxy
@@ -32,6 +34,13 @@ _main_window: AmuletMainWindow | None = None
 log = logging.getLogger(__name__)
 
 
+def save_level() -> None:
+    level = get_main_level()
+    if level is not None:
+        # TODO: add some kind of dialog for the user to see
+        level.save()
+
+
 class AmuletMainWindow(QMainWindow):
     """
     The main window in the Amulet application.
@@ -42,6 +51,24 @@ class AmuletMainWindow(QMainWindow):
 
     def __init__(self) -> None:
         super().__init__()
+
+        self._file_menu = QMenu()
+
+        if get_main_level() is not None:
+            self._save_action = QAction(self, autoRepeat=False)
+            self._save_action.triggered.connect(save_level)
+            self._file_menu.addAction(self._save_action)
+
+        self.menuBar().addMenu(self._file_menu)
+
+        self._tool_menu = QMenu()
+
+        self._inspect_action = QAction(self, autoRepeat=False)
+        self._inspect_action.triggered.connect(self._show_inspector)
+        self._tool_menu.addAction(self._inspect_action)
+
+        self.menuBar().addMenu(self._tool_menu)
+
         self._central_widget = QWidget(self)
         self._central_layout = QHBoxLayout(self._central_widget)
         self._central_layout.setContentsMargins(4, 4, 4, 4)
@@ -64,9 +91,6 @@ class AmuletMainWindow(QMainWindow):
         self._dummy_gl_widget.hide()
 
         self._localise()
-
-        f12 = QShortcut(Qt.Key.Key_F12, self)
-        f12.activated.connect(lambda: show_inspector(self))
 
     def _bind_events(
         self, widget: _tab_widget.TabWidgetStack | _tab_widget.RecursiveSplitter
@@ -166,13 +190,62 @@ class AmuletMainWindow(QMainWindow):
 
     def _localise(self) -> None:
         self.setWindowTitle(
-            QCoreApplication.translate("AmuletMainWindow", "Amulet Editor", None)
+            QCoreApplication.translate(
+                "plugin.amulet.editor.AmuletMainWindow",
+                "amulet_editor",
+                None,
+            )
+        )
+        self._file_menu.setTitle(
+            QCoreApplication.translate(
+                "plugin.amulet.editor.AmuletMainWindow",
+                "file_menu_text",
+                None,
+            )
+        )
+        self._save_action.setText(
+            QCoreApplication.translate(
+                "plugin.amulet.editor.AmuletMainWindow",
+                "save_action_text",
+                None,
+            )
+        )
+        self._save_action.setShortcut(
+            QCoreApplication.translate(
+                "plugin.amulet.editor.AmuletMainWindow",
+                "save_action_shortcut",
+                None,
+            )
+        )
+        self._tool_menu.setTitle(
+            QCoreApplication.translate(
+                "plugin.amulet.editor.AmuletMainWindow",
+                "tool_menu_text",
+                None,
+            )
+        )
+        self._inspect_action.setText(
+            QCoreApplication.translate(
+                "plugin.amulet.editor.AmuletMainWindow",
+                "inspect_action_text",
+                None,
+            )
+        )
+        self._inspect_action.setShortcut(
+            QCoreApplication.translate(
+                "plugin.amulet.editor.AmuletMainWindow",
+                "inspect_action_shortcut",
+                None,
+            )
         )
 
     def closeEvent(self, event: QCloseEvent) -> None:
         global _main_window
         destroy_editor.emit()
         _main_window = None
+
+    def _show_inspector(self) -> None:
+        show_inspector(self)
 
 
 def init_main_window() -> None:
