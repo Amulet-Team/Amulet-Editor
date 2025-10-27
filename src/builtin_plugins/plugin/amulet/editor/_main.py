@@ -76,6 +76,12 @@ brush_button: ButtonProxy | None = None
 BlockEditLayoutId = "amulet.block_editor"
 block_edit_button: ButtonProxy | None = None
 
+ImportLayoutId = "amulet.import"
+import_button: ButtonProxy | None = None
+
+ExportLayoutId = "amulet.export"
+export_button: ButtonProxy | None = None
+
 ChunkLayoutId = "amulet.chunk"
 chunk_button: ButtonProxy | None = None
 
@@ -109,6 +115,8 @@ def _init_editor() -> None:
     global fill_button
     global brush_button
     global block_edit_button
+    global import_button
+    global export_button
     global chunk_button
     global convert_button
 
@@ -249,6 +257,38 @@ def _init_editor() -> None:
         block_edit_button.set_name("Block Editor")
 
         register_layout(
+            ImportLayoutId,
+            LayoutConfig(
+                WindowConfig(
+                    None,
+                    None,
+                    WidgetStackConfig((WidgetConfig(View3DWidgetIdentifier),)),
+                ),
+                (),
+            ),
+        )
+
+        import_button = create_layout_button(ImportLayoutId)
+        import_button.set_icon(tablericons.outline.file_import)
+        import_button.set_name("Import")
+
+        register_layout(
+            ExportLayoutId,
+            LayoutConfig(
+                WindowConfig(
+                    None,
+                    None,
+                    WidgetStackConfig((WidgetConfig(View3DWidgetIdentifier),)),
+                ),
+                (),
+            ),
+        )
+
+        export_button = create_layout_button(ExportLayoutId)
+        export_button.set_icon(tablericons.outline.file_export)
+        export_button.set_name("Export")
+
+        register_layout(
             ChunkLayoutId,
             LayoutConfig(
                 WindowConfig(
@@ -294,9 +334,25 @@ def _destroy_editor() -> None:
         select_button.delete()
         unregister_layout(SelectLayoutId)
 
+    if fill_button is not None:
+        fill_button.delete()
+        unregister_layout(FillLayoutId)
+
     if brush_button is not None:
         brush_button.delete()
         unregister_layout(BrushLayoutId)
+
+    if block_edit_button is not None:
+        block_edit_button.delete()
+        unregister_layout(BlockEditLayoutId)
+
+    if import_button is not None:
+        import_button.delete()
+        unregister_layout(ImportLayoutId)
+
+    if export_button is not None:
+        export_button.delete()
+        unregister_layout(ExportLayoutId)
 
     if chunk_button is not None:
         chunk_button.delete()
@@ -305,14 +361,6 @@ def _destroy_editor() -> None:
     if convert_button is not None:
         convert_button.delete()
         unregister_layout(ConvertLayoutId)
-
-    if block_edit_button is not None:
-        block_edit_button.delete()
-        unregister_layout(BlockEditLayoutId)
-
-    if fill_button is not None:
-        fill_button.delete()
-        unregister_layout(FillLayoutId)
 
     unregister_tab_widget(HomeWidgetIdentifier)
     unregister_tab_widget(LevelInfoWidgetIdentifier)
