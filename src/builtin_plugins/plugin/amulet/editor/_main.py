@@ -67,20 +67,20 @@ level_info_button: ButtonProxy | None = None
 SelectLayoutId = "amulet.editor"
 select_button: ButtonProxy | None = None
 
+FillLayoutId = "amulet.fill"
+fill_button: ButtonProxy | None = None
+
 BrushLayoutId = "amulet.brush"
 brush_button: ButtonProxy | None = None
+
+BlockEditLayoutId = "amulet.block_editor"
+block_edit_button: ButtonProxy | None = None
 
 ChunkLayoutId = "amulet.chunk"
 chunk_button: ButtonProxy | None = None
 
 ConvertLayoutId = "amulet.convert"
 convert_button: ButtonProxy | None = None
-
-BlockEditLayoutId = "amulet.block_editor"
-block_edit_button: ButtonProxy | None = None
-
-FillLayoutId = "amulet.fill"
-fill_button: ButtonProxy | None = None
 
 
 def _init_app() -> None:
@@ -106,9 +106,9 @@ def _init_editor() -> None:
     global home_button
     global level_info_button
     global select_button
-    global block_edit_button
     global fill_button
     global brush_button
+    global block_edit_button
     global chunk_button
     global convert_button
 
@@ -179,6 +179,34 @@ def _init_editor() -> None:
         select_button.set_name("Select")
 
         register_layout(
+            FillLayoutId,
+            LayoutConfig(
+                WindowConfig(
+                    None,
+                    None,
+                    SplitterConfig(
+                        WidgetStackConfig((WidgetConfig(SelectionWidgetIdentifier),)),
+                        SplitterConfig(
+                            WidgetStackConfig((WidgetConfig(View3DWidgetIdentifier),)),
+                            WidgetStackConfig(
+                                (WidgetConfig(FillReplaceWidgetIdentifier),)
+                            ),
+                            Qt.Orientation.Horizontal,
+                            0.9,
+                        ),
+                        Qt.Orientation.Horizontal,
+                        0.1,
+                    ),
+                ),
+                (),
+            ),
+        )
+
+        fill_button = create_layout_button(FillLayoutId)
+        fill_button.set_icon(tablericons.outline.bucket_droplet)
+        fill_button.set_name("Fill")
+
+        register_layout(
             BrushLayoutId,
             LayoutConfig(
                 WindowConfig(
@@ -198,6 +226,27 @@ def _init_editor() -> None:
         brush_button = create_layout_button(BrushLayoutId)
         brush_button.set_icon(tablericons.outline.brush)
         brush_button.set_name("Brush")
+
+        register_layout(
+            BlockEditLayoutId,
+            LayoutConfig(
+                WindowConfig(
+                    None,
+                    None,
+                    SplitterConfig(
+                        WidgetStackConfig((WidgetConfig(BlockEditWidgetIdentifier),)),
+                        WidgetStackConfig((WidgetConfig(View3DWidgetIdentifier),)),
+                        Qt.Orientation.Horizontal,
+                        0.1,
+                    ),
+                ),
+                (),
+            ),
+        )
+
+        block_edit_button = create_layout_button(BlockEditLayoutId)
+        block_edit_button.set_icon(tablericons.outline.cube)
+        block_edit_button.set_name("Block Editor")
 
         register_layout(
             ChunkLayoutId,
@@ -227,58 +276,9 @@ def _init_editor() -> None:
             ),
         )
 
-        chunk_button = create_layout_button(ConvertLayoutId)
-        chunk_button.set_icon(tablericons.filled.arrow_big_right_lines)
-        chunk_button.set_name("Convert")
-
-        register_layout(
-            BlockEditLayoutId,
-            LayoutConfig(
-                WindowConfig(
-                    None,
-                    None,
-                    SplitterConfig(
-                        WidgetStackConfig((WidgetConfig(BlockEditWidgetIdentifier),)),
-                        WidgetStackConfig((WidgetConfig(View3DWidgetIdentifier),)),
-                        Qt.Orientation.Horizontal,
-                        0.1,
-                    ),
-                ),
-                (),
-            ),
-        )
-
-        block_edit_button = create_layout_button(BlockEditLayoutId)
-        block_edit_button.set_icon(tablericons.outline.cube)
-        block_edit_button.set_name("Block Editor")
-
-        register_layout(
-            FillLayoutId,
-            LayoutConfig(
-                WindowConfig(
-                    None,
-                    None,
-                    SplitterConfig(
-                        WidgetStackConfig((WidgetConfig(SelectionWidgetIdentifier),)),
-                        SplitterConfig(
-                            WidgetStackConfig((WidgetConfig(View3DWidgetIdentifier),)),
-                            WidgetStackConfig(
-                                (WidgetConfig(FillReplaceWidgetIdentifier),)
-                            ),
-                            Qt.Orientation.Horizontal,
-                            0.9,
-                        ),
-                        Qt.Orientation.Horizontal,
-                        0.1,
-                    ),
-                ),
-                (),
-            ),
-        )
-
-        fill_button = create_layout_button(FillLayoutId)
-        fill_button.set_icon(tablericons.outline.bucket_droplet)
-        fill_button.set_name("Fill")
+        convert_button = create_layout_button(ConvertLayoutId)
+        convert_button.set_icon(tablericons.filled.arrow_big_right_lines)
+        convert_button.set_name("Convert")
 
 
 def _destroy_editor() -> None:
