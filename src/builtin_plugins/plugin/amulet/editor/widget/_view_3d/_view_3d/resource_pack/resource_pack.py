@@ -21,6 +21,9 @@ from amulet.utils.cast import dynamic_cast
 from amulet.utils.task_manager import (
     AbstractProgressManager,
     VoidProgressManager,
+    AbstractCancelManager,
+    VoidCancelManager,
+    TaskCancelled,
 )
 from amulet.core.version import VersionNumber
 from amulet.core.block import Block, BlockStack
@@ -75,6 +78,7 @@ class OpenGLResourcePack(AbstractOpenGLResourcePack):
         resource_pack: BaseResourcePackManager,
         translator: GameVersion,
         progress_manager: AbstractProgressManager = VoidProgressManager(),
+        cancel_manager: AbstractCancelManager = VoidCancelManager(),
     ):
         super().__init__()
         self._lock = Lock()
@@ -118,7 +122,9 @@ class OpenGLResourcePack(AbstractOpenGLResourcePack):
             (
                 atlas,
                 bounds,
-            ) = create_atlas(self._resource_pack.textures, progress_manager)
+            ) = create_atlas(
+                self._resource_pack.textures, progress_manager, cancel_manager
+            )
 
             os.makedirs(cache_dir, exist_ok=True)
             atlas.save(img_path)
@@ -130,6 +136,9 @@ class OpenGLResourcePack(AbstractOpenGLResourcePack):
         self._default_texture_bounds = self._texture_bounds[
             self._resource_pack.missing_no
         ]
+
+        if cancel_manager.is_cancel_requested():
+            raise TaskCancelled
 
         def init_gl() -> None:
             log.debug("Initialising OpenGL resource pack texture.")
@@ -241,40 +250,44 @@ class OpenGLResourcePackHandle(QObject):
         self._resource_pack_container = get_resource_pack_handle(level)
         self._resource_pack: BaseResourcePackManager | None = None
         self._gl_resource_pack: OpenGLResourcePack | None = None
-        self._load_progress_manager: AbstractProgressManager | None = None
+        self._load_managers: (
+            tuple[AbstractProgressManager, AbstractCancelManager] | None
+        ) = None
 
         self._resource_pack_container.changed.connect(self._resource_pack_changed)
 
     def get_gl_resource_pack(
         self,
         progress_manager: AbstractProgressManager = VoidProgressManager(),
+        cancel_manager: AbstractCancelManager = VoidCancelManager(),
     ) -> OpenGLResourcePack:
         with self._condition:
-            self_progress_manager = self._load_progress_manager
-            if self_progress_manager is not None:
+            if self._load_managers is not None:
+                existing_progress_manager, existing_cancel_manager = self._load_managers
+                # TODO: if self_progress_manager is a void progress manager, this will do nothing
                 # The resource pack is being loaded by another call.
                 # Connect the progress managers
-                progress_token = self_progress_manager.register_progress_callback(
+                progress_token = existing_progress_manager.register_progress_callback(
                     progress_manager.update_progress
                 )
                 progress_text_token = (
-                    self_progress_manager.register_progress_text_callback(
+                    existing_progress_manager.register_progress_text_callback(
                         progress_manager.update_progress_text
                     )
                 )
 
                 # Wait until the first call completes. Note that it may fail.
-                while self._load_progress_manager is not None:
+                while self._load_managers is not None:
                     self._condition.wait()
 
-                self_progress_manager.unregister_progress_callback(progress_token)
-                self_progress_manager.unregister_progress_text_callback(
+                existing_progress_manager.unregister_progress_callback(progress_token)
+                existing_progress_manager.unregister_progress_text_callback(
                     progress_text_token
                 )
 
             if self._gl_resource_pack is None:
                 # The resource pack has not been loaded
-                self._load_progress_manager = progress_manager
+                self._load_managers = (progress_manager, cancel_manager)
             else:
                 # The resource pack has already been set/loaded
                 return self._gl_resource_pack
@@ -288,31 +301,25 @@ class OpenGLResourcePackHandle(QObject):
             else:
                 log.debug(f"Loading OpenGL resource pack.")
             resource_pack = self._resource_pack_container.get_resource_pack(
-                progress_manager
+                progress_manager, cancel_manager
             )
             # TODO: modify the resource pack library to expose the desired translator
             translator = get_game_version("java", VersionNumber(2, -1, 0))
 
-            # TODO: support canceling
             gl_resource_pack = OpenGLResourcePack(
-                resource_pack, translator, progress_manager
+                resource_pack, translator, progress_manager, cancel_manager
             )
         except Exception as e:
             # Loading failed
-            display_exception(
-                title="Error initialising the OpenGL resource pack.",
-                error=str(e),
-                traceback=traceback.format_exc(),
-            )
             with self._condition:
-                self._load_progress_manager = None
+                self._load_managers = None
                 self._condition.notify_all()
             # re-raise the exception
             raise
         else:
             # Loading succeeded
             with self._condition:
-                self._load_progress_manager = None
+                self._load_managers = None
                 self._resource_pack = resource_pack
                 self._gl_resource_pack = gl_resource_pack
                 self._condition.notify_all()
@@ -323,10 +330,11 @@ class OpenGLResourcePackHandle(QObject):
         def _reset_and_notify() -> None:
             with CatchExceptionDialog("Error resetting OpenGL resource pack."):
                 with self._condition:
-                    # Wait until the first call completes. Note that it may fail.
-                    # TODO: support canceling so we don't need to wait
-                    while self._load_progress_manager is not None:
-                        self._condition.wait()
+                    # Cancel the running call and wait for it to complete.
+                    if self._load_managers is not None:
+                        self._load_managers[1].cancel()
+                        while self._load_managers is not None:
+                            self._condition.wait()
 
                     # Invalidate the previous resource pack
                     self._gl_resource_pack = None

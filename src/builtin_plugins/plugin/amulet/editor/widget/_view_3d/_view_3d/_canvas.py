@@ -2,7 +2,9 @@ from __future__ import annotations
 
 import traceback
 from typing import Any, TypeVar, SupportsFloat
+from threading import Condition
 import logging
+import weakref
 from math import sin, cos, radians
 
 from PySide6.QtCore import Qt, QPoint, Slot, QThread, QThreadPool, QObject
@@ -28,7 +30,7 @@ from OpenGL.GL import (
     GL_DEPTH_TEST as _GL_DEPTH_TEST,
 )
 
-from amulet.utils.task_manager import ProgressManager
+from amulet.utils.task_manager import AbstractProgressManager, ProgressManager, AbstractCancelManager, CancelManager, TaskCancelled
 from amulet.utils.event import EventToken
 from amulet.utils.matrix import Matrix4x4
 from amulet.level.abc.level import Level
@@ -50,7 +52,6 @@ from .level.level_geometry import LevelGeometry
 from .selection import SelectionGeometry
 from .resource_pack import (
     get_gl_resource_pack_handle,
-    OpenGLResourcePackHandle,
     OpenGLResourcePack,
 )
 
@@ -234,6 +235,9 @@ class FirstPersonCanvas(QOpenGLWidget, QOpenGLFunctions):
         self._gl_resource_pack_handle = get_gl_resource_pack_handle(self._level)
         self._gl_resource_pack: OpenGLResourcePack | None = None
 
+        self._rp_load_condition = Condition()
+        self._rp_load_managers: tuple[AbstractProgressManager, AbstractCancelManager] | None = None
+
         self._loading_overlay = QWidget(self)
         self._loading_layout = QVBoxLayout(self._loading_overlay)
         self._loading_overlay.hide()
@@ -252,6 +256,22 @@ class FirstPersonCanvas(QOpenGLWidget, QOpenGLFunctions):
         self._loading_layout.addWidget(self._loading_bar)
 
         self._loading_layout.addStretch(1)
+
+        weak_self = weakref.ref(self)
+
+        def delete() -> None:
+            print("delete canvas")
+            self_ = weak_self()
+            if self_ is None:
+                return
+            with self_._rp_load_condition:
+                if self._rp_load_managers is None:
+                    return
+                self._rp_load_managers[1].cancel()
+                while self._rp_load_managers is not None:
+                    self._rp_load_condition.wait()
+
+        self.destroyed.connect(delete)
 
         log.debug(f"FirstPersonCanvas.__init__({self}) end")
 
@@ -294,8 +314,10 @@ class FirstPersonCanvas(QOpenGLWidget, QOpenGLFunctions):
     def _load_resource_pack(self) -> None:
         with CatchExceptionDialog("Error loading resource pack."):
             log.debug(f"FirstPersonCanvas._load_resource_pack({self})")
-            # TODO: connect this to the GUI
             progress_manager = ProgressManager()
+            cancel_manager = CancelManager()
+            with self._rp_load_condition:
+                self._rp_load_managers = (progress_manager, cancel_manager)
 
             def print_msg(msg: str) -> None:
                 self._progress_text_changed.emit(msg)
@@ -309,8 +331,10 @@ class FirstPersonCanvas(QOpenGLWidget, QOpenGLFunctions):
             progress_token = progress_manager.register_progress_callback(print_progress)
             try:
                 gl_resource_pack = self._gl_resource_pack_handle.get_gl_resource_pack(
-                    progress_manager
+                    progress_manager, cancel_manager
                 )
+            except TaskCancelled:
+                pass
             except Exception:
                 raise
             else:
@@ -322,8 +346,11 @@ class FirstPersonCanvas(QOpenGLWidget, QOpenGLFunctions):
             finally:
                 progress_manager.unregister_progress_text_callback(progress_text_token)
                 progress_manager.unregister_progress_callback(progress_token)
+                with self._rp_load_condition:
+                    self._rp_load_managers = None
+                    self._rp_load_condition.notify_all()
                 self._loading_finished.emit()
-                log.debug(f"FirstPersonCanvas._load_resource_pack({self}) end")
+                log.debug(f"FirstPersonCanvas._load_resource_pack() end")
 
     def _show_loading_overlay(self) -> None:
         self._loading_overlay.show()
