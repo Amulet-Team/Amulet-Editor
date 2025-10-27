@@ -26,7 +26,13 @@ import logging
 from PIL import Image
 import math
 from collections.abc import Collection
-from amulet.utils.task_manager import AbstractProgressManager, VoidProgressManager
+from amulet.utils.task_manager import (
+    AbstractProgressManager,
+    VoidProgressManager,
+    AbstractCancelManager,
+    VoidCancelManager,
+    TaskCancelled,
+)
 
 log = logging.getLogger(__name__)
 
@@ -255,6 +261,7 @@ class TextureAtlas(PackRegion):
 def create_atlas(
     texture_tuple: Collection[str],
     progress_manager: AbstractProgressManager = VoidProgressManager(),
+    cancel_manager: AbstractCancelManager = VoidCancelManager(),
 ) -> tuple[Image.Image, dict[str, tuple[float, float, float, float]]]:
     log.info("Creating texture atlas")
     # Parse texture names
@@ -262,6 +269,8 @@ def create_atlas(
     textures = []
     for texture_index, texture_path in enumerate(texture_tuple):
         if not texture_index % 100:
+            if cancel_manager.is_cancel_requested():
+                raise TaskCancelled
             progress_manager_1.update_progress(texture_index / len(texture_tuple))
 
         # Build frame objects
@@ -293,6 +302,8 @@ def create_atlas(
 
             for texture_index, texture in enumerate(textures):
                 if not texture_index % 30:
+                    if cancel_manager.is_cancel_requested():
+                        raise TaskCancelled
                     progress_manager_2.update_progress(texture_index / len(textures))
                 atlas.pack_texture(texture)
         except AtlasTooSmall:
