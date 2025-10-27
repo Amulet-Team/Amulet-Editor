@@ -20,7 +20,6 @@ from amulet.app.exception import display_exception, CatchExceptionDialog
 from plugin.amulet.editor.widget.abc import TabWidget
 from plugin.amulet.level import get_main_level
 
-from ._block_edit import BlockEdit
 from ._block_stack_edit import BlockStackEdit
 
 
@@ -30,7 +29,7 @@ BlockEditWidgetIdentifier = "amulet.editor.BlockEdit"
 class BlockEditWidget(TabWidget):
     def __init__(self) -> None:
         super().__init__()
-        self._layout = QVBoxLayout()
+        self._layout = QVBoxLayout(self)
         self._layout.setContentsMargins(0, 0, 0, 0)
 
         self._x_input = QSpinBox(minimum=-30_000_000, maximum=30_000_000)
