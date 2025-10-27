@@ -89,8 +89,8 @@ class BlockSelect(QWidget):
 
         self._show_block_entity = show_block_entity
         self._snbt_input = QTextEdit()
-        self._snbt_input.setVisible(self._show_block_entity)
         self._layout.addWidget(self._snbt_input)
+        self._snbt_input.setVisible(self._show_block_entity)
 
         self._layout.addStretch(1)
 
