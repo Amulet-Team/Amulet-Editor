@@ -1,5 +1,4 @@
 from typing import Callable
-from threading import RLock
 import traceback
 from weakref import finalize, WeakMethod
 
@@ -161,7 +160,6 @@ class ToolBar(QFrame):
         self._lyt_main.addLayout(self._lyt_static_buttons)
 
         self._layout_button_group = QButtonGroup()
-        self._lock = RLock()
 
     def add_layout_button(self) -> ToolbarButton:
         """Add a button to the toolbar."""
