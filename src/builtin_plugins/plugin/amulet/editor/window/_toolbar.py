@@ -131,7 +131,7 @@ class DragContainer(QWidget):
         self._layout.addWidget(item)
 
 
-class ToolBar(QFrame):
+class ToolBar(QWidget):
     """
     A toolbar is a strip of buttons.
     The first half can be rearranged and the second half are fixed.
@@ -139,11 +139,9 @@ class ToolBar(QFrame):
 
     def __init__(
         self,
-        parent: QWidget | None = None,
-        f: Qt.WindowType = Qt.WindowType.Widget,
         orientation: Qt.Orientation = Qt.Orientation.Vertical,
     ) -> None:
-        super().__init__(parent, f)
+        super().__init__()
 
         layout_cls = LayoutCls[orientation]
 
