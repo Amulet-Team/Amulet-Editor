@@ -2,9 +2,16 @@ from typing import Callable
 import traceback
 from weakref import finalize, WeakMethod
 
-from PySide6.QtCore import QSize, Qt
+from PySide6.QtCore import QSize, Qt, QObject, QEvent, QRect, QPoint
 from PySide6.QtGui import QMouseEvent
-from PySide6.QtWidgets import QFrame, QWidget, QVBoxLayout, QHBoxLayout, QButtonGroup
+from PySide6.QtWidgets import (
+    QFrame,
+    QWidget,
+    QVBoxLayout,
+    QHBoxLayout,
+    QButtonGroup,
+    QScrollArea,
+)
 
 from plugin.amulet.editor._toolbar_button import ToolbarButton
 from amulet.app.exception import display_exception
@@ -83,10 +90,8 @@ LayoutCls: dict[Qt.Orientation, type[QVBoxLayout | QHBoxLayout]] = {
 }
 
 
-class DragContainer(QWidget):
-    """
-    Generic list sorting handler.
-    """
+class DragContainer(QScrollArea):
+    """A rearrangeable list of buttons."""
 
     # orderChanged = Signal(list)
 
@@ -96,39 +101,84 @@ class DragContainer(QWidget):
         orientation: Qt.Orientation = Qt.Orientation.Vertical,
     ):
         super().__init__(parent)
-        self.setMouseTracking(True)
+        self._orientation = orientation
 
-        self._layout = {
-            Qt.Orientation.Horizontal: QHBoxLayout,
-            Qt.Orientation.Vertical: QVBoxLayout,
-        }[orientation](self)
-        self._layout.setContentsMargins(0, 0, 0, 0)
-
-        self._drag = None
-
-    def mouseMoveEvent(self, event: QMouseEvent) -> None:
-        if event.buttons() == Qt.MouseButton.LeftButton:
-            if self._drag is None:
-                for i in range(self._layout.count()):
-                    child = self._layout.itemAt(i).widget()
-                    if child.underMouse():
-                        self._drag = child
-                        break
-            if self._drag is not None:
-                point = event.position().toPoint()
-                for i in range(self._layout.count()):
-                    child = self._layout.itemAt(i).widget()
-                    rect = child.rect()
-                    rect.moveTo(child.pos())
-                    if rect.contains(point):
-                        self._layout.removeWidget(self._drag)
-                        self._layout.insertWidget(i, self._drag)
-                        break
+        if orientation == Qt.Orientation.Vertical:
+            self._size_hint = QSize(ButtonSize, ButtonSize * 2)
         else:
-            self._drag = None
+            self._size_hint = QSize(ButtonSize * 2, ButtonSize)
+
+        # self.setMouseTracking(True)
+
+        self._widget = QWidget()
+
+        layout_cls = LayoutCls[orientation]
+
+        self._container_layout = layout_cls(self._widget)
+        self._container_layout.setContentsMargins(0, 0, 0, 0)
+
+        self._layout = layout_cls()
+        self._layout.setContentsMargins(0, 0, 0, 0)
+        self._layout.setSpacing(2)
+        self._container_layout.addLayout(self._layout)
+
+        self._container_layout.addStretch(1)
+
+        self._dragged_widget: QWidget | None = None
+        self._dragged = False
+
+        self.setFrameShape(QFrame.Shape.NoFrame)
+        self.setWidget(self._widget)
+        self.setHorizontalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
+        self.setVerticalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
+        self.setWidgetResizable(True)
+
+    def eventFilter(self, obj: QObject, event: QEvent) -> bool:
+        if isinstance(event, QMouseEvent) and isinstance(obj, QWidget):
+            if self._dragged_widget is None:
+                if (
+                    event.type() == QEvent.Type.MouseButtonPress
+                    and self._layout.indexOf(obj) != -1
+                ):
+                    self._dragged_widget = obj
+                    self._dragged = False
+            elif self._dragged_widget is obj:
+                if event.type() == QEvent.Type.MouseButtonRelease:
+                    self._dragged_widget = None
+                    dragged = self._dragged
+                    self._dragged = False
+                    if dragged:
+                        return True
+                elif event.type() == QEvent.Type.MouseMove:
+                    point = event.globalPos()
+                    for i in range(self._layout.count()):
+                        item = self._layout.itemAt(i)
+                        if item is None:
+                            continue
+                        child = item.widget()
+                        if child is None:
+                            continue
+                        if QRect(child.mapToGlobal(QPoint()), child.size()).contains(
+                            point
+                        ):
+                            if self._dragged_widget is child:
+                                break
+                            self._layout.removeWidget(self._dragged_widget)
+                            self._layout.insertWidget(i, self._dragged_widget)
+                            self._dragged = True
+                            break
+        return super().eventFilter(obj, event)
 
     def add_item(self, item: QWidget) -> None:
         self._layout.addWidget(item)
+        item.installEventFilter(self)
+
+    def sizeHint(self) -> QSize:
+        return self._size_hint
+
+    def minimumSizeHint(self) -> QSize:
+        return self._size_hint
+
 
 
 class ToolBar(QWidget):
@@ -145,16 +195,14 @@ class ToolBar(QWidget):
 
         layout_cls = LayoutCls[orientation]
 
-        self._lyt_main = layout_cls()
+        self._lyt_main = layout_cls(self)
         self._lyt_main.setSpacing(5)
         self._lyt_main.setContentsMargins(0, 0, 0, 0)
-        self.setLayout(self._lyt_main)
 
         self._wgt_layout_buttons = DragContainer(self, orientation)
-        self._lyt_main.addWidget(self._wgt_layout_buttons)
+        self._lyt_main.addWidget(self._wgt_layout_buttons, 1)
 
         self._lyt_static_buttons = layout_cls()
-        self._lyt_static_buttons.addStretch()
         self._lyt_main.addLayout(self._lyt_static_buttons)
 
         self._layout_button_group = QButtonGroup()
@@ -177,7 +225,7 @@ class ToolBar(QWidget):
     def add_static_button(self) -> ToolbarButton:
         """Add a button to the toolbar."""
         button = ToolbarButton()
-        self._lyt_static_buttons.insertWidget(1, button)
         button.setFixedSize(QSize(ButtonSize, ButtonSize))
         button.setIconSize(QSize(IconSize, IconSize))
+        self._lyt_static_buttons.insertWidget(0, button)
         return button
