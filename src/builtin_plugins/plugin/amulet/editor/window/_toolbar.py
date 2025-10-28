@@ -75,6 +75,15 @@ class ButtonProxy:
         self._get_button().click()
 
 
+ButtonSize = 40
+IconSize = 30
+
+LayoutCls: dict[Qt.Orientation, type[QVBoxLayout | QHBoxLayout]] = {
+    Qt.Orientation.Vertical: QVBoxLayout,
+    Qt.Orientation.Horizontal: QHBoxLayout,
+}
+
+
 class DragContainer(QWidget):
     """
     Generic list sorting handler.
@@ -137,10 +146,7 @@ class ToolBar(QFrame):
     ) -> None:
         super().__init__(parent, f)
 
-        layout_cls = {
-            Qt.Orientation.Vertical: QVBoxLayout,
-            Qt.Orientation.Horizontal: QHBoxLayout,
-        }[orientation]
+        layout_cls = LayoutCls[orientation]
 
         self._lyt_main = layout_cls()
         self._lyt_main.setSpacing(5)
@@ -160,8 +166,8 @@ class ToolBar(QFrame):
     def add_layout_button(self) -> ToolbarButton:
         """Add a button to the toolbar."""
         button = ToolbarButton()
-        button.setFixedSize(QSize(40, 40))
-        button.setIconSize(QSize(30, 30))
+        button.setFixedSize(QSize(ButtonSize, ButtonSize))
+        button.setIconSize(QSize(IconSize, IconSize))
         button.setCheckable(True)
         self._layout_button_group.addButton(button)
         self._wgt_layout_buttons.add_item(button)
@@ -175,7 +181,7 @@ class ToolBar(QFrame):
     def add_static_button(self) -> ToolbarButton:
         """Add a button to the toolbar."""
         button = ToolbarButton()
-        button.setFixedSize(QSize(40, 40))
-        button.setIconSize(QSize(30, 30))
         self._lyt_static_buttons.insertWidget(1, button)
+        button.setFixedSize(QSize(ButtonSize, ButtonSize))
+        button.setIconSize(QSize(IconSize, IconSize))
         return button
