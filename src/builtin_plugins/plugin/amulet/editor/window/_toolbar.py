@@ -28,7 +28,6 @@ class ButtonProxy:
     def __init__(self, button: ToolbarButton) -> None:
         """
         :param button: The button to wrap.
-        :param on_delete: A function to call just before deleting the button.
         """
         self._button: ToolbarButton | None = button
         self._on_click: Callable[[], None] | None = None
