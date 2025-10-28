@@ -90,7 +90,7 @@ LayoutCls: dict[Qt.Orientation, type[QVBoxLayout | QHBoxLayout]] = {
 }
 
 
-class DragContainer(QScrollArea):
+class DynamicButtonWidget(QScrollArea):
     """A rearrangeable list of buttons."""
 
     # orderChanged = Signal(list)
@@ -195,15 +195,15 @@ class ToolBar(QWidget):
 
         layout_cls = LayoutCls[orientation]
 
-        self._lyt_main = layout_cls(self)
-        self._lyt_main.setSpacing(5)
-        self._lyt_main.setContentsMargins(0, 0, 0, 0)
+        self._main_layout = layout_cls(self)
+        self._main_layout.setSpacing(5)
+        self._main_layout.setContentsMargins(0, 0, 0, 0)
 
-        self._wgt_layout_buttons = DragContainer(self, orientation)
-        self._lyt_main.addWidget(self._wgt_layout_buttons, 1)
+        self._dynamic_button_widget = DynamicButtonWidget(self, orientation)
+        self._main_layout.addWidget(self._dynamic_button_widget, 1)
 
-        self._lyt_static_buttons = layout_cls()
-        self._lyt_main.addLayout(self._lyt_static_buttons)
+        self._static_button_layout = layout_cls()
+        self._main_layout.addLayout(self._static_button_layout)
 
         self._layout_button_group = QButtonGroup()
 
@@ -214,7 +214,7 @@ class ToolBar(QWidget):
         button.setIconSize(QSize(IconSize, IconSize))
         button.setCheckable(True)
         self._layout_button_group.addButton(button)
-        self._wgt_layout_buttons.add_item(button)
+        self._dynamic_button_widget.add_item(button)
         return button
 
     def uncheck_layout_buttons(self) -> None:
@@ -227,5 +227,5 @@ class ToolBar(QWidget):
         button = ToolbarButton()
         button.setFixedSize(QSize(ButtonSize, ButtonSize))
         button.setIconSize(QSize(IconSize, IconSize))
-        self._lyt_static_buttons.insertWidget(0, button)
+        self._static_button_layout.insertWidget(0, button)
         return button
