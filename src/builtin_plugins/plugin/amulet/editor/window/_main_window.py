@@ -2,9 +2,16 @@ from __future__ import annotations
 from threading import Lock
 import logging
 
-from PySide6.QtGui import QShortcut, QCloseEvent, QAction
+from PySide6.QtGui import QCloseEvent, QAction
 from PySide6.QtCore import Qt, QEvent, QCoreApplication
-from PySide6.QtWidgets import QWidget, QMainWindow, QHBoxLayout, QVBoxLayout, QMenu
+from PySide6.QtWidgets import (
+    QWidget,
+    QMainWindow,
+    QBoxLayout,
+    QHBoxLayout,
+    QVBoxLayout,
+    QMenu,
+)
 from PySide6.QtOpenGLWidgets import QOpenGLWidget
 
 from plugin.amulet.inspector import show_inspector
@@ -69,20 +76,28 @@ class AmuletMainWindow(QMainWindow):
 
         self.menuBar().addMenu(self._tool_menu)
 
-        self._central_widget = QWidget(self)
-        self._central_layout = QHBoxLayout(self._central_widget)
-        self._central_layout.setContentsMargins(4, 4, 4, 4)
-        self._central_layout.setSpacing(4)
+        # TODO: make this configurable
+        orientation: QBoxLayout.Direction = QBoxLayout.Direction.LeftToRight
 
-        self._toolbar = ToolBar(self._central_widget)
+        self._central_widget = QWidget(self)
+        self._central_layout = QBoxLayout(orientation, self._central_widget)
+        self._central_layout.setContentsMargins(2, 2, 2, 2)
+        self._central_layout.setSpacing(2)
+
+        self._toolbar = ToolBar(
+            Qt.Orientation.Vertical
+            if orientation == QBoxLayout.Direction.LeftToRight
+            or orientation == QBoxLayout.Direction.RightToLeft
+            else Qt.Orientation.Horizontal
+        )
         self._central_layout.addWidget(self._toolbar)
 
-        self._layout = QVBoxLayout()
-        self._central_layout.addLayout(self._layout, 1)
+        self._widget_layout = QVBoxLayout()
+        self._central_layout.addLayout(self._widget_layout, 1)
 
         self._widget = _tab_widget.RecursiveSplitter()
         self._bind_events(self._widget)
-        self._layout.addWidget(self._widget)
+        self._widget_layout.addWidget(self._widget)
 
         self.setCentralWidget(self._central_widget)
 
@@ -129,7 +144,7 @@ class AmuletMainWindow(QMainWindow):
             # Add the new widget
             self._widget = new_widget
             self._bind_events(new_widget)
-            self._layout.addWidget(new_widget)
+            self._widget_layout.addWidget(new_widget)
             old_widget.deleteLater()
 
     def _on_split(
@@ -156,8 +171,8 @@ class AmuletMainWindow(QMainWindow):
             # Create the new widget
             self._widget = splitter = _tab_widget.RecursiveSplitter()
             self._bind_events(splitter)
-            self._layout.removeWidget(old_widget)
-            self._layout.addWidget(splitter)
+            self._widget_layout.removeWidget(old_widget)
+            self._widget_layout.addWidget(splitter)
 
             # Put the widgets in the splitter
             splitter.setOrientation(
@@ -177,8 +192,8 @@ class AmuletMainWindow(QMainWindow):
     ) -> _tab_widget.TabWidgetStack | _tab_widget.RecursiveSplitter:
         old_widget = self._widget
         self._unbind_events(old_widget)
-        self._layout.removeWidget(old_widget)
-        self._layout.addWidget(new_widget)
+        self._widget_layout.removeWidget(old_widget)
+        self._widget_layout.addWidget(new_widget)
         self._bind_events(new_widget)
         self._widget = new_widget
         return old_widget
