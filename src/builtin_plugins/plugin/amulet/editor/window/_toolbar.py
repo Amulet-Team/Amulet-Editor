@@ -180,18 +180,20 @@ class DynamicButtonWidget(QScrollArea):
                     if dragged:
                         return True
                 elif event.type() == QEvent.Type.MouseMove:
-                    found = self._find_widget_at(
-                        self._widget.mapFromGlobal(event.globalPos())
-                    )
-                    if found is not None:
-                        i, child = found
-                        if self._dragged_widget is not child:
-                            self._layout.removeWidget(self._dragged_widget)
-                            self._layout.insertWidget(i, self._dragged_widget)
-                            self._dragged = True
+                    self._move_dragged_to_cursor()
         elif obj is self._widget and isinstance(event, QResizeEvent):
             self.resized.emit()
         return super().eventFilter(obj, event)
+
+    def _move_dragged_to_cursor(self) -> None:
+        assert self._dragged_widget is not None
+        found = self._find_widget_at(self._widget.mapFromGlobal(QCursor.pos()))
+        if found is not None:
+            i, child = found
+            if self._dragged_widget is not child:
+                self._layout.removeWidget(self._dragged_widget)
+                self._layout.insertWidget(i, self._dragged_widget)
+                self._dragged = True
 
     def add_item(self, item: QWidget) -> None:
         self._layout.addWidget(item)
@@ -223,6 +225,10 @@ class DynamicButtonWidget(QScrollArea):
             else self.verticalScrollBar()
         )
         bar.setValue(bar.value() - event.angleDelta().y() // 5)
+
+        if self._dragged_widget is not None:
+            self._move_dragged_to_cursor()
+            return
 
         # Get the new widget the mouse is over
         new_pos = self._widget.mapFromGlobal(global_pos)
