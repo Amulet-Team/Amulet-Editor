@@ -2,7 +2,7 @@ from typing import Callable
 import traceback
 from weakref import finalize, WeakMethod
 
-from PySide6.QtCore import QSize, Qt, QObject, QEvent, QPoint
+from PySide6.QtCore import QSize, Qt, QObject, QEvent, QPoint, QRect
 from PySide6.QtGui import (
     QMouseEvent,
     QResizeEvent,
@@ -104,8 +104,8 @@ LayoutCls: dict[Qt.Orientation, type[QVBoxLayout | QHBoxLayout]] = {
 class DynamicButtonWidget(QScrollArea):
     """A rearrangeable list of buttons."""
 
-    # orderChanged = Signal(list)
     resized = Signal[()]()
+    _widgets_moved = Signal[()]()
 
     def __init__(
         self,
@@ -143,6 +143,10 @@ class DynamicButtonWidget(QScrollArea):
         self.setHorizontalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
         self.setVerticalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
         self.setWidgetResizable(True)
+
+        self._widgets_moved.connect(
+            self._on_widgets_moved, Qt.ConnectionType.QueuedConnection
+        )
 
     def child_widget(self) -> QWidget:
         return self._widget
@@ -193,6 +197,7 @@ class DynamicButtonWidget(QScrollArea):
             if self._dragged_widget is not child:
                 self._layout.removeWidget(self._dragged_widget)
                 self._layout.insertWidget(i, self._dragged_widget)
+                self._widgets_moved.emit()
                 self._dragged = True
 
     def add_item(self, item: QWidget) -> None:
@@ -226,6 +231,7 @@ class DynamicButtonWidget(QScrollArea):
         )
         bar.setValue(bar.value() - event.angleDelta().y() // 5)
 
+        self._widgets_moved.emit()
         if self._dragged_widget is not None:
             self._move_dragged_to_cursor()
             return
@@ -268,12 +274,47 @@ class DynamicButtonWidget(QScrollArea):
             self.verticalScrollBar().setValue(self.verticalScrollBar().value() - 60)
         else:
             self.horizontalScrollBar().setValue(self.horizontalScrollBar().value() - 60)
+        self._widgets_moved.emit()
 
     def scroll_down(self) -> None:
         if self._orientation == Qt.Orientation.Vertical:
             self.verticalScrollBar().setValue(self.verticalScrollBar().value() + 60)
         else:
             self.horizontalScrollBar().setValue(self.horizontalScrollBar().value() + 60)
+        self._widgets_moved.emit()
+
+    def show_labels(self) -> None:
+        visible_rect = QRect(-self._widget.pos(), self.viewport().size())
+        for i in range(self._layout.count()):
+            item = self._layout.itemAt(i)
+            if item is None:
+                continue
+            widget = item.widget()
+            if isinstance(widget, ToolbarButton) and visible_rect.contains(
+                widget.geometry()
+            ):
+                widget.show_tooltip()
+
+    def hide_labels(self) -> None:
+        for i in range(self._layout.count()):
+            item = self._layout.itemAt(i)
+            if item is None:
+                continue
+            widget = item.widget()
+            if isinstance(widget, ToolbarButton):
+                widget.hide_tooltip()
+
+    def _on_widgets_moved(self) -> None:
+        visible_rect = QRect(-self._widget.pos(), self.viewport().size())
+        for i in range(self._layout.count()):
+            item = self._layout.itemAt(i)
+            if item is None:
+                continue
+            widget = item.widget()
+            if isinstance(widget, ToolbarButton):
+                widget.hide_tooltip()
+                if visible_rect.contains(widget.geometry()):
+                    widget.show_tooltip()
 
 
 class ToolBar(QWidget):
@@ -370,3 +411,29 @@ class ToolBar(QWidget):
         button.setIconSize(QSize(IconSize, IconSize))
         self._static_button_layout.insertWidget(0, button)
         return button
+
+    def enterEvent(self, event: QEnterEvent) -> None:
+        super().enterEvent(event)
+
+        self._dynamic_button_widget.show_labels()
+
+        for i in range(self._static_button_layout.count()):
+            item = self._static_button_layout.itemAt(i)
+            if item is None:
+                continue
+            widget = item.widget()
+            if isinstance(widget, ToolbarButton):
+                widget.show_tooltip()
+
+    def leaveEvent(self, event: QEvent) -> None:
+        super().leaveEvent(event)
+
+        self._dynamic_button_widget.hide_labels()
+
+        for i in range(self._static_button_layout.count()):
+            item = self._static_button_layout.itemAt(i)
+            if item is None:
+                continue
+            widget = item.widget()
+            if isinstance(widget, ToolbarButton):
+                widget.hide_tooltip()
