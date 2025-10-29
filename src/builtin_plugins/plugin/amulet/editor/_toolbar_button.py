@@ -44,16 +44,6 @@ class ToolbarButton(SVGButton):
         super().__init__(icon_path, parent)
         self._hlbl_tooltip: QHoverLabel | None = None
 
-    def enterEvent(self, event: QEnterEvent) -> None:
-        if self._hlbl_tooltip is not None and len(self._hlbl_tooltip.text()) > 0:
-            self._hlbl_tooltip.show()
-        super().enterEvent(event)
-
-    def leaveEvent(self, event: QEvent) -> None:
-        if self._hlbl_tooltip is not None:
-            self._hlbl_tooltip.hide()
-        super().leaveEvent(event)
-
     def toolTip(self) -> str:
         return "" if self._hlbl_tooltip is None else self._hlbl_tooltip.text()
 
@@ -63,3 +53,11 @@ class ToolbarButton(SVGButton):
             self._hlbl_tooltip.hide()
         else:
             self._hlbl_tooltip.setText(label)
+
+    def show_tooltip(self) -> None:
+        if self._hlbl_tooltip is not None and len(self._hlbl_tooltip.text()) > 0:
+            self._hlbl_tooltip.show()
+
+    def hide_tooltip(self) -> None:
+        if self._hlbl_tooltip is not None:
+            self._hlbl_tooltip.hide()
