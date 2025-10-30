@@ -1,0 +1,33 @@
+<!--
+tags: [arrow, data, paper, document, format]
+category: Document
+version: "1.37"
+unicode: "edea"
+-->
+<svg
+  xmlns="http://www.w3.org/2000/svg"
+  width="24"
+  height="24"
+  viewBox="0 0 24 24"
+  fill="none"
+  stroke="currentColor"
+  stroke-width="2"
+  stroke-linecap="round"
+  stroke-linejoin="round"
+>
+  <path d="M14 3v4a1 1 0 0 0 1 1h4" />
+  <path d="
+  M10 21
+  h-3
+  a2 2 0 0 1 -2 -2
+  v-14
+  a2 2 0 0 1 2 -2
+  h7
+  l5 5
+  v5
+  m2 4
+  h-10
+  m4 -4
+  l-4 4
+  l4 4" />
+</svg>

@@ -26,19 +26,22 @@ from .window._main_window import (
     get_main_window,
     destroy_main_window,
     ButtonProxy,
+    add_static_button,
 )
 from .widget._home import HomeWidget, HomeWidgetIdentifier
-from .widget._level_info import (
-    LevelInfoWidget,
-    LevelInfoWidgetIdentifier,
-)
-from .widget._selection import (
-    SelectionWidget,
-    SelectionWidgetIdentifier,
-)
-from .widget._view_3d import View3DWidget, View3DWidgetIdentifier
+from .widget._metadata import MetadataWidget, MetadataWidgetIdentifier
+from .widget._selection import SelectionWidget, SelectionWidgetIdentifier
+from .widget._view_3d import ViewportWidget, ViewportWidgetIdentifier
 from .widget._block_inspect import BlockEditWidget, BlockEditWidgetIdentifier
+from .widget._brush import BrushWidget, BrushWidgetIdentifier
 from .widget._fill_replace import FillReplaceWidget, FillReplaceWidgetIdentifier
+from .widget._import import ImportWidget, ImportWidgetIdentifier
+from .widget._export import ExportWidget, ExportWidgetIdentifier
+from .widget._clipboard import ClipboardWidget, ClipboardWidgetIdentifier
+from .widget._paste import PasteWidget, PasteWidgetIdentifier
+from .widget._operation import OperationWidget, OperationWidgetIdentifier
+from .widget._chunk import ChunkWidget, ChunkWidgetIdentifier
+from .widget._player import PlayerWidget, PlayerWidgetIdentifier
 from .widget import register_tab_widget, unregister_tab_widget
 from .layout import (
     register_layout,
@@ -61,11 +64,8 @@ _translator: Translator | None = None
 HomeLayoutID = "amulet.home"
 home_button: ButtonProxy | None = None
 
-LevelInfoLayoutID = "amulet.level_info"
-level_info_button: ButtonProxy | None = None
-
-SelectLayoutId = "amulet.editor"
-select_button: ButtonProxy | None = None
+MetadataLayoutID = "amulet.metadata"
+metadata_button: ButtonProxy | None = None
 
 FillLayoutId = "amulet.fill"
 fill_button: ButtonProxy | None = None
@@ -76,6 +76,9 @@ brush_button: ButtonProxy | None = None
 BlockEditLayoutId = "amulet.block_editor"
 block_edit_button: ButtonProxy | None = None
 
+OperationLayoutId = "amulet.operation"
+operation_button: ButtonProxy | None = None
+
 ImportLayoutId = "amulet.import"
 import_button: ButtonProxy | None = None
 
@@ -85,8 +88,13 @@ export_button: ButtonProxy | None = None
 ChunkLayoutId = "amulet.chunk"
 chunk_button: ButtonProxy | None = None
 
+PlayerLayoutId = "amulet.player"
+player_button: ButtonProxy | None = None
+
 ConvertLayoutId = "amulet.convert"
 convert_button: ButtonProxy | None = None
+
+settings_button: ButtonProxy | None = None
 
 
 def _init_app() -> None:
@@ -110,22 +118,31 @@ def _load_translations() -> None:
 
 def _init_editor() -> None:
     global home_button
-    global level_info_button
-    global select_button
+    global metadata_button
     global fill_button
     global brush_button
     global block_edit_button
     global import_button
     global export_button
     global chunk_button
+    global player_button
     global convert_button
+    global settings_button
 
     register_tab_widget(HomeWidgetIdentifier, HomeWidget)
-    register_tab_widget(LevelInfoWidgetIdentifier, LevelInfoWidget)
+    register_tab_widget(MetadataWidgetIdentifier, MetadataWidget)
     register_tab_widget(SelectionWidgetIdentifier, SelectionWidget)
     register_tab_widget(BlockEditWidgetIdentifier, BlockEditWidget)
-    register_tab_widget(View3DWidgetIdentifier, View3DWidget)
+    register_tab_widget(BrushWidgetIdentifier, BrushWidget)
+    register_tab_widget(ViewportWidgetIdentifier, ViewportWidget)
     register_tab_widget(FillReplaceWidgetIdentifier, FillReplaceWidget)
+    register_tab_widget(ImportWidgetIdentifier, ImportWidget)
+    register_tab_widget(ExportWidgetIdentifier, ExportWidget)
+    register_tab_widget(ClipboardWidgetIdentifier, ClipboardWidget)
+    register_tab_widget(PasteWidgetIdentifier, PasteWidget)
+    register_tab_widget(OperationWidgetIdentifier, OperationWidget)
+    register_tab_widget(ChunkWidgetIdentifier, ChunkWidget)
+    register_tab_widget(PlayerWidgetIdentifier, PlayerWidget)
 
     register_layout(
         HomeLayoutID,
@@ -147,44 +164,22 @@ def _init_editor() -> None:
         home_button.click()
     else:
         register_layout(
-            LevelInfoLayoutID,
+            MetadataLayoutID,
             LayoutConfig(
                 WindowConfig(
                     None,
                     None,
-                    WidgetStackConfig((WidgetConfig(LevelInfoWidgetIdentifier),)),
+                    WidgetStackConfig((WidgetConfig(MetadataWidgetIdentifier),)),
                 ),
                 (),
             ),
         )
 
         # Set up the home button
-        level_info_button = create_layout_button(LevelInfoLayoutID)
-        level_info_button.set_icon(tablericons.outline.file_info)
-        level_info_button.set_name("Level Info")
-        level_info_button.click()
-
-        register_layout(
-            SelectLayoutId,
-            LayoutConfig(
-                WindowConfig(
-                    None,
-                    None,
-                    SplitterConfig(
-                        WidgetStackConfig((WidgetConfig(SelectionWidgetIdentifier),)),
-                        WidgetStackConfig((WidgetConfig(View3DWidgetIdentifier),)),
-                        Qt.Orientation.Horizontal,
-                        0.1,
-                    ),
-                ),
-                (),
-            ),
-        )
-
-        # Set up the 3D View button
-        select_button = create_layout_button(SelectLayoutId)
-        select_button.set_icon(tablericons.outline.cube_3d_sphere)
-        select_button.set_name("Select")
+        metadata_button = create_layout_button(MetadataLayoutID)
+        metadata_button.set_icon(tablericons.outline.file_info)
+        metadata_button.set_name("Metadata")
+        metadata_button.click()
 
         register_layout(
             FillLayoutId,
@@ -195,12 +190,14 @@ def _init_editor() -> None:
                     SplitterConfig(
                         WidgetStackConfig((WidgetConfig(SelectionWidgetIdentifier),)),
                         SplitterConfig(
-                            WidgetStackConfig((WidgetConfig(View3DWidgetIdentifier),)),
+                            WidgetStackConfig(
+                                (WidgetConfig(ViewportWidgetIdentifier),)
+                            ),
                             WidgetStackConfig(
                                 (WidgetConfig(FillReplaceWidgetIdentifier),)
                             ),
                             Qt.Orientation.Horizontal,
-                            0.9,
+                            8 / 9,
                         ),
                         Qt.Orientation.Horizontal,
                         0.1,
@@ -212,7 +209,7 @@ def _init_editor() -> None:
 
         fill_button = create_layout_button(FillLayoutId)
         fill_button.set_icon(tablericons.outline.bucket_droplet)
-        fill_button.set_name("Fill")
+        fill_button.set_name("Fill/Replace")
 
         register_layout(
             BrushLayoutId,
@@ -221,8 +218,8 @@ def _init_editor() -> None:
                     None,
                     None,
                     SplitterConfig(
-                        WidgetStackConfig((WidgetConfig(SelectionWidgetIdentifier),)),
-                        WidgetStackConfig((WidgetConfig(View3DWidgetIdentifier),)),
+                        WidgetStackConfig((WidgetConfig(BrushWidgetIdentifier),)),
+                        WidgetStackConfig((WidgetConfig(ViewportWidgetIdentifier),)),
                         Qt.Orientation.Horizontal,
                         0.1,
                     ),
@@ -243,7 +240,7 @@ def _init_editor() -> None:
                     None,
                     SplitterConfig(
                         WidgetStackConfig((WidgetConfig(BlockEditWidgetIdentifier),)),
-                        WidgetStackConfig((WidgetConfig(View3DWidgetIdentifier),)),
+                        WidgetStackConfig((WidgetConfig(ViewportWidgetIdentifier),)),
                         Qt.Orientation.Horizontal,
                         0.1,
                     ),
@@ -257,19 +254,70 @@ def _init_editor() -> None:
         block_edit_button.set_name("Block Editor")
 
         register_layout(
+            OperationLayoutId,
+            LayoutConfig(
+                WindowConfig(
+                    None,
+                    None,
+                    SplitterConfig(
+                        WidgetStackConfig((WidgetConfig(SelectionWidgetIdentifier),)),
+                        SplitterConfig(
+                            WidgetStackConfig(
+                                (WidgetConfig(ViewportWidgetIdentifier),)
+                            ),
+                            WidgetStackConfig(
+                                (WidgetConfig(OperationWidgetIdentifier),)
+                            ),
+                            Qt.Orientation.Horizontal,
+                            8 / 9,
+                        ),
+                        Qt.Orientation.Horizontal,
+                        0.1,
+                    ),
+                ),
+                (),
+            ),
+        )
+
+        operation_button = create_layout_button(OperationLayoutId)
+        operation_button.set_icon(tablericons.outline.brand_python)
+        operation_button.set_name("Operation")
+
+        register_layout(
             ImportLayoutId,
             LayoutConfig(
                 WindowConfig(
                     None,
                     None,
-                    WidgetStackConfig((WidgetConfig(View3DWidgetIdentifier),)),
+                    SplitterConfig(
+                        WidgetStackConfig((WidgetConfig(PasteWidgetIdentifier),)),
+                        SplitterConfig(
+                            WidgetStackConfig(
+                                (WidgetConfig(ViewportWidgetIdentifier),)
+                            ),
+                            SplitterConfig(
+                                WidgetStackConfig(
+                                    (WidgetConfig(ImportWidgetIdentifier),)
+                                ),
+                                WidgetStackConfig(
+                                    (WidgetConfig(ClipboardWidgetIdentifier),)
+                                ),
+                                Qt.Orientation.Vertical,
+                                0.5,
+                            ),
+                            Qt.Orientation.Horizontal,
+                            0.8,
+                        ),
+                        Qt.Orientation.Horizontal,
+                        0.1,
+                    ),
                 ),
                 (),
             ),
         )
 
         import_button = create_layout_button(ImportLayoutId)
-        import_button.set_icon(tablericons.outline.file_import)
+        import_button.set_icon(tablericons.outline_alt.file_import)
         import_button.set_name("Import")
 
         register_layout(
@@ -278,14 +326,26 @@ def _init_editor() -> None:
                 WindowConfig(
                     None,
                     None,
-                    WidgetStackConfig((WidgetConfig(View3DWidgetIdentifier),)),
+                    SplitterConfig(
+                        WidgetStackConfig((WidgetConfig(SelectionWidgetIdentifier),)),
+                        SplitterConfig(
+                            WidgetStackConfig(
+                                (WidgetConfig(ViewportWidgetIdentifier),)
+                            ),
+                            WidgetStackConfig((WidgetConfig(ExportWidgetIdentifier),)),
+                            Qt.Orientation.Horizontal,
+                            8 / 9,
+                        ),
+                        Qt.Orientation.Horizontal,
+                        0.1,
+                    ),
                 ),
                 (),
             ),
         )
 
         export_button = create_layout_button(ExportLayoutId)
-        export_button.set_icon(tablericons.outline.file_export)
+        export_button.set_icon(tablericons.outline_alt.file_export)
         export_button.set_name("Export")
 
         register_layout(
@@ -294,7 +354,12 @@ def _init_editor() -> None:
                 WindowConfig(
                     None,
                     None,
-                    WidgetStackConfig((WidgetConfig(View3DWidgetIdentifier),)),
+                    SplitterConfig(
+                        WidgetStackConfig((WidgetConfig(ChunkWidgetIdentifier),)),
+                        WidgetStackConfig((WidgetConfig(ViewportWidgetIdentifier),)),
+                        Qt.Orientation.Horizontal,
+                        0.1,
+                    ),
                 ),
                 (),
             ),
@@ -305,20 +370,45 @@ def _init_editor() -> None:
         chunk_button.set_name("Chunk")
 
         register_layout(
+            PlayerLayoutId,
+            LayoutConfig(
+                WindowConfig(
+                    None,
+                    None,
+                    SplitterConfig(
+                        WidgetStackConfig((WidgetConfig(PlayerWidgetIdentifier),)),
+                        WidgetStackConfig((WidgetConfig(ViewportWidgetIdentifier),)),
+                        Qt.Orientation.Horizontal,
+                        0.1,
+                    ),
+                ),
+                (),
+            ),
+        )
+
+        player_button = create_layout_button(PlayerLayoutId)
+        player_button.set_icon(tablericons.outline.user)
+        player_button.set_name("Player")
+
+        register_layout(
             ConvertLayoutId,
             LayoutConfig(
                 WindowConfig(
                     None,
                     None,
-                    WidgetStackConfig((WidgetConfig(View3DWidgetIdentifier),)),
+                    WidgetStackConfig((WidgetConfig(ViewportWidgetIdentifier),)),
                 ),
                 (),
             ),
         )
 
         convert_button = create_layout_button(ConvertLayoutId)
-        convert_button.set_icon(tablericons.filled.arrow_big_right_lines)
+        convert_button.set_icon(tablericons.outline.arrow_big_right_lines)
         convert_button.set_name("Convert")
+
+    settings_button = add_static_button()
+    settings_button.set_icon(tablericons.outline.settings)
+    settings_button.set_name("Settings")
 
 
 def _destroy_editor() -> None:
@@ -326,13 +416,9 @@ def _destroy_editor() -> None:
         home_button.delete()
         unregister_layout(HomeLayoutID)
 
-    if level_info_button is not None:
-        level_info_button.delete()
-        unregister_layout(LevelInfoLayoutID)
-
-    if select_button is not None:
-        select_button.delete()
-        unregister_layout(SelectLayoutId)
+    if metadata_button is not None:
+        metadata_button.delete()
+        unregister_layout(MetadataLayoutID)
 
     if fill_button is not None:
         fill_button.delete()
@@ -346,6 +432,10 @@ def _destroy_editor() -> None:
         block_edit_button.delete()
         unregister_layout(BlockEditLayoutId)
 
+    if operation_button is not None:
+        operation_button.delete()
+        unregister_layout(OperationLayoutId)
+
     if import_button is not None:
         import_button.delete()
         unregister_layout(ImportLayoutId)
@@ -358,16 +448,31 @@ def _destroy_editor() -> None:
         chunk_button.delete()
         unregister_layout(ChunkLayoutId)
 
+    if player_button is not None:
+        player_button.delete()
+        unregister_layout(PlayerLayoutId)
+
     if convert_button is not None:
         convert_button.delete()
         unregister_layout(ConvertLayoutId)
 
+    if settings_button is not None:
+        settings_button.delete()
+
     unregister_tab_widget(HomeWidgetIdentifier)
-    unregister_tab_widget(LevelInfoWidgetIdentifier)
+    unregister_tab_widget(MetadataWidgetIdentifier)
     unregister_tab_widget(SelectionWidgetIdentifier)
     unregister_tab_widget(BlockEditWidgetIdentifier)
-    unregister_tab_widget(View3DWidgetIdentifier)
+    unregister_tab_widget(BrushWidgetIdentifier)
+    unregister_tab_widget(ViewportWidgetIdentifier)
     unregister_tab_widget(FillReplaceWidgetIdentifier)
+    unregister_tab_widget(ImportWidgetIdentifier)
+    unregister_tab_widget(ExportWidgetIdentifier)
+    unregister_tab_widget(ClipboardWidgetIdentifier)
+    unregister_tab_widget(PasteWidgetIdentifier)
+    unregister_tab_widget(OperationWidgetIdentifier)
+    unregister_tab_widget(ChunkWidgetIdentifier)
+    unregister_tab_widget(PlayerWidgetIdentifier)
 
 
 def _main(args: FullArgs) -> None:

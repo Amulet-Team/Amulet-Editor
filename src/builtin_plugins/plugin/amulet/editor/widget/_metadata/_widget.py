@@ -8,10 +8,10 @@ from PySide6.QtWidgets import QWidget, QVBoxLayout
 from plugin.amulet.editor.widget.abc import TabWidget
 
 
-LevelInfoWidgetIdentifier = "amulet.editor.LevelInfoWidget"
+MetadataWidgetIdentifier = "amulet.editor.MetadataWidget"
 
 
-class LevelInfoWidget(TabWidget):
+class MetadataWidget(TabWidget):
     def __init__(
         self, parent: Optional[QWidget] = None, f: Qt.WindowType = Qt.WindowType.Widget
     ):
@@ -21,4 +21,4 @@ class LevelInfoWidget(TabWidget):
 
     @property
     def title(self) -> str:
-        return "Level Info"
+        return "Metadata"
