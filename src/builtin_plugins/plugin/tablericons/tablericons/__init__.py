@@ -6032,3 +6032,8 @@ class outline:
     zoom = _get_path("outline", "zoom.svg")
     zzz_off = _get_path("outline", "zzz-off.svg")
     zzz = _get_path("outline", "zzz.svg")
+
+
+class outline_alt:
+    file_export = _get_path("outline_alt", "file-export.svg")
+    file_import = _get_path("outline_alt", "file-import.svg")

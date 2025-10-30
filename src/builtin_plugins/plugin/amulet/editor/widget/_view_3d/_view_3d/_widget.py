@@ -10,10 +10,10 @@ from plugin.amulet.editor.widget.abc import TabWidget
 from ._canvas import FirstPersonCanvas
 
 
-View3DWidgetIdentifier = "amulet.editor.View3DWidget"
+ViewportWidgetIdentifier = "amulet.editor.ViewportWidget"
 
 
-class View3DWidget(TabWidget):
+class ViewportWidget(TabWidget):
     def __init__(
         self, parent: Optional[QWidget] = None, f: Qt.WindowType = Qt.WindowType.Widget
     ):
@@ -24,4 +24,4 @@ class View3DWidget(TabWidget):
 
     @property
     def title(self) -> str:
-        return "3D View"
+        return "Viewport"
