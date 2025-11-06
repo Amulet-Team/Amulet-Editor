@@ -15,7 +15,7 @@ UnionPattern = re.compile(
 )
 
 
-def union_sub_func(match: re.Match) -> str:
+def union_sub_func(match: re.Match[str]) -> str:
     return f'{match.group("variable")}: typing.TypeAlias = {match.group("value")}'
 
 
@@ -26,7 +26,7 @@ ClassVarUnionPattern = re.compile(
 
 
 def class_var_union_sub_func(match: re.Match) -> str:
-    return f'{match.group("variable")}: typing.ClassVar[typing.TypeAlias] = {match.group("value")}'
+    return f'{match.group("variable")}: typing.TypeAlias = {match.group("value")}'
 
 
 VersionPattern = re.compile(r"(?P<var>[a-zA-Z0-9_].*): str = '.*?'")
@@ -36,13 +36,20 @@ def str_sub_func(match: re.Match) -> str:
     return f"{match.group('var')}: str"
 
 
+CompilerConfigPattern = re.compile(r"compiler_config: dict.*")
+
+
+def compiler_config_sub_func(match: re.Match) -> str:
+    return "compiler_config: dict"
+
+
 EqPattern = re.compile(
     r"(?P<indent>[ \t]+)def __eq__\(self, arg0: (?P<other>[a-zA-Z1-9.]+)\) -> (?P<return>[a-zA-Z1-9.]+):"
     r"(?P<ellipsis_docstring>\s*((\.\.\.)|(\"\"\"(.|\n)*?\"\"\")))"
 )
 
 
-def eq_sub_func(match: re.Match) -> str:
+def eq_sub_func(match: re.Match[str]) -> str:
     """
     if one - add @overload and overloaded signature
 
@@ -95,72 +102,37 @@ def get_package_dir(name: str) -> str:
     return os.path.realpath(os.path.dirname(get_module_path(name)))
 
 
-def patch_stubgen():
+def patch_stubgen() -> None:
+    class_member_blacklist: set[Identifier] = FilterClassMembers._FilterClassMembers__class_member_blacklist  # type: ignore
+    attribute_blacklist: set[Identifier] = FilterClassMembers._FilterClassMembers__attribute_blacklist  # type: ignore
+
     # Is there a better way to add items to the blacklist?
     # Pybind11
-    FilterClassMembers._FilterClassMembers__class_member_blacklist.add(
-        Identifier("_pybind11_conduit_v1_")
-    )
+    class_member_blacklist.add(Identifier("_pybind11_conduit_v1_"))
     # Python
-    FilterClassMembers._FilterClassMembers__class_member_blacklist.add(
-        Identifier("__new__")
-    )
-    FilterClassMembers._FilterClassMembers__class_member_blacklist.add(
-        Identifier("__subclasshook__")
-    )
+    class_member_blacklist.add(Identifier("__new__"))
+    class_member_blacklist.add(Identifier("__subclasshook__"))
     # Pickle
-    FilterClassMembers._FilterClassMembers__class_member_blacklist.add(
-        Identifier("__getnewargs__")
-    )
-    FilterClassMembers._FilterClassMembers__class_member_blacklist.add(
-        Identifier("__getstate__")
-    )
-    FilterClassMembers._FilterClassMembers__class_member_blacklist.add(
-        Identifier("__setstate__")
-    )
+    class_member_blacklist.add(Identifier("__getnewargs__"))
+    class_member_blacklist.add(Identifier("__getstate__"))
+    class_member_blacklist.add(Identifier("__setstate__"))
     # ABC
-    FilterClassMembers._FilterClassMembers__attribute_blacklist.add(
-        Identifier("__abstractmethods__")
-    )
-    FilterClassMembers._FilterClassMembers__attribute_blacklist.add(
-        Identifier("__orig_bases__")
-    )
-    FilterClassMembers._FilterClassMembers__attribute_blacklist.add(
-        Identifier("__parameters__")
-    )
-    FilterClassMembers._FilterClassMembers__attribute_blacklist.add(
-        Identifier("_abc_impl")
-    )
+    attribute_blacklist.add(Identifier("__abstractmethods__"))
+    attribute_blacklist.add(Identifier("__orig_bases__"))
+    attribute_blacklist.add(Identifier("__parameters__"))
+    attribute_blacklist.add(Identifier("_abc_impl"))
     # Protocol
-    FilterClassMembers._FilterClassMembers__attribute_blacklist.add(
-        Identifier("__protocol_attrs__")
-    )
-    FilterClassMembers._FilterClassMembers__attribute_blacklist.add(
-        Identifier("__non_callable_proto_members__")
-    )
-    FilterClassMembers._FilterClassMembers__attribute_blacklist.add(
-        Identifier("_is_protocol")
-    )
-    FilterClassMembers._FilterClassMembers__attribute_blacklist.add(
-        Identifier("_is_runtime_protocol")
-    )
+    attribute_blacklist.add(Identifier("__protocol_attrs__"))
+    attribute_blacklist.add(Identifier("__non_callable_proto_members__"))
+    attribute_blacklist.add(Identifier("_is_protocol"))
+    attribute_blacklist.add(Identifier("_is_runtime_protocol"))
     # dataclass
-    FilterClassMembers._FilterClassMembers__attribute_blacklist.add(
-        Identifier("__dataclass_fields__")
-    )
-    FilterClassMembers._FilterClassMembers__attribute_blacklist.add(
-        Identifier("__dataclass_params__")
-    )
-    FilterClassMembers._FilterClassMembers__attribute_blacklist.add(
-        Identifier("__match_args__")
-    )
+    attribute_blacklist.add(Identifier("__dataclass_fields__"))
+    attribute_blacklist.add(Identifier("__dataclass_params__"))
+    attribute_blacklist.add(Identifier("__match_args__"))
     # Buffer protocol
-    FilterClassMembers._FilterClassMembers__class_member_blacklist.add(
-        Identifier("__buffer__")
-    )
-    FilterClassMembers._FilterClassMembers__class_member_blacklist.add(
-        Identifier("__release_buffer__")
-    )
+    class_member_blacklist.add(Identifier("__buffer__"))
+    class_member_blacklist.add(Identifier("__release_buffer__"))
 
 
 def main() -> None:
@@ -249,6 +221,7 @@ def main() -> None:
         pyi = UnionPattern.sub(union_sub_func, pyi)
         pyi = ClassVarUnionPattern.sub(class_var_union_sub_func, pyi)
         pyi = VersionPattern.sub(str_sub_func, pyi)
+        pyi = CompilerConfigPattern.sub(compiler_config_sub_func, pyi)
         pyi = GenericAliasPattern.sub(generic_alias_sub_func, pyi)
         pyi = pyi.replace(
             "__hash__: typing.ClassVar[None] = None",
