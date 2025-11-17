@@ -22,9 +22,15 @@ LevelGeometry::~LevelGeometry()
     timer->moveToThread(QCoreApplication::instance()->thread());
     timer->setSingleShot(true);
     QObject::connect(timer, &QTimer::timeout, [impl, timer]() {
-        // main thread
-        delete impl;
-        timer->deleteLater();
+        try {
+            // main thread
+            delete impl;
+            timer->deleteLater();
+        } catch (const std::exception& e) {
+            error(std::string("Error in ~LevelGeometry(): ") + e.what());
+        } catch (...) {
+            error("Error in ~LevelGeometry()");
+        }
     });
     QMetaObject::invokeMethod(timer, "start", Qt::QueuedConnection, Q_ARG(int, 0));
 }

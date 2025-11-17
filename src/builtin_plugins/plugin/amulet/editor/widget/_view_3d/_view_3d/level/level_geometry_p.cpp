@@ -483,104 +483,111 @@ void LevelGeometryImp::_wake_chunk_manager()
 
 void LevelGeometryImp::_manager()
 {
-    debug("LevelGeometry::_manager()");
-    std::unique_lock data_lock(_data_mutex);
-    if (!_is_awake()) {
-        critical("LevelGeometry should be awake here.");
-        return;
-    }
+    try {
+        debug("LevelGeometry::_manager()");
+        std::unique_lock data_lock(_data_mutex);
+        if (!_is_awake()) {
+            critical("LevelGeometry should be awake here.");
+            return;
+        }
 
-    while (
-        !_gl_texture && !QThread::currentThread()->isInterruptionRequested()) {
-        // Wait until the texture is initialised or interruption is requested.
-        _condition.wait(data_lock);
-    }
-
-    // The number of chunks we have processed.
-    // After ChunkRestartCount processed chunks, the finder should be restarted.
-    // This gives a balance between prioritising near chunks and not constantly rebuilding the same chunk.
-    size_t processed_count = 0;
-    // Loop until thread interruption is requested.
-    while (!QThread::currentThread()->isInterruptionRequested()) {
-        if (_worker_thread_pool.maxThreadCount() <= _worker_count) {
-            debug("hit max thread count. Sleeping");
-            // All the threads in the pool are running. Sleep until woken.
+        while (
+            !_gl_texture && !QThread::currentThread()->isInterruptionRequested()) {
+            // Wait until the texture is initialised or interruption is requested.
             _condition.wait(data_lock);
-            continue;
         }
 
-        // Find the next chunk to process.
-        std::optional<std::tuple<DimensionId, int, int>> chunk_key;
-        std::shared_ptr<ChunkGeometry> chunk_geometry;
-        while (true) {
-            // Find one chunk to mesh.
-            chunk_key = _chunk_finder.next();
-            if (chunk_key) {
-                auto it = _level_gl_data->chunks.find(*chunk_key);
-                if (it == _level_gl_data->chunks.end()) {
-                    // has not been generated yet
-                    chunk_geometry = nullptr;
-                    break;
-                }
-                chunk_geometry = it->second;
-                if (chunk_geometry->processing) {
-                    // Skip if the chunk is being meshed.
-                    continue;
-                }
-                if (chunk_geometry->has_changed()) {
-                    // has changed since it was last generated
-                    break;
-                }
-            } else {
-                break;
-            }
-        }
-
-        if (!chunk_key) {
-            // Reached the end of the iterator
-            if (_chunk_finder_needs_reset) {
-                _reset_chunk_finder();
+        // The number of chunks we have processed.
+        // After ChunkRestartCount processed chunks, the finder should be restarted.
+        // This gives a balance between prioritising near chunks and not constantly rebuilding the same chunk.
+        size_t processed_count = 0;
+        // Loop until thread interruption is requested.
+        while (!QThread::currentThread()->isInterruptionRequested()) {
+            if (_worker_thread_pool.maxThreadCount() <= _worker_count) {
+                debug("hit max thread count. Sleeping");
+                // All the threads in the pool are running. Sleep until woken.
+                _condition.wait(data_lock);
                 continue;
             }
-            // There are no more chunks to process. Sleep until woken.
-            _condition.wait(data_lock);
-            continue;
+
+            // Find the next chunk to process.
+            std::optional<std::tuple<DimensionId, int, int>> chunk_key;
+            std::shared_ptr<ChunkGeometry> chunk_geometry;
+            while (true) {
+                // Find one chunk to mesh.
+                chunk_key = _chunk_finder.next();
+                if (chunk_key) {
+                    auto it = _level_gl_data->chunks.find(*chunk_key);
+                    if (it == _level_gl_data->chunks.end()) {
+                        // has not been generated yet
+                        chunk_geometry = nullptr;
+                        break;
+                    }
+                    chunk_geometry = it->second;
+                    if (chunk_geometry->processing) {
+                        // Skip if the chunk is being meshed.
+                        continue;
+                    }
+                    if (chunk_geometry->has_changed()) {
+                        // has changed since it was last generated
+                        break;
+                    }
+                } else {
+                    break;
+                }
+            }
+
+            if (!chunk_key) {
+                // Reached the end of the iterator
+                if (_chunk_finder_needs_reset) {
+                    _reset_chunk_finder();
+                    continue;
+                }
+                // There are no more chunks to process. Sleep until woken.
+                _condition.wait(data_lock);
+                continue;
+            }
+
+            auto& [dimension, cx, cz] = *chunk_key;
+
+            // Create the chunk data object if it doesn't exist.
+            if (!chunk_geometry) {
+                QMatrix4x4 transform;
+                transform.translate(cx * 16, 0, cz * 16);
+                auto chunk_handle = _level->get_dimension(dimension)->get_chunk_handle(cx, cz);
+                chunk_geometry = std::make_shared<ChunkGeometry>(std::move(chunk_handle), transform);
+                chunk_geometry->changed_token = chunk_geometry->chunk_handle->changed.connect(
+                    [this]() {
+                        std::lock_guard lock(_data_mutex);
+                        _queue_reset_chunk_finder();
+                    });
+                _level_gl_data->chunks.emplace(*chunk_key, chunk_geometry);
+                _sort_chunks();
+            }
+
+            // Keep track of which chunks are processing
+            chunk_geometry->processing = true;
+            // Increment the worker count
+            _worker_count += 1;
+            // Add the chunk meshing job.
+            _worker_thread_pool.start([this, dimension, cx, cz, chunk_geometry]() {
+                QThread::currentThread()->setObjectName("ChunkMesher");
+                _worker(dimension, cx, cz, std::move(chunk_geometry));
+            });
+
+            processed_count += 1;
+            if (ChunkRestartCount <= processed_count && _chunk_finder_needs_reset) {
+                // Once we have generated ChunkRestartCount chunks, recheck the nearer chunks.
+                processed_count = 0;
+                _reset_chunk_finder();
+            }
         }
-
-        auto& [dimension, cx, cz] = *chunk_key;
-
-        // Create the chunk data object if it doesn't exist.
-        if (!chunk_geometry) {
-            QMatrix4x4 transform;
-            transform.translate(cx * 16, 0, cz * 16);
-            auto chunk_handle = _level->get_dimension(dimension)->get_chunk_handle(cx, cz);
-            chunk_geometry = std::make_shared<ChunkGeometry>(std::move(chunk_handle), transform);
-            chunk_geometry->changed_token = chunk_geometry->chunk_handle->changed.connect(
-                [this]() {
-                    std::lock_guard lock(_data_mutex);
-                    _queue_reset_chunk_finder();
-                });
-            _level_gl_data->chunks.emplace(*chunk_key, chunk_geometry);
-            _sort_chunks();
-        }
-
-        // Keep track of which chunks are processing
-        chunk_geometry->processing = true;
-        // Increment the worker count
-        _worker_count += 1;
-        // Add the chunk meshing job.
-        _worker_thread_pool.start([this, dimension, cx, cz, chunk_geometry]() {
-            _worker(dimension, cx, cz, std::move(chunk_geometry));
-        });
-
-        processed_count += 1;
-        if (ChunkRestartCount <= processed_count && _chunk_finder_needs_reset) {
-            // Once we have generated ChunkRestartCount chunks, recheck the nearer chunks.
-            processed_count = 0;
-            _reset_chunk_finder();
-        }
+        debug("LevelGeometry::_manager() end");
+    } catch (const std::exception& e) {
+        error(std::string("Error in LevelGeometry::_manager(): ") + e.what());
+    } catch (...) {
+        error("Error in LevelGeometry::_manager()");
     }
-    debug("LevelGeometry::_manager() end");
 }
 
 void LevelGeometryImp::_worker(
@@ -589,55 +596,67 @@ void LevelGeometryImp::_worker(
     std::int64_t cz,
     std::shared_ptr<ChunkGeometry> chunk_geometry)
 {
-    // debug(f"Meshing chunk {chunk_key}.");
+    try {
+        // debug(f"Meshing chunk {chunk_key}.");
 
-    // Get the chunk state before we start meshing
-    auto chunk_state = chunk_geometry->get_chunk_state();
+        // Get the chunk state before we start meshing
+        auto chunk_state = chunk_geometry->get_chunk_state();
 
-    // Create a local reference to the resource pack.
-    // _gl_resource_pack can get swapped while we are meshing.
-    std::shared_ptr<AbstractOpenGLResourcePack> resource_pack;
-    {
-        std::lock_guard lock(_data_mutex);
-        resource_pack = _gl_resource_pack;
-    }
-
-    // Do the chunk meshing
-    auto [opaque_buffer, opaque_vertex_count, translucent_buffer, translucent_vertex_count] = mesh_chunk(
-        *_level, *resource_pack, dimension, cx, cz);
-
-    // queue OpenGL data creation on the main thread.
-    // debug(f"Mesh generated for {chunk_key}");
-    {
-        std::lock_guard lock(_data_mutex);
-        _processed_chunks.emplace_back(
-            std::move(dimension),
-            cx,
-            cz,
-            std::move(chunk_geometry),
-            chunk_state,
-            std::move(opaque_buffer),
-            opaque_vertex_count,
-            std::move(translucent_buffer),
-            translucent_vertex_count);
-        if (_processed_chunks.size() == 1) {
-            // If it is more than 1 there should be an event pending.
-            QTimer* timer = new QTimer();
-            timer->moveToThread(QCoreApplication::instance()->thread());
-            timer->setSingleShot(true);
-            QObject::connect(timer, &QTimer::timeout, [this, timer]() {
-                // main thread
-                _init_chunks_gl();
-                timer->deleteLater();
-            });
-            QMetaObject::invokeMethod(timer, "start", Qt::QueuedConnection, Q_ARG(int, 0));
+        // Create a local reference to the resource pack.
+        // _gl_resource_pack can get swapped while we are meshing.
+        std::shared_ptr<AbstractOpenGLResourcePack> resource_pack;
+        {
+            std::lock_guard lock(_data_mutex);
+            resource_pack = _gl_resource_pack;
         }
-        _worker_count -= 1;
-    }
 
-    // Wake up the manager thread to submit new jobs.
-    _wake_chunk_manager();
-    // debug(f"Finished meshing chunk {chunk_key}.");
+        // Do the chunk meshing
+        auto [opaque_buffer, opaque_vertex_count, translucent_buffer, translucent_vertex_count] = mesh_chunk(
+            *_level, *resource_pack, dimension, cx, cz);
+
+        // queue OpenGL data creation on the main thread.
+        // debug(f"Mesh generated for {chunk_key}");
+        {
+            std::lock_guard lock(_data_mutex);
+            _processed_chunks.emplace_back(
+                std::move(dimension),
+                cx,
+                cz,
+                std::move(chunk_geometry),
+                chunk_state,
+                std::move(opaque_buffer),
+                opaque_vertex_count,
+                std::move(translucent_buffer),
+                translucent_vertex_count);
+            if (_processed_chunks.size() == 1) {
+                // If it is more than 1 there should be an event pending.
+                QTimer* timer = new QTimer();
+                timer->moveToThread(QCoreApplication::instance()->thread());
+                timer->setSingleShot(true);
+                QObject::connect(timer, &QTimer::timeout, [this, timer]() {
+                    try {
+                        // main thread
+                        _init_chunks_gl();
+                        timer->deleteLater();
+                    } catch (const std::exception& e) {
+                        error(std::string("Error in LevelGeometryImp::_init_chunks_gl(): ") + e.what());
+                    } catch (...) {
+                        error("Error in LevelGeometryImp::_init_chunks_gl()");
+                    }
+                });
+                QMetaObject::invokeMethod(timer, "start", Qt::QueuedConnection, Q_ARG(int, 0));
+            }
+            _worker_count -= 1;
+        }
+
+        // Wake up the manager thread to submit new jobs.
+        _wake_chunk_manager();
+        // debug(f"Finished meshing chunk {chunk_key}.");
+    } catch (const std::exception& e) {
+        error(std::string("Error in LevelGeometryImp::_worker: ") + e.what());
+    } catch (...) {
+        error("Error in LevelGeometryImp::_worker");
+    }
 }
 
 void LevelGeometryImp::_init_chunks_gl()
