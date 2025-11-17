@@ -7,9 +7,9 @@
 #include <QThread>
 #include <QTimer>
 
+#include <amulet/utils/event.hpp>
 #include <amulet/utils/logging.hpp>
 #include <amulet/utils/matrix.hpp>
-#include <amulet/utils/event.hpp>
 
 #include <amulet/core/selection/box.hpp>
 #include <amulet/core/selection/box_group.hpp>
@@ -190,7 +190,8 @@ void SelectionGeometryImp::paint_gl(const Matrix4x4& projection_matrix, const Ma
     program.release();
 }
 
-Event<>& SelectionGeometryImp::get_geometry_changed() {
+Event<>& SelectionGeometryImp::get_geometry_changed()
+{
     return geometry_changed;
 }
 
@@ -268,9 +269,15 @@ void SelectionGeometryImp::set_selection(const SelectionShapeGroup& shapes)
     timer->moveToThread(QCoreApplication::instance()->thread());
     timer->setSingleShot(true);
     QObject::connect(timer, &QTimer::timeout, [this, timer, buffer = std::move(buffer), model_data = std::move(model_data)]() {
-        // main thread
-        init_geometry(buffer, std::move(model_data));
-        timer->deleteLater();
+        try {
+            // main thread
+            init_geometry(buffer, std::move(model_data));
+            timer->deleteLater();
+        } catch (const std::exception& e) {
+            error(std::string("Error in SelectionGeometryImp::init_geometry: ") + e.what());
+        } catch (...) {
+            error("Error in SelectionGeometryImp::init_geometry");
+        }
     });
     QMetaObject::invokeMethod(timer, "start", Qt::QueuedConnection, Q_ARG(int, 0));
 }
