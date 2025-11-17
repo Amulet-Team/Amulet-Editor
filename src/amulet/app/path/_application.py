@@ -1,6 +1,7 @@
 import os
 
 from PySide6.QtCore import QStandardPaths
+from amulet.utils.temp import set_temp_dir, get_temp_dir
 
 
 DefaultDataDir = os.path.realpath(
@@ -62,9 +63,9 @@ def init_paths(
         os.environ["CONFIG_DIR"] = config_dir
 
     if cache_dir is None:
-        os.environ.setdefault("CACHE_DIR", DefaultCacheDir)
-    else:
-        os.environ["CACHE_DIR"] = cache_dir
+        cache_dir = os.environ.get("CACHE_DIR", DefaultCacheDir)
+    os.makedirs(cache_dir, exist_ok=True)
+    set_temp_dir(cache_dir)
 
     if log_dir is None:
         os.environ.setdefault("LOG_DIR", DefaultLogDir)
@@ -97,9 +98,7 @@ def cache_directory() -> str:
     Returns a path to the directory used for storage of cache data.
     Generates appropriate directories if path does not already exist.
     """
-    directory = os.environ["CACHE_DIR"]
-    os.makedirs(directory, exist_ok=True)
-    return directory
+    return str(get_temp_dir())
 
 
 def logging_directory() -> str:
