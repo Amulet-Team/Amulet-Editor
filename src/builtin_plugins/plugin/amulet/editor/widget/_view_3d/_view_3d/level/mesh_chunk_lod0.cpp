@@ -2,7 +2,6 @@
 
 namespace Amulet {
 
-
 void mesh_chunk_lod0(
     AbstractOpenGLResourcePack& resource_pack,
     const std::int64_t cx,
@@ -42,8 +41,7 @@ void mesh_chunk_lod0(
         const auto* ptr = block_meshes[block_id];
         if (ptr) {
             return *ptr;
-        }
-        else {
+        } else {
             const auto& chunk_data = all_chunk_data[chunk_index];
             const auto& block_stack = chunk_data->get_palette().index_to_block_stack(block_id);
             const BlockMesh* mesh_ptr = &resource_pack.get_block_model(block_stack);
@@ -63,10 +61,10 @@ void mesh_chunk_lod0(
 
     const auto& block_arrays = sections.get_arrays();
     // For each section in the chunk.
-    for (const auto& it : block_arrays) {
-        const std::int64_t& cy = it.first;
-        const IndexArray3D& section = *it.second;
-        
+    for (const auto& section_it : block_arrays) {
+        const std::int64_t& cy = section_it.first;
+        const IndexArray3D& section = *section_it.second;
+
         const auto& section_buffer = section.get_buffer();
 
         // Make a transparency 3D array two elements larger than one section in each direction
@@ -77,8 +75,7 @@ void mesh_chunk_lod0(
         const auto padded_y_stride = padded_z_shape;
         std::vector<BlockMeshTransparency> transparency_array(
             padded_x_shape * padded_y_shape * padded_z_shape,
-            BlockMeshTransparency::Partial
-        );
+            BlockMeshTransparency::Partial);
 
         // Populate the transparency array with values from the block models.
         for (std::int32_t x = 0; x < x_shape; x++) {
@@ -116,7 +113,7 @@ void mesh_chunk_lod0(
                 }
             }
         }
-        
+
         // North
         if (all_chunk_data[0]) {
             const auto& neighbour_block_component = *all_chunk_data[0];
@@ -125,9 +122,9 @@ void mesh_chunk_lod0(
                 throw std::invalid_argument("North section shape does not match.");
             }
             const auto& neighbour_block_arrays = neighbour_sections.get_arrays();
-            auto it = neighbour_block_arrays.find(cy);
-            if (it != neighbour_block_arrays.end()) {
-                const auto& arr = it->second->get_buffer();
+            auto north_it = neighbour_block_arrays.find(cy);
+            if (north_it != neighbour_block_arrays.end()) {
+                const auto& arr = north_it->second->get_buffer();
                 const auto& palette = neighbour_block_component.get_palette();
                 for (std::int32_t x = 0; x < x_shape; x++) {
                     for (std::int32_t y = 0; y < y_shape; y++) {
@@ -147,9 +144,9 @@ void mesh_chunk_lod0(
                 throw std::invalid_argument("East section shape does not match.");
             }
             const auto& neighbour_block_arrays = neighbour_sections.get_arrays();
-            auto it = neighbour_block_arrays.find(cy);
-            if (it != neighbour_block_arrays.end()) {
-                const auto& arr = it->second->get_buffer();
+            auto west_it = neighbour_block_arrays.find(cy);
+            if (west_it != neighbour_block_arrays.end()) {
+                const auto& arr = west_it->second->get_buffer();
                 const auto& palette = neighbour_block_component.get_palette();
                 for (std::int32_t y = 0; y < y_shape; y++) {
                     for (std::int32_t z = 0; z < z_shape; z++) {
@@ -169,9 +166,9 @@ void mesh_chunk_lod0(
                 throw std::invalid_argument("South section shape does not match.");
             }
             const auto& neighbour_block_arrays = neighbour_sections.get_arrays();
-            auto it = neighbour_block_arrays.find(cy);
-            if (it != neighbour_block_arrays.end()) {
-                const auto& arr = it->second->get_buffer();
+            auto south_it = neighbour_block_arrays.find(cy);
+            if (south_it != neighbour_block_arrays.end()) {
+                const auto& arr = south_it->second->get_buffer();
                 const auto& palette = neighbour_block_component.get_palette();
                 for (std::int32_t x = 0; x < x_shape; x++) {
                     for (std::int32_t y = 0; y < y_shape; y++) {
@@ -191,9 +188,9 @@ void mesh_chunk_lod0(
                 throw std::invalid_argument("West section shape does not match.");
             }
             const auto& neighbour_block_arrays = neighbour_sections.get_arrays();
-            auto it = neighbour_block_arrays.find(cy);
-            if (it != neighbour_block_arrays.end()) {
-                const auto& arr = it->second->get_buffer();
+            auto west_it = neighbour_block_arrays.find(cy);
+            if (west_it != neighbour_block_arrays.end()) {
+                const auto& arr = west_it->second->get_buffer();
                 const auto& palette = neighbour_block_component.get_palette();
                 for (std::int32_t y = 0; y < y_shape; y++) {
                     for (std::int32_t z = 0; z < z_shape; z++) {
@@ -231,22 +228,21 @@ void mesh_chunk_lod0(
                             float_arr[9] = vert.tint.x * shading;
                             float_arr[10] = vert.tint.y * shading;
                             float_arr[11] = vert.tint.z * shading;
-                            };
+                        };
                         for (const auto& triangle : part.triangles) {
                             const auto& bounds = resource_pack.get_texture_bounds(mesh.textures[triangle.texture_index]);
                             add_vert(triangle.vert_index_a, bounds);
                             add_vert(triangle.vert_index_b, bounds);
                             add_vert(triangle.vert_index_c, bounds);
                         }
-                        };
+                    };
 
                     auto add_part_conditional = [&](
-                        const std::optional<BlockMeshPart>& part, 
-                        std::int32_t dx, 
-                        std::int32_t dy, 
-                        std::int32_t dz,
-                        float shading
-                    ) {
+                                                    const std::optional<BlockMeshPart>& part,
+                                                    std::int32_t dx,
+                                                    std::int32_t dy,
+                                                    std::int32_t dz,
+                                                    float shading) {
                         if (!part) {
                             return;
                         }
@@ -268,7 +264,7 @@ void mesh_chunk_lod0(
                         }
 
                         add_part(*part, shading);
-                        };
+                    };
 
                     const auto& parts = mesh.parts;
                     if (parts[BlockMeshCullDirection::BlockMeshCullNone]) {
