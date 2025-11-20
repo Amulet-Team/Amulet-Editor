@@ -274,12 +274,8 @@ std::tuple<std::string, size_t, std::string, size_t> mesh_chunk(
     try {
         chunk = dimension->get_chunk_handle(cx, cz)->get_chunk(std::set<std::string> { BlockComponent::ComponentID });
     } catch (const ChunkDoesNotExist& e) {
-        // log.debug(f"Chunk {dimension_id}, {cx}, {cz} does not exist")
         opaque_buffer = _get_empty_geometry(dimension->get_bounds(), resource_pack, cx, cz);
     } catch (const ChunkLoadError& e) {
-        // log.exception(
-        //     f"Error loading chunk {dimension_id}, {cx}, {cz}", exc_info=True
-        // )
         opaque_buffer = _get_error_geometry(dimension->get_bounds(), resource_pack, cx, cz);
     }
 
@@ -287,34 +283,37 @@ std::tuple<std::string, size_t, std::string, size_t> mesh_chunk(
         auto* block_component = dynamic_cast<BlockComponent*>(chunk.get());
         if (block_component) {
             // log.debug(f"Creating geometry for chunk {dimension_id}, {cx}, {cz}")
-            auto self = block_component->get_block_storage();
-            auto north = _get_block_component(*dimension, cx, cz - 1);
-            auto east = _get_block_component(*dimension, cx + 1, cz);
-            auto south = _get_block_component(*dimension, cx, cz + 1);
-            auto west = _get_block_component(*dimension, cx - 1, cz);
-            mesh_chunk_lod0(
-                resource_pack,
-                cx,
-                cz,
-                *self,
-                north.get(), 
-                east.get(), 
-                south.get(),
-                west.get(), 
-                opaque_buffer,
-                translucent_buffer);
+            try {
+                auto self = block_component->get_block_storage();
+                auto north = _get_block_component(*dimension, cx, cz - 1);
+                auto east = _get_block_component(*dimension, cx + 1, cz);
+                auto south = _get_block_component(*dimension, cx, cz + 1);
+                auto west = _get_block_component(*dimension, cx - 1, cz);
+                mesh_chunk_lod0(
+                    resource_pack,
+                    cx,
+                    cz,
+                    *self,
+                    north.get(),
+                    east.get(),
+                    south.get(),
+                    west.get(),
+                    opaque_buffer,
+                    translucent_buffer);
+            } catch (const std::exception& e) {
+                error("Error meshing chunk: dimension=" + dimension_id + ", cx=" + std::to_string(cx) + ", cz=" + std::to_string(cz) + ", reason=" + e.what());
+                opaque_buffer = _get_error_geometry(dimension->get_bounds(), resource_pack, cx, cz);
+            } catch (...) {
+                error("Error meshing chunk: dimension=" + dimension_id + ", cx=" + std::to_string(cx) + ", cz=" + std::to_string(cz));
+                opaque_buffer = _get_error_geometry(dimension->get_bounds(), resource_pack, cx, cz);
+            }
         } else {
-            // log.debug(
-            //     f"Chunk {dimension_id}, {cx}, {cz} does not implement BlockComponent."
-            // )
+            opaque_buffer = _get_empty_geometry(dimension->get_bounds(), resource_pack, cx, cz);
         }
     }
 
-    // log.debug(f"Generated array for {dimension_id}, {cx}, {cz}")
-
     size_t opaque_vertex_count = opaque_buffer.size() / (12 * sizeof(float));
     size_t translucent_vertex_count = translucent_buffer.size() / (12 * sizeof(float));
-    // log.debug(f"Generated chunk {dimension_id}, {cx}, {cz}")
     return { opaque_buffer, opaque_vertex_count, translucent_buffer, translucent_vertex_count };
 }
 
