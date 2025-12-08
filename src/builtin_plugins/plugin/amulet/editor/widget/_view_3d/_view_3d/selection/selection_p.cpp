@@ -139,7 +139,7 @@ void SelectionGeometryImp::paint_gl(const Matrix4x4& projection_matrix, const Ma
 
     // Set OpenGL attributes.
     f->glEnable(GL_DEPTH_TEST);
-    f->glDepthFunc(GL_LEQUAL);
+    f->glDepthFunc(GL_LESS);
     f->glEnable(GL_BLEND);
     f->glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
     f->glEnable(GL_CULL_FACE);
