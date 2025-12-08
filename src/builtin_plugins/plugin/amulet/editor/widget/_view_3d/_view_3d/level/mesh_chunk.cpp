@@ -273,13 +273,18 @@ std::tuple<std::string, size_t, std::string, size_t> mesh_chunk(
 
     try {
         chunk = dimension->get_chunk_handle(cx, cz)->get_chunk(std::set<std::string> { BlockComponent::ComponentID });
-    } catch (const ChunkDoesNotExist& e) {
+    } catch (const ChunkDoesNotExist&) {
         opaque_buffer = _get_empty_geometry(dimension->get_bounds(), resource_pack, cx, cz);
-    } catch (const ChunkLoadError& e) {
+    } catch (const std::exception& e){
         opaque_buffer = _get_error_geometry(dimension->get_bounds(), resource_pack, cx, cz);
+        error("Error getting chunk: dimension=" + dimension_id + ", cx=" + std::to_string(cx) + ", cz=" + std::to_string(cz) + ", reason=" + e.what());
+    } catch (...) {
+        opaque_buffer = _get_error_geometry(dimension->get_bounds(), resource_pack, cx, cz);
+        error("Error getting chunk: dimension=" + dimension_id + ", cx=" + std::to_string(cx) + ", cz=" + std::to_string(cz));
     }
 
     if (chunk) {
+        opaque_buffer = _get_empty_geometry(dimension->get_bounds(), resource_pack, cx, cz);
         auto* block_component = dynamic_cast<BlockComponent*>(chunk.get());
         if (block_component) {
             // log.debug(f"Creating geometry for chunk {dimension_id}, {cx}, {cz}")
