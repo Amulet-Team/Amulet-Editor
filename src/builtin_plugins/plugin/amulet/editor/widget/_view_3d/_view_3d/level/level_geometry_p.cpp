@@ -470,7 +470,7 @@ void LevelGeometryImp::_sort_chunks()
             return std::max(
                        std::abs(_cx - a->chunk_handle->get_cx()),
                        std::abs(_cz - a->chunk_handle->get_cz()))
-                > std::max(
+                < std::max(
                     std::abs(_cx - b->chunk_handle->get_cx()),
                     std::abs(_cz - b->chunk_handle->get_cz()));
         });
