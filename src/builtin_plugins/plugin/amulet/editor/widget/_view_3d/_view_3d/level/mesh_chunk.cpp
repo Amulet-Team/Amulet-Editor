@@ -3,6 +3,7 @@
 #include <string_view>
 
 #include <amulet/core/chunk/component/block_component.hpp>
+#include <amulet/core/chunk/component/block_entity_component.hpp>
 
 #include "mesh_chunk.hpp"
 
@@ -201,7 +202,7 @@ static std::string _create_grid(
     return buffer;
 }
 
-static std::string _get_empty_geometry(
+static std::string _get_normal_bounds(
     const std::variant<SelectionBox, SelectionBoxGroup>& level_bounds,
     AbstractOpenGLResourcePack& resource_pack,
     const std::int64_t cx,
@@ -210,14 +211,34 @@ static std::string _get_empty_geometry(
     return _create_grid(
         level_bounds,
         resource_pack,
-        "amulet",
-        "amulet_ui/chunk_grid_null",
+        //"amulet",
+        //"amulet_ui/chunk_grid_null",
+        "minecraft",
+        "block/light_blue_concrete",
         true,
         true,
         ((cx + cz) % 2 ? std::array<float, 3> { 1.0, 1.0, 1.0 } : std::array<float, 3> { 0.8, 0.8, 0.8 }));
 }
 
-static std::string _get_error_geometry(
+static std::string _get_empty_bounds(
+    const std::variant<SelectionBox, SelectionBoxGroup>& level_bounds,
+    AbstractOpenGLResourcePack& resource_pack,
+    const std::int64_t cx,
+    const std::int64_t cz)
+{
+    return _create_grid(
+        level_bounds,
+        resource_pack,
+        //"amulet",
+        //"amulet_ui/chunk_grid_null",
+        "minecraft",
+        "block/light_gray_concrete",
+        true,
+        true,
+        ((cx + cz) % 2 ? std::array<float, 3> { 1.0, 1.0, 1.0 } : std::array<float, 3> { 0.8, 0.8, 0.8 }));
+}
+
+static std::string _get_error_bounds(
     std::variant<SelectionBox, SelectionBoxGroup> level_bounds,
     AbstractOpenGLResourcePack& resource_pack,
     const std::int64_t cx,
@@ -226,8 +247,10 @@ static std::string _get_error_geometry(
     return _create_grid(
         level_bounds,
         resource_pack,
-        "amulet",
-        "amulet_ui/chunk_grid_error",
+        //"amulet",
+        //"amulet_ui/chunk_grid_error",
+        "minecraft",
+        "block/red_concrete",
         true,
         true,
         ((cx + cz) % 2 ? std::array<float, 3> { 1.0, 1.0, 1.0 } : std::array<float, 3> { 0.8, 0.8, 0.8 }));
@@ -272,48 +295,60 @@ std::tuple<std::string, size_t, std::string, size_t> mesh_chunk(
     std::string translucent_buffer;
 
     try {
-        chunk = dimension->get_chunk_handle(cx, cz)->get_chunk(std::set<std::string> { BlockComponent::ComponentID });
+        chunk = dimension->get_chunk_handle(cx, cz)->get_chunk(std::set<std::string> { BlockComponent::ComponentID, BlockEntityComponent::ComponentID });
     } catch (const ChunkDoesNotExist&) {
-        opaque_buffer = _get_empty_geometry(dimension->get_bounds(), resource_pack, cx, cz);
-    } catch (const std::exception& e){
-        opaque_buffer = _get_error_geometry(dimension->get_bounds(), resource_pack, cx, cz);
+        opaque_buffer = _get_empty_bounds(dimension->get_bounds(), resource_pack, cx, cz);
+    } catch (const std::exception& e) {
+        opaque_buffer = _get_error_bounds(dimension->get_bounds(), resource_pack, cx, cz);
         error("Error getting chunk: dimension=" + dimension_id + ", cx=" + std::to_string(cx) + ", cz=" + std::to_string(cz) + ", reason=" + e.what());
     } catch (...) {
-        opaque_buffer = _get_error_geometry(dimension->get_bounds(), resource_pack, cx, cz);
+        opaque_buffer = _get_error_bounds(dimension->get_bounds(), resource_pack, cx, cz);
         error("Error getting chunk: dimension=" + dimension_id + ", cx=" + std::to_string(cx) + ", cz=" + std::to_string(cz));
     }
 
     if (chunk) {
-        opaque_buffer = _get_empty_geometry(dimension->get_bounds(), resource_pack, cx, cz);
-        auto* block_component = dynamic_cast<BlockComponent*>(chunk.get());
-        if (block_component) {
-            // log.debug(f"Creating geometry for chunk {dimension_id}, {cx}, {cz}")
+        auto* block_component_ptr = dynamic_cast<BlockComponent*>(chunk.get());
+        if (block_component_ptr) {
+            opaque_buffer = _get_normal_bounds(dimension->get_bounds(), resource_pack, cx, cz);
             try {
-                auto self = block_component->get_block_storage_ptr();
-                auto north = _get_block_component(*dimension, cx, cz - 1);
-                auto east = _get_block_component(*dimension, cx + 1, cz);
-                auto south = _get_block_component(*dimension, cx, cz + 1);
-                auto west = _get_block_component(*dimension, cx - 1, cz);
-                mesh_chunk_lod0(
+                auto block_storage = block_component_ptr->get_block_storage_ptr();
+                auto block_storage_north = _get_block_component(*dimension, cx, cz - 1);
+                auto block_storage_east = _get_block_component(*dimension, cx + 1, cz);
+                auto block_storage_south = _get_block_component(*dimension, cx, cz + 1);
+                auto block_storage_west = _get_block_component(*dimension, cx - 1, cz);
+                mesh_chunk_lod0_blocks(
                     resource_pack,
                     cx,
                     cz,
-                    *self,
-                    north.get(),
-                    east.get(),
-                    south.get(),
-                    west.get(),
+                    *block_storage,
+                    block_storage_north.get(),
+                    block_storage_east.get(),
+                    block_storage_south.get(),
+                    block_storage_west.get(),
                     opaque_buffer,
                     translucent_buffer);
             } catch (const std::exception& e) {
                 error("Error meshing chunk: dimension=" + dimension_id + ", cx=" + std::to_string(cx) + ", cz=" + std::to_string(cz) + ", reason=" + e.what());
-                opaque_buffer = _get_error_geometry(dimension->get_bounds(), resource_pack, cx, cz);
+                opaque_buffer = _get_error_bounds(dimension->get_bounds(), resource_pack, cx, cz);
             } catch (...) {
                 error("Error meshing chunk: dimension=" + dimension_id + ", cx=" + std::to_string(cx) + ", cz=" + std::to_string(cz));
-                opaque_buffer = _get_error_geometry(dimension->get_bounds(), resource_pack, cx, cz);
+                opaque_buffer = _get_error_bounds(dimension->get_bounds(), resource_pack, cx, cz);
             }
         } else {
-            opaque_buffer = _get_empty_geometry(dimension->get_bounds(), resource_pack, cx, cz);
+            opaque_buffer = _get_normal_bounds(dimension->get_bounds(), resource_pack, cx, cz);
+        }
+
+        auto* block_entity_component_ptr = dynamic_cast<BlockEntityComponent*>(chunk.get());
+        if (block_entity_component_ptr) {
+            try {
+                mesh_chunk_lod0_block_entities(
+                    resource_pack,
+                    cx,
+                    cz,
+                    *block_entity_component_ptr->get_block_entity_storage(),
+                    translucent_buffer);
+            } catch (...) {
+            }
         }
     }
 

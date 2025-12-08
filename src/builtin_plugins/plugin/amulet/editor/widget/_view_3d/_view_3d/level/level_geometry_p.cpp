@@ -251,7 +251,7 @@ void LevelGeometryImp::paint_gl(QMatrix4x4& projection_matrix, QMatrix4x4& view_
 
     // Set OpenGL attributes.
     f->glEnable(GL_DEPTH_TEST);
-    f->glDepthFunc(GL_LEQUAL);
+    f->glDepthFunc(GL_LESS);
     f->glEnable(GL_BLEND);
     f->glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
     f->glEnable(GL_CULL_FACE);
