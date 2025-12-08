@@ -107,7 +107,7 @@ class BlockSelect(QWidget):
     def get_block(self) -> Block:
         return Block(
             self.get_platform(),
-            self.get_version(),
+            self.get_block_version(),
             self.get_namespace(),
             self.get_base_name(),
             self.get_properties(),
@@ -116,10 +116,8 @@ class BlockSelect(QWidget):
     def get_platform(self) -> str:
         return self._platform_select.currentText()
 
-    def get_version(self) -> VersionNumber:
-        return VersionNumber(
-            *[int(arg) for arg in self._versions_select.currentText().split(".")]
-        )
+    def get_block_version(self) -> VersionNumber:
+        return self._versions_select.currentData()
 
     def get_namespace(self) -> str:
         return self._namespace_select.currentText()
@@ -157,14 +155,25 @@ class BlockSelect(QWidget):
         log.debug("Updating version")
         with QSignalBlocker(self._versions_select):
             self._versions_select.clear()
+
+            def version_sort(v: GameVersion) -> VersionNumber:
+                return v.min_semantic_version
+
             for version in sorted(
-                game_version.min_version
-                for game_version in get_game_versions(
-                    self._platform_select.currentText()
-                )
+                get_game_versions(self._platform_select.currentText()),
+                key=version_sort,
+                reverse=True,
             ):
-                self._versions_select.addItem(str(version), version)
-            self._versions_select.setCurrentIndex(self._versions_select.count() - 1)
+                if version.min_semantic_version == version.max_known_semantic_version:
+                    label = str(version.min_semantic_version)
+                else:
+                    label = f"{version.min_semantic_version} - {version.max_known_semantic_version}"
+                if version.min_block_version == version.max_known_block_version:
+                    label += f", {version.min_block_version}"
+                else:
+                    label += f", {version.min_block_version} - {version.max_known_block_version}"
+                self._versions_select.addItem(label, version.min_block_version)
+            self._versions_select.setCurrentIndex(0)
         self._update_namespace(self._get_game_version())
 
     def _on_version_change(self) -> None:
