@@ -16,7 +16,6 @@ AMULET_RESOURCE_PACK_REQUIREMENT = "~=1.0.4.0a0"
 AMULET_GAME_REQUIREMENT = "~=1.0.4.0a0"
 AMULET_ANVIL_REQUIREMENT = "~=1.0.4.0a0"
 AMULET_LEVEL_REQUIREMENT = "~=1.0.4.0a0"
-AMULET_GAME_REQUIREMENT = "~=1.0.4.0a0"
 NUMPY_REQUIREMENT = "~=2.0"
 PIL_REQUIREMENT = "~=11.3"
 OPENGL_REQUIREMENT = "~=3.1"
@@ -205,7 +204,6 @@ def get_runtime_dependencies() -> list[str]:
         f"amulet-game{AMULET_GAME_REQUIREMENT}",
         f"amulet-anvil{AMULET_ANVIL_REQUIREMENT}",
         f"amulet-level{AMULET_LEVEL_REQUIREMENT}",
-        f"amulet-game{AMULET_GAME_REQUIREMENT}",
         f"numpy{NUMPY_REQUIREMENT}",
         f"pillow{PIL_REQUIREMENT}",
         f"PyOpenGL{OPENGL_REQUIREMENT}",
