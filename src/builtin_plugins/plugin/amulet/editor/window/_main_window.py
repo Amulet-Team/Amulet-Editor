@@ -55,6 +55,7 @@ class AmuletMainWindow(QMainWindow):
     """
 
     _widget: _tab_widget.TabWidgetStack | _tab_widget.RecursiveSplitter
+    _save_action: QAction | None
 
     def __init__(self) -> None:
         super().__init__()
@@ -65,6 +66,8 @@ class AmuletMainWindow(QMainWindow):
             self._save_action = QAction(self, autoRepeat=False)
             self._save_action.triggered.connect(save_level)
             self._file_menu.addAction(self._save_action)
+        else:
+            self._save_action = None
 
         self.menuBar().addMenu(self._file_menu)
 
@@ -218,20 +221,21 @@ class AmuletMainWindow(QMainWindow):
                 None,
             )
         )
-        self._save_action.setText(
-            QCoreApplication.translate(
-                "plugin.amulet.editor.AmuletMainWindow",
-                "save_action_text",
-                None,
+        if self._save_action is not None:
+            self._save_action.setText(
+                QCoreApplication.translate(
+                    "plugin.amulet.editor.AmuletMainWindow",
+                    "save_action_text",
+                    None,
+                )
             )
-        )
-        self._save_action.setShortcut(
-            QCoreApplication.translate(
-                "plugin.amulet.editor.AmuletMainWindow",
-                "save_action_shortcut",
-                None,
+            self._save_action.setShortcut(
+                QCoreApplication.translate(
+                    "plugin.amulet.editor.AmuletMainWindow",
+                    "save_action_shortcut",
+                    None,
+                )
             )
-        )
         self._tool_menu.setTitle(
             QCoreApplication.translate(
                 "plugin.amulet.editor.AmuletMainWindow",

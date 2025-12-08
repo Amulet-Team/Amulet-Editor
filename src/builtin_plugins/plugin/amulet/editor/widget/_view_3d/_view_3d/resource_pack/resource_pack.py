@@ -223,15 +223,19 @@ class OpenGLResourcePack(AbstractOpenGLResourcePack):
                 blocks.append(block)
             else:
                 # Translate to the required format.
-                converted_block, _, _ = get_game_version(
-                    block.platform, block.version
-                ).block.translate(
-                    self._game_version.platform,
-                    self._game_version.max_version,
-                    block,
-                )
-                if isinstance(converted_block, Block):
-                    blocks.append(converted_block)
+                try:
+                    converted_block, _, _ = get_game_version(
+                        block.platform, block.version
+                    ).block.translate(
+                        self._game_version.platform,
+                        self._game_version.max_known_block_version,
+                        block,
+                    )
+                except Exception:
+                    return self._resource_pack.missing_block
+                else:
+                    if isinstance(converted_block, Block):
+                        blocks.append(converted_block)
         if blocks:
             return self._resource_pack.get_block_model(BlockStack(*blocks))
         else:

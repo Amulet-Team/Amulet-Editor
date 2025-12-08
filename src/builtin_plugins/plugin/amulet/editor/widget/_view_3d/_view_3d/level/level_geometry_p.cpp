@@ -470,7 +470,7 @@ void LevelGeometryImp::_sort_chunks()
             return std::max(
                        std::abs(_cx - a->chunk_handle->get_cx()),
                        std::abs(_cz - a->chunk_handle->get_cz()))
-                > std::max(
+                < std::max(
                     std::abs(_cx - b->chunk_handle->get_cx()),
                     std::abs(_cz - b->chunk_handle->get_cz()));
         });
@@ -584,9 +584,9 @@ void LevelGeometryImp::_manager()
         }
         debug("LevelGeometry::_manager() end");
     } catch (const std::exception& e) {
-        error(std::string("Error in LevelGeometry::_manager(): ") + e.what());
+        error(std::string("Unhandled exception in LevelGeometry::_manager(): ") + e.what());
     } catch (...) {
-        error("Error in LevelGeometry::_manager()");
+        error("Unhandled exception in LevelGeometry::_manager()");
     }
 }
 
@@ -653,9 +653,9 @@ void LevelGeometryImp::_worker(
         _wake_chunk_manager();
         // debug(f"Finished meshing chunk {chunk_key}.");
     } catch (const std::exception& e) {
-        error(std::string("Error in LevelGeometryImp::_worker: ") + e.what());
+        error(std::string("Unhandled exception in LevelGeometryImp::_worker: ") + e.what());
     } catch (...) {
-        error("Error in LevelGeometryImp::_worker");
+        error("Unhandled exception in LevelGeometryImp::_worker");
     }
 }
 

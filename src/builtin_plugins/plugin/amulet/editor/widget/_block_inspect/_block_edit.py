@@ -112,7 +112,7 @@ class BlockEdit(QWidget):
     def get_block(self) -> Block:
         return Block(
             self.get_platform(),
-            self.get_version(),
+            self.get_block_version(),
             self.get_namespace(),
             self.get_base_name(),
             self.get_properties(),
@@ -143,17 +143,24 @@ class BlockEdit(QWidget):
             raise RuntimeError(f"Platform {platform} not found.")
         self._platform_select.setCurrentIndex(index)
 
-    def get_version(self) -> VersionNumber:
-        return VersionNumber(
-            *[int(arg) for arg in self._versions_select.currentText().split(".")]
-        )
+    def get_block_version(self) -> VersionNumber:
+        return self._versions_select.currentData()
 
     def set_version(self, version: VersionNumber) -> None:
-        index = self._versions_select.findData(version)
+        index = next(
+            (
+                i
+                for i in range(self._versions_select.count())
+                if get_game_version(
+                    self.get_platform(), self._versions_select.itemData(i)
+                ).supports_version(self.get_platform(), version)
+            ),
+            -1,
+        )
         if index == -1:
-            self._versions_select.setCurrentText(str(version))
-        else:
-            self._versions_select.setCurrentIndex(index)
+            self._versions_select.addItem(str(version), version)
+            index = self._versions_select.findData(version)
+        self._versions_select.setCurrentIndex(index)
 
     def get_namespace(self) -> str:
         return self._namespace_select.currentText()
@@ -208,7 +215,7 @@ class BlockEdit(QWidget):
                 continue
 
     def _get_game_version(self) -> GameVersion:
-        return get_game_version(self.get_platform(), self.get_version())
+        return get_game_version(self.get_platform(), self.get_block_version())
 
     def _on_platform_change(self) -> None:
         self._update_version_recursive()
@@ -217,12 +224,25 @@ class BlockEdit(QWidget):
         log.debug("Updating version")
         with QSignalBlocker(self._versions_select):
             self._versions_select.clear()
+
+            def version_sort(v: GameVersion) -> VersionNumber:
+                return v.min_semantic_version
+
             for version in sorted(
-                game_version.min_version
-                for game_version in get_game_versions(self.get_platform())
+                get_game_versions(self.get_platform()),
+                key=version_sort,
+                reverse=True,
             ):
-                self._versions_select.addItem(str(version), version)
-            self._versions_select.setCurrentIndex(self._versions_select.count() - 1)
+                if version.min_semantic_version == version.max_known_semantic_version:
+                    label = f"{version.min_semantic_version}"
+                else:
+                    label = f"{version.min_semantic_version} - {version.max_known_semantic_version}"
+                if version.min_block_version == version.max_known_block_version:
+                    label += f", {version.min_block_version}"
+                else:
+                    label += f", {version.min_block_version} - {version.max_known_block_version}"
+                self._versions_select.addItem(label, version.min_block_version)
+            self._versions_select.setCurrentIndex(0)
 
     def _update_version_recursive(self) -> None:
         self._update_version()

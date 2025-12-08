@@ -1,3 +1,5 @@
+import logging
+
 from amulet.utils.lock import ThreadAccessMode, ThreadShareMode
 
 from amulet.core.block import Block, BlockStack
@@ -8,6 +10,8 @@ from amulet.game import get_game_version
 
 from plugin.amulet.selection import get_selection_manager
 from plugin.amulet.level import get_main_level
+
+log = logging.getLogger(__name__)
 
 
 def get_chunk_boxes(
@@ -39,7 +43,7 @@ def fill_block(block: Block, find_block: Block | None = None) -> None:
     sub_chunk_size = level.sub_chunk_size
     chunk_boxes = get_chunk_boxes(selection.voxelise(), sub_chunk_size)
     with level.lock(thread_mode=(ThreadAccessMode.ReadWrite, ThreadShareMode.Unique)):
-        max_version = level.max_game_version
+        max_block_version = level.max_block_version
         for (cx, cz), boxes in chunk_boxes.items():
             dimension = level.get_dimension("minecraft:overworld")
             chunk_handle = dimension.get_chunk_handle(cx, cz)
@@ -58,22 +62,28 @@ def fill_block(block: Block, find_block: Block | None = None) -> None:
                     ):
                         raise RuntimeError("Unexpected section shape")
 
-                    target_platform = palette.version_range.platform
-                    target_max_version = min(
-                        max_version, palette.version_range.max_version
+                    chunk_platform = palette.version_range.platform
+                    chunk_min_block_version = palette.version_range.min_version
+                    chunk_max_block_version = min(
+                        max_block_version, palette.version_range.max_version
                     )
+                    if chunk_max_block_version < chunk_min_block_version:
+                        log.error(
+                            f"Chunk {dimension.dimension_id}, {cx}, {cz} is newer than the max level version. Skipping."
+                        )
+                        continue
 
                     def get_converted_block(block_: Block) -> Block:
                         if (
-                            block_.platform == target_platform
-                            and palette.version_range.min_version
+                            block_.platform == chunk_platform
+                            and chunk_min_block_version
                             <= block_.version
-                            <= target_max_version
+                            <= chunk_max_block_version
                         ):
                             return block_
                         game_version = get_game_version(block_.platform, block_.version)
                         block, _, _ = game_version.block.translate(
-                            target_platform, target_max_version, block_
+                            chunk_platform, chunk_max_block_version, block_
                         )
                         if isinstance(block, Block):
                             return block
