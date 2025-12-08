@@ -282,4 +282,14 @@ void mesh_chunk_lod0_blocks(
     }
 }
 
+void mesh_chunk_lod0_block_entities(
+    AbstractOpenGLResourcePack& resource_pack,
+    const std::int64_t cx,
+    const std::int64_t cz,
+    const BlockEntityStorage& block_entity_storage,
+    std::string& translucent_buffer)
+{
+
+}
+
 } // namespace Amulet

@@ -3,6 +3,7 @@
 #include <string_view>
 
 #include <amulet/core/chunk/component/block_component.hpp>
+#include <amulet/core/chunk/component/block_entity_component.hpp>
 
 #include "mesh_chunk.hpp"
 
@@ -294,10 +295,10 @@ std::tuple<std::string, size_t, std::string, size_t> mesh_chunk(
     std::string translucent_buffer;
 
     try {
-        chunk = dimension->get_chunk_handle(cx, cz)->get_chunk(std::set<std::string> { BlockComponent::ComponentID });
+        chunk = dimension->get_chunk_handle(cx, cz)->get_chunk(std::set<std::string> { BlockComponent::ComponentID, BlockEntityComponent::ComponentID });
     } catch (const ChunkDoesNotExist&) {
         opaque_buffer = _get_empty_bounds(dimension->get_bounds(), resource_pack, cx, cz);
-    } catch (const std::exception& e){
+    } catch (const std::exception& e) {
         opaque_buffer = _get_error_bounds(dimension->get_bounds(), resource_pack, cx, cz);
         error("Error getting chunk: dimension=" + dimension_id + ", cx=" + std::to_string(cx) + ", cz=" + std::to_string(cz) + ", reason=" + e.what());
     } catch (...) {
@@ -335,6 +336,19 @@ std::tuple<std::string, size_t, std::string, size_t> mesh_chunk(
             }
         } else {
             opaque_buffer = _get_normal_bounds(dimension->get_bounds(), resource_pack, cx, cz);
+        }
+
+        auto* block_entity_component_ptr = dynamic_cast<BlockEntityComponent*>(chunk.get());
+        if (block_entity_component_ptr) {
+            try {
+                mesh_chunk_lod0_block_entities(
+                    resource_pack,
+                    cx,
+                    cz,
+                    *block_entity_component_ptr->get_block_entity_storage(),
+                    translucent_buffer);
+            } catch (...) {
+            }
         }
     }
 

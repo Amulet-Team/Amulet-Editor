@@ -5,6 +5,7 @@
 #include <utility>
 
 #include <amulet/core/chunk/component/block_component.hpp>
+#include <amulet/core/chunk/component/block_entity_component.hpp>
 
 #include <amulet/level/abc/dimension.hpp>
 #include <amulet/level/abc/level.hpp>
@@ -23,6 +24,13 @@ void mesh_chunk_lod0_blocks(
     const Amulet::BlockStorage* const south_block_data,
     const Amulet::BlockStorage* const west_block_data,
     std::string& opaque_buffer,
+    std::string& translucent_buffer);
+
+void mesh_chunk_lod0_block_entities(
+    AbstractOpenGLResourcePack& resource_pack,
+    const std::int64_t cx,
+    const std::int64_t cz,
+    const BlockEntityStorage& block_entity_storage,
     std::string& translucent_buffer);
 
 std::tuple<std::string, size_t, std::string, size_t> mesh_chunk(
