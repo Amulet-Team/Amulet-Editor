@@ -289,7 +289,53 @@ void mesh_chunk_lod0_block_entities(
     const BlockEntityStorage& block_entity_storage,
     std::string& translucent_buffer)
 {
+    // Reserve enough space
+    translucent_buffer.reserve(translucent_buffer.size() + block_entity_storage.get_size() * 12 * 3 * 12 * sizeof(float));
 
+    // Get the texture bounds
+    const auto& bounds = resource_pack.get_texture_bounds(
+        resource_pack.get_texture_path("minecraft", "block/yellow_stained_glass"));
+
+    // For each block entity
+    for (const auto& [coord, block_entity] : block_entity_storage.get_block_entities()) {
+        auto add_vert = [&](float dx, float dy, float dz, float tx, float ty) {
+            size_t buffer_size = translucent_buffer.size();
+            translucent_buffer.resize(buffer_size + sizeof(float) * 12);
+            float* float_arr = reinterpret_cast<float*>(&translucent_buffer[buffer_size]);
+            float_arr[0] = std::get<0>(coord) + dx;
+            float_arr[1] = std::get<1>(coord) + dy;
+            float_arr[2] = std::get<2>(coord) + dz;
+            float_arr[3] = tx;
+            float_arr[4] = ty;
+            float_arr[5] = std::get<0>(bounds);
+            float_arr[6] = std::get<1>(bounds);
+            float_arr[7] = std::get<2>(bounds);
+            float_arr[8] = std::get<3>(bounds);
+            float_arr[9] = 1.0;
+            float_arr[10] = 1.0;
+            float_arr[11] = 1.0;
+        };
+        auto add_quad = [&](
+                            float x1, float y1, float z1,
+                            float x2, float y2, float z2,
+                            float x3, float y3, float z3,
+                            float x4, float y4, float z4) {
+            add_vert(x1, y1, z1, 0, 0);
+            add_vert(x2, y2, z2, 1, 0);
+            add_vert(x3, y3, z3, 1, 1);
+            add_vert(x1, y1, z1, 0, 0);
+            add_vert(x3, y3, z3, 1, 1);
+            add_vert(x4, y4, z4, 0, 1);
+        };
+        float a = -0.01;
+        float b = 1.01;
+        add_quad(a, b, a, a, b, b, b, b, b, b, b, a); // up
+        add_quad(b, a, a, b, a, b, a, a, b, a, a, a); // down
+        add_quad(a, a, b, a, b, b, a, b, a, a, a, a); // north
+        add_quad(b, a, a, b, b, a, b, b, b, b, a, b); // south
+        add_quad(a, a, a, a, b, a, b, b, a, b, a, a); // east
+        add_quad(b, a, b, b, b, b, a, b, b, a, a, b); // west
+    }
 }
 
 } // namespace Amulet
