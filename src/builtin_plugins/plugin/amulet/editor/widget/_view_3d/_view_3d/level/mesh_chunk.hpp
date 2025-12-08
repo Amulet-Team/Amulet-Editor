@@ -13,7 +13,7 @@
 
 namespace Amulet {
 
-void mesh_chunk_lod0(
+void mesh_chunk_lod0_blocks(
     AbstractOpenGLResourcePack& resource_pack,
     const std::int64_t cx,
     const std::int64_t cz,
