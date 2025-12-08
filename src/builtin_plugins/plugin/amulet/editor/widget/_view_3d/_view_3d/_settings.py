@@ -6,7 +6,7 @@ class RenderSettings(QObject):
 
     def __init__(self) -> None:
         super().__init__()
-        self._chunk_load_distance = 15
+        self._chunk_load_distance = 50
         self._chunk_unload_distance = 100
 
     @property
