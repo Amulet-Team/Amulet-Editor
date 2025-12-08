@@ -228,7 +228,7 @@ class OpenGLResourcePack(AbstractOpenGLResourcePack):
                         block.platform, block.version
                     ).block.translate(
                         self._game_version.platform,
-                        self._game_version.max_version,
+                        self._game_version.max_known_block_version,
                         block,
                     )
                 except Exception:
