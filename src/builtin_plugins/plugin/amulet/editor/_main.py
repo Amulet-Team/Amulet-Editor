@@ -482,7 +482,7 @@ def _main(args: FullArgs) -> None:
     _init_app()
 
     # Load the level
-    level_path = args.level_path
+    level_path = getattr(args, "level_path", None)
     if level_path is None:
         set_main_level(None)
     else:
