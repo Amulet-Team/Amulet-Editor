@@ -37,7 +37,9 @@ def main():
         ("Amulet-Editor", "1.0"),
     ]:
         if not os.path.isdir(repo):
-            if subprocess.run(["git", "clone", f"https://github.com/Amulet-Team/{repo}"]).returncode:
+            if subprocess.run(
+                ["git", "clone", f"https://github.com/Amulet-Team/{repo}"]
+            ).returncode:
                 raise RuntimeError(f"Could not clone {repo}")
             if subprocess.run(["git", "-C", repo, "switch", branch]).returncode:
                 raise RuntimeError(f"Could not switch to branch {branch} of {repo}")
@@ -47,27 +49,43 @@ def main():
         env = venv.EnvBuilder(with_pip=True, symlinks=True)
         env.create(venv_dir)
 
-    python_path = os.path.join(venv_dir, *(("Scripts", "python.exe") if os.name == "nt" else ("bin", "python")))
+    python_path = os.path.join(
+        venv_dir, *(("Scripts", "python.exe") if os.name == "nt" else ("bin", "python"))
+    )
 
     # Install repositories without compiling C++
     if subprocess.run(
         [
             python_path,
-            "-m", "pip", "install",
-            "-e", "./Amulet-pybind11-extensions",
-            "-e", "./Amulet-IO",
-            "-e", "./Amulet-LevelDB",
-            "-e", "./Amulet-Utils",
-            "-e", "./Amulet-zlib",
-            "-e", "./Amulet-NBT",
-            "-e", "./Amulet-Core",
-            "-e", "./Amulet-Game",
-            "-e", "./Amulet-Anvil",
-            "-e", "./Amulet-Level",
-            "-e", "./Amulet-Resource-Pack",
-            "-e", "./Amulet-Editor",
+            "-m",
+            "pip",
+            "install",
+            "-e",
+            "./Amulet-pybind11-extensions",
+            "-e",
+            "./Amulet-IO",
+            "-e",
+            "./Amulet-LevelDB",
+            "-e",
+            "./Amulet-Utils",
+            "-e",
+            "./Amulet-zlib",
+            "-e",
+            "./Amulet-NBT",
+            "-e",
+            "./Amulet-Core",
+            "-e",
+            "./Amulet-Game",
+            "-e",
+            "./Amulet-Anvil",
+            "-e",
+            "./Amulet-Level",
+            "-e",
+            "./Amulet-Resource-Pack",
+            "-e",
+            "./Amulet-Editor",
         ],
-        env={**os.environ, "AMULET_SKIP_COMPILE": "1"}
+        env={**os.environ, "AMULET_SKIP_COMPILE": "1"},
     ).returncode:
         raise RuntimeError("Could not install requirements")
 
@@ -91,13 +109,15 @@ def main():
     p = subprocess.run(
         [python_path, "-c", "import pybind11;print(pybind11.get_cmake_dir())"],
         text=True,
-        capture_output=True
+        capture_output=True,
     )
     if p.returncode:
         raise RuntimeError("Could not find pybind11")
     pybind11_path = p.stdout.strip()
 
-    qt6_dir = input("Enter the path to Qt6 cmake files. E.g. C:/Qt/6.10.2/msvc2022_64/lib/cmake/Qt6: ")
+    qt6_dir = input(
+        "Enter the path to Qt6 cmake files. E.g. C:/Qt/6.10.2/msvc2022_64/lib/cmake/Qt6: "
+    )
 
     shutil.rmtree(os.path.join("_build", "CMakeFiles"), ignore_errors=True)
     if subprocess.run(
@@ -115,10 +135,11 @@ def main():
         raise RuntimeError("Error configuring amulet-editor")
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     try:
         main()
     except:
         import traceback
+
         traceback.print_exc()
         input("Press Enter to exit")
