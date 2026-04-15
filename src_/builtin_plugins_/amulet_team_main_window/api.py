@@ -4,7 +4,6 @@ from amulet_team_main_window import _plugin
 from .models.view import View
 from .application.windows.main_window import AmuletMainWindow
 
-
 UID = str
 
 

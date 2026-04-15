@@ -18,7 +18,6 @@ from plugin.amulet.editor.window import _tab_widget
 from plugin.amulet.editor.window import _main_window
 from plugin.amulet.editor.window import _child_window
 
-
 # my_namespace.my_layout
 # my_namespace.my_group.my_layout
 LayoutIdPattern = re.compile(r"[a-z0-9_]+\.[a-z0-9_.]+")

@@ -22,7 +22,6 @@ from plugin.amulet.level import get_main_level
 
 from ._block_stack_edit import BlockStackEdit
 
-
 BlockEditWidgetIdentifier = "amulet.editor.BlockEdit"
 
 

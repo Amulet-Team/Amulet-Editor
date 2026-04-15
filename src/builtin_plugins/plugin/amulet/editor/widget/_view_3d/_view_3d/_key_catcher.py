@@ -8,7 +8,6 @@ from inspect import ismethod
 from PySide6.QtCore import QObject, QEvent, Slot, Signal, QTimer, Qt
 from PySide6.QtGui import QMouseEvent, QKeyEvent, QScrollEvent, QMoveEvent
 
-
 """
 When a key is released, we stop all all events that need that key.
 When a key is pressed, we find all events bound to that trigger key with satisfied modifier keys (if any).

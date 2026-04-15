@@ -43,7 +43,6 @@ from ._requirement import Requirement
 from amulet.app.exception import display_exception
 from amulet.app._sys import set_sys_modules
 
-
 log = logging.getLogger(__name__)
 PythonVersion = Version(".".join(map(str, sys.version_info[:3])))
 

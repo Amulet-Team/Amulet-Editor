@@ -7,7 +7,6 @@ from PySide6.QtWidgets import QWidget, QVBoxLayout
 
 from plugin.amulet.editor.widget.abc import TabWidget
 
-
 MetadataWidgetIdentifier = "amulet.editor.MetadataWidget"
 
 

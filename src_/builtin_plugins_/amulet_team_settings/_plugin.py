@@ -9,7 +9,6 @@ from .settings import SettingsPage
 
 from amulet_team_main_window.api import add_static_toolbar_button
 
-
 _windows: list = []
 
 

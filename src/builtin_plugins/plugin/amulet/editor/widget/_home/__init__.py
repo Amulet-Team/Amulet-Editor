@@ -8,7 +8,6 @@ from .open_world import OpenWorldPage
 
 from plugin.amulet.editor.widget.abc import TabWidget
 
-
 HomeWidgetIdentifier = "amulet.editor.HomeWidget"
 
 

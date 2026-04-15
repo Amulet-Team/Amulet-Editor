@@ -2,7 +2,6 @@ from PySide6.QtWidgets import QVBoxLayout
 
 from plugin.amulet.editor.widget.abc import TabWidget
 
-
 ExportWidgetIdentifier = "amulet.editor.ExportWidget"
 
 

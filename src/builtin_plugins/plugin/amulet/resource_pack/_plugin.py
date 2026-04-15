@@ -9,7 +9,6 @@ from amulet.app.plugin import PluginV1
 
 from plugin.amulet.resource_pack import __path__ as resource_pack_path
 
-
 # Qt only weekly references this. We must hold a strong reference to stop it getting garbage collected
 _translator: Optional[Translator] = None
 

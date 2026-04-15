@@ -6,7 +6,6 @@ from PySide6.QtWidgets import QWidget, QVBoxLayout
 
 from amulet_team_main_window.models.view import View
 
-
 ViewType = Union[QWidget, View]
 
 

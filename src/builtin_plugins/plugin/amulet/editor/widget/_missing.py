@@ -5,7 +5,6 @@ from PySide6.QtCore import Qt
 
 from .abc import TabWidget
 
-
 MissingTabIdentifier = "amulet.editor.MissingWidget"
 
 
