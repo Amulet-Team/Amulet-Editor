@@ -2,7 +2,6 @@ from threading import Lock
 from weakref import WeakKeyDictionary
 from typing import Generic, TypeVar
 
-
 T = TypeVar("T")
 
 

@@ -10,7 +10,6 @@ from amulet.app.style import get_current_style_identifier, get_valid_styles, set
 
 from ._home import Ui_HomePage
 
-
 _locales: tuple[tuple[tuple[str, QLocale], ...], int] | None = None
 
 

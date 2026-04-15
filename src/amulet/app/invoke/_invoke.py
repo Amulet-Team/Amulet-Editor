@@ -5,7 +5,6 @@ from PySide6.QtGui import QGuiApplication
 
 from runtime_final import final
 
-
 T = TypeVar("T")
 
 

@@ -3,7 +3,6 @@ import os
 from PySide6.QtCore import QStandardPaths
 from amulet.utils.temp import set_temp_dir, get_temp_dir
 
-
 DefaultDataDir = os.path.realpath(
     os.path.join(
         QStandardPaths.writableLocation(

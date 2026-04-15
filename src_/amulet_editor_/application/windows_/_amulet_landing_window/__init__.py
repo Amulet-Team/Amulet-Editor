@@ -7,7 +7,6 @@ from ._landing_window import Ui_AmuletLandingWindow
 from .views.home import HomeView
 from ._view import ViewContainer, View
 
-
 # Terminology
 # A tool button is a button in the toolbar
 # A view is a program that exists within Amulet

@@ -5,7 +5,6 @@ from packaging.specifiers import SpecifierSet
 
 from ._uid import LibraryUID
 
-
 RequirementPattern = re.compile(
     r"(?P<identifier>[a-zA-Z]+\w*(\.[a-zA-Z]+\w*)?)(?P<requirement>.*)"
 )

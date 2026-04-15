@@ -2,7 +2,6 @@ from PySide6.QtWidgets import QVBoxLayout, QLabel
 
 from plugin.amulet.editor.widget.abc import TabWidget
 
-
 PasteWidgetIdentifier = "amulet.editor.PasteWidget"
 
 
