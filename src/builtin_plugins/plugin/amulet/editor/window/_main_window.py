@@ -23,7 +23,6 @@ from . import _tab_widget
 from . import _tab_drag
 from ._toolbar import ToolBar, ButtonProxy
 
-
 # Terminology
 # A Widget is an atomic GUI element within the program
 # A Layout is an arrangement of widgets

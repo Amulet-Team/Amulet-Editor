@@ -15,7 +15,6 @@ from ._state import PluginState
 from ._requirement import Requirement
 from ._uid import LibraryUID
 
-
 _plugin_classes: dict[int, Type[PluginContainer]] = {}
 
 

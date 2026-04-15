@@ -8,8 +8,7 @@ def main() -> None:
     package_path = os.path.dirname(__file__)
 
     with open(os.path.join(package_path, "__init__.py"), "w") as f:
-        f.write(
-            f"""import os
+        f.write(f"""import os
 
 _package_path = os.path.dirname(__file__)
 
@@ -18,8 +17,7 @@ def _get_path(group: str, name: str) -> str:
     return os.path.join(_package_path, "_resources", group, name)
 
 
-"""
-        )
+""")
 
         resources_path = os.path.join(package_path, "_resources")
         for group in os.listdir(resources_path):

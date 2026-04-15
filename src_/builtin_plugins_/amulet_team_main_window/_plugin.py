@@ -3,7 +3,6 @@ from __future__ import annotations
 from amulet_team_main_window.application.windows.main_window import AmuletMainWindow
 from amulet.app.plugin import PluginV1
 
-
 window: AmuletMainWindow | None = None
 
 

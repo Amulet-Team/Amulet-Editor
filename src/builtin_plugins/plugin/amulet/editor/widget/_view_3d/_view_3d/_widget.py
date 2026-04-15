@@ -9,7 +9,6 @@ from plugin.amulet.editor.widget.abc import TabWidget
 
 from ._canvas import FirstPersonCanvas
 
-
 ViewportWidgetIdentifier = "amulet.editor.ViewportWidget"
 
 

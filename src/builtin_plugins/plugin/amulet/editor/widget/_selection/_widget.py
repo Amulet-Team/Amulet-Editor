@@ -6,7 +6,6 @@ from plugin.amulet.editor.widget.abc import TabWidget
 
 from ._core import SelectionCoreWidget
 
-
 SelectionWidgetIdentifier = "amulet.editor.SelectionWidget"
 
 

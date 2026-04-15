@@ -16,7 +16,6 @@ from plugin.amulet.editor.widget.abc import TabWidget
 from ._block_select import BlockSelect
 from ._op import fill_block
 
-
 FillReplaceWidgetIdentifier = "amulet.editor.FillReplaceWidget"
 
 

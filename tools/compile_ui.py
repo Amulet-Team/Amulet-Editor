@@ -16,7 +16,6 @@ from enum import EnumType
 import PySide6.QtWidgets
 import PySide6.QtCore
 
-
 ProjectRoot = os.path.dirname(os.path.dirname(__file__))
 UIC = os.path.join(PySide6.__path__[0], "uic.exe")
 
