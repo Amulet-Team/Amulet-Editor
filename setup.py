@@ -73,7 +73,7 @@ class CMakeBuild(BuildExt):
                 [
                     "cmake",
                     *platform_args,
-                    f"-DPYTHON_EXECUTABLE={sys.executable}",
+                    f"-DPython3_EXECUTABLE={fix_path(sys.executable)}",
                     f"-DQt6_DIR={qt6_dir}",
                     f"-Dpybind11_DIR={fix_path(pybind11.get_cmake_dir())}",
                     f"-Damulet_pybind11_extensions_DIR={fix_path(amulet.pybind11_extensions.__path__[0])}",
