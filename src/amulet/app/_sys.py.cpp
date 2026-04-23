@@ -47,7 +47,7 @@ static void set_sys_modules(py::object modules){
     Py_XDECREF(old_sys_modules);
 }
 
-PYBIND11_MODULE(_sys, m)
-{
+void init_sys(py::module m_parent) {
+    auto m = m_parent.def_submodule("_sys");
     m.def("set_sys_modules", set_sys_modules);
 }

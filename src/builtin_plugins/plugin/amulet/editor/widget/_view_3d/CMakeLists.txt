@@ -45,9 +45,9 @@ foreach(FILE ${SOURCES} ${HEADERS})
     source_group(${GROUP} FILES ${FILE})
 endforeach()
 
-if(NOT DEFINED AMULET_EDITOR_EXT_SRC_DIR)
-    set(AMULET_EDITOR_EXT_SRC_DIR ${AMULET_EDITOR_SRC_DIR})
+if(NOT DEFINED AMULET_APP_EXT_DIR)
+    set(AMULET_APP_EXT_DIR ${amulet_app_DIR})
 endif()
 
 # Install
-install(TARGETS _view_3d DESTINATION ${AMULET_EDITOR_EXT_SRC_DIR}/builtin_plugins/plugin/amulet/editor/widget/_view_3d/_view_3d)
+install(TARGETS _view_3d DESTINATION ${AMULET_APP_EXT_DIR}/../../builtin_plugins/plugin/amulet/editor/widget/_view_3d/_view_3d)
