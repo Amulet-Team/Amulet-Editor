@@ -114,11 +114,7 @@ cmdclass["build_ext"] = CMakeBuild  # type: ignore
 setup(
     version=versioneer.get_version(),
     cmdclass=cmdclass,
-    ext_modules=[
-        Extension(
-            "builtin_plugins.plugin.amulet.editor.widget._view_3d._view_3d._view_3d", []
-        )
-    ]
+    ext_modules=[Extension("amulet.app._amulet_app", [])]
     * (not os.environ.get("AMULET_SKIP_COMPILE", None)),
     install_requires=requirements.get_runtime_dependencies(),
 )
