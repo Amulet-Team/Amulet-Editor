@@ -5,7 +5,7 @@ We only recommend installing from source if you want to develop Amulet or can't 
 1) Install [Git](https://git-scm.com/) and add it to your path.
 2) Install [CMake](https://cmake.org/download/) and add it to your path.
 3) Install [Python 3.14](https://www.python.org/downloads/release/python-3144/)
-4) Install [Qt 6.10.1 binaries](https://www.qt.io/download-qt-installer-oss) for your platform. Debug symbols are optional but recommended.
+4) Install [Qt 6.10.2 binaries](https://www.qt.io/download-qt-installer-oss) for your platform. Debug symbols are optional but recommended.
 5) Install [Visual Studio](https://visualstudio.microsoft.com/) (Windows users only).
 6) Copy `install_amulet.py` and `CMakeLists.txt` from this directory and put them in the diretory you want to install Amulet in.
 7) Run `install_amulet.py` with Python 3.14. It will download and configure Amulet.
