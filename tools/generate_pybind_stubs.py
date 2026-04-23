@@ -149,8 +149,7 @@ def patch_stubgen() -> None:
 def main() -> None:
     root_path = os.path.dirname(os.path.dirname(__file__))
     src_path = os.path.join(root_path, "src")
-    amulet_app_sys_path = get_package_dir("amulet.app._sys")
-
+    amulet_app_path = get_package_dir("amulet.app")
     builtin_plugin_path = get_package_dir("builtin_plugins")
     # make plugins importable
     sys.path.append(builtin_plugin_path)
@@ -159,20 +158,18 @@ def main() -> None:
         "plugin.amulet.editor.widget._view_3d._view_3d"
     )
     tests_path = os.path.join(root_path, "tests")
-    # test_amulet_editor_path = os.path.join(tests_path, "test_amulet_editor")
 
     # make tests importable
     sys.path.append(tests_path)
 
     # out_dir, module_dir, module_name
     modules: list[tuple[str, str, str]] = [
-        (src_path, amulet_app_sys_path, "amulet.app._sys"),
+        (src_path, amulet_app_path, "amulet.app"),
         (
             builtin_plugin_path,
             viewer_plugin_path,
             "plugin.amulet.editor.widget._view_3d._view_3d",
         ),
-        # (tests_path, test_amulet_editor_path, "test_amulet_editor"),
     ]
 
     # Remove all existing stub files

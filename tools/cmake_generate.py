@@ -59,7 +59,7 @@ def main() -> None:
             f"-Damulet_game_DIR={fix_path(amulet.game.__path__[0])}",
             f"-Damulet_anvil_DIR={fix_path(amulet.anvil.__path__[0])}",
             f"-Damulet_level_DIR={fix_path(amulet.level.__path__[0])}",
-            f"-DAMULET_EDITOR_SRC_DIR={fix_path(os.path.join(RootDir, 'src'))}",
+            f"-Damulet_app_DIR={fix_path(os.path.join(RootDir, 'src', 'amulet', 'app'))}",
             f"-DCMAKE_INSTALL_PREFIX=install",
             f"-DBUILD_AMULET_EDITOR_TESTS=ON",
             "-B",

@@ -41,8 +41,12 @@ class CMakeBuild(BuildExt):
         import amulet.anvil
         import amulet.level
 
-        ext_dir = (Path.cwd() / self.get_ext_fullpath("")).parent.resolve()
-        src_dir = Path.cwd() / "src" if self.editable_mode else ext_dir
+        ext_dir = (
+            (Path.cwd() / self.get_ext_fullpath("")).parent.resolve() / "amulet" / "app"
+        )
+        app_src_dir = (
+            Path.cwd() / "src" / "amulet" / "app" if self.editable_mode else ext_dir
+        )
 
         platform_args = []
         if sys.platform == "win32":
@@ -86,8 +90,8 @@ class CMakeBuild(BuildExt):
                     f"-Damulet_game_DIR={fix_path(amulet.game.__path__[0])}",
                     f"-Damulet_anvil_DIR={fix_path(amulet.anvil.__path__[0])}",
                     f"-Damulet_level_DIR={fix_path(amulet.level.__path__[0])}",
-                    f"-DAMULET_EDITOR_SRC_DIR={fix_path(src_dir)}",
-                    f"-DAMULET_EDITOR_EXT_SRC_DIR={fix_path(ext_dir)}",
+                    f"-Damulet_app_DIR={fix_path(app_src_dir)}",
+                    f"-DAMULET_APP_EXT_DIR={fix_path(ext_dir)}",
                     f"-DCMAKE_INSTALL_PREFIX=install",
                     "-B",
                     tempdir,

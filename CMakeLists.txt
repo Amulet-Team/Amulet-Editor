@@ -1,8 +1,8 @@
 cmake_minimum_required(VERSION 4.1)
 
-project(amulet_editor LANGUAGES CXX)
+project(amulet_app LANGUAGES CXX)
 
-set(AMULET_EDITOR_SRC_DIR ${CMAKE_CURRENT_LIST_DIR}/src CACHE PATH "")
+set(amulet_app_DIR ${CMAKE_CURRENT_LIST_DIR}/src/amulet/app CACHE PATH "")
 
 # Set C++20
 set(CMAKE_CXX_STANDARD 20)
