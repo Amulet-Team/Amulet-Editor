@@ -4,8 +4,10 @@ include requirements.py
 include get_compiler/CMakeLists.txt
 include get_compiler/__init__.py
 
-recursive-include src *.cpp *.hpp *Config.cmake CMakeLists.txt *.jpg *.png *.svg *.ico *.lang *.json *.qss
+recursive-include src/amulet *.cpp *.hpp
 
 include CMakeLists.txt
+recursive-include src/amulet *.png *.svg *.ico *.lang *.json
+recursive-include src/plugins *.cpp *.hpp CMakeLists.txt *.json *.lang *.svg
 
 prune tests
