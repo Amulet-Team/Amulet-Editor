@@ -13,9 +13,9 @@ authors = [
     {name = "James Clare"},
     {name = "Ben Gothard"},
 ]
-description = "A new Minecraft world editor and converter that supports all versions since Java 1.12 and Bedrock 1.7."
+description = "A Minecraft world editor and converter that supports all versions since Java 1.12 and Bedrock 1.7."
 dynamic = ["version", "readme", "dependencies"]
-requires-python = ">=3.11"
+requires-python = ">=3.14"
 classifiers = [
     "Programming Language :: Python :: 3",
     "Operating System :: OS Independent",
@@ -28,7 +28,6 @@ dev = [
     "versioneer",
     "types-versioneer",
     "packaging",
-    "wheel",
     "pybind11_stubgen>=2.5.4",
     "black>=22.3",
     "isort",
@@ -53,7 +52,6 @@ include-package-data = false
     "**/*.so",
     "**/*.dylib",
     "**/*.lib",
-    "**/*.jpg",
     "**/*.png",
     "**/*.svg",
     "**/*.ico",

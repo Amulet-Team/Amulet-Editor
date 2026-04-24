@@ -116,7 +116,7 @@ def main():
     pybind11_path = p.stdout.strip()
 
     qt6_dir = input(
-        "Enter the path to Qt6 cmake files. E.g. C:/Qt/6.10.2/msvc2022_64/lib/cmake/Qt6: "
+        "Enter the path to Qt6 cmake files. E.g. C:/Qt/6.10.3/msvc2022_64/lib/cmake/Qt6: "
     )
 
     shutil.rmtree(os.path.join("_build", "CMakeFiles"), ignore_errors=True)

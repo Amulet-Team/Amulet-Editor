@@ -2,6 +2,7 @@ import sys
 import subprocess
 import os
 import shutil
+import sysconfig
 
 import pybind11
 import amulet.pybind11_extensions
@@ -27,10 +28,14 @@ def main() -> None:
     platform_args = []
     if sys.platform == "win32":
         platform_args.extend(["-G", "Visual Studio 17 2022"])
-        if sys.maxsize > 2**32:
+        if sysconfig.get_platform() == "win-amd64":
             platform_args.extend(["-A", "x64"])
-        else:
+        elif sysconfig.get_platform() == "win32":
             platform_args.extend(["-A", "Win32"])
+        elif sysconfig.get_platform() == "win-arm64":
+            platform_args.extend(["-A", "ARM64"])
+        else:
+            raise RuntimeError(f"Unsupported platform: {sysconfig.get_platform()}")
         platform_args.extend(["-T", "v143"])
 
     os.chdir(RootDir)
@@ -42,7 +47,7 @@ def main() -> None:
         [
             "cmake",
             *platform_args,
-            f"-DPYTHON_EXECUTABLE={sys.executable}",
+            f"-DPython3_EXECUTABLE={fix_path(sys.executable)}",
             f"-Dpybind11_DIR={fix_path(pybind11.get_cmake_dir())}",
             f"-Damulet_pybind11_extensions_DIR={fix_path(amulet.pybind11_extensions.__path__[0])}",
             f"-Damulet_io_DIR={fix_path(amulet.io.__path__[0])}",
@@ -54,7 +59,7 @@ def main() -> None:
             f"-Damulet_game_DIR={fix_path(amulet.game.__path__[0])}",
             f"-Damulet_anvil_DIR={fix_path(amulet.anvil.__path__[0])}",
             f"-Damulet_level_DIR={fix_path(amulet.level.__path__[0])}",
-            f"-DAMULET_EDITOR_SRC_DIR={fix_path(os.path.join(RootDir, 'src'))}",
+            f"-Damulet_app_DIR={fix_path(os.path.join(RootDir, 'src', 'amulet', 'app'))}",
             f"-DCMAKE_INSTALL_PREFIX=install",
             f"-DBUILD_AMULET_EDITOR_TESTS=ON",
             "-B",
