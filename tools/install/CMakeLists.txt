@@ -8,7 +8,7 @@ set(Python3_EXECUTABLE "C:/Program Files/Python314/python3.14t.exe" CACHE PATH "
 find_package(Python3 COMPONENTS Interpreter Development REQUIRED)
 
 set(CMAKE_INSTALL_PREFIX "_install" CACHE PATH "Directory for unused binaries" FORCE)
-set(Qt6_DIR "C:/Qt/6.11.0/msvc2022_64/lib/cmake/Qt6" CACHE PATH "The path to Qt6")
+set(Qt6_DIR "C:/Qt/6.10.3/msvc2022_64/lib/cmake/Qt6" CACHE PATH "The path to Qt6")
 set(pybind11_DIR "Amulet-Editor/.venv/Lib/site-packages/pybind11/share/cmake/pybind11" CACHE PATH "The path to pybind11")
 
 add_subdirectory("Amulet-Test-Utils")
