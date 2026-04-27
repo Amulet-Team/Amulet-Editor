@@ -85,6 +85,7 @@ def app_main(argv: Sequence[str] | None = None) -> None:
             logging.StreamHandler(log_file),
         ],
     )
+    logging.getLogger("OpenGL.acceleratesupport").setLevel(logging.CRITICAL)
     # TODO: remove old log files
 
     class StdCapture(TextIOWrapper):
