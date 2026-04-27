@@ -5,9 +5,9 @@ Plugins can register their own launch commands.
 
 from __future__ import annotations
 from argparse import ArgumentParser
-from typing import Any, TYPE_CHECKING
+from typing import Any
 from weakref import WeakSet, WeakValueDictionary
-from collections.abc import Callable, Mapping, Sequence
+from collections.abc import Callable, Mapping
 from dataclasses import dataclass
 from threading import Lock
 from types import MappingProxyType
@@ -20,7 +20,6 @@ class Command:
     name: str
     main_func: Callable[[FullArgs], None]
     init_argparse: Callable[[ArgumentParser], None] | None = None
-    add_parser_args: Sequence[Any] = ()
     add_parser_kwargs: Mapping[str, Any] = MappingProxyType({})
 
     def __hash__(self) -> int:

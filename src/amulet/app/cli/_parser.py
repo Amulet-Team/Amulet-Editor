@@ -90,7 +90,6 @@ def get_parser(full: bool) -> ArgumentParser:
         for command in _command.get_commands():
             command_parser = entry_subcommand.add_parser(
                 command.name,
-                *command.add_parser_args,
                 **command.add_parser_kwargs,
             )
             init_argparse = command.init_argparse
