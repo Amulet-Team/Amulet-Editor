@@ -1,12 +1,12 @@
 import sys
 import subprocess
 
-from ._parser import parse_global_args
+from ._parser import parse_cli
 
 
 def spawn_process(command: str, *args: str) -> None:
     """Spawn a new process with the specificed command and arguments."""
-    global_args = parse_global_args()
+    global_args = parse_cli()
     new_args = [
         sys.executable,
         sys.argv[0],

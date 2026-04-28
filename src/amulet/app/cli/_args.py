@@ -1,7 +1,8 @@
 from argparse import Namespace
 
 
-class GlobalArgs(Namespace):
+class CLIArgs(Namespace):
+    help: bool
     data_dir: str | None
     config_dir: str | None
     cache_dir: str | None
@@ -9,7 +10,5 @@ class GlobalArgs(Namespace):
     logging_level: int
     logging_format: str
     trace: bool
-
-
-class FullArgs(GlobalArgs):
-    command: str | None
+    command: str
+    command_args: list[str]
