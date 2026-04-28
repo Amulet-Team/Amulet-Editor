@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import inspect
 import time
-from typing import NamedTuple, Optional, Protocol
+from typing import Optional, Protocol
 from types import FrameType, ModuleType
 from threading import RLock
 import os
@@ -13,8 +13,6 @@ import gc
 from importlib.util import spec_from_file_location, module_from_spec
 from importlib.metadata import version, packages_distributions
 
-# from queue import Queue
-from enum import Enum
 import sys
 from collections import UserDict
 from collections.abc import Mapping, Sequence
@@ -26,15 +24,9 @@ from packaging.version import Version
 from PySide6.QtCore import Signal, QObject
 
 from amulet.app._splash import Splash
-from amulet.app.invoke import invoke
 
 from amulet.app.path._plugin import plugin_dirs
 
-# from amulet.app.data.process._messaging import (
-#     register_global_function,
-#     call_in_parent,
-#     call_in_children,
-# )
 from ._uid import LibraryUID
 from ._plugin import PluginV1
 from ._state import PluginState
@@ -66,26 +58,11 @@ Plugins can import directly from other plugins to access static classes and func
 """
 
 
-class PluginJobType(Enum):
-    Enable = 1
-    Disable = 2
-    Reload = 3
-
-
-# class PluginJob(NamedTuple):
-#     plugin_identifier: LibraryUID
-#     job_type: PluginJobType
-
-
 # A lock for the plugin data. Code must acquire this before touching the plugin data
 _plugin_lock = RLock()
 
 # The plugin data
 _plugins: dict[LibraryUID, PluginContainer] = {}
-
-# A queue of jobs to apply to the plugins.
-# Any function in this module can add jobs to this queue but only the job thread can remove items.
-# _plugin_queue: Queue = Queue()
 
 # A map from the package identifier to the UID.
 # Only plugins that are currently enabled will appear in this dictionary.
@@ -461,19 +438,6 @@ def scan_plugins() -> None:
                     log.exception(e)
 
 
-# @register_global_function
-# def local_enable_plugin(plugin_uid: LibraryUID):
-#     """
-#     Load and initialise a plugin in the current processes.
-#     Any plugins that are inactive because they depend on this plugin will also be enabled.
-#     This returns immediately and is completed asynchronously.
-#
-#     :param plugin_uid: The plugin uid to load.
-#     """
-#     log.debug(f"Locally enabling plugin {plugin_uid}")
-#     _plugin_queue.put(PluginJob(plugin_uid, PluginJobType.Enable))
-
-
 def _has_library(requirement: Requirement) -> bool:
     try:
         return version(requirement.identifier) in requirement.specifier
@@ -489,7 +453,7 @@ def _has_plugin(requirement: Requirement) -> bool:
 
 
 def _enable_plugin(plugin_uid: LibraryUID) -> None:
-    """Enable a plugin. This must only be called by the job thread.
+    """Enable a plugin. This must only be called by the main thread.
     :param plugin_uid: The unique identifier of the plugin to enable
     :raises: Exception if an error happened when loading the plugin.
     """
@@ -562,8 +526,7 @@ def _enable_plugin(plugin_uid: LibraryUID) -> None:
                                 "Plugin attribute must be an instance of amulet.app.plugin.PluginV1"
                             )
                         plugin_container.plugin = plugin
-                        # User code must be run from the main thread to avoid issues.
-                        invoke(plugin_container.plugin.load)
+                        plugin_container.plugin.load()
 
                         log.debug(f"enabled plugin {plugin_container.data.uid}")
                     except Exception as e:
@@ -597,21 +560,8 @@ def _plugin_diagnostic() -> None:
             )
 
 
-# @register_global_function
-# def local_disable_plugin(plugin_uid: LibraryUID):
-#     """
-#     Disable and destroy a plugin in the current process.
-#     Any dependent plugins will be disabled before disabling this plugin.
-#     This returns immediately and is completed asynchronously.
-#
-#     :param plugin_uid: The plugin uid to disable.
-#     """
-#     log.debug(f"Locally disabling plugin {plugin_uid}")
-#     _plugin_queue.put(PluginJob(plugin_uid, PluginJobType.Disable))
-
-
 def _disable_plugin(plugin_uid: LibraryUID) -> None:
-    """Disable a plugin and inactive all dependents. This must only be called by the job thread."""
+    """Disable a plugin and inactive all dependents. This must only be called by the main thread."""
     with _plugin_lock:
         if not isinstance(plugin_uid, LibraryUID):
             raise TypeError
@@ -625,7 +575,7 @@ def _disable_plugin(plugin_uid: LibraryUID) -> None:
 
 
 def _unload_plugin(plugin_container: PluginContainer) -> None:
-    """Unload and destroy a plugin. This must only be called by the job thread."""
+    """Unload and destroy a plugin. This must only be called by the main thread."""
     _recursive_inactive_plugins(plugin_container.data.uid)
     if _splash_load_screen is not None:
         _splash_load_screen.showMessage(
@@ -638,8 +588,7 @@ def _unload_plugin(plugin_container: PluginContainer) -> None:
 
     if plugin_container.plugin is not None:
         try:
-            # User code must be run from the main thread to avoid issues.
-            invoke(plugin_container.plugin.unload)
+            plugin_container.plugin.unload()
         except Exception as e:
             log.exception(e)
             display_exception(
@@ -662,7 +611,7 @@ def _unload_plugin(plugin_container: PluginContainer) -> None:
 
 def _recursive_inactive_plugins(plugin_uid: LibraryUID) -> None:
     """
-    Recursively inactive all dependents of a plugin This must only be called by the job thread.
+    Recursively inactive all dependents of a plugin This must only be called by the main thread.
     When a plugin is disabled none of its dependents are valid any more so they must be inactivated.
     :param plugin_uid: The plugin unique identifier to find dependents of.
     """
@@ -673,76 +622,6 @@ def _recursive_inactive_plugins(plugin_uid: LibraryUID) -> None:
         ):
             _unload_plugin(plugin_container)
             _set_plugin_state(plugin_container, PluginState.Inactive)
-
-
-# @register_global_function
-# def local_reload_plugin(plugin_uid: LibraryUID):
-#     """
-#     Disable a plugin if enabled and reload from source.
-#     Only effects the current process.
-#     This returns immediately and is completed asynchronously.
-#
-#     :param plugin_uid: The plugin uid to reload.
-#     """
-#     log.debug(f"Locally reloading plugin {plugin_uid}")
-#     _plugin_queue.put(PluginJob(plugin_uid, PluginJobType.Reload))
-
-
-# @register_global_function
-# def global_enable_plugin(plugin_uid: LibraryUID):
-#     """
-#     Enable a plugin for all processes.
-#     This returns immediately and is completed asynchronously.
-#     """
-#     log.debug(f"Globally enabling plugin {plugin_uid}")
-#     if get_process_type() is ProcessType.Main:
-#         # If this is the main process enable for self
-#         # and tell all child processes to enable
-#         local_enable_plugin(plugin_uid)
-#         call_in_children(local_enable_plugin, plugin_uid)
-#     elif get_process_type() is ProcessType.Child:
-#         # If this is a child process then notify the main process.
-#         call_in_parent(global_enable_plugin, plugin_uid)
-#     else:
-#         raise RuntimeError
-
-
-# @register_global_function
-# def global_disable_plugin(plugin_uid: LibraryUID):
-#     """
-#     Disable a plugin for all processes.
-#     This returns immediately and is completed asynchronously.
-#     """
-#     log.debug(f"Globally disabling plugin {plugin_uid}")
-#     if get_process_type() is ProcessType.Main:
-#         # If this is the main process enable for self
-#         # and tell all child processes to enable
-#         local_disable_plugin(plugin_uid)
-#         call_in_children(local_disable_plugin, plugin_uid)
-#     elif get_process_type() is ProcessType.Child:
-#         # If this is a child process then notify the main process.
-#         call_in_parent(global_disable_plugin, plugin_uid)
-#     else:
-#         raise RuntimeError
-
-
-# @register_global_function
-# def global_reload_plugin(plugin_uid: LibraryUID):
-#     """
-#     Reload a plugin for all processes.
-#     This returns immediately and is completed asynchronously.
-#     """
-#     log.debug(f"Globally reloading plugin {plugin_uid}")
-#     if get_process_type() is ProcessType.Main:
-#         # If this is the main process enable for self
-#         # and tell all child processes to enable
-#         local_reload_plugin(plugin_uid)
-#         call_in_children(local_reload_plugin, plugin_uid)
-#     elif get_process_type() is ProcessType.Child:
-#         # If this is a child process then notify the main process.
-#         call_in_parent(global_reload_plugin, plugin_uid)
-#     else:
-#         raise RuntimeError
 
 
 # def install_plugin(path: str):
