@@ -6,4 +6,5 @@ void init_sys(py::module);
 
 void init_amulet_app(py::module m){
     init_sys(m);
+    py::module::import("amulet.app.app");
 }
