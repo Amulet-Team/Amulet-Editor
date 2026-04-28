@@ -15,26 +15,17 @@ import atexit
 import traceback
 
 from PySide6.QtCore import (
-    Qt,
-    QCoreApplication,
     qInstallMessageHandler,
     QtMsgType,
-    QLocale,
     QMessageLogContext,
-    QTimer,
 )
-from PySide6.QtWidgets import QApplication
-from PySide6.QtGui import QSurfaceFormat
 
 import amulet.utils.logging
 
-from amulet.app.resource import get_resource_path
-from amulet.app.exception import CatchExceptionDialog
-from amulet.app.localisation import Translator, locale_changed
 import amulet.app.plugin._manager as plugin_manager
 
-from amulet.app.cli._parser import parse_global_args, parse_args
-from amulet.app.cli._command import run_command
+from amulet.app.cli._parser import parse_cli
+from amulet.app.cli._command import get_commands, run_command
 from amulet.app.path._application import init_paths, logging_directory
 from amulet.app.exception import display_exception
 
@@ -60,12 +51,12 @@ def _qt_log(msg_type: QtMsgType, context: QMessageLogContext, msg: str) -> None:
 def app_main(argv: Sequence[str] | None = None) -> None:
     # Set up global state.
     # Plugins have not been loaded at this point.
-    global_args = parse_global_args(argv)
+    cli_args = parse_cli(argv)
     init_paths(
-        global_args.data_dir,
-        global_args.config_dir,
-        global_args.cache_dir,
-        global_args.log_dir,
+        cli_args.data_dir,
+        cli_args.config_dir,
+        cli_args.cache_dir,
+        cli_args.log_dir,
     )
 
     log_file = open(
@@ -77,8 +68,8 @@ def app_main(argv: Sequence[str] | None = None) -> None:
     )
 
     logging.basicConfig(
-        level=global_args.logging_level,
-        format=global_args.logging_format,
+        level=cli_args.logging_level,
+        format=cli_args.logging_format,
         force=True,
         handlers=[
             logging.StreamHandler(sys.__stderr__),
@@ -129,18 +120,18 @@ def app_main(argv: Sequence[str] | None = None) -> None:
 
     sys.excepthook = error_handler
 
-    def thread_error_handler(args: ExceptHookArgs) -> None:
-        error_handler(args.exc_type, args.exc_value, args.exc_traceback)
+    def thread_error_handler(exc: ExceptHookArgs) -> None:
+        error_handler(exc.exc_type, exc.exc_value, exc.exc_traceback)
 
     threading.excepthook = thread_error_handler
 
     # Link the Amulet C++ logging
-    amulet.utils.logging.set_min_log_level(global_args.logging_level)
+    amulet.utils.logging.set_min_log_level(cli_args.logging_level)
 
     # When running via pythonw the stderr is None so log directly to the log file
     faulthandler.enable(sys.__stderr__ or log_file)
 
-    if global_args.trace:
+    if cli_args.trace:
 
         def trace_calls(frame: FrameType, event: str, arg: Any) -> TraceFunction:
             if event == "call":
@@ -155,68 +146,13 @@ def app_main(argv: Sequence[str] | None = None) -> None:
         sys.settrace(trace_calls)
         threading.settrace(trace_calls)
 
-    if QApplication.instance() is not None:
-        raise RuntimeError("QApplication has already been initialized")
+    # Load the plugins so they can register entry points
+    plugin_manager.load()
 
-    # Allow context sharing between widgets that do not share the same top level window.
-    QCoreApplication.setAttribute(Qt.ApplicationAttribute.AA_ShareOpenGLContexts)
+    # Validate the command and show help if requested.
+    valid_commands = get_commands()
+    if cli_args.help or cli_args.command not in valid_commands:
+        parse_cli(argv, valid_commands)
 
-    # Set the default surface format. Apparently this is required for some platforms.
-    surface_format = QSurfaceFormat()
-    surface_format.setDepthBufferSize(24)
-    surface_format.setVersion(3, 2)
-    surface_format.setProfile(QSurfaceFormat.OpenGLContextProfile.CoreProfile)
-    QSurfaceFormat.setDefaultFormat(surface_format)
-    app = QApplication()
-
-    translator = Translator()
-
-    def load_translations() -> None:
-        translator.load_lang(
-            QLocale(),
-            "",
-            directory=get_resource_path("lang"),
-        )
-
-    load_translations()
-    QApplication.installTranslator(translator)
-    locale_changed.connect(load_translations)
-
-    def shut_down() -> None:
-        plugin_manager.unload()
-
-    app.aboutToQuit.connect(shut_down)
-
-    def launch() -> None:
-        with CatchExceptionDialog("Failed to launch", suppress=False):
-            plugin_manager.load()
-            try:
-                full_args = parse_args(argv)
-            except SystemExit:
-                # argparse calls system exit but Qt needs to exit gracefully
-                pass
-            else:
-                run_command(full_args.command or "editor", full_args)
-
-    # This will be processed after the app starts
-    QTimer.singleShot(0, launch)
-
-    log.debug("Entering main loop.")
-    exit_code = app.exec()
-    log.debug(f"Exiting with code {exit_code}")
-    sys.exit(exit_code)
-
-    # is_broker = global_args.level_path == BROKER
-    #
-    # if is_broker:
-    #     # Dummy application to get a main loop.
-    #     app = QApplication()
-    #     translator = Translator()
-    #     translator.load_lang(
-    #         QLocale(),
-    #         "",
-    #         directory=get_resource_path("lang"),
-    #     )
-    #     QCoreApplication.installTranslator(translator)
-    #
-    # # rpc.init_rpc(is_broker)
+    # Call the requested command
+    run_command(cli_args.command, cli_args.args)
