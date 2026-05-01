@@ -4,7 +4,7 @@ project(amulet_meta)
 
 add_definitions("/wd4251")
 
-set(Python3_EXECUTABLE "C:/Program Files/Python314/python3.14t.exe" CACHE PATH "Path to the Python exe" FORCE)
+set(Python3_EXECUTABLE "C:/Program Files/Python314/python.exe" CACHE PATH "Path to the Python exe" FORCE)
 find_package(Python3 COMPONENTS Interpreter Development REQUIRED)
 
 set(CMAKE_INSTALL_PREFIX "_install" CACHE PATH "Directory for unused binaries" FORCE)
