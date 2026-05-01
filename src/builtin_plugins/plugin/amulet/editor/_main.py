@@ -452,7 +452,19 @@ def _destroy_editor() -> None:
     unregister_tab_widget(PlayerWidgetIdentifier)
 
 
-def _main(args: FullArgs) -> None:
+class EditorNamespace(Namespace):
+    level_path: str
+
+
+def main(argv: list[str]) -> NoReturn:
+    parser = ArgumentParser("amulet_editor amulet_editor")
+    parser.add_argument(
+        "level_path",
+        type=str,
+        help="The Minecraft world or structure to open",
+        action="store",
+    )
+    args = parser.parse_args(argv, namespace=EditorNamespace())
 
     # Check an app has not already been created
     if QApplication.instance() is not None:
@@ -476,19 +488,21 @@ def _main(args: FullArgs) -> None:
     app.setWindowIcon(QIcon(get_resource_path("icons/amulet/Icon.ico")))
 
     # Load the level
-    level_path = getattr(args, "level_path", None)
-    if level_path is None:
-        set_main_level(None)
-    else:
-        log.debug("Loading level.")
-        with CatchExceptionDialog(
-            f"Failed loading level at path {level_path}", suppress=False
-        ):
-            level = get_level(
-                LevelLoaderPathToken(level_path)
-            )  # TODO: make this generic
-            level.open()
-            set_main_level(level)
+    log.debug("Loading level.")
+    try:
+        level = get_level(
+            LevelLoaderPathToken(args.level_path)
+        )  # TODO: make this generic
+        level.open()
+        set_main_level(level)
+    except Exception as e:
+        log.exception(e)
+        display_exception_blocking(
+            title=f"Failed loading level at path {args.level_path}",
+            error=str(e),
+            traceback="".join(traceback.format_exc()),
+        )
+        sys.exit(1)
 
     # Load the translations
     _translator = Translator()
