@@ -510,17 +510,17 @@ def main(argv: list[str]) -> NoReturn:
         sys.exit(1)
 
     # Load the translations
-    _translator = Translator()
+    translator = Translator()
 
     def _load_translations() -> None:
-        _translator.load_lang(
+        translator.load_lang(
             QLocale(),
             "",
             directory=os.path.join(editor_plugin_path[0], "_resources", "lang"),
         )
 
     _load_translations()
-    QApplication.installTranslator(_translator)
+    QApplication.installTranslator(translator)
     locale_changed.connect(_load_translations)
 
     # Initialise the main window
