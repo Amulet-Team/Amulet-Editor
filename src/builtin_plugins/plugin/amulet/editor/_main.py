@@ -1,21 +1,24 @@
 from __future__ import annotations
 
-from argparse import ArgumentParser
+from typing import NoReturn
+from argparse import ArgumentParser, Namespace
 import logging
 import os
+import sys
+import traceback
 
 from PySide6.QtWidgets import QApplication
-from PySide6.QtGui import QIcon
-from PySide6.QtCore import QLocale, Qt
+from PySide6.QtGui import QIcon, QSurfaceFormat
+from PySide6.QtCore import QLocale, Qt, QCoreApplication
 
 from amulet.level import get_level
 from amulet.level.loader import LevelLoaderPathToken
 
 from amulet.app import __version__
-from amulet.app.cli import FullArgs, Command
 from amulet.app.resource import get_resource_path
-from amulet.app.exception import CatchExceptionDialog
+from amulet.app.exception import display_exception_blocking
 from amulet.app.localisation import Translator, locale_changed
+from amulet.app.app import app_created
 
 from plugin.tablericons import tablericons
 from plugin.amulet.level import get_main_level, set_main_level
@@ -24,7 +27,6 @@ from . import __path__ as editor_plugin_path
 from .window._main_window import (
     init_main_window,
     get_main_window,
-    destroy_main_window,
     ButtonProxy,
     add_static_button,
 )
