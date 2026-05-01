@@ -14,5 +14,4 @@ from .layout import (
     create_layout_button,
 )
 from ._signal import init_editor, destroy_editor
-
-from ._plugin import plugin  # Private plugin initialisation
+from . import _command
