@@ -57,10 +57,6 @@ from ._signal import init_editor, destroy_editor
 
 log = logging.getLogger(__name__)
 
-
-# Qt only weekly references this. We must hold a strong reference to stop it getting garbage collected
-_translator: Translator | None = None
-
 HomeLayoutID = "amulet.home"
 home_button: ButtonProxy | None = None
 
@@ -104,16 +100,6 @@ def _init_app() -> None:
     app.setApplicationName("Amulet Editor")
     app.setApplicationVersion(__version__)
     app.setWindowIcon(QIcon(get_resource_path("icons/amulet/Icon.ico")))
-
-
-def _load_translations() -> None:
-    if _translator is None:
-        return
-    _translator.load_lang(
-        QLocale(),
-        "",
-        directory=os.path.join(editor_plugin_path[0], "_resources", "lang"),
-    )
 
 
 def _init_editor() -> None:
@@ -476,7 +462,6 @@ def _destroy_editor() -> None:
 
 
 def _main(args: FullArgs) -> None:
-    global _translator
 
     # Initialise the application
     _init_app()
@@ -498,6 +483,14 @@ def _main(args: FullArgs) -> None:
 
     # Load the translations
     _translator = Translator()
+
+    def _load_translations() -> None:
+        _translator.load_lang(
+            QLocale(),
+            "",
+            directory=os.path.join(editor_plugin_path[0], "_resources", "lang"),
+        )
+
     _load_translations()
     QApplication.installTranslator(_translator)
     locale_changed.connect(_load_translations)
