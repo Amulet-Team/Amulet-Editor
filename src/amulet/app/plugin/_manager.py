@@ -23,8 +23,6 @@ from packaging.version import Version
 
 from PySide6.QtCore import Signal, QObject
 
-from amulet.app._splash import Splash
-
 from amulet.app.path._plugin import plugin_dirs
 
 from ._uid import LibraryUID
@@ -67,9 +65,6 @@ _plugins: dict[LibraryUID, PluginContainer] = {}
 # A map from the package identifier to the UID.
 # Only plugins that are currently enabled will appear in this dictionary.
 _enabled_plugins: dict[str, LibraryUID] = {}
-
-_splash_load_screen: Optional[Splash] = None
-_splash_unload_screen: Optional[Splash] = None
 
 
 class Event(QObject):
@@ -298,15 +293,10 @@ def load() -> None:
     This must be called before any other functions in this module can be called.
     It can only be called once.
     """
-    global _splash_load_screen
     log.debug("Loading plugin manager")
     log.debug("Waiting for plugin lock")
     with _plugin_lock:
         log.debug("Acquired the plugin lock")
-
-        _splash_load_screen = Splash()
-        _splash_load_screen.setModal(True)
-        _splash_load_screen.show()
 
         # Remove the plugin directories from sys.path so that they are not directly importable
         for i in range(len(sys.path) - 1, -1, -1):
@@ -336,9 +326,6 @@ def load() -> None:
                 _enable_plugin(plugin_uid)
         _plugin_diagnostic()
 
-        _splash_load_screen.close()
-        _splash_load_screen = None
-
     log.debug("Finished loading plugins.")
 
 
@@ -347,8 +334,6 @@ def unload() -> None:
     Called just before application exit to tear down all plugins.
     :return:
     """
-    global _splash_unload_screen
-
     gc.collect()
 
     log.debug("Unloading plugins")
@@ -356,10 +341,6 @@ def unload() -> None:
     log.debug("Waiting for plugin lock")
     with _plugin_lock:
         log.debug("Acquired the plugin lock")
-
-        _splash_unload_screen = Splash()
-        _splash_unload_screen.setModal(True)
-        _splash_unload_screen.show()
 
         t = time.time()
 
@@ -369,8 +350,6 @@ def unload() -> None:
         sleep_time = 0.5 - (time.time() - t)
         if sleep_time > 0:
             time.sleep(sleep_time)
-        _splash_unload_screen.close()
-        _splash_unload_screen = None
 
     gc.collect()
 
@@ -480,10 +459,6 @@ def _enable_plugin(plugin_uid: LibraryUID) -> None:
                     try:
                         _set_plugin_state(plugin_container, PluginState.Enabled)
                         log.debug(f"enabling plugin {plugin_container.data.uid}")
-                        if _splash_load_screen is not None:
-                            _splash_load_screen.showMessage(
-                                f"Enabling plugin {plugin_container.data.uid.identifier}"
-                            )
                         path = plugin_container.data.path
                         if os.path.isdir(path):
                             path = os.path.join(path, "__init__.py")
@@ -577,14 +552,6 @@ def _disable_plugin(plugin_uid: LibraryUID) -> None:
 def _unload_plugin(plugin_container: PluginContainer) -> None:
     """Unload and destroy a plugin. This must only be called by the main thread."""
     _recursive_inactive_plugins(plugin_container.data.uid)
-    if _splash_load_screen is not None:
-        _splash_load_screen.showMessage(
-            f"Disabling plugin {plugin_container.data.uid.identifier}"
-        )
-    elif _splash_unload_screen is not None:
-        _splash_unload_screen.showMessage(
-            f"Disabling plugin {plugin_container.data.uid.identifier}"
-        )
 
     if plugin_container.plugin is not None:
         try:
