@@ -454,6 +454,20 @@ def _destroy_editor() -> None:
 
 def _main(args: FullArgs) -> None:
 
+    # Check an app has not already been created
+    if QApplication.instance() is not None:
+        raise RuntimeError("QApplication has already been initialized")
+
+    # Allow context sharing between widgets that do not share the same top level window.
+    QCoreApplication.setAttribute(Qt.ApplicationAttribute.AA_ShareOpenGLContexts)
+
+    # Set the default surface format. Apparently this is required for some platforms.
+    surface_format = QSurfaceFormat()
+    surface_format.setDepthBufferSize(24)
+    surface_format.setVersion(3, 2)
+    surface_format.setProfile(QSurfaceFormat.OpenGLContextProfile.CoreProfile)
+    QSurfaceFormat.setDefaultFormat(surface_format)
+
     # Initialise the application
     app = QApplication()
     app_created.emit()
