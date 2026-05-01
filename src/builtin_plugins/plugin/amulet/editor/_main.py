@@ -533,38 +533,3 @@ def main(argv: list[str]) -> NoReturn:
     exit_code = app.exec()
     log.debug(f"Exiting with code {exit_code}")
     sys.exit(exit_code)
-
-
-def unload() -> None:
-    global _translator
-
-    if _translator is not None:
-        QApplication.removeTranslator(_translator)
-        _translator = None
-
-    destroy_main_window()
-
-
-def _init_argparse(parser: ArgumentParser) -> None:
-    parser.add_argument(
-        "--level_path",
-        type=str,
-        help="The Minecraft world or structure to open. Default opens no level",
-        action="store",
-        dest="level_path",
-        default=None,
-    )
-
-
-_editor_command: Command | None = None
-
-
-def get_command() -> Command:
-    global _editor_command
-    if _editor_command is None:
-        _editor_command = Command(
-            name="editor",
-            main_func=_main,
-            init_argparse=_init_argparse,
-        )
-    return _editor_command
