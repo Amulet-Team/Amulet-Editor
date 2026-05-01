@@ -93,15 +93,6 @@ convert_button: ButtonProxy | None = None
 settings_button: ButtonProxy | None = None
 
 
-def _init_app() -> None:
-    app = QApplication.instance()
-    if not isinstance(app, QApplication):
-        raise RuntimeError("No QApplication instance")
-    app.setApplicationName("Amulet Editor")
-    app.setApplicationVersion(__version__)
-    app.setWindowIcon(QIcon(get_resource_path("icons/amulet/Icon.ico")))
-
-
 def _init_editor() -> None:
     global home_button
     global metadata_button
@@ -464,7 +455,11 @@ def _destroy_editor() -> None:
 def _main(args: FullArgs) -> None:
 
     # Initialise the application
-    _init_app()
+    app = QApplication()
+    app_created.emit()
+    app.setApplicationName("Amulet Editor")
+    app.setApplicationVersion(__version__)
+    app.setWindowIcon(QIcon(get_resource_path("icons/amulet/Icon.ico")))
 
     # Load the level
     level_path = getattr(args, "level_path", None)
@@ -505,6 +500,11 @@ def _main(args: FullArgs) -> None:
 
     # Show the window
     get_main_window().showMaximized()
+
+    log.debug("Entering main loop.")
+    exit_code = app.exec()
+    log.debug(f"Exiting with code {exit_code}")
+    sys.exit(exit_code)
 
 
 def unload() -> None:
