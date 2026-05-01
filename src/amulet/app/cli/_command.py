@@ -13,7 +13,7 @@ from threading import Lock
 @dataclass(frozen=True, kw_only=True)
 class Command:
     name: str
-    main_func: Callable[[list[str]], NoReturn]
+    main: Callable[[list[str]], NoReturn]
 
 
 _lock = Lock()
@@ -41,4 +41,4 @@ def run_command(name: str, args: list[str]) -> NoReturn:
         command = _commands.get(name)
     if command is None:
         raise RuntimeError(f'Could not find the "{name}" command.')
-    command.main_func(args)
+    command.main(args)
