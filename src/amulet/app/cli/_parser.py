@@ -24,7 +24,8 @@ def parse_cli(
     )
 
     parser.add_argument(
-        "-h", "--help",
+        "-h",
+        "--help",
         help="Show this help message and exit.",
         action="store_true",
     )
