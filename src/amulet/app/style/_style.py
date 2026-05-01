@@ -68,7 +68,6 @@ def get_valid_styles() -> dict[str, str]:
 
 def set_style(identifier: str) -> None:
     with _lock:
-        storage = _styles[identifier]
         factory = _styles[identifier].style_factory
         if isinstance(factory, str):
             # Built in style
@@ -81,4 +80,3 @@ def set_style(identifier: str) -> None:
 from ._amulet import AmuletStyle
 
 register_style("amulet", "Amulet", AmuletStyle)
-set_style("amulet")

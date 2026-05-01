@@ -19,6 +19,7 @@ from amulet.app.resource import get_resource_path
 from amulet.app.exception import display_exception_blocking
 from amulet.app.localisation import Translator, locale_changed
 from amulet.app.app import app_created
+from amulet.app.style import set_style
 
 from plugin.tablericons import tablericons
 from plugin.amulet.level import get_main_level, set_main_level
@@ -488,6 +489,8 @@ def main(argv: list[str]) -> NoReturn:
     app.setApplicationName("Amulet Editor")
     app.setApplicationVersion(__version__)
     app.setWindowIcon(QIcon(get_resource_path("icons/amulet/Icon.ico")))
+
+    set_style("amulet")
 
     # Load the level
     log.debug("Loading level.")
