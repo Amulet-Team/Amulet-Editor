@@ -215,7 +215,7 @@ class ImportProtocol(Protocol):
         name: str,
         globals: Mapping[str, object] | None = None,
         locals: Mapping[str, object] | None = None,
-        fromlist: Sequence[str] = (),
+        fromlist: Sequence[str] | None = (),
         level: int = 0,
     ) -> ModuleType: ...
 
@@ -225,7 +225,7 @@ def wrap_importer(imp: ImportProtocol) -> ImportProtocol:
         name: str,
         globals: Mapping[str, object] | None = None,
         locals: Mapping[str, object] | None = None,
-        fromlist: Sequence[str] = (),
+        fromlist: Sequence[str] | None = (),
         level: int = 0,
     ) -> ModuleType:
         if level == 0:

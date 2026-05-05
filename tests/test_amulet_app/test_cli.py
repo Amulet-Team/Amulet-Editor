@@ -19,7 +19,7 @@ class CLITestCase(unittest.TestCase):
         trace: bool = False,
         command: str = "amulet_launcher",
         args: list[str] | None = None,
-    ):
+    ) -> None:
         if data_dir is None:
             self.assertIsNone(cli_args.data_dir)
         else:

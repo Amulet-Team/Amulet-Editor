@@ -579,4 +579,7 @@ class RecursiveSplitter(QSplitter):
     def remove_index(self, index: int, /) -> QWidget:
         """Hide and orphan the widget at the given index."""
         log.debug(f"RecursiveSplitter.remove_index({self}, {index}, {self})")
-        return self.remove_widget(self.widget(index))
+        widget = self.widget(index)
+        if widget is None:
+            raise RuntimeError(f"There is no widget at index {index}")
+        return self.remove_widget(widget)

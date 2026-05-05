@@ -20,6 +20,7 @@ from amulet.core.version import VersionNumber
 
 from amulet.game import get_game_platforms, get_game_versions, get_game_version
 from amulet.game.abc import GameVersion
+from amulet.utils.cast import dynamic_cast
 
 log = logging.getLogger(__name__)
 
@@ -144,7 +145,7 @@ class BlockEdit(QWidget):
         self._platform_select.setCurrentIndex(index)
 
     def get_block_version(self) -> VersionNumber:
-        return self._versions_select.currentData()
+        return dynamic_cast(self._versions_select.currentData(), VersionNumber)
 
     def set_version(self, version: VersionNumber) -> None:
         index = next(

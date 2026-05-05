@@ -8,6 +8,7 @@ from typing import NoReturn
 from collections.abc import Callable
 from dataclasses import dataclass
 from threading import Lock
+import sys
 
 
 @dataclass(frozen=True, kw_only=True)
@@ -42,3 +43,4 @@ def run_command(name: str, args: list[str]) -> NoReturn:
     if command is None:
         raise RuntimeError(f'Could not find the "{name}" command.')
     command.main(args)
+    sys.exit(0)

@@ -10,6 +10,8 @@ from PySide6.QtWidgets import (
     QTextEdit,
 )
 
+from amulet.utils.cast import dynamic_cast
+
 from amulet.core.block import Block
 from amulet.core.version import VersionNumber
 
@@ -117,7 +119,7 @@ class BlockSelect(QWidget):
         return self._platform_select.currentText()
 
     def get_block_version(self) -> VersionNumber:
-        return self._versions_select.currentData()
+        return dynamic_cast(self._versions_select.currentData(), VersionNumber)
 
     def get_namespace(self) -> str:
         return self._namespace_select.currentText()
