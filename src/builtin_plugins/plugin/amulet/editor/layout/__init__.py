@@ -5,7 +5,6 @@ from ._layout import (
     WindowConfig,
     LayoutConfig,
     register_layout,
-    unregister_layout,
     activate_layout,
     active_layout,
     create_layout_button,

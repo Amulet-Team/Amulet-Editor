@@ -129,21 +129,6 @@ def register_layout(layout_id: str, layout: LayoutConfig) -> None:
         layouts[layout_id] = layout_container
 
 
-def unregister_layout(layout_id: str) -> None:
-    """Unregister the layout.
-
-    When the plugin is unloaded, it must unregister all layouts that it registered.
-    If a button was created it must be destroyed before calling this.
-
-    :param layout_id: The unique identifier for the layout.
-    :return:
-    """
-    with lock:
-        if layout_id not in layouts:
-            raise ValueError(f"Layout id {layout_id} does not exist.")
-        del layouts[layout_id]
-
-
 def active_layout() -> LayoutContainer | None:
     """Get the unique id for the currently active layout."""
     return _active_layout
