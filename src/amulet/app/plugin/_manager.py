@@ -31,7 +31,6 @@ from ._state import PluginState
 from ._container import PluginContainer
 from ._requirement import Requirement
 from amulet.app.exception import display_exception
-from amulet.app._sys import set_sys_modules
 
 log = logging.getLogger(__name__)
 PythonVersion = Version(".".join(map(str, sys.version_info[:3])))
@@ -317,7 +316,6 @@ def load() -> None:
         plugin_module.__path__ = []
         sys.modules["plugin"] = plugin_module
 
-        set_sys_modules(CustomSysModules(sys.modules))
         builtins.__import__ = wrap_importer(builtins.__import__)
         scan_plugins()
         plugin_state = get_plugins_state()
