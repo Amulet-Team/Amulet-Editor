@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 import inspect
-import time
 from typing import Optional, Protocol
 from types import FrameType, ModuleType
 from threading import RLock
@@ -9,24 +8,18 @@ import os
 from os.path import samefile
 import glob
 import logging
-import gc
 from importlib.util import spec_from_file_location, module_from_spec
 from importlib.metadata import version, packages_distributions
-
 import sys
-from collections import UserDict
 from collections.abc import Mapping, Sequence
 import traceback
 import builtins
 
 from packaging.version import Version
 
-from PySide6.QtCore import Signal, QObject
-
 from amulet.app.path._plugin import plugin_dirs
 
 from ._uid import LibraryUID
-from ._plugin import PluginV1
 from ._state import PluginState
 from ._container import PluginContainer
 from ._requirement import Requirement
@@ -64,13 +57,6 @@ _plugins: dict[LibraryUID, PluginContainer] = {}
 # A map from the package identifier to the UID.
 # Only plugins that are currently enabled will appear in this dictionary.
 _enabled_plugins: dict[str, LibraryUID] = {}
-
-
-class Event(QObject):
-    plugin_state_change = Signal(LibraryUID, PluginState)
-
-
-_event = Event()
 
 
 _amulet_modules = {
@@ -224,31 +210,6 @@ def _validate_import(imported_name: str, frame: FrameType | None) -> None:
         )
 
 
-class CustomSysModules(UserDict[str, ModuleType]):
-    def __init__(self, original: dict) -> None:
-        super().__init__()
-        self.data = original
-
-    def __getitem__(self, imported_name: str) -> ModuleType:
-        if not isinstance(imported_name, str):
-            raise TypeError
-
-        # Find the first frame before UserDict code
-        frame = inspect.currentframe()
-        if frame is not None:
-            frame = frame.f_back
-            while frame is not None and frame.f_globals.get("__name__") in {
-                "collections",
-                "collections.abc",
-                "inspect",
-                "dataclasses",
-            }:
-                frame = frame.f_back
-            _validate_import(imported_name, frame)
-
-        return super().__getitem__(imported_name)
-
-
 class ImportProtocol(Protocol):
     def __call__(
         self,
@@ -327,33 +288,6 @@ def load() -> None:
     log.debug("Finished loading plugins.")
 
 
-def unload() -> None:
-    """
-    Called just before application exit to tear down all plugins.
-    :return:
-    """
-    gc.collect()
-
-    log.debug("Unloading plugins")
-
-    log.debug("Waiting for plugin lock")
-    with _plugin_lock:
-        log.debug("Acquired the plugin lock")
-
-        t = time.time()
-
-        for plugin_uid in _plugins.keys():
-            _disable_plugin(plugin_uid)
-
-        sleep_time = 0.5 - (time.time() - t)
-        if sleep_time > 0:
-            time.sleep(sleep_time)
-
-    gc.collect()
-
-    log.debug("Finished unloading plugins")
-
-
 def plugin_uids() -> tuple[LibraryUID, ...]:
     """Get a tuple of all plugin unique identifiers that are installed."""
     with _plugin_lock:
@@ -386,7 +320,6 @@ def _set_plugin_state(
 
     # self.__plugins_config[plugin_container.data.uid.to_string()] = bool(plugin_state)
     # self.__save_plugin_config()
-    _event.plugin_state_change.emit(plugin_container.data.uid, plugin_container.state)
 
 
 def scan_plugins() -> None:
@@ -488,19 +421,6 @@ def _enable_plugin(plugin_uid: LibraryUID) -> None:
 
                         plugin_container.module = mod
 
-                        try:
-                            plugin = plugin_container.module.plugin
-                        except AttributeError:
-                            # The plugin does not have a plugin attribute
-                            plugin = PluginV1()
-
-                        if not isinstance(plugin, PluginV1):
-                            raise ValueError(
-                                "Plugin attribute must be an instance of amulet.app.plugin.PluginV1"
-                            )
-                        plugin_container.plugin = plugin
-                        plugin_container.plugin.load()
-
                         log.debug(f"enabled plugin {plugin_container.data.uid}")
                     except Exception as e:
                         log.exception(e)
@@ -509,9 +429,6 @@ def _enable_plugin(plugin_uid: LibraryUID) -> None:
                             error=str(e),
                             traceback=traceback.format_exc(),
                         )
-
-                        # Since the plugin failed to load we must try and disable it
-                        _disable_plugin(plugin_container.data.uid)
                     else:
                         enabled_count += 1
 
@@ -531,62 +448,6 @@ def _plugin_diagnostic() -> None:
                 f"MissingLibraries={[str(l) for l in plugin_container.data.depends.library if not _has_library(l)]}, "
                 f"MissingPlugins={[str(p) for p in plugin_container.data.depends.plugin if not _has_plugin(p)]}"
             )
-
-
-def _disable_plugin(plugin_uid: LibraryUID) -> None:
-    """Disable a plugin and inactive all dependents. This must only be called by the main thread."""
-    with _plugin_lock:
-        if not isinstance(plugin_uid, LibraryUID):
-            raise TypeError
-        plugin_container = _plugins[plugin_uid]
-        if plugin_container.state is PluginState.Disabled:
-            # Cannot disable a plugin that is already disabled
-            return
-        elif plugin_container.state is PluginState.Enabled:
-            _unload_plugin(plugin_container)
-        _set_plugin_state(plugin_container, PluginState.Disabled)
-
-
-def _unload_plugin(plugin_container: PluginContainer) -> None:
-    """Unload and destroy a plugin. This must only be called by the main thread."""
-    _recursive_inactive_plugins(plugin_container.data.uid)
-
-    if plugin_container.plugin is not None:
-        try:
-            plugin_container.plugin.unload()
-        except Exception as e:
-            log.exception(e)
-            display_exception(
-                title=f"Error while unloading plugin {plugin_container.data.uid.identifier} {plugin_container.data.uid.version}",
-                error=str(e),
-                traceback=traceback.format_exc(),
-            )
-    plugin_container.module = None
-    plugin_container.plugin = None
-
-    # Remove the module from sys.modules
-    modules = sys.modules
-    if isinstance(modules, CustomSysModules):
-        module_qualname = f"plugin.{plugin_container.data.uid.identifier}"
-        plugin_prefix = f"{module_qualname}."
-        for key in list(modules.keys()):
-            if key == module_qualname or key.startswith(plugin_prefix):
-                del modules[key]
-
-
-def _recursive_inactive_plugins(plugin_uid: LibraryUID) -> None:
-    """
-    Recursively inactive all dependents of a plugin This must only be called by the main thread.
-    When a plugin is disabled none of its dependents are valid any more so they must be inactivated.
-    :param plugin_uid: The plugin unique identifier to find dependents of.
-    """
-    for plugin_container in _plugins.values():
-        if plugin_container.state is PluginState.Enabled and any(
-            plugin_uid in requirement
-            for requirement in plugin_container.data.depends.plugin
-        ):
-            _unload_plugin(plugin_container)
-            _set_plugin_state(plugin_container, PluginState.Inactive)
 
 
 # def install_plugin(path: str):

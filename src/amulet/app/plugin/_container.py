@@ -9,7 +9,6 @@ from packaging.version import Version
 from packaging.specifiers import SpecifierSet
 
 from amulet.app.path._plugin import first_party_plugin_directory
-from ._plugin import PluginV1
 from ._data import PluginData, PluginDataDepends
 from ._state import PluginState
 from ._requirement import Requirement
@@ -33,7 +32,6 @@ def dynamic_cast(obj: Any, cls: type[T], msg: str = "") -> T:
 class PluginContainer(ABC):
     data: PluginData
     module: Optional[ModuleType]  # The instance of the plugin.
-    plugin: Optional[PluginV1]
     state: PluginState
 
     FormatVersion: int = -1
@@ -41,7 +39,6 @@ class PluginContainer(ABC):
     def __init__(self, data: PluginData):
         self.data = data
         self.module = None
-        self.plugin = None
         self.state = PluginState.Disabled
 
     @classmethod
