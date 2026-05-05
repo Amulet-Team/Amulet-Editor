@@ -2,10 +2,10 @@
 	"files": [
 		"src\\amulet\\app\\exception\\_traceback_dialog_ui.ui",
 		"src\\amulet\\app\\_splash\\_splash_ui.ui",
-		"src\\builtin_plugins\\plugin\\amulet\\editor\\widget\\_home\\home\\_home.ui",
-		"src\\builtin_plugins\\plugin\\amulet\\editor\\widget\\_home\\open_world\\_open_world.ui",
-		"src\\builtin_plugins\\plugin\\amulet\\editor\\window\\_child\\child_window_ui.ui",
-		"src\\builtin_plugins\\plugin\\amulet\\editor\\window\\_main\\_main_window_ui.ui",
-		"src\\builtin_plugins\\plugin\\amulet\\inspector\\_inspector\\_inspector.ui"
+		"src\\plugin\\amulet\\editor\\widget\\_home\\home\\_home.ui",
+		"src\\plugin\\amulet\\editor\\widget\\_home\\open_world\\_open_world.ui",
+		"src\\plugin\\amulet\\editor\\window\\_child\\child_window_ui.ui",
+		"src\\plugin\\amulet\\editor\\window\\_main\\_main_window_ui.ui",
+		"src\\plugin\\amulet\\inspector\\_inspector\\_inspector.ui"
 	]
 }

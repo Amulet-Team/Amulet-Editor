@@ -91,4 +91,4 @@ endif()
 # Install
 install(TARGETS _amulet_app DESTINATION ${AMULET_APP_EXT_DIR})
 
-add_subdirectory("src/builtin_plugins/plugin/amulet/editor/widget/_view_3d")
+add_subdirectory("src/plugin/amulet/editor/widget/_view_3d")

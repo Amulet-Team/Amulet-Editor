@@ -66,7 +66,7 @@ class PluginContainer(ABC):
             return cls2.from_data(
                 plugin_path,
                 plugin_data,
-                os.path.dirname(os.path.dirname(os.path.dirname(plugin_path)))
+                os.path.dirname(os.path.dirname(plugin_path))
                 == first_party_plugin_directory(),
             )
 
@@ -170,9 +170,6 @@ class PluginContainerV1(PluginContainer):
             )
         plugin_depends = tuple(map(Requirement.from_string, plugin_depends_raw))
 
-        # Get the locked state
-        locked = bool(first_party and plugin_data.get("locked"))
-
         return cls(
             PluginData(
                 LibraryUID(f"{plugin_namespace}.{plugin_identifier}", plugin_version),
@@ -183,6 +180,6 @@ class PluginContainerV1(PluginContainer):
                     library_depends,
                     plugin_depends,
                 ),
-                locked,
+                first_party,
             )
         )

@@ -9,6 +9,5 @@
 			"PySide6_Essentials~=6.2"
 		],
 		"plugin": []
-	},
-	"locked": "true"
+	}
 }

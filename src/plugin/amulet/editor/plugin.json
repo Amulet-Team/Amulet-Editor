@@ -26,6 +26,5 @@
 			"amulet.level~=1.0",
 			"amulet.camera~=1.0"
 		]
-	},
-	"locked": "true"
+	}
 }

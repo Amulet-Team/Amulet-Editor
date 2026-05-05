@@ -5,7 +5,6 @@ from typing import Optional, Protocol
 from types import FrameType, ModuleType
 from threading import RLock
 import os
-from os.path import samefile
 import glob
 import logging
 from importlib.util import spec_from_file_location, module_from_spec
@@ -17,7 +16,7 @@ import builtins
 
 from packaging.version import Version
 
-from amulet.app.path._plugin import plugin_dirs
+from amulet.app.path._plugin import first_party_plugin_directory
 
 from ._uid import LibraryUID
 from ._state import PluginState
@@ -40,9 +39,9 @@ def _get_packages_distributions() -> dict[str, list[str]]:
 
 """
 Notes:
-First party plugins are stored in builtin_plugins
+First party plugins are stored in plugin
 Third party plugins are imported as a zip and extracted to a writable directory with a UUID as the name.
-Custom code loads the plugin package into sys.modules under its package name. Adding builtin_plugins as sources root helps the IDE understand this.
+Custom code loads the plugin package into sys.modules under its package name.
 TODO: look into generating stub files for the active plugins to help with development on the compiled version.
 Plugins can import directly from other plugins to access static classes and functions 
 """
@@ -258,30 +257,11 @@ def load() -> None:
     with _plugin_lock:
         log.debug("Acquired the plugin lock")
 
-        # Remove the plugin directories from sys.path so that they are not directly importable
-        for i in range(len(sys.path) - 1, -1, -1):
-            path = sys.path[i]
-            for plugin_path in plugin_dirs():
-                try:
-                    is_same = samefile(path, plugin_path)
-                except FileNotFoundError:
-                    pass
-                else:
-                    if is_same:
-                        sys.path.pop(i)
-                        break
-
-        # Disable importing from builtin_plugins
-        sys.modules["builtin_plugins"] = None  # type: ignore
-        plugin_module = ModuleType("plugin")
-        plugin_module.__path__ = []
-        sys.modules["plugin"] = plugin_module
-
         builtins.__import__ = wrap_importer(builtins.__import__)
         scan_plugins()
         plugin_state = get_plugins_state()
         for plugin_uid, plugin_container in _plugins.items():
-            if plugin_state.get(plugin_uid) or plugin_container.data.locked:
+            if plugin_container.data.first_party or plugin_state.get(plugin_uid):
                 _enable_plugin(plugin_uid)
         _plugin_diagnostic()
 
@@ -329,23 +309,22 @@ def scan_plugins() -> None:
     """
     with _plugin_lock:
         # Find and parse all plugins
-        for plugin_dir in plugin_dirs():
-            for manifest_path in glob.glob(
-                os.path.join(glob.escape(plugin_dir), "plugin", "*", "*", "plugin.json")
-            ):
-                try:
-                    plugin_path = os.path.dirname(manifest_path)
-                    plugin_container = PluginContainer.from_path(plugin_path)
-                    plugin_uid = plugin_container.data.uid
+        for manifest_path in glob.glob(
+            os.path.join(glob.escape(first_party_plugin_directory()), "*", "*", "plugin.json")
+        ):
+            try:
+                plugin_path = os.path.dirname(manifest_path)
+                plugin_container = PluginContainer.from_path(plugin_path)
+                plugin_uid = plugin_container.data.uid
 
-                    if plugin_uid not in _plugins:
-                        _plugins[plugin_uid] = plugin_container
-                    elif _plugins[plugin_uid].data.path != plugin_path:
-                        log.warning(
-                            f"Two plugins cannot have the same identifier and version.\n{_plugins[plugin_uid].data.path} and {plugin_path} have the same identifier and version."
-                        )
-                except Exception as e:
-                    log.exception(e)
+                if plugin_uid not in _plugins:
+                    _plugins[plugin_uid] = plugin_container
+                elif _plugins[plugin_uid].data.path != plugin_path:
+                    log.warning(
+                        f"Two plugins cannot have the same identifier and version.\n{_plugins[plugin_uid].data.path} and {plugin_path} have the same identifier and version."
+                    )
+            except Exception as e:
+                log.exception(e)
 
 
 def _has_library(requirement: Requirement) -> bool:

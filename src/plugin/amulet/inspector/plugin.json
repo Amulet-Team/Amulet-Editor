@@ -12,6 +12,5 @@
 		"plugin": [
 			"tablericons.tablericons~=3.34"
 		]
-	},
-	"locked": "true"
+	}
 }

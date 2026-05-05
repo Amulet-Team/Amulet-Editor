@@ -6,6 +6,5 @@
 	"depends": {
 		"python": "~=3.11",
 		"plugin": []
-	},
-	"locked": "true"
+	}
 }

@@ -9,6 +9,5 @@
 			"amulet_level~=1.0a0"
 		],
 		"plugin": []
-	},
-	"locked": "true"
+	}
 }
