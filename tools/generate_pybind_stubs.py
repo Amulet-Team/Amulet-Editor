@@ -209,9 +209,13 @@ def main() -> None:
         for stub_path in glob.iglob(
             os.path.join(glob.escape(module_dir), "**", "*.pyi"), recursive=True
         ):
-            if os.path.isfile(stub_path[:-1]) and not stub_path.endswith(
-                "__init__.pyi"
-            ):
+            if os.path.isfile(stub_path[:-1]):
+                if stub_path.endswith("__init__.pyi"):
+                    with open(stub_path[:-1], "r") as f:
+                        py = f.read()
+                    if "init(sys.modules[__name__])" in py:
+                        continue
+
                 os.remove(stub_path)
 
     print("Patching stub files...")
