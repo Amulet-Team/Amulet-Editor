@@ -5,10 +5,12 @@ def _init_localisation() -> None:
     import os
     from PySide6.QtCore import QLocale, QCoreApplication
     from amulet.app.localisation import Translator, locale_changed
+
     translator = Translator()
 
     def _locale_changed() -> None:
         from plugin.amulet.resource_pack import __path__ as resource_pack_path
+
         translator.load_lang(
             QLocale(),
             "",

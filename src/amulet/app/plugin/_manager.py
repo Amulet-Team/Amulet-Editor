@@ -310,7 +310,9 @@ def scan_plugins() -> None:
     with _plugin_lock:
         # Find and parse all plugins
         for manifest_path in glob.glob(
-            os.path.join(glob.escape(first_party_plugin_directory()), "*", "*", "plugin.json")
+            os.path.join(
+                glob.escape(first_party_plugin_directory()), "*", "*", "plugin.json"
+            )
         ):
             try:
                 plugin_path = os.path.dirname(manifest_path)
