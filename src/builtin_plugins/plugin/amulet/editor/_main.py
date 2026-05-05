@@ -45,10 +45,9 @@ from .widget._paste import PasteWidget, PasteWidgetIdentifier
 from .widget._operation import OperationWidget, OperationWidgetIdentifier
 from .widget._chunk import ChunkWidget, ChunkWidgetIdentifier
 from .widget._player import PlayerWidget, PlayerWidgetIdentifier
-from .widget import register_tab_widget, unregister_tab_widget
+from .widget import register_tab_widget
 from .layout import (
     register_layout,
-    unregister_layout,
     LayoutConfig,
     WindowConfig,
     SplitterConfig,
@@ -391,70 +390,6 @@ def _init_editor() -> None:
     settings_button.set_name("Settings")
 
 
-def _destroy_editor() -> None:
-    if home_button is not None:
-        home_button.delete()
-        unregister_layout(HomeLayoutID)
-
-    if metadata_button is not None:
-        metadata_button.delete()
-        unregister_layout(MetadataLayoutID)
-
-    if fill_button is not None:
-        fill_button.delete()
-        unregister_layout(FillLayoutId)
-
-    if brush_button is not None:
-        brush_button.delete()
-        unregister_layout(BrushLayoutId)
-
-    if block_edit_button is not None:
-        block_edit_button.delete()
-        unregister_layout(BlockEditLayoutId)
-
-    if operation_button is not None:
-        operation_button.delete()
-        unregister_layout(OperationLayoutId)
-
-    if import_button is not None:
-        import_button.delete()
-        unregister_layout(ImportLayoutId)
-
-    if export_button is not None:
-        export_button.delete()
-        unregister_layout(ExportLayoutId)
-
-    if chunk_button is not None:
-        chunk_button.delete()
-        unregister_layout(ChunkLayoutId)
-
-    if player_button is not None:
-        player_button.delete()
-        unregister_layout(PlayerLayoutId)
-
-    if convert_button is not None:
-        convert_button.delete()
-        unregister_layout(ConvertLayoutId)
-
-    if settings_button is not None:
-        settings_button.delete()
-
-    unregister_tab_widget(HomeWidgetIdentifier)
-    unregister_tab_widget(MetadataWidgetIdentifier)
-    unregister_tab_widget(SelectionWidgetIdentifier)
-    unregister_tab_widget(BlockEditWidgetIdentifier)
-    unregister_tab_widget(BrushWidgetIdentifier)
-    unregister_tab_widget(ViewportWidgetIdentifier)
-    unregister_tab_widget(FillReplaceWidgetIdentifier)
-    unregister_tab_widget(ImportWidgetIdentifier)
-    unregister_tab_widget(ExportWidgetIdentifier)
-    unregister_tab_widget(ClipboardWidgetIdentifier)
-    unregister_tab_widget(PasteWidgetIdentifier)
-    unregister_tab_widget(OperationWidgetIdentifier)
-    unregister_tab_widget(ChunkWidgetIdentifier)
-    unregister_tab_widget(PlayerWidgetIdentifier)
-
-
 class EditorNamespace(Namespace):
     level_path: str
 
@@ -528,7 +463,6 @@ def main(argv: list[str]) -> NoReturn:
 
     # Register widgets and layouts
     _init_editor()
-    destroy_editor.connect(_destroy_editor)
     init_editor.emit()
 
     # Show the window
