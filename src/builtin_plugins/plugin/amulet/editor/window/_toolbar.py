@@ -43,26 +43,11 @@ class ButtonProxy:
         """
         self._button: ToolbarButton | None = button
         self._on_click: Callable[[], None] | None = None
-        weak_destroy = WeakMethod(self._destroy)
-        self._finalise = finalize(
-            self, lambda: (destroy := weak_destroy()) and destroy()
-        )
 
     def _get_button(self) -> ToolbarButton:
         if self._button is None:
             raise RuntimeError("The button has already been destroyed.")
         return self._button
-
-    def _destroy(self) -> None:
-        self._get_button().deleteLater()
-        self._button = None
-
-    def __del__(self) -> None:
-        self._finalise()
-
-    def delete(self) -> None:
-        """Delete the button"""
-        self._finalise()
 
     def set_icon(self, icon_path: str) -> None:
         self._get_button().setIcon(icon_path)
