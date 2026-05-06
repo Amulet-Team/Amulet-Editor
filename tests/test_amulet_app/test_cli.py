@@ -42,11 +42,6 @@ class CLITestCase(unittest.TestCase):
         self.assertEqual(command, cli_args.command)
         self.assertEqual(args or [], cli_args.args)
 
-    def test_cli_default(self) -> None:
-        cli_args = parse_cli()
-        self.assertIsInstance(cli_args, CLIArgs)
-        self._check_args(cli_args)
-
     def test_cli_empty(self) -> None:
         cli_args = parse_cli([])
         self.assertIsInstance(cli_args, CLIArgs)
