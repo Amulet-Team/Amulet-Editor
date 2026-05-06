@@ -5,12 +5,10 @@ This module manages resource pack objects for each level
 from weakref import WeakKeyDictionary
 from threading import Lock, Condition
 import logging
-import traceback
 
 from PySide6.QtCore import QObject, QCoreApplication, Signal
 
 from amulet.level.abc import Level
-from amulet.app.exception import display_exception
 
 from amulet.utils.task_manager import (
     AbstractProgressManager,
