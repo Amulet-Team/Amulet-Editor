@@ -258,6 +258,7 @@ def load() -> None:
         log.debug("Acquired the plugin lock")
 
         builtins.__import__ = wrap_importer(builtins.__import__)
+        log.debug(f"Loading plugins from {first_party_plugin_directory()}")
         scan_plugins()
         plugin_state = get_plugins_state()
         for plugin_uid, plugin_container in _plugins.items():
