@@ -1,4 +1,4 @@
-def main():
+def main() -> None:
     import subprocess
     import sys
     import venv

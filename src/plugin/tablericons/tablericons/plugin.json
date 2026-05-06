@@ -1,0 +1,10 @@
+{
+	"namespace": "tablericons",
+	"identifier": "tablericons",
+	"version": "3.34.1",
+	"name": "Tabler Icons",
+	"depends": {
+		"python": "~=3.11",
+		"plugin": []
+	}
+}

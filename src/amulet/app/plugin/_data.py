@@ -25,4 +25,4 @@ class PluginData(NamedTuple):
     path: str  # The root path of the plugin.
     name: str  # The public name of the plugin.
     depends: PluginDataDepends  # The dependencies for the plugin
-    locked: bool  # Is the plugin locked on. Only accessible to first party plugins.
+    first_party: bool  # Is the plugin a first party plugin.

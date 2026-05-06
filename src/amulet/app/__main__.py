@@ -6,8 +6,8 @@ def main() -> None:
         # Verify the python version
         import sys
 
-        if sys.version_info[:2] < (3, 11):
-            raise Exception("Must be using Python 3.11+")
+        if sys.version_info[:2] < (3, 14):
+            raise Exception("Must be using Python 3.14+")
 
         # This is required when running from a frozen bundle (eg pyinstaller)
         from multiprocessing import freeze_support

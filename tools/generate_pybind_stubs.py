@@ -150,10 +150,6 @@ def main() -> None:
     root_path = os.path.dirname(os.path.dirname(__file__))
     src_path = os.path.join(root_path, "src")
     amulet_app_path = get_package_dir("amulet.app")
-    builtin_plugin_path = get_package_dir("builtin_plugins")
-    # make plugins importable
-    sys.path.append(builtin_plugin_path)
-
     viewer_plugin_path = get_package_dir(
         "plugin.amulet.editor.widget._view_3d._view_3d"
     )
@@ -166,7 +162,7 @@ def main() -> None:
     modules: list[tuple[str, str, str]] = [
         (src_path, amulet_app_path, "amulet.app"),
         (
-            builtin_plugin_path,
+            src_path,
             viewer_plugin_path,
             "plugin.amulet.editor.widget._view_3d._view_3d",
         ),
@@ -209,9 +205,13 @@ def main() -> None:
         for stub_path in glob.iglob(
             os.path.join(glob.escape(module_dir), "**", "*.pyi"), recursive=True
         ):
-            if os.path.isfile(stub_path[:-1]) and not stub_path.endswith(
-                "__init__.pyi"
-            ):
+            if os.path.isfile(stub_path[:-1]):
+                if stub_path.endswith("__init__.pyi"):
+                    with open(stub_path[:-1], "r") as f:
+                        py = f.read()
+                    if "init(sys.modules[__name__])" in py:
+                        continue
+
                 os.remove(stub_path)
 
     print("Patching stub files...")

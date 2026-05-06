@@ -1,8 +1,8 @@
-from argparse import ArgumentParser
+from argparse import ArgumentParser, REMAINDER, OPTIONAL
 import logging
-import subprocess
-import sys
 from collections.abc import Sequence
+import sys
+
 from amulet.app.path._application import (
     DefaultDataDir,
     DefaultConfigDir,
@@ -10,15 +10,24 @@ from amulet.app.path._application import (
     DefaultLogDir,
 )
 
-from . import _command
-from ._args import GlobalArgs, FullArgs
+from ._args import CLIArgs
 
 
-def get_parser(full: bool) -> ArgumentParser:
+def parse_cli(
+    argv: Sequence[str] | None = None,
+    valid_commands: Sequence[str] | None = None,
+) -> CLIArgs:
     parser = ArgumentParser(
-        prog="amulet",
-        add_help=full,
+        prog="amulet_editor",
+        add_help=False,
         description="Amulet is a Minecraft world editing application.",
+    )
+
+    parser.add_argument(
+        "-h",
+        "--help",
+        help="Show this help message and exit.",
+        action="store_true",
     )
 
     parser.add_argument(
@@ -77,36 +86,29 @@ def get_parser(full: bool) -> ArgumentParser:
 
     parser.add_argument(
         "--trace",
-        help="If defined, print the qualified name of each function as it is called. Useful if the program crashes due to an access violation and you don't know where it came from.",
+        help="Print the qualified name of each function as it is called. Useful if the program crashes due to an access violation and you don't know where it came from.",
         action="store_true",
         dest="trace",
     )
 
-    if full:
-        entry_subcommand = parser.add_subparsers(
-            dest="command", help="The main command to run"
-        )
+    parser.add_argument(
+        "command",
+        help="The command to run",
+        nargs=OPTIONAL,
+        default="amulet_launcher",
+        choices=valid_commands,
+    )
 
-        for command in _command.get_commands():
-            command_parser = entry_subcommand.add_parser(
-                command.name,
-                *command.add_parser_args,
-                **command.add_parser_kwargs,
-            )
-            init_argparse = command.init_argparse
-            if init_argparse is not None:
-                init_argparse(command_parser)
+    parser.add_argument(
+        "args",
+        help="The arguments to pass to the command",
+        nargs=REMAINDER,
+    )
 
-    return parser
+    args = parser.parse_args(argv, namespace=CLIArgs())
 
+    if valid_commands is not None and args.help:
+        parser.print_help()
+        sys.exit(0)
 
-def parse_global_args(argv: Sequence[str] | None = None) -> GlobalArgs:
-    parser = get_parser(False)
-    args, _ = parser.parse_known_args(argv)
-    return args  # type: ignore
-
-
-def parse_args(argv: Sequence[str] | None = None) -> FullArgs:
-    parser = get_parser(True)
-    args, _ = parser.parse_known_args(argv)
-    return args  # type: ignore
+    return args
