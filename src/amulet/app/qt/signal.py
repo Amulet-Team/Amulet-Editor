@@ -43,14 +43,10 @@ class Signal(Generic[*Ts]):
     >>>     my_signal = Signal[int, float]()
     """
 
-    _Ts: tuple[*Ts] | None = None
-
-    def __new__(cls, name: str = "", arguments: Sequence[str] = ()) -> Signal:
-        if cls._Ts is None:
-            raise RuntimeError(
-                "Signal must be specialised before it can be instantiated. Signal[int]()"
-            )
-        return QSignal(*(i if inspect.isclass(i) else type for i in cls._Ts), name=name, arguments=arguments)  # type: ignore
+    def __new__(
+        cls, *types: type, name: str = "", arguments: Sequence[str] = ()
+    ) -> Signal:
+        return QSignal(*(t if inspect.isclass(t) else type for t in types), name=name, arguments=arguments)  # type: ignore
 
     @overload
     def __class_getitem__(cls, item: tuple[*Ts]) -> type[Signal[*Ts]]: ...
@@ -59,10 +55,13 @@ class Signal(Generic[*Ts]):
     def __class_getitem__(
         cls, item: tuple[*Ts] | T
     ) -> type[Signal[*Ts]] | type[Signal[T]]:
-        items = item if isinstance(item, tuple) else (item,)
+        types = item if isinstance(item, tuple) else (item,)
 
         class SubSignal(Signal):
-            _Ts = items
+            def __new__(
+                cls, *, name: str = "", arguments: Sequence[str] = ()
+            ) -> SubSignal:
+                return super().__new__(cls, *types, name=name, arguments=arguments)  # type: ignore
 
         return SubSignal
 
