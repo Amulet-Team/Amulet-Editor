@@ -4,7 +4,9 @@ _package_path = os.path.dirname(__file__)
 
 
 def _get_path(group: str, name: str) -> str:
-    return os.path.join(_package_path, "_resources", group, name)
+    return os.path.realpath(
+        os.path.join(_package_path, "_resources", group, name)
+    ).replace(os.sep, "/")
 
 
 class filled:
