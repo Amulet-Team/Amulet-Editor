@@ -17,7 +17,7 @@ class CLITestCase(unittest.TestCase):
         logging_level: int = logging.INFO,
         logging_format: str = "%(levelname)s - %(message)s",
         trace: bool = False,
-        command: str = "amulet_launcher",
+        command: str = "amulet_editor",
         args: list[str] | None = None,
     ) -> None:
         if data_dir is None:
@@ -150,13 +150,13 @@ class CLITestCase(unittest.TestCase):
         parse_cli(["-h"])
         parse_cli(["--help"])
         with self.assertRaises(SystemExit):
-            parse_cli(["-h"], ["amulet_launcher", "a", "b", "c"])
+            parse_cli(["-h"], ["amulet_editor", "a", "b", "c"])
         with self.assertRaises(SystemExit):
-            parse_cli(["--help"], ["amulet_launcher", "a", "b", "c"])
+            parse_cli(["--help"], ["amulet_editor", "a", "b", "c"])
 
     def test_invalid_command(self) -> None:
         with self.assertRaises(SystemExit):
-            parse_cli(["command"], ["amulet_launcher", "a", "b", "c"])
+            parse_cli(["command"], ["amulet_editor", "a", "b", "c"])
 
 
 if __name__ == "__main__":

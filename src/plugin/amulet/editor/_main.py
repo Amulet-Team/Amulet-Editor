@@ -9,22 +9,21 @@ import traceback
 
 from PySide6.QtWidgets import QApplication
 from PySide6.QtGui import QIcon, QSurfaceFormat
-from PySide6.QtCore import QLocale, Qt, QCoreApplication
+from PySide6.QtCore import QLocale, Qt, QCoreApplication, QThreadPool
 
 from amulet.level import get_level
 from amulet.level.loader import LevelLoaderPathToken
 
 from amulet.app import __version__
 from amulet.app.resource import get_resource_path
-from amulet.app.exception import display_exception_blocking
+from amulet.app.exception import display_exception, CatchExceptionDialog
 from amulet.app.localisation import Translator, locale_changed
 from amulet.app.app import app_created
 from amulet.app.style import set_style
-
-from plugin.tablericons import tablericons
-from plugin.amulet.level import get_main_level, set_main_level
+from amulet.app.invoke import invoke
 
 from . import __path__ as editor_plugin_path
+from ._window import show_main_window, add_level_tab
 from .window._main_window import (
     init_main_window,
     get_main_window,
@@ -391,18 +390,44 @@ def _init_editor() -> None:
 
 
 class EditorNamespace(Namespace):
-    level_path: str
+    level_paths: list[str]
+
+
+def _load_levels(level_paths: list[str]) -> None:
+    with CatchExceptionDialog("Error loading levels", logger=log):
+        # Load the level(s)
+        is_first = True
+        for level_path in level_paths:
+            log.debug(f'Loading level "{level_path}".')
+            try:
+                level = get_level(
+                    LevelLoaderPathToken(level_path)
+                )  # TODO: make this generic
+                level.open()
+            except Exception as e:
+                log.exception(e)
+                display_exception(
+                    title=f"Failed loading level at path {level_path}",
+                    error=str(e),
+                    traceback="".join(traceback.format_exc()),
+                )
+            else:
+                invoke(lambda: add_level_tab(level, show=is_first))
+                is_first = False
 
 
 def main(argv: list[str]) -> NoReturn:
     parser = ArgumentParser("amulet_editor amulet_editor")
     parser.add_argument(
-        "level_path",
+        "level_paths",
         type=str,
-        help="The Minecraft world or structure to open",
+        nargs="*",
+        help="The Minecraft worlds or structures to open",
         action="store",
     )
     args = parser.parse_args(argv, namespace=EditorNamespace())
+
+    # TODO: check if a session is already running and open the levels in that session
 
     # Check an app has not already been created
     if QApplication.instance() is not None:
@@ -427,23 +452,6 @@ def main(argv: list[str]) -> NoReturn:
 
     set_style("amulet")
 
-    # Load the level
-    log.debug("Loading level.")
-    try:
-        level = get_level(
-            LevelLoaderPathToken(args.level_path)
-        )  # TODO: make this generic
-        level.open()
-        set_main_level(level)
-    except Exception as e:
-        log.exception(e)
-        display_exception_blocking(
-            title=f"Failed loading level at path {args.level_path}",
-            error=str(e),
-            traceback="".join(traceback.format_exc()),
-        )
-        sys.exit(1)
-
     # Load the translations
     translator = Translator()
 
@@ -458,15 +466,10 @@ def main(argv: list[str]) -> NoReturn:
     QApplication.installTranslator(translator)
     locale_changed.connect(_load_translations)
 
-    # Initialise the main window
-    init_main_window()
+    show_main_window()
 
-    # Register widgets and layouts
-    _init_editor()
-    init_editor.emit()
-
-    # Show the window
-    get_main_window().showMaximized()
+    if args.level_paths:
+        QThreadPool.globalInstance().start(lambda: _load_levels(args.level_paths))
 
     log.debug("Entering main loop.")
     exit_code = app.exec()
