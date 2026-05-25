@@ -1,4 +1,4 @@
-from PySide6.QtCore import Slot, QSize, Qt
+from PySide6.QtCore import QSize, Qt
 from PySide6.QtGui import QGuiApplication, QIcon
 from PySide6.QtWidgets import QWidget
 
@@ -28,7 +28,6 @@ class TracebackDialog(Ui_TracebackDialog):
         self._error_text.setText(error)
         self._traceback_text.setText(traceback)
 
-    @Slot()
     def _on_copy(self) -> None:
         clipboard = QGuiApplication.clipboard()
         clipboard.setText(self._traceback)
