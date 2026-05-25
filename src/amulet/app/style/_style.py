@@ -74,6 +74,9 @@ def set_style(identifier: str) -> None:
             style = QStyleFactory.create(factory)
         else:
             style = factory()
+        app = QApplication.instance()
+        assert isinstance(app, QApplication)
+        app.setStyleSheet("")
         QApplication.setStyle(style)
 
 
