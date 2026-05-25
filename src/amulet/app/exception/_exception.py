@@ -43,14 +43,7 @@ def display_exception(title: str = "", error: str = "", traceback: str = "") -> 
     """
     if QThread.isMainThread():
         dialog = TracebackDialog(title=title, error=error, traceback=traceback)
-        Dialogs.append(dialog)
-
-        def on_finish() -> None:
-            Dialogs.remove(dialog)
-            dialog.deleteLater()
-
-        dialog.finished.connect(on_finish)
-        dialog.open()
+        dialog.exec()
     else:
         # Call self on the main thread
         invoke(lambda: display_exception(title=title, error=error, traceback=traceback))
