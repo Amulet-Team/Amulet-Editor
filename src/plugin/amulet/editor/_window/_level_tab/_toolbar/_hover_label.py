@@ -3,7 +3,7 @@ from PySide6.QtGui import QShowEvent
 from PySide6.QtWidgets import QWidget, QPushButton
 
 
-class QHoverLabel(QPushButton):
+class HoverLabel(QPushButton):
     def __init__(self, text: str, parent: QWidget):
         super().__init__(parent.window())
         self._parent = parent

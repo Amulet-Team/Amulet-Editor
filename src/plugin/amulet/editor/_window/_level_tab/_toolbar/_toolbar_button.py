@@ -1,13 +1,11 @@
-from amulet.app.resource import get_resource_path
-from plugin.amulet.editor._label import QHoverLabel
-from PySide6.QtCore import QEvent, QSize, Qt
-from PySide6.QtGui import (
-    QEnterEvent,
-    QPixmap,
-    QIcon,
-)
+from PySide6.QtCore import QSize, Qt
+from PySide6.QtGui import QPixmap, QIcon
 from PySide6.QtWidgets import QWidget, QVBoxLayout, QPushButton
 from PySide6.QtSvgWidgets import QSvgWidget
+
+from amulet.app.resource import get_resource_path
+
+from ._hover_label import HoverLabel
 
 
 class SVGButton(QPushButton):
@@ -42,14 +40,14 @@ class ToolbarButton(SVGButton):
         parent: QWidget | None = None,
     ) -> None:
         super().__init__(icon_path, parent)
-        self._hlbl_tooltip: QHoverLabel | None = None
+        self._hlbl_tooltip: HoverLabel | None = None
 
     def toolTip(self) -> str:
         return "" if self._hlbl_tooltip is None else self._hlbl_tooltip.text()
 
     def setToolTip(self, label: str) -> None:
         if self._hlbl_tooltip is None:
-            self._hlbl_tooltip = QHoverLabel(label, self)
+            self._hlbl_tooltip = HoverLabel(label, self)
             self._hlbl_tooltip.hide()
         else:
             self._hlbl_tooltip.setText(label)

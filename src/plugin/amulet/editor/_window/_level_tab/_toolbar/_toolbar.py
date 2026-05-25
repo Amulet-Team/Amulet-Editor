@@ -1,8 +1,7 @@
 from typing import Callable
 import traceback
-from weakref import finalize, WeakMethod
 
-from PySide6.QtCore import QSize, Qt, QObject, QEvent, QPoint, QRect
+from PySide6.QtCore import QSize, Qt, QObject, QEvent, QPoint, QRect, Signal
 from PySide6.QtGui import (
     QMouseEvent,
     QResizeEvent,
@@ -23,10 +22,9 @@ from PySide6.QtWidgets import (
     QApplication,
 )
 
-from amulet.app.qt.signal import Signal
 from amulet.app.exception import display_exception
 
-from plugin.amulet.editor._toolbar_button import ToolbarButton
+from ._toolbar_button import ToolbarButton
 
 
 class ButtonProxy:
@@ -89,8 +87,8 @@ LayoutCls: dict[Qt.Orientation, type[QVBoxLayout | QHBoxLayout]] = {
 class DynamicButtonWidget(QScrollArea):
     """A rearrangeable list of buttons."""
 
-    resized = Signal[()]()
-    _widgets_moved = Signal[()]()
+    resized = Signal()
+    _widgets_moved = Signal()
 
     def __init__(
         self,
