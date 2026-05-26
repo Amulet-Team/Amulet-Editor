@@ -1,7 +1,7 @@
 import traceback
 
-from PySide6.QtCore import QObject, QEvent, QCoreApplication, QThread, Qt
-from PySide6.QtGui import QMouseEvent
+from PySide6.QtCore import QEvent, QCoreApplication, QThread
+from PySide6.QtGui import QCloseEvent
 from PySide6.QtWidgets import (
     QWidget,
     QMainWindow,
@@ -113,6 +113,23 @@ class EditorMainWindow(QMainWindow):
         if new_widget is None:
             raise RuntimeError("Level tab does not exist")
         self._tabs.setCurrentWidget(new_widget)
+
+    def closeEvent(self, event: QCloseEvent) -> None:
+        levels = list(self._widgets.keys())
+        active_level = self._levels.get(self._tabs.currentWidget())
+        if active_level is not None:
+            # Remove the active level last to minimise show/hide events
+            levels.remove(active_level)
+            levels.append(active_level)
+        veto = False
+        for level in levels:
+            if self._request_close_level_tab(level):
+                with level.lock():
+                    level.close()
+            else:
+                veto = True
+        if veto:
+            event.ignore()
 
 
 main_window: EditorMainWindow | None = None
