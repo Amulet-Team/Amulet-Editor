@@ -1,4 +1,7 @@
-from PySide6.QtCore import QEvent, QCoreApplication, QThread
+import traceback
+
+from PySide6.QtCore import QObject, QEvent, QCoreApplication, QThread, Qt
+from PySide6.QtGui import QMouseEvent
 from PySide6.QtWidgets import (
     QWidget,
     QMainWindow,
@@ -7,11 +10,13 @@ from PySide6.QtWidgets import (
     QTabBar,
 )
 
-from amulet.app.exception import CatchExceptionDialog
+from amulet.app.exception import CatchExceptionDialog, display_exception
 
 from amulet.level.abc import Level
 
 from ._home_tab import HomeWidget
+from ._level_tab import LevelWidget
+from ._tab import WindowTabClose
 
 
 class EditorMainWindow(QMainWindow):
@@ -24,23 +29,25 @@ class EditorMainWindow(QMainWindow):
         self._central_layout.setSpacing(0)
         self._central_widget.setLayout(self._central_layout)
 
-        self._pages = QTabWidget()
-        self._pages.setStyleSheet("QTabBar::tab { min-width: 100px; }")
-        self._pages.setTabsClosable(True)
-        self._pages.setTabBarAutoHide(True)
-        self._central_layout.addWidget(self._pages)
+        self._tabs = QTabWidget()
+        self._tab_bar = self._tabs.tabBar()
+        self._tabs.setStyleSheet("QTabBar::tab { min-width: 100px; }")
+        self._tabs.setTabsClosable(True)
+        self._tabs.setTabBarAutoHide(True)
+        self._central_layout.addWidget(self._tabs)
 
-        self._pages.addTab(HomeWidget(), "Home")
-        self._pages.tabBar().setTabButton(0, QTabBar.ButtonPosition.RightSide, None)
+        self._home_widget = HomeWidget()
+        self._tabs.addTab(self._home_widget, "Home")
+        self._tab_bar.setTabButton(0, QTabBar.ButtonPosition.RightSide, None)
 
         self.setCentralWidget(self._central_widget)
-
-        self._localise()
 
         self._widgets: dict[Level, QWidget] = {}
         self._levels: dict[QWidget, Level] = {}
 
-        self._pages.tabCloseRequested.connect(self._tab_close_requested)
+        self._tabs.tabCloseRequested.connect(self._tab_close_requested)
+
+        self._localise()
 
     def changeEvent(self, event: QEvent) -> None:
         super().changeEvent(event)
@@ -48,7 +55,7 @@ class EditorMainWindow(QMainWindow):
             self._localise()
 
     def _localise(self) -> None:
-        self._pages.tabBar().setTabText(
+        self._tabs.tabBar().setTabText(
             0,
             QCoreApplication.translate(
                 "plugin.amulet.editor.EditorMainWindow",
@@ -58,38 +65,54 @@ class EditorMainWindow(QMainWindow):
         )
 
     def _tab_close_requested(self, index: int) -> None:
-        with CatchExceptionDialog("Failed closing level"):
-            widget = self._pages.widget(index)
-            if widget is None:
+        with CatchExceptionDialog("Error in EditorMainWindow._tab_close_requested"):
+            widget = self._tabs.widget(index)
+            if widget is None or widget is self._home_widget:
                 return
             level = self._levels[widget]
-            self._close_level_tab(level)
-            with level.lock():
-                level.close()
+            if self._request_close_level_tab(level):
+                with level.lock():
+                    level.close()
+
+    def _request_close_level_tab(self, level: Level) -> bool:
+        widget = self._widgets.get(level)
+        if widget is None:
+            # We are not aware of this level
+            return True
+        if isinstance(widget, WindowTabClose):
+            with CatchExceptionDialog("Failed closing tab"):
+                if not widget.close_tab():
+                    # The tab vetoed the close
+                    return False
+        self._tabs.removeTab(self._tabs.indexOf(widget))
+        self._widgets.pop(level, None)
+        self._levels.pop(widget, None)
+        return True
 
     def _add_level_tab(self, level: Level, show: bool = False) -> None:
         widget = self._widgets.get(level)
         if widget is None:
-            widget = QWidget()
-            self._widgets[level] = widget
-            self._levels[widget] = level
-            index = self._pages.addTab(widget, level.level_name)
-            # self._pages.tabBar().setTabButton(index, QTabBar.ButtonPosition.RightSide, None)
+            try:
+                widget = LevelWidget(level)
+            except Exception as e:
+                display_exception(
+                    title="Failed creating level tab",
+                    error=str(e),
+                    traceback=traceback.format_exc(),
+                )
+                return
+            else:
+                self._widgets[level] = widget
+                self._levels[widget] = level
+                self._tabs.addTab(widget, level.level_name)
         if show:
-            self._pages.setCurrentWidget(widget)
+            self._show_level_tab(level)
 
     def _show_level_tab(self, level: Level) -> None:
-        widget = self._widgets.get(level)
-        if widget is None:
+        new_widget = self._widgets.get(level)
+        if new_widget is None:
             raise RuntimeError("Level tab does not exist")
-        self._pages.setCurrentWidget(widget)
-
-    def _close_level_tab(self, level: Level) -> None:
-        widget = self._widgets.pop(level, None)
-        if widget is None:
-            return
-        self._pages.removeTab(self._pages.indexOf(widget))
-        del self._levels[widget]
+        self._tabs.setCurrentWidget(new_widget)
 
 
 main_window: EditorMainWindow | None = None
@@ -128,13 +151,14 @@ def show_level_tab(level: Level) -> None:
     main_window._show_level_tab(level)
 
 
-def close_level_tab(level: Level) -> None:
+def request_close_level_tab(level: Level) -> bool:
     """
-    Closes the tab for the level.
-    It is your responsibility to close the level object.
+    Request closing the tab for the level.
+    Returns True if the tab was closed.
+    If the tab was closed, the level object is now your responsibility.
     """
     if not QThread.isMainThread():
         raise RuntimeError("This must be called by the main thread")
     if main_window is None:
         raise RuntimeError("Main window does not exist")
-    main_window._close_level_tab(level)
+    return main_window._request_close_level_tab(level)
