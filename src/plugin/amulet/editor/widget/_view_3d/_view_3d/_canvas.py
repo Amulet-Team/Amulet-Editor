@@ -7,7 +7,7 @@ import logging
 import weakref
 from math import sin, cos, radians
 
-from PySide6.QtCore import Qt, QPoint, Slot, QThread, QThreadPool, QObject
+from PySide6.QtCore import Qt, QPoint, QThread, QThreadPool, QObject
 from PySide6.QtGui import (
     QOpenGLFunctions,
     QOpenGLContext,
@@ -536,36 +536,28 @@ class FirstPersonCanvas(QOpenGLWidget, QOpenGLFunctions):
             z + cos(azimuth) * self.camera.speed * dt,
         )
 
-    @Slot()
     def _forwards(self, dt: float) -> None:
         self._move_relative(180, dt)
 
-    @Slot()
     def _right(self, dt: float) -> None:
         self._move_relative(270, dt)
 
-    @Slot()
     def _backwards(self, dt: float) -> None:
         self._move_relative(0, dt)
 
-    @Slot()
     def _left(self, dt: float) -> None:
         self._move_relative(90, dt)
 
-    @Slot()
     def _up(self, dt: float) -> None:
         x, y, z = self.camera.location
         self.camera.location = Location(x, y + self.camera.speed * dt, z)
 
-    @Slot()
     def _down(self, dt: float) -> None:
         x, y, z = self.camera.location
         self.camera.location = Location(x, y - self.camera.speed * dt, z)
 
-    @Slot()
     def _faster(self) -> None:
         self.camera.speed *= 1.1
 
-    @Slot()
     def _slower(self) -> None:
         self.camera.speed /= 1.1
