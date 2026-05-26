@@ -1,6 +1,6 @@
 import traceback
 
-from PySide6.QtCore import QEvent, QCoreApplication, QThread
+from PySide6.QtCore import QObject, Signal, QEvent, QCoreApplication, QThread
 from PySide6.QtGui import QCloseEvent
 from PySide6.QtWidgets import (
     QWidget,
@@ -15,7 +15,7 @@ from amulet.app.exception import CatchExceptionDialog, display_exception
 from amulet.level.abc import Level
 
 from ._home_tab import HomeTabWidget
-from ._level_tab import LevelTabWidget
+from ._level_tab import LevelTabWidget, LevelTabWidgetAPI
 from ._tab import WindowTabClose
 
 
@@ -70,11 +70,11 @@ class EditorMainWindow(QMainWindow):
             if widget is None or widget is self._home_widget:
                 return
             level = self._levels[widget]
-            if self._request_close_level_tab(level):
+            if self.request_close_level_tab(level):
                 with level.lock():
                     level.close()
 
-    def _request_close_level_tab(self, level: Level) -> bool:
+    def request_close_level_tab(self, level: Level) -> bool:
         widget = self._widgets.get(level)
         if widget is None:
             # We are not aware of this level
@@ -89,7 +89,7 @@ class EditorMainWindow(QMainWindow):
         self._levels.pop(widget, None)
         return True
 
-    def _add_level_tab(self, level: Level, show: bool = False) -> None:
+    def add_level_tab(self, level: Level, show: bool = False) -> None:
         widget = self._widgets.get(level)
         if widget is None:
             try:
@@ -106,9 +106,9 @@ class EditorMainWindow(QMainWindow):
                 self._levels[widget] = level
                 self._tabs.addTab(widget, level.level_name)
         if show:
-            self._show_level_tab(level)
+            self.show_level_tab(level)
 
-    def _show_level_tab(self, level: Level) -> None:
+    def show_level_tab(self, level: Level) -> None:
         new_widget = self._widgets.get(level)
         if new_widget is None:
             raise RuntimeError("Level tab does not exist")
@@ -123,7 +123,7 @@ class EditorMainWindow(QMainWindow):
             levels.append(active_level)
         veto = False
         for level in levels:
-            if self._request_close_level_tab(level):
+            if self.request_close_level_tab(level):
                 with level.lock():
                     level.close()
             else:
@@ -132,50 +132,63 @@ class EditorMainWindow(QMainWindow):
             event.ignore()
 
 
-main_window: EditorMainWindow | None = None
+class AmuletEditorAPI(QObject):
+    """This is the public interface to interact with the editor."""
+
+    def __init__(self) -> None:
+        super().__init__()
+        self._main_window = EditorMainWindow()
+        self._main_window.showMaximized()
+
+    # This is emitted when for each level tab, just after it is first shown.
+    level_tab_init = Signal(Level)
+
+    def has_level_tab(self, level: Level) -> bool:
+        """Check if a tab exists for the level."""
+        raise NotImplementedError
+
+    def get_level_tab(self, level: Level) -> LevelTabWidgetAPI:
+        """Get the tab for the level."""
+        raise NotImplementedError
+
+    def add_level_tab(self, level: Level, show: bool = False) -> None:
+        """
+        Add a tab for the level.
+        If a tab already exists for the level, this will do nothing.
+        If show is True, the tab will be shown.
+        """
+        self._main_window.add_level_tab(level, show)
+
+    def show_level_tab(self, level: Level) -> None:
+        """Switch to the tab for the level."""
+        self._main_window.show_level_tab(level)
+
+    def request_close_level_tab(self, level: Level) -> bool:
+        """
+        Request closing the tab for the level.
+        Returns True if the tab was closed.
+        If the tab was closed, the level object is now your responsibility.
+        """
+        return self._main_window.request_close_level_tab(level)
 
 
-def show_main_window() -> None:
+_api: AmuletEditorAPI | None = None
+
+
+def init_and_show_editor() -> None:
     if not QThread.isMainThread():
         raise RuntimeError("This must be called by the main thread")
-    global main_window
-    if main_window is not None:
-        raise RuntimeError("Main window already exists")
-    main_window = EditorMainWindow()
-    main_window.showMaximized()
+    global _api
+    if _api is not None:
+        raise RuntimeError("Amulet Editor has already been initialised")
+    _api = AmuletEditorAPI()
 
 
-def add_level_tab(level: Level, show: bool = False) -> None:
+def get_amulet_editor_api() -> AmuletEditorAPI:
     """
-    Add the level to a tab in the main window.
-    If a tab already exists for the level, this will do nothing.
+    Get the Amulet editor API.
+    This will fail if the editor has not been initialised.
     """
-    if not QThread.isMainThread():
-        raise RuntimeError("This must be called by the main thread")
-    if main_window is None:
-        raise RuntimeError("Main window does not exist")
-    main_window._add_level_tab(level, show)
-
-
-def show_level_tab(level: Level) -> None:
-    """
-    Switch to the tab for the level.
-    """
-    if not QThread.isMainThread():
-        raise RuntimeError("This must be called by the main thread")
-    if main_window is None:
-        raise RuntimeError("Main window does not exist")
-    main_window._show_level_tab(level)
-
-
-def request_close_level_tab(level: Level) -> bool:
-    """
-    Request closing the tab for the level.
-    Returns True if the tab was closed.
-    If the tab was closed, the level object is now your responsibility.
-    """
-    if not QThread.isMainThread():
-        raise RuntimeError("This must be called by the main thread")
-    if main_window is None:
-        raise RuntimeError("Main window does not exist")
-    return main_window._request_close_level_tab(level)
+    if _api is None:
+        raise RuntimeError("Amulet editor has not been initialised")
+    return _api

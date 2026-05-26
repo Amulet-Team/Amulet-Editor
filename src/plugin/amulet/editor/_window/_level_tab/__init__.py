@@ -1,1 +1,1 @@
-from ._widget import LevelTabWidget
+from ._widget import LevelTabWidget, LevelTabWidgetAPI

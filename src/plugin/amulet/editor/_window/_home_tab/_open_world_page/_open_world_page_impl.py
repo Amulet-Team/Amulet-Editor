@@ -40,9 +40,9 @@ class OpenWorldPage(OpenWorldPageGui):
     @staticmethod
     def _open_level(path: str) -> None:
         with CatchExceptionDialog("Failed opening level"):
-            from ..._main_window import add_level_tab
+            from ..._main_window import get_amulet_editor_api
 
             level = get_level(LevelLoaderPathToken(path))
             with level.lock():
                 level.open()
-            add_level_tab(level, show=True)
+            get_amulet_editor_api().add_level_tab(level, show=True)

@@ -55,6 +55,7 @@ from .layout import (
     create_layout_button,
 )
 from ._signal import init_editor, destroy_editor
+from ._window import init_and_show_editor, get_amulet_editor_api
 
 log = logging.getLogger(__name__)
 
@@ -412,7 +413,8 @@ def _load_levels(level_paths: list[str]) -> None:
                     traceback="".join(traceback.format_exc()),
                 )
             else:
-                invoke(lambda: add_level_tab(level, show=is_first))
+                # TODO: This will crash if the window is closed
+                invoke(lambda: get_amulet_editor_api().add_level_tab(level, show=is_first))
                 is_first = False
 
 
@@ -466,7 +468,7 @@ def main(argv: list[str]) -> NoReturn:
     QApplication.installTranslator(translator)
     locale_changed.connect(_load_translations)
 
-    show_main_window()
+    init_and_show_editor()
 
     if args.level_paths:
         QThreadPool.globalInstance().start(lambda: _load_levels(args.level_paths))

@@ -1,6 +1,4 @@
 from ._main_window import (
-    show_main_window,
-    add_level_tab,
-    show_level_tab,
-    request_close_level_tab,
+    init_and_show_editor,
+    get_amulet_editor_api
 )
