@@ -6,7 +6,7 @@ from ._home_page import HomePage
 from ._open_world_page import OpenWorldPage
 
 
-class HomeWidget(QWidget):
+class HomeTabWidget(QWidget):
     def __init__(self) -> None:
         super().__init__()
         self._layout = QVBoxLayout(self)

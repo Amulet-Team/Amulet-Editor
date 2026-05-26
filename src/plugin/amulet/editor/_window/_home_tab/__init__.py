@@ -1,1 +1,1 @@
-from ._widget import HomeWidget
+from ._widget import HomeTabWidget

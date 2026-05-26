@@ -5,7 +5,7 @@ from PySide6.QtWidgets import QWidget
 from amulet.level import Level
 
 
-class LevelWidget(QWidget, WindowTabClose):
+class LevelTabWidget(QWidget, WindowTabClose):
     def __init__(self, level: Level) -> None:
         super().__init__()
         self._level = level

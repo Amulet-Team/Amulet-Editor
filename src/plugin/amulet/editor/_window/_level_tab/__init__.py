@@ -1,1 +1,1 @@
-from ._widget import LevelWidget
+from ._widget import LevelTabWidget

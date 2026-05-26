@@ -14,8 +14,8 @@ from amulet.app.exception import CatchExceptionDialog, display_exception
 
 from amulet.level.abc import Level
 
-from ._home_tab import HomeWidget
-from ._level_tab import LevelWidget
+from ._home_tab import HomeTabWidget
+from ._level_tab import LevelTabWidget
 from ._tab import WindowTabClose
 
 
@@ -36,7 +36,7 @@ class EditorMainWindow(QMainWindow):
         self._tabs.setTabBarAutoHide(True)
         self._central_layout.addWidget(self._tabs)
 
-        self._home_widget = HomeWidget()
+        self._home_widget = HomeTabWidget()
         self._tabs.addTab(self._home_widget, "Home")
         self._tab_bar.setTabButton(0, QTabBar.ButtonPosition.RightSide, None)
 
@@ -93,7 +93,7 @@ class EditorMainWindow(QMainWindow):
         widget = self._widgets.get(level)
         if widget is None:
             try:
-                widget = LevelWidget(level)
+                widget = LevelTabWidget(level)
             except Exception as e:
                 display_exception(
                     title="Failed creating level tab",
