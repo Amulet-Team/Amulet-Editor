@@ -23,7 +23,6 @@ from amulet.app.style import set_style
 from amulet.app.invoke import invoke
 
 from . import __path__ as editor_plugin_path
-from ._window import show_main_window, add_level_tab
 from .window._main_window import (
     init_main_window,
     get_main_window,
@@ -56,6 +55,7 @@ from .layout import (
 )
 from ._signal import init_editor, destroy_editor
 from ._window import init_and_show_editor, get_amulet_editor_api
+from ._window import init_and_show_editor, get_amulet_editor
 
 log = logging.getLogger(__name__)
 
@@ -414,7 +414,7 @@ def _load_levels(level_paths: list[str]) -> None:
                 )
             else:
                 # TODO: This will crash if the window is closed
-                invoke(lambda: get_amulet_editor_api().add_level_tab(level, show=is_first))
+                invoke(lambda: get_amulet_editor().add_level_tab(level, show=is_first))
                 is_first = False
 
 

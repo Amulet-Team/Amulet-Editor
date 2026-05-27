@@ -32,9 +32,9 @@ class LevelTabWidget(QWidget, WindowTabClose):
 
     def showEvent(self, event: QShowEvent, /) -> None:
         if not self._initialised:
-            from .._main_window import get_amulet_editor_api
+            from .._main_window import get_amulet_editor
             self._initialised = True
-            get_amulet_editor_api().level_tab_init.emit(self._level)
+            get_amulet_editor().level_tab_init.emit(self._level)
 
 
 class LevelTabWidgetAPI:
