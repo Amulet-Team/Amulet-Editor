@@ -82,15 +82,17 @@ class TracebackDialogGUI(QDialog):
             self._localise()
 
     def _localise(self) -> None:
-        self.setWindowTitle(
-            QCoreApplication.translate(
-                "amulet.app.TracebackDialog", "window_title", None
-            )
-            or "Exception Traceback"
+        title = QCoreApplication.translate(
+            "amulet.app.TracebackDialog", "window_title", None
         )
+        if title == "window_title":
+            title = "Exception Traceback"
+        self.setWindowTitle(title)
         self._alert_image.setText("")
         self._error_text.setText("")
-        self._copy_button.setText(
-            QCoreApplication.translate("amulet.app.TracebackDialog", "copy_error", None)
-            or "Copy Error"
+        copy_button_text = QCoreApplication.translate(
+            "amulet.app.TracebackDialog", "copy_error", None
         )
+        if copy_button_text == "copy_error":
+            copy_button_text = "Copy Error"
+        self._copy_button.setText(copy_button_text)
