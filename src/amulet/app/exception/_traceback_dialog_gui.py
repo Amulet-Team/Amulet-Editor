@@ -1,11 +1,3 @@
-# -*- coding: utf-8 -*-
-################################################################################
-## Form generated from reading UI file '_traceback_dialog_ui.ui'
-##
-## Created by: Qt User Interface Compiler
-##
-## WARNING! All changes made in this file will be lost when recompiling UI file!
-################################################################################
 from PySide6.QtCore import QCoreApplication, QMetaObject, QSize, Qt, QEvent
 from PySide6.QtWidgets import (
     QDialog,
@@ -21,7 +13,7 @@ from PySide6.QtWidgets import (
 )
 
 
-class Ui_TracebackDialog(QDialog):
+class TracebackDialogGUI(QDialog):
     def __init__(
         self, parent: QWidget | None = None, f: Qt.WindowType = Qt.WindowType.Dialog
     ) -> None:
@@ -91,10 +83,14 @@ class Ui_TracebackDialog(QDialog):
 
     def _localise(self) -> None:
         self.setWindowTitle(
-            QCoreApplication.translate("TracebackDialog", "window_title", None)
+            QCoreApplication.translate(
+                "amulet.app.TracebackDialog", "window_title", None
+            )
+            or "Exception Traceback"
         )
         self._alert_image.setText("")
         self._error_text.setText("")
         self._copy_button.setText(
-            QCoreApplication.translate("TracebackDialog", "copy_error", None)
+            QCoreApplication.translate("amulet.app.TracebackDialog", "copy_error", None)
+            or "Copy Error"
         )

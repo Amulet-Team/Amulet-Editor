@@ -2,11 +2,11 @@ from PySide6.QtCore import QSize, Qt
 from PySide6.QtGui import QGuiApplication, QIcon
 from PySide6.QtWidgets import QWidget
 
-from ._traceback_dialog_ui import Ui_TracebackDialog
+from ._traceback_dialog_gui import TracebackDialogGUI
 from amulet.app.resource import get_resource_path
 
 
-class TracebackDialog(Ui_TracebackDialog):
+class TracebackDialog(TracebackDialogGUI):
     """A dialog to display tracebacks."""
 
     def __init__(
