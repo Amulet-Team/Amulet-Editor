@@ -11,7 +11,7 @@ from PySide6.QtWidgets import (
 )
 
 
-class HomePageGui(QWidget):
+class HomePageGUI(QWidget):
     def __init__(
         self, parent: QWidget | None = None, f: Qt.WindowType = Qt.WindowType.Widget
     ) -> None:

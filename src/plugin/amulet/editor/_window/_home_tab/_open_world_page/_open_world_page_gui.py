@@ -11,7 +11,7 @@ from PySide6.QtWidgets import (
 )
 
 
-class OpenWorldPageGui(QWidget):
+class OpenWorldPageGUI(QWidget):
     def __init__(
         self, parent: QWidget | None = None, f: Qt.WindowType = Qt.WindowType.Widget
     ) -> None:

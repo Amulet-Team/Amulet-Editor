@@ -9,10 +9,10 @@ from amulet.app.exception import CatchExceptionDialog
 
 from plugin.tablericons import tablericons
 
-from ._open_world_page_gui import OpenWorldPageGui
+from ._open_world_page_gui import OpenWorldPageGUI
 
 
-class OpenWorldPage(OpenWorldPageGui):
+class OpenWorldPage(OpenWorldPageGUI):
     def __init__(
         self, parent: QWidget | None = None, f: Qt.WindowType = Qt.WindowType.Widget
     ):

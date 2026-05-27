@@ -8,7 +8,7 @@ from amulet.app.resource import get_resource_path
 from amulet.app.localisation import set_locale
 from amulet.app.style import get_current_style_identifier, get_valid_styles, set_style
 
-from ._home_page_gui import HomePageGui
+from ._home_page_gui import HomePageGUI
 
 _locales: tuple[tuple[tuple[str, QLocale], ...], int] | None = None
 
@@ -48,7 +48,7 @@ def _get_locales() -> tuple[tuple[tuple[str, QLocale], ...], int]:
     return _locales
 
 
-class HomePage(HomePageGui):
+class HomePage(HomePageGUI):
     def __init__(
         self, parent: QWidget | None = None, f: Qt.WindowType = Qt.WindowType.Widget
     ):
