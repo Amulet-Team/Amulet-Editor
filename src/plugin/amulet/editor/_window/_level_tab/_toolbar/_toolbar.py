@@ -1,6 +1,3 @@
-from typing import Callable
-import traceback
-
 from PySide6.QtCore import QSize, Qt, QObject, QEvent, QPoint, QRect, Signal
 from PySide6.QtGui import (
     QMouseEvent,
@@ -22,58 +19,7 @@ from PySide6.QtWidgets import (
     QApplication,
 )
 
-from amulet.app.exception import display_exception
-
 from ._toolbar_button import ToolbarButton
-
-
-class ButtonProxy:
-    """
-    This class is a proxy for a button in the toolbar.
-    This is returned by the constructor for the button.
-    You must store a reference to this in your plugin otherwise the button will be deleted.
-    This is also used to access and remove the button.
-    """
-
-    def __init__(self, button: ToolbarButton) -> None:
-        """
-        :param button: The button to wrap.
-        """
-        self._button: ToolbarButton | None = button
-        self._on_click: Callable[[], None] | None = None
-
-    def _get_button(self) -> ToolbarButton:
-        if self._button is None:
-            raise RuntimeError("The button has already been destroyed.")
-        return self._button
-
-    def set_icon(self, icon_path: str) -> None:
-        self._get_button().setIcon(icon_path)
-
-    def set_name(self, name: str) -> None:
-        self._get_button().setToolTip(name)
-
-    def set_callback(self, callback: Callable[[], None] | None = None) -> None:
-        def on_click() -> None:
-            if callback is not None:
-                try:
-                    callback()
-                except Exception as e:
-                    display_exception(
-                        title=f"Error running {callback}",
-                        error=str(e),
-                        traceback=traceback.format_exc(),
-                    )
-
-        button = self._get_button()
-        if self._on_click is not None:
-            button.clicked.disconnect(self._on_click)
-        self._on_click = on_click
-        button.clicked.connect(on_click)
-
-    def click(self) -> None:
-        self._get_button().click()
-
 
 ButtonSize = 40
 IconSize = 30
@@ -372,28 +318,24 @@ class ToolBar(QWidget):
                 < self._dynamic_button_widget.child_widget().sizeHint().width()
             )
 
-    def add_layout_button(self) -> ToolbarButton:
+    def add_layout_button(self, button: ToolbarButton) -> None:
         """Add a button to the toolbar."""
-        button = ToolbarButton()
         button.setFixedSize(QSize(ButtonSize, ButtonSize))
         button.setIconSize(QSize(IconSize, IconSize))
         button.setCheckable(True)
         self._button_group.addButton(button)
         self._dynamic_button_widget.add_item(button)
-        return button
 
     def uncheck_layout_buttons(self) -> None:
         button = self._button_group.checkedButton()
         if button is not None:
             button.setChecked(False)
 
-    def add_static_button(self) -> ToolbarButton:
+    def add_static_button(self, button: ToolbarButton) -> None:
         """Add a button to the toolbar."""
-        button = ToolbarButton()
         button.setFixedSize(QSize(ButtonSize, ButtonSize))
         button.setIconSize(QSize(IconSize, IconSize))
         self._static_button_layout.insertWidget(0, button)
-        return button
 
     def enterEvent(self, event: QEnterEvent) -> None:
         super().enterEvent(event)

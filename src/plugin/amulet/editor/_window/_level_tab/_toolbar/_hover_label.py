@@ -4,10 +4,9 @@ from PySide6.QtWidgets import QWidget, QPushButton
 
 
 class HoverLabel(QPushButton):
-    def __init__(self, text: str, parent: QWidget):
+    def __init__(self, parent: QWidget):
         super().__init__(parent.window())
         self._parent = parent
-        self.setText(text)
 
     def setText(self, text: str) -> None:
         super().setText(text)

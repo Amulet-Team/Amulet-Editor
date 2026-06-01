@@ -1,9 +1,9 @@
-from PySide6.QtCore import QSize, Qt
+from PySide6.QtCore import QSize, Qt, QEvent, QCoreApplication
 from PySide6.QtGui import QPixmap, QIcon
-from PySide6.QtWidgets import QWidget, QVBoxLayout, QPushButton
+from PySide6.QtWidgets import QVBoxLayout, QPushButton
 from PySide6.QtSvgWidgets import QSvgWidget
 
-from amulet.app.resource import get_resource_path
+from amulet.app.exception import CatchExceptionDialog
 
 from ._hover_label import HoverLabel
 
@@ -11,12 +11,8 @@ from ._hover_label import HoverLabel
 class SVGButton(QPushButton):
     """A QPushButton containing a stylable icon."""
 
-    def __init__(
-        self,
-        icon_path: str = get_resource_path("icons/tabler/question-mark.svg"),
-        parent: QWidget | None = None,
-    ) -> None:
-        super().__init__(parent)
+    def __init__(self, icon_path: str) -> None:
+        super().__init__()
         self._layout = QVBoxLayout(self)
         self._layout.setContentsMargins(0, 0, 0, 0)
         self._layout.setAlignment(Qt.AlignmentFlag.AlignCenter)
@@ -36,26 +32,33 @@ class SVGButton(QPushButton):
 class ToolbarButton(SVGButton):
     def __init__(
         self,
-        icon_path: str = get_resource_path("icons/tabler/question-mark.svg"),
-        parent: QWidget | None = None,
+        name: str | tuple[str, str, str | None],
+        icon_path: str,
     ) -> None:
-        super().__init__(icon_path, parent)
-        self._hlbl_tooltip: HoverLabel | None = None
+        super().__init__(icon_path)
+        self._name = name
+        self._tooltip: HoverLabel | None = None
 
-    def toolTip(self) -> str:
-        return "" if self._hlbl_tooltip is None else self._hlbl_tooltip.text()
+    def changeEvent(self, event: QEvent) -> None:
+        super().changeEvent(event)
+        if event.type() == QEvent.Type.LanguageChange:
+            self._localise()
 
-    def setToolTip(self, label: str) -> None:
-        if self._hlbl_tooltip is None:
-            self._hlbl_tooltip = HoverLabel(label, self)
-            self._hlbl_tooltip.hide()
-        else:
-            self._hlbl_tooltip.setText(label)
+    def _localise(self) -> None:
+        with CatchExceptionDialog("Error localising ToolbarButton."):
+            name = self._name
+            if not isinstance(name, str):
+                context, key, disambiguation = self._name
+                name = QCoreApplication.translate(context, key, disambiguation)
+            if self._tooltip is not None:
+                self._tooltip.setText(name)
 
     def show_tooltip(self) -> None:
-        if self._hlbl_tooltip is not None and len(self._hlbl_tooltip.text()) > 0:
-            self._hlbl_tooltip.show()
+        if self._tooltip is None:
+            self._tooltip = HoverLabel(self)
+            self._localise()
+        self._tooltip.show()
 
     def hide_tooltip(self) -> None:
-        if self._hlbl_tooltip is not None:
-            self._hlbl_tooltip.hide()
+        if self._tooltip is not None:
+            self._tooltip.hide()
