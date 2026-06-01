@@ -28,3 +28,14 @@ plugin.amulet.editor.SelectionWidget.delete_tip=Click to delete the selected sha
 plugin.amulet.editor.OpenWorldPage.open_level=Open Level
 plugin.amulet.editor.OpenWorldPage.open_file=Open File
 plugin.amulet.editor.OpenWorldPage.open_directory=Open Directory
+
+plugin.amulet.editor.tool.metadata=Metadata
+plugin.amulet.editor.tool.fill_replace=Fill/Replace
+plugin.amulet.editor.tool.brush=Brush
+plugin.amulet.editor.tool.block_editor=Block Editor
+plugin.amulet.editor.tool.operation=Operation
+plugin.amulet.editor.tool.import=Import
+plugin.amulet.editor.tool.export=Export
+plugin.amulet.editor.tool.chunk=Chunk
+plugin.amulet.editor.tool.player=Player
+plugin.amulet.editor.tool.convert=Convert
