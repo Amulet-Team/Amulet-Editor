@@ -10,27 +10,6 @@ from ._traceback_dialog import TracebackDialog
 main_logger = logging.getLogger()
 
 
-def display_exception_blocking(
-    title: str = "", error: str = "", traceback: str = ""
-) -> None:
-    """
-    Display an exception window.
-    This must be called from the main thread.
-    This blocks until the user closes the window.
-
-    :param title: The title of the dialog.
-    :param error: A user-readable description of the error context.
-    :param traceback: The traceback to display in the dialog.
-    """
-    if not QThread.isMainThread():
-        raise RuntimeError("This function can only be called from the main thread.")
-    dialog = TracebackDialog(title=title, error=error, traceback=traceback)
-    dialog.exec()
-
-
-Dialogs: list[TracebackDialog] = []
-
-
 def display_exception(title: str = "", error: str = "", traceback: str = "") -> None:
     """
     Display an exception window.
