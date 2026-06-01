@@ -9,6 +9,7 @@ from PySide6.QtWidgets import (
 import amulet.app.style
 
 Colours = [
+    # light
     {
         "button_highlight": "#fdfdfd",
         "button_border": "#ababab",
@@ -17,11 +18,14 @@ Colours = [
         "button_hover_light": "#dadada",
         "button_hover_dark": "#c7c7c7",
         "button_hover_2": "#a0a0a0",
-        "button_checked_light": "#4cc2ff",
-        "button_checked_dark": "#3a9ccf",
+        "button_checked_light": "#82d4ff",
+        "button_checked_dark": "#82d4ff",
+        "button_checked_hover_light": "#64bbe9",
+        "button_checked_hover_dark": "#41ade4",
         "tab_widget_light": "#fcfcfc",
         "tab_widget_dark": "#fcfcfc",
     },
+    # dark
     {
         "button_highlight": "#6a6a6a",
         "button_border": "#151515",
@@ -32,6 +36,8 @@ Colours = [
         "button_hover_2": "#a0a0a0",
         "button_checked_light": "#4cc2ff",
         "button_checked_dark": "#3a9ccf",
+        "button_checked_hover_light": "#23a0e1",
+        "button_checked_hover_dark": "#2e7ca5",
         "tab_widget_light": "#303030",
         "tab_widget_dark": "#303030",
     },
@@ -68,6 +74,15 @@ QPushButton {{
     padding-right: 8px;
 }}
 
+QPushButton:hover {{
+    background: qlineargradient(
+        x1: 0, y1: 0,
+        x2: 0, y2: 1,
+        stop: 0 {button_hover_light},
+        stop: 1 {button_hover_dark}
+    );
+}}
+
 QPushButton:checked {{
     background: qlineargradient(
         x1: 0, y1: 0,
@@ -78,15 +93,15 @@ QPushButton:checked {{
     color: black;
 }}
 
-QPushButton:hover {{
+QPushButton:checked:hover {{
     background: qlineargradient(
         x1: 0, y1: 0,
         x2: 0, y2: 1,
-        stop: 0 {button_hover_light},
-        stop: 1 {button_hover_dark}
+        stop: 0 {button_checked_hover_light},
+        stop: 1 {button_checked_hover_dark}
     );
+    color: black;
 }}
-
 
 QComboBox {{
     background: qlineargradient(
@@ -158,6 +173,15 @@ QTabBar::tab {{
     padding-right: 5px;
 }}
 
+QTabBar::tab:hover {{
+    background: qlineargradient(
+        x1: 0, y1: 0,
+        x2: 0, y2: 1,
+        stop: 0 {button_hover_light},
+        stop: 1 {button_hover_dark}
+    );
+}}
+
 QTabBar::tab:selected {{
     background: qlineargradient(
         x1: 0, y1: 0,
@@ -173,13 +197,19 @@ QTabBar::tab:selected {{
     color: black;
 }}
 
-QTabBar::tab:hover {{
+QTabBar::tab:selected:hover {{
     background: qlineargradient(
         x1: 0, y1: 0,
         x2: 0, y2: 1,
-        stop: 0 {button_hover_light},
-        stop: 1 {button_hover_dark}
+        stop: 0 {button_checked_hover_light},
+        stop: 1 {button_checked_hover_dark}
     );
+    
+    border-bottom: none;
+    
+    height: 27px;
+    
+    color: black;
 }}
 
 QTabBar::close-button {{
