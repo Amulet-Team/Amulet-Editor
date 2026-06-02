@@ -3,12 +3,12 @@ from __future__ import annotations
 from PySide6.QtWidgets import QVBoxLayout, QLabel
 from PySide6.QtCore import Qt
 
-from .abc import TabWidget
+from ._abc import DockWidget
 
 MissingTabIdentifier = "amulet.editor.MissingWidget"
 
 
-class MissingWidget(TabWidget):
+class MissingWidget(DockWidget):
     def __init__(self, identifier: str) -> None:
         super().__init__()
 
