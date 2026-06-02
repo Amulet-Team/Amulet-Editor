@@ -85,6 +85,7 @@ class BuiltInStyle(QProxyStyle):
 def set_style(identifier: str) -> None:
     with _lock:
         factory = _styles[identifier].style_factory
+        style: QStyle
         if isinstance(factory, str):
             # Built in style
             style = BuiltInStyle(factory)
