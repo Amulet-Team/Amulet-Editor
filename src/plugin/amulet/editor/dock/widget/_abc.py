@@ -6,7 +6,9 @@ from PySide6.QtWidgets import QWidget
 from amulet.app.qt.signal import Signal
 
 
-class TabWidget(QWidget):
+class DockWidget(QWidget):
+    """A base class for all widgets in the docking system."""
+
     @property
     def title(self) -> str:
         """The title to display in the tab."""

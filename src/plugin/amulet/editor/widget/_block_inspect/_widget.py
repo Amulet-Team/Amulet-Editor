@@ -17,7 +17,7 @@ from amulet.core.chunk import ChunkLoadError, ChunkDoesNotExist
 
 from amulet.app.exception import display_exception, CatchExceptionDialog
 
-from plugin.amulet.editor.widget.abc import TabWidget
+from plugin.amulet.editor.dock.widget import DockWidget
 from plugin.amulet.level import get_main_level
 
 from ._block_stack_edit import BlockStackEdit
@@ -25,7 +25,7 @@ from ._block_stack_edit import BlockStackEdit
 BlockEditWidgetIdentifier = "amulet.editor.BlockEdit"
 
 
-class BlockEditWidget(TabWidget):
+class BlockEditWidget(DockWidget):
     def __init__(self) -> None:
         super().__init__()
         self._layout = QVBoxLayout(self)

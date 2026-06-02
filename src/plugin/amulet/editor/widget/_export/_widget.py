@@ -1,11 +1,11 @@
 from PySide6.QtWidgets import QVBoxLayout
 
-from plugin.amulet.editor.widget.abc import TabWidget
+from plugin.amulet.editor.dock.widget import DockWidget
 
 ExportWidgetIdentifier = "amulet.editor.ExportWidget"
 
 
-class ExportWidget(TabWidget):
+class ExportWidget(DockWidget):
     def __init__(self) -> None:
         super().__init__()
 

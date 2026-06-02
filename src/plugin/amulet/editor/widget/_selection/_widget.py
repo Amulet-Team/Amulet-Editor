@@ -2,14 +2,14 @@ from __future__ import annotations
 
 from PySide6.QtWidgets import QVBoxLayout
 
-from plugin.amulet.editor.widget.abc import TabWidget
+from plugin.amulet.editor.dock.widget import DockWidget
 
 from ._core import SelectionCoreWidget
 
 SelectionWidgetIdentifier = "amulet.editor.SelectionWidget"
 
 
-class SelectionWidget(TabWidget):
+class SelectionWidget(DockWidget):
     def __init__(self) -> None:
         super().__init__()
         self._layout = QVBoxLayout(self)

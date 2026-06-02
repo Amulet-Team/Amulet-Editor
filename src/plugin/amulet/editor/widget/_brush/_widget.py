@@ -1,11 +1,11 @@
 from PySide6.QtWidgets import QVBoxLayout, QLabel
 
-from plugin.amulet.editor.widget.abc import TabWidget
+from plugin.amulet.editor.dock.widget import DockWidget
 
 BrushWidgetIdentifier = "amulet.editor.BrushWidget"
 
 
-class BrushWidget(TabWidget):
+class BrushWidget(DockWidget):
     def __init__(self) -> None:
         super().__init__()
 

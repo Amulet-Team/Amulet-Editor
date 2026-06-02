@@ -11,7 +11,7 @@ from PySide6.QtWidgets import (
 
 from amulet.core.block import Block
 
-from plugin.amulet.editor.widget.abc import TabWidget
+from plugin.amulet.editor.dock.widget import DockWidget
 
 from ._block_select import BlockSelect
 from ._op import fill_block
@@ -59,7 +59,7 @@ class FindWidget(QWidget):
         return self._block_select.get_block()
 
 
-class FillReplaceWidget(TabWidget):
+class FillReplaceWidget(DockWidget):
     def __init__(self) -> None:
         super().__init__()
 
