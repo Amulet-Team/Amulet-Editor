@@ -48,7 +48,7 @@ class ToolbarButton(SVGButton):
         with CatchExceptionDialog("Error localising ToolbarButton."):
             name = self._name
             if not isinstance(name, str):
-                context, key, disambiguation = self._name
+                context, key, disambiguation = name
                 name = QCoreApplication.translate(context, key, disambiguation)
             if self._tooltip is not None:
                 self._tooltip.setText(name)

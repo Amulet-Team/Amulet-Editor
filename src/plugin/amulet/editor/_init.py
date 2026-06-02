@@ -8,7 +8,7 @@ from amulet.level import Level
 
 from plugin.tablericons import tablericons
 
-from ._window import get_amulet_editor
+from ._main_window import get_amulet_editor
 
 MetadataToolIdentifier = "amulet.editor.metadata"
 FillToolIdentifier = "amulet.editor.fill"
