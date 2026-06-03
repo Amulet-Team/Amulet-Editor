@@ -2,9 +2,8 @@ from __future__ import annotations
 
 import logging
 
-from PySide6.QtWidgets import (
-    QWidget,
-)
+from PySide6.QtWidgets import QWidget
+from PySide6.QtGui import QShowEvent, QHideEvent
 
 log = logging.getLogger(__name__)
 
