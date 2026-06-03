@@ -4,4 +4,5 @@ from ._layout import (
     WidgetStackConfig,
     WindowConfig,
     LayoutConfig,
+    register_layout,
 )
