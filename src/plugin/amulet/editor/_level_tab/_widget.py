@@ -8,8 +8,6 @@ from amulet.level import Level
 
 from .._tab import WindowTabClose
 from ._toolbar import ToolBar, ToolbarButton
-from ..dock.layout import LayoutConfig
-from ..dock._layout import register_layout
 from ..dock._impl import DockMainWidget
 
 
