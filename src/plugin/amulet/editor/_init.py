@@ -15,6 +15,7 @@ from .dock.layout import (
     SplitterConfig,
     WidgetStackConfig,
     WidgetConfig,
+    register_layout,
 )
 
 from .widget._metadata import MetadataWidget, MetadataWidgetIdentifier
@@ -52,7 +53,83 @@ def _init_level_tools(level: Level) -> None:
         identifier=MetadataToolIdentifier,
         name=("plugin.amulet.editor.tool", "metadata", None),
         icon_path=tablericons.outline.file_info,
-        widget=LayoutConfig(
+        widget=MetadataToolIdentifier,
+    )
+
+    tab.activate_tool(MetadataToolIdentifier)
+
+    tab.add_tool(
+        identifier=FillToolIdentifier,
+        name=("plugin.amulet.editor.tool", "fill_replace", None),
+        icon_path=tablericons.outline.bucket_droplet,
+        widget=FillToolIdentifier,
+    )
+
+    tab.add_tool(
+        identifier=BrushToolIdentifier,
+        name=("plugin.amulet.editor.tool", "brush", None),
+        icon_path=tablericons.outline.brush,
+        widget=BrushToolIdentifier,
+    )
+
+    tab.add_tool(
+        identifier=BlockEditToolIdentifier,
+        name=("plugin.amulet.editor.tool", "block_editor", None),
+        icon_path=tablericons.outline.cube,
+        widget=BlockEditToolIdentifier,
+    )
+
+    tab.add_tool(
+        identifier=OperationToolIdentifier,
+        name=("plugin.amulet.editor.tool", "operation", None),
+        icon_path=tablericons.outline.brand_python,
+        widget=OperationToolIdentifier,
+    )
+
+    tab.add_tool(
+        identifier=ImportToolIdentifier,
+        name=("plugin.amulet.editor.tool", "import", None),
+        icon_path=tablericons.outline_alt.file_import,
+        widget=ImportToolIdentifier,
+    )
+
+    tab.add_tool(
+        identifier=ExportToolIdentifier,
+        name=("plugin.amulet.editor.tool", "export", None),
+        icon_path=tablericons.outline_alt.file_export,
+        widget=ExportToolIdentifier,
+    )
+
+    tab.add_tool(
+        identifier=ChunkToolIdentifier,
+        name=("plugin.amulet.editor.tool", "chunk", None),
+        icon_path=tablericons.filled.stack_3,
+        widget=ChunkToolIdentifier,
+    )
+
+    tab.add_tool(
+        identifier=PlayerToolIdentifier,
+        name=("plugin.amulet.editor.tool", "player", None),
+        icon_path=tablericons.outline.user,
+        widget=PlayerToolIdentifier,
+    )
+
+    tab.add_tool(
+        identifier=ConvertToolIdentifier,
+        name=("plugin.amulet.editor.tool", "convert", None),
+        icon_path=tablericons.outline.arrow_big_right_lines,
+        widget=ConvertToolIdentifier,
+    )
+
+    # settings_button = add_static_button()
+    # settings_button.set_icon(tablericons.outline.settings)
+    # settings_button.set_name("Settings")
+
+
+def init_editor_tools() -> None:
+    register_layout(
+        MetadataToolIdentifier,
+        LayoutConfig(
             WindowConfig(
                 None,
                 None,
@@ -62,13 +139,9 @@ def _init_level_tools(level: Level) -> None:
         ),
     )
 
-    tab.activate_tool(MetadataToolIdentifier)
-
-    tab.add_tool(
-        identifier=FillToolIdentifier,
-        name=("plugin.amulet.editor.tool", "fill_replace", None),
-        icon_path=tablericons.outline.bucket_droplet,
-        widget=LayoutConfig(
+    register_layout(
+        FillToolIdentifier,
+        LayoutConfig(
             WindowConfig(
                 None,
                 None,
@@ -88,11 +161,9 @@ def _init_level_tools(level: Level) -> None:
         ),
     )
 
-    tab.add_tool(
-        identifier=BrushToolIdentifier,
-        name=("plugin.amulet.editor.tool", "brush", None),
-        icon_path=tablericons.outline.brush,
-        widget=LayoutConfig(
+    register_layout(
+        BrushToolIdentifier,
+        LayoutConfig(
             WindowConfig(
                 None,
                 None,
@@ -107,11 +178,9 @@ def _init_level_tools(level: Level) -> None:
         ),
     )
 
-    tab.add_tool(
-        identifier=BlockEditToolIdentifier,
-        name=("plugin.amulet.editor.tool", "block_editor", None),
-        icon_path=tablericons.outline.cube,
-        widget=LayoutConfig(
+    register_layout(
+        BlockEditToolIdentifier,
+        LayoutConfig(
             WindowConfig(
                 None,
                 None,
@@ -126,11 +195,9 @@ def _init_level_tools(level: Level) -> None:
         ),
     )
 
-    tab.add_tool(
-        identifier=OperationToolIdentifier,
-        name=("plugin.amulet.editor.tool", "operation", None),
-        icon_path=tablericons.outline.brand_python,
-        widget=LayoutConfig(
+    register_layout(
+        OperationToolIdentifier,
+        LayoutConfig(
             WindowConfig(
                 None,
                 None,
@@ -150,11 +217,9 @@ def _init_level_tools(level: Level) -> None:
         ),
     )
 
-    tab.add_tool(
-        identifier=ImportToolIdentifier,
-        name=("plugin.amulet.editor.tool", "import", None),
-        icon_path=tablericons.outline_alt.file_import,
-        widget=LayoutConfig(
+    register_layout(
+        ImportToolIdentifier,
+        LayoutConfig(
             WindowConfig(
                 None,
                 None,
@@ -181,11 +246,9 @@ def _init_level_tools(level: Level) -> None:
         ),
     )
 
-    tab.add_tool(
-        identifier=ExportToolIdentifier,
-        name=("plugin.amulet.editor.tool", "export", None),
-        icon_path=tablericons.outline_alt.file_export,
-        widget=LayoutConfig(
+    register_layout(
+        ExportToolIdentifier,
+        LayoutConfig(
             WindowConfig(
                 None,
                 None,
@@ -205,11 +268,9 @@ def _init_level_tools(level: Level) -> None:
         ),
     )
 
-    tab.add_tool(
-        identifier=ChunkToolIdentifier,
-        name=("plugin.amulet.editor.tool", "chunk", None),
-        icon_path=tablericons.filled.stack_3,
-        widget=LayoutConfig(
+    register_layout(
+        ChunkToolIdentifier,
+        LayoutConfig(
             WindowConfig(
                 None,
                 None,
@@ -224,11 +285,9 @@ def _init_level_tools(level: Level) -> None:
         ),
     )
 
-    tab.add_tool(
-        identifier=PlayerToolIdentifier,
-        name=("plugin.amulet.editor.tool", "player", None),
-        icon_path=tablericons.outline.user,
-        widget=LayoutConfig(
+    register_layout(
+        PlayerToolIdentifier,
+        LayoutConfig(
             WindowConfig(
                 None,
                 None,
@@ -243,11 +302,9 @@ def _init_level_tools(level: Level) -> None:
         ),
     )
 
-    tab.add_tool(
-        identifier=ConvertToolIdentifier,
-        name=("plugin.amulet.editor.tool", "convert", None),
-        icon_path=tablericons.outline.arrow_big_right_lines,
-        widget=LayoutConfig(
+    register_layout(
+        ConvertToolIdentifier,
+        LayoutConfig(
             WindowConfig(
                 None,
                 None,
@@ -257,12 +314,6 @@ def _init_level_tools(level: Level) -> None:
         ),
     )
 
-    # settings_button = add_static_button()
-    # settings_button.set_icon(tablericons.outline.settings)
-    # settings_button.set_name("Settings")
-
-
-def init_editor_tools() -> None:
     register_tab_widget(MetadataWidgetIdentifier, MetadataWidget)
     register_tab_widget(SelectionWidgetIdentifier, SelectionWidget)
     register_tab_widget(BlockEditWidgetIdentifier, BlockEditWidget)

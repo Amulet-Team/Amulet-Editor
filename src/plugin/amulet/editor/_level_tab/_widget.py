@@ -10,7 +10,7 @@ from .._tab import WindowTabClose
 from ._toolbar import ToolBar, ToolbarButton
 from ..dock.layout import LayoutConfig
 from ..dock._layout import register_layout
-from ..dock._widget import DockMainWidget
+from ..dock._impl import DockMainWidget
 
 
 @dataclass(frozen=True)
@@ -55,14 +55,13 @@ class LevelTabWidget(QWidget, WindowTabClose):
         identifier: str,
         name: str | tuple[str, str, str | None],
         icon_path: str,
-        widget: QWidget | LayoutConfig,
+        widget: QWidget | str,
     ) -> None:
         if identifier in self._tool_id_to_storage:
             raise ValueError(f"Tool with identifier {identifier} already exists.")
 
-        if isinstance(widget, LayoutConfig):
-            register_layout(identifier, widget)
-            widget = DockMainWidget(identifier)
+        if isinstance(widget, str):
+            widget = DockMainWidget(widget)
 
         self._widget_stack.addWidget(widget)
         button = ToolbarButton(name, icon_path)
@@ -88,7 +87,7 @@ class LevelTabWidgetAPI:
         identifier: str,
         name: str | tuple[str, str, str | None],
         icon_path: str,
-        widget: QWidget | LayoutConfig,
+        widget: QWidget | str,
     ) -> None:
         """
         Add a new tool.
@@ -97,7 +96,7 @@ class LevelTabWidgetAPI:
         :param icon_path: The path to the icon to display in the button.
         :param widget:
             1) The widget that is displayed when the tool is selected.
-            2) A LayoutConfig to be used in a dock layout.
+            2) The identifier for a dock layout.
         """
         self._level_tab.add_tool(identifier, name, icon_path, widget)
 
