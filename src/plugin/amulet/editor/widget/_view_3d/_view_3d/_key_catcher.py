@@ -1,4 +1,4 @@
-from typing import Union, Callable, Optional, Literal
+from typing import Union, Callable, Optional, Any, Literal, TYPE_CHECKING
 from threading import Lock
 from enum import IntEnum
 import time
@@ -7,6 +7,9 @@ from inspect import ismethod
 
 from PySide6.QtCore import QObject, QEvent, Signal, QTimer, Qt
 from PySide6.QtGui import QMouseEvent, QKeyEvent, QScrollEvent
+
+if TYPE_CHECKING:
+    from PySide6.QtCore import SignalInstanceProtocol
 
 """
 When a key is released, we stop all all events that need that key.
@@ -26,11 +29,28 @@ KeyT = Union[
 ]
 ModifierT = frozenset[KeyT]
 Number = Union[float, int]
-ReceiverType = Union[Signal, Callable[[float], None], WeakMethod]
+
+ReceiverType = Union[
+    SignalInstanceProtocol[[]],
+    Callable[[], Any],
+]
+
+DeltaReceiverType = Union[
+    SignalInstanceProtocol[[]],
+    SignalInstanceProtocol[[float]],
+    Callable[[], Any],
+    Callable[[float], Any],
+]
+
+DeltaReceiverStorageType = Union[
+    DeltaReceiverType,
+    WeakMethod[Callable[[], Any]],
+    WeakMethod[Callable[[float], Any]],
+]
 
 
 class TimerData(QObject):
-    event_receivers: set[ReceiverType]
+    event_receivers: set[DeltaReceiverStorageType]
     interval: float
 
     _timer: QTimer
@@ -173,7 +193,7 @@ class KeyCatcher(QObject):
 
     def connect_single_shot(
         self,
-        receiver: Union[Signal, Callable[[], None]],
+        receiver: ReceiverType,
         key: KeyT,
         modifiers: frozenset[KeyT],
     ) -> None:
@@ -191,7 +211,7 @@ class KeyCatcher(QObject):
 
     def disconnect_single_shot(
         self,
-        receiver: Union[Signal, Callable[[], None]],
+        receiver: ReceiverType,
         key: KeyT,
         modifiers: frozenset[KeyT],
     ) -> None:
@@ -212,7 +232,7 @@ class KeyCatcher(QObject):
 
     def connect_repeating(
         self,
-        receiver: Union[Signal, Callable[[float], None]],
+        receiver: DeltaReceiverType,
         key: KeyT,
         modifiers: frozenset[KeyT],
         interval: int,
@@ -239,7 +259,7 @@ class KeyCatcher(QObject):
 
     def disconnect_repeating(
         self,
-        receiver: Union[Signal, Callable[[float], None]],
+        receiver: DeltaReceiverType,
         key: KeyT,
         modifiers: frozenset[KeyT],
         interval: int,
