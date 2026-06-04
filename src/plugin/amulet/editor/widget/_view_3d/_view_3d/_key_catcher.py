@@ -30,19 +30,19 @@ KeyT = Union[
 ModifierT = frozenset[KeyT]
 Number = Union[float, int]
 
-ReceiverType = Union[
+type ReceiverType = Union[
     SignalInstanceProtocol[[]],
     Callable[[], Any],
 ]
 
-DeltaReceiverType = Union[
+type DeltaReceiverType = Union[
     SignalInstanceProtocol[[]],
     SignalInstanceProtocol[[float]],
     Callable[[], Any],
     Callable[[float], Any],
 ]
 
-DeltaReceiverStorageType = Union[
+type DeltaReceiverStorageType = Union[
     DeltaReceiverType,
     WeakMethod[Callable[[], Any]],
     WeakMethod[Callable[[float], Any]],
