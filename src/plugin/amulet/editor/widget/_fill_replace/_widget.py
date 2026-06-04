@@ -10,6 +10,7 @@ from PySide6.QtWidgets import (
 )
 
 from amulet.core.block import Block
+from amulet.level.abc import Level
 
 from plugin.amulet.editor.dock.widget import DockWidget
 
@@ -60,8 +61,9 @@ class FindWidget(QWidget):
 
 
 class FillReplaceWidget(DockWidget):
-    def __init__(self) -> None:
+    def __init__(self, level: Level) -> None:
         super().__init__()
+        self._level = level
 
         self._layout = QVBoxLayout(self)
         self._layout.setContentsMargins(0, 0, 0, 0)
@@ -115,4 +117,4 @@ class FillReplaceWidget(DockWidget):
             find_block = None
         else:
             find_block = self._find_widget.get_block()
-        fill_block(self._fill_widget.get_block(), find_block)
+        fill_block(self._level, self._fill_widget.get_block(), find_block)

@@ -1,12 +1,14 @@
 from PySide6.QtWidgets import QVBoxLayout, QLabel
 
+from amulet.level.abc import Level
+
 from plugin.amulet.editor.dock.widget import DockWidget
 
 ChunkWidgetIdentifier = "amulet.editor.ChunkWidget"
 
 
 class ChunkWidget(DockWidget):
-    def __init__(self) -> None:
+    def __init__(self, level: Level) -> None:
         super().__init__()
 
         self._layout = QVBoxLayout(self)

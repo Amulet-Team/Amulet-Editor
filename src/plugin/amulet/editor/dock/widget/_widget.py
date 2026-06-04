@@ -5,9 +5,11 @@ from collections.abc import Callable
 
 from PySide6.QtCore import Signal, QObject
 
+from amulet.level.abc import Level
+
 from ._abc import DockWidget
 
-type DockWidgetConstructor = Callable[[], DockWidget]
+type DockWidgetConstructor = Callable[[Level], DockWidget]
 
 
 class DockWidgetAPI(QObject):

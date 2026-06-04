@@ -1,12 +1,14 @@
 from PySide6.QtWidgets import QVBoxLayout, QLabel
 
+from amulet.level.abc import Level
+
 from plugin.amulet.editor.dock.widget import DockWidget
 
 ImportWidgetIdentifier = "amulet.editor.ImportWidget"
 
 
 class ImportWidget(DockWidget):
-    def __init__(self) -> None:
+    def __init__(self, level: Level) -> None:
         super().__init__()
 
         self._layout = QVBoxLayout(self)

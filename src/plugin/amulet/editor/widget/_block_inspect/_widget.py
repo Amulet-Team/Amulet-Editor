@@ -14,11 +14,11 @@ from amulet.utils.lock import ThreadAccessMode, ThreadShareMode
 
 from amulet.core.chunk.component import BlockComponent
 from amulet.core.chunk import ChunkLoadError, ChunkDoesNotExist
+from amulet.level.abc import Level
 
 from amulet.app.exception import display_exception, CatchExceptionDialog
 
 from plugin.amulet.editor.dock.widget import DockWidget
-from plugin.amulet.level import get_main_level
 
 from ._block_stack_edit import BlockStackEdit
 
@@ -26,8 +26,10 @@ BlockEditWidgetIdentifier = "amulet.editor.BlockEdit"
 
 
 class BlockEditWidget(DockWidget):
-    def __init__(self) -> None:
+    def __init__(self, level: Level) -> None:
         super().__init__()
+        self._level = level
+
         self._layout = QVBoxLayout(self)
         self._layout.setContentsMargins(0, 0, 0, 0)
 
@@ -83,9 +85,7 @@ class BlockEditWidget(DockWidget):
             x = self._x_input.value()
             y = self._y_input.value()
             z = self._z_input.value()
-            level = get_main_level()
-            if level is None:
-                return
+            level = self._level
             sub_chunk_size = level.sub_chunk_size
             cx = x // sub_chunk_size
             cz = z // sub_chunk_size
@@ -140,9 +140,7 @@ class BlockEditWidget(DockWidget):
             y = self._y_input.value()
             z = self._z_input.value()
             block_stack = self._block_edit.get_block_stack()
-            level = get_main_level()
-            if level is None:
-                return
+            level = self._level
             sub_chunk_size = level.sub_chunk_size
             cx = x // sub_chunk_size
             cz = z // sub_chunk_size

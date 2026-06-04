@@ -46,7 +46,6 @@ from amulet.app.invoke import invoke
 
 from plugin.amulet.resource_pack import get_resource_pack_handle
 
-from plugin.amulet.level import get_main_level
 from plugin.amulet.camera import get_camera_extrinsics, Location, Rotation
 
 from ._settings import render_settings
@@ -192,11 +191,11 @@ class FirstPersonCanvas(QOpenGLWidget, QOpenGLFunctions):
     # Having a pointer to self would stop self being garbage collected.
     _canvas_gl_data: CanvasGlData
 
-    def __init__(self, parent: QWidget | None = None) -> None:
+    def __init__(self, level: Level) -> None:
         log.debug("FirstPersonCanvas.__init__()")
         if not QThread.isMainThread():
             raise RuntimeError("FirstPersonCanvas must be constructed in main thread")
-        QOpenGLWidget.__init__(self, parent)
+        QOpenGLWidget.__init__(self)
         QOpenGLFunctions.__init__(self)
         self._initialised = False
         self._errors: set[str] = set()
@@ -204,11 +203,6 @@ class FirstPersonCanvas(QOpenGLWidget, QOpenGLFunctions):
         # hideEvent can be called twice without a call to showEvent
         self._shown = False
 
-        level = get_main_level()
-        if level is None:
-            raise RuntimeError(
-                "FirstPersonCanvas cannot be constructed when a level does not exist."
-            )
         self._level = level
         self._canvas_gl_data = CanvasGlData(self._level)
 
