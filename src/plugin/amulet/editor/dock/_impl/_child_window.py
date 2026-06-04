@@ -1,20 +1,18 @@
 from __future__ import annotations
 
-from weakref import WeakSet
 import logging
 
 from PySide6.QtCore import Qt, QEvent, QCoreApplication
 from PySide6.QtGui import QCloseEvent
 from PySide6.QtWidgets import QMainWindow, QWidget
 
-from . import _main_window
 from . import _tab_widget
 from . import _tab_drag
 
 log = logging.getLogger(__name__)
 
 
-class AmuletChildWindow(QMainWindow):
+class DockChildWindow(QMainWindow):
     """
     The class for the sub-window.
     New instances must be constructed using create_sub_window.
@@ -24,14 +22,10 @@ class AmuletChildWindow(QMainWindow):
 
     def __init__(
         self,
-        parent: QWidget | None = None,
-        widget: (
-            _tab_widget.TabWidgetStack | _tab_widget.RecursiveSplitter | None
-        ) = None,
+        parent: QWidget,
+        widget: _tab_widget.TabWidgetStack | _tab_widget.RecursiveSplitter,
     ) -> None:
         super().__init__(parent)
-        if widget is None:
-            widget = _tab_widget.TabWidgetStack()
         self._widget = widget
         self._bind_events(self._widget)
         self.setCentralWidget(self._widget)
@@ -40,7 +34,7 @@ class AmuletChildWindow(QMainWindow):
     def _bind_events(
         self, widget: _tab_widget.TabWidgetStack | _tab_widget.RecursiveSplitter
     ) -> None:
-        log.debug(f"AmuletChildWindow._bind_events({self}, {widget})")
+        log.debug(f"DockChildWindow._bind_events({self}, {widget})")
         if isinstance(widget, _tab_widget.TabWidgetStack):
             widget.last_tab_removed.connect(self._on_last_tab_closed)
             widget.split.connect(self._on_split)
@@ -50,7 +44,7 @@ class AmuletChildWindow(QMainWindow):
     def _unbind_events(
         self, widget: _tab_widget.TabWidgetStack | _tab_widget.RecursiveSplitter
     ) -> None:
-        log.debug(f"AmuletChildWindow._unbind_events({self}, {widget})")
+        log.debug(f"DockChildWindow._unbind_events({self}, {widget})")
         if isinstance(widget, _tab_widget.TabWidgetStack):
             widget.last_tab_removed.disconnect(self._on_last_tab_closed)
             widget.split.disconnect(self._on_split)
@@ -60,11 +54,11 @@ class AmuletChildWindow(QMainWindow):
             )
 
     def _on_last_tab_closed(self, _: _tab_widget.TabWidgetStack) -> None:
-        log.debug(f"AmuletChildWindow._on_last_tab_closed({self})")
+        log.debug(f"DockChildWindow._on_last_tab_closed({self})")
         self.close()
 
     def _on_penultimate_child_removed(self) -> None:
-        log.debug(f"AmuletChildWindow._on_penultiate_child_removed({self})")
+        log.debug(f"DockChildWindow._on_penultiate_child_removed({self})")
         # Switch from a splitter to a stack
         if isinstance(self._widget, _tab_widget.RecursiveSplitter):
             old_widget = self._widget
@@ -89,7 +83,7 @@ class AmuletChildWindow(QMainWindow):
         new_widget: _tab_widget.TabWidgetStack,
         direction: _tab_drag.DropArea,
     ) -> None:
-        log.debug(f"AmuletChildWindow._on_split({self}, {new_widget}, {direction})")
+        log.debug(f"DockChildWindow._on_split({self}, {new_widget}, {direction})")
         # Switch from a stack to a splitter
         if isinstance(self._widget, _tab_widget.TabWidgetStack):
             # Remove the old widget
@@ -129,25 +123,10 @@ class AmuletChildWindow(QMainWindow):
 
     def _localise(self) -> None:
         self.setWindowTitle(
-            QCoreApplication.translate("AmuletChildWindow", "Amulet Editor", None)
+            QCoreApplication.translate("DockChildWindow", "Amulet Editor", None)
         )
 
     def closeEvent(self, event: QCloseEvent) -> None:
         # The parent keeps this object alive. We need to do this so it can be destroyed
         self.setParent(None)
         self.deleteLater()
-
-
-# This can only be modified from the main thread.
-sub_windows = WeakSet[AmuletChildWindow]()
-
-
-def create_sub_window(
-    widget: _tab_widget.TabWidgetStack | _tab_widget.RecursiveSplitter | None = None,
-) -> AmuletChildWindow:
-    """Create a new sub-window.
-    The main window owns the sub-window and a weak reference is stored in sub_windows.
-    """
-    window = AmuletChildWindow(_main_window.get_main_window(), widget)
-    sub_windows.add(window)
-    return window

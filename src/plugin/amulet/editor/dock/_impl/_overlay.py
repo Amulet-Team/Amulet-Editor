@@ -18,7 +18,7 @@ from PySide6.QtGui import (
 )
 from PySide6.QtWidgets import QWidget
 
-from ._tab_widget import TabContainerWidget, TabButton, WidgetStack
+from . import _tab_widget
 
 
 class CuboidDropOverlay(QWidget):
@@ -45,7 +45,7 @@ class CuboidDropOverlay(QWidget):
 class TabContainerOverlay(QWidget):
     """A class to implement tab bar highlighting."""
 
-    def __init__(self, parent: TabContainerWidget) -> None:
+    def __init__(self, parent: _tab_widget.TabContainerWidget) -> None:
         super().__init__(parent)
         self.setWindowFlags(Qt.WindowType.FramelessWindowHint)
         self.setAttribute(Qt.WidgetAttribute.WA_TranslucentBackground)
@@ -59,13 +59,13 @@ class TabContainerOverlay(QWidget):
 
     def paintEvent(self, event: QPaintEvent) -> None:
         parent = self.parent()
-        if not isinstance(parent, TabContainerWidget):
+        if not isinstance(parent, _tab_widget.TabContainerWidget):
             return
 
-        def tab_x_pos(tab_: TabButton) -> int:
+        def tab_x_pos(tab_: _tab_widget.TabButton) -> int:
             return tab_.x()
 
-        tabs = sorted(parent.findChildren(TabButton), key=tab_x_pos)
+        tabs = sorted(parent.findChildren(_tab_widget.TabButton), key=tab_x_pos)
 
         cursor_point = QCursor.pos() - parent.mapToGlobal(QPoint(0, 0))
         cursor_x = cursor_point.x()
@@ -130,7 +130,7 @@ class DropArea(IntEnum):
 class SplitterDropOverlay(QWidget):
     """A class to implement 5-way splitter drop highlighting."""
 
-    def __init__(self, target: WidgetStack) -> None:
+    def __init__(self, target: _tab_widget.WidgetStack) -> None:
         super().__init__(target)
         self._target_ref = ref(target)
         self.setWindowFlags(Qt.WindowType.FramelessWindowHint)

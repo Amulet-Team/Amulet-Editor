@@ -2,24 +2,21 @@
 
 from __future__ import annotations
 
-from enum import IntEnum
+from typing import Callable
 from weakref import ref
 import logging
 
-from PySide6.QtCore import QObject, QEvent, QPoint, QSize, Qt, QRect
-from PySide6.QtGui import (
-    QMouseEvent,
-    QPaintEvent,
-    QPainter,
-    QColor,
-    QResizeEvent,
-    QPolygon,
-    QCursor,
-)
-from PySide6.QtWidgets import QWidget, QApplication
+from PySide6.QtCore import QObject, QEvent, QPoint, QSize, Qt
+from PySide6.QtGui import QMouseEvent
+from PySide6.QtWidgets import QApplication, QMainWindow
 
 from . import _tab_widget
-from . import _child_window
+from ._overlay import (
+    CuboidDropOverlay,
+    TabContainerOverlay,
+    SplitterDropOverlay,
+    DropArea,
+)
 
 log = logging.getLogger(__name__)
 
@@ -55,8 +52,10 @@ class TabDragManager(QObject):
         self,
         stack_widget: _tab_widget.TabWidgetStack,
         tab_widget_meta: _tab_widget.TabWidgetMeta,
+        create_child_window: Callable[[_tab_widget.TabWidgetStack], QMainWindow | None],
     ) -> None:
         super().__init__()
+        self._create_sub_window = create_child_window
         self._tab_widget_meta = tab_widget_meta
         self._tab = tab_widget_meta.tab
 
@@ -192,15 +191,17 @@ class TabDragManager(QObject):
             ):
                 stack_widget._add_tab_widget(self._tab_widget_meta)
             else:
-                new_stack_widget = _tab_widget.TabWidgetStack()
+                new_stack_widget = _tab_widget.TabWidgetStack(self._create_sub_window)
                 new_stack_widget._add_tab_widget(self._tab_widget_meta)
                 stack_widget.split.emit(stack_widget, new_stack_widget, drop_area)
         elif isinstance(hover_state, ExternalHoverState):
             hover_state.overlay.deleteLater()
             old_stack_widget._disconnect_tab_widget(self._tab_widget_meta)
-            tab_widget = _tab_widget.TabWidgetStack()
+            tab_widget = _tab_widget.TabWidgetStack(self._create_sub_window)
             tab_widget._add_tab_widget(self._tab_widget_meta)
-            new_window = _child_window.create_sub_window(tab_widget)
+            new_window = self._create_sub_window(tab_widget)
+            if new_window is None:
+                return
             new_window.resize(400, 400)
             new_window.move(event.globalPosition().toPoint())
             new_window.show()

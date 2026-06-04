@@ -6,7 +6,7 @@ from typing import Callable
 from weakref import ref
 import logging
 
-from PySide6.QtCore import Qt, QSize, QEvent, QObject, QTimer
+from PySide6.QtCore import Qt, QSize, QEvent, QObject, QTimer, Signal
 from PySide6.QtGui import (
     QWheelEvent,
     QCursor,
@@ -18,6 +18,7 @@ from PySide6.QtGui import (
 )
 from PySide6.QtWidgets import (
     QApplication,
+    QMainWindow,
     QWidget,
     QPushButton,
     QSplitter,
@@ -30,9 +31,7 @@ from PySide6.QtWidgets import (
     QLabel,
 )
 
-from amulet.app.qt.signal import Signal
-
-from plugin.amulet.editor.widget.abc import TabWidget
+from plugin.amulet.editor.dock.widget import DockWidget
 
 from . import _tab_drag
 
@@ -51,7 +50,7 @@ class TabWidgetMeta:
     tab: TabButton
 
     # The TabWidget instance
-    widget: TabWidget
+    widget: DockWidget
 
     # The callable bound to the tab click signal
     tab_click_event: Callable[[], None] | None
@@ -62,7 +61,7 @@ class TabWidgetMeta:
     # A callable that returns the TabWidgetStack the TabWidget is bound to.
     bound_widget: Callable[[], TabWidgetStack | None]
 
-    def __init__(self, identifier: str, tab_widget: TabWidget) -> None:
+    def __init__(self, identifier: str, tab_widget: DockWidget) -> None:
         self.identifier = identifier
         self.tab = TabButton(tab_widget.icon, tab_widget.title)
         self.tab.setCheckable(True)
@@ -76,8 +75,11 @@ class TabWidgetMeta:
     def _on_title_change(self, title: str) -> None:
         self.tab.setText(title)
 
-    def _on_icon_change(self, icon: QIcon) -> None:
-        self.tab.setIcon(icon)
+    def _on_icon_change(self, icon: QIcon | None) -> None:
+        if icon is None:
+            self.tab.setIcon(QIcon())
+        else:
+            self.tab.setIcon(icon)
 
 
 class TabContainerWidget(QWidget):
@@ -135,7 +137,7 @@ class HorizontalScrollableTabArea(QScrollArea):
         """The layout the owner should interact with."""
         return self._child_layout
 
-    child_size_change = Signal[()]()
+    child_size_change = Signal()
 
     def scroll_left(self) -> None:
         self.horizontalScrollBar().setValue(self.horizontalScrollBar().value() - 60)
@@ -208,8 +210,11 @@ class WidgetStack(QStackedWidget):
 class TabWidgetStack(QWidget):
     """A custom class that behaves like a QTabWidget"""
 
-    def __init__(self) -> None:
+    def __init__(
+        self, create_child_window: Callable[[TabWidgetStack], QMainWindow | None]
+    ) -> None:
         super().__init__()
+        self._create_child_window = create_child_window
         self.setAcceptDrops(True)
 
         # Convert from the button to the storage class
@@ -259,9 +264,9 @@ class TabWidgetStack(QWidget):
         self._tab_container.child_size_change.connect(self._on_resize)
 
     # Emitted when the stack is empty (the stack will still have the default add widget)
-    last_tab_removed = Signal["TabWidgetStack"]()
+    last_tab_removed = Signal("TabWidgetStack")
 
-    split = Signal["TabWidgetStack", "TabWidgetStack", _tab_drag.DropArea]()
+    split = Signal("TabWidgetStack", "TabWidgetStack", _tab_drag.DropArea)
 
     def showEvent(self, event: QShowEvent) -> None:
         super().showEvent(event)
@@ -339,7 +344,9 @@ class TabWidgetStack(QWidget):
                 self_._tab_container.ensureWidgetVisible(tab, 0, 0)
                 self_._stacked_widget.setCurrentWidget(widget)
 
-        drag_manager = _tab_drag.TabDragManager(self, tab_widget_meta)
+        drag_manager = _tab_drag.TabDragManager(
+            self, tab_widget_meta, self._create_child_window
+        )
         tab.installEventFilter(drag_manager)
 
         tab.clicked.connect(on_click)
@@ -467,7 +474,7 @@ class RecursiveSplitter(QSplitter):
         self._children: list[QWidget] = []
 
     # Emitted when the penultimate child is removed
-    penultimate_child_removed = Signal["RecursiveSplitter"]()
+    penultimate_child_removed = Signal("RecursiveSplitter")
 
     def _on_last_tab_removed(self, stack: TabWidgetStack) -> None:
         log.debug(f"RecursiveSplitter._on_last_tab_removed({self}, {stack})")
