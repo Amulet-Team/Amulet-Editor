@@ -16,7 +16,7 @@ class ViewportWidget(DockWidget):
         super().__init__()
         self._layout = QVBoxLayout(self)
         self._layout.setContentsMargins(0, 0, 0, 0)
-        self._layout.addWidget(FirstPersonCanvas())
+        self._layout.addWidget(FirstPersonCanvas(level))
 
     @property
     def title(self) -> str:
