@@ -1,9 +1,8 @@
 from __future__ import annotations
 
+from PySide6.QtCore import Signal
 from PySide6.QtGui import QIcon
 from PySide6.QtWidgets import QWidget
-
-from amulet.app.qt.signal import Signal
 
 
 class DockWidget(QWidget):
@@ -15,7 +14,7 @@ class DockWidget(QWidget):
         return ""
 
     # Emit this signal to notify that the title has changed
-    title_changed = Signal[str]()
+    title_changed = Signal(str)
 
     @property
     def icon(self) -> QIcon:
@@ -23,4 +22,4 @@ class DockWidget(QWidget):
         return QIcon()
 
     # Emit this signal to notify that the icon has changed
-    icon_changed = Signal[QIcon | None]()
+    icon_changed = Signal(QIcon | None)

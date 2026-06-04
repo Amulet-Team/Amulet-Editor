@@ -1,14 +1,13 @@
 from threading import RLock
 from copy import deepcopy
 
-from PySide6.QtCore import QObject
+from PySide6.QtCore import QObject, Signal
 from amulet.core.selection import SelectionShapeGroup
-from amulet.app.qt.signal import Signal
 
 
 class SelectionManager(QObject):
-    selection_changed = Signal[()]()
-    selection_index_changed = Signal[int]()
+    selection_changed = Signal()
+    selection_index_changed = Signal(int)
 
     def __init__(self) -> None:
         super().__init__()
