@@ -10,6 +10,7 @@ from PySide6.QtWidgets import (
     QTabWidget,
     QTabBar,
 )
+from PySide6.QtOpenGLWidgets import QOpenGLWidget
 
 from amulet.app.exception import CatchExceptionDialog, display_exception
 
@@ -30,6 +31,10 @@ class LevelTabStorage:
 class EditorMainWindow(QMainWindow):
     def __init__(self) -> None:
         super().__init__()
+
+        # This is here to stop the window closing and reopening when the first QOpenGLWidget is added.
+        self._dummy_gl_widget = QOpenGLWidget(self)
+        self._dummy_gl_widget.hide()
 
         self._central_widget = QWidget(self)
         self._central_layout = QVBoxLayout()
