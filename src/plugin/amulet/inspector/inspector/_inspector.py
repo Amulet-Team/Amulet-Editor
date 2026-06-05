@@ -1,9 +1,8 @@
-from typing import Optional
 from weakref import ref
 
-from PySide6.QtWidgets import QTreeWidgetItem, QApplication, QWidget
 from PySide6.QtCore import QObject, QPoint, Qt
-from PySide6.QtGui import QMouseEvent, QPainter, QColor, QIcon, QCloseEvent, QPaintEvent
+from PySide6.QtGui import QMouseEvent, QPainter, QColor, QIcon, QPaintEvent
+from PySide6.QtWidgets import QTreeWidgetItem, QApplication, QWidget, QComboBox, QLayout
 
 from amulet.app.exception import CatchExceptionDialog
 from plugin.tablericons import tablericons
@@ -11,21 +10,43 @@ from plugin.tablericons import tablericons
 from ._inspector_gui import InspectionToolGUI
 
 
-class TreeWidgetItem(QTreeWidgetItem):
-    @classmethod
-    def create(cls, widget: QObject) -> Optional[QTreeWidgetItem]:
-        if isinstance(widget, InspectorTool):
-            return None
-        else:
-            return cls(widget)
+class TreeLayoutItem(QTreeWidgetItem):
+    def __init__(self, layout: QLayout, child_widgets: list[QObject]) -> None:
+        super().__init__([str(layout)])
+        self.layout = ref(layout)
+        for i in range(layout.count()):
+            item = layout.itemAt(i)
+            if item is None:
+                continue
+            child_layout = item.layout()
+            if child_layout is not None:
+                self.addChild(TreeLayoutItem(child_layout, child_widgets))
+            child_widget = item.widget()
+            if child_widget is not None:
+                try:
+                    child_widgets.remove(child_widget)
+                except ValueError:
+                    pass
+                self.addChild(TreeWidgetItem(child_widget))
 
+
+class TreeWidgetItem(QTreeWidgetItem):
     def __init__(self, widget: QObject) -> None:
         super().__init__([str(widget)])
         self.widget = ref(widget)
+        layouts: list[QLayout] = []
+        children: list[QObject] = []
         for child in widget.children():
-            item = self.create(child)
-            if item is not None:
-                self.addChild(item)
+            if isinstance(child, QLayout):
+                layouts.append(child)
+            else:
+                children.append(child)
+
+        for layout in layouts:
+            self.addChild(TreeLayoutItem(layout, children))
+        for child in children:
+            if not isinstance(child, InspectorTool):
+                self.addChild(TreeWidgetItem(child))
 
 
 class Overlay(QWidget):
@@ -65,16 +86,15 @@ class InspectorTool(InspectionToolGUI):
         self.run_button.clicked.connect(self._run_code)
         self.reload()
 
-    def closeEvent(self, event: QCloseEvent) -> None:
-        global _inspector
-        _inspector = None
-
     def reload(self) -> None:
         self.tree_widget.clear()
         for window in QApplication.topLevelWidgets():
-            root = TreeWidgetItem.create(window)
-            if root is not None:
-                self.tree_widget.addTopLevelItem(root)
+            if isinstance(window, InspectorTool) or isinstance(
+                window.parent(), QComboBox
+            ):
+                continue
+            root = TreeWidgetItem(window)
+            self.tree_widget.addTopLevelItem(root)
         if self.tree_widget.topLevelItemCount():
             self.tree_widget.topLevelItem(0)
 
@@ -118,11 +138,6 @@ class InspectorTool(InspectionToolGUI):
 
     def _run_code(self) -> None:
         item = self.tree_widget.currentItem()
-        if not isinstance(item, TreeWidgetItem):
-            return
-        obj = item.widget()
-        if obj is None:
-            print("Selected object no longer exists.")
-        else:
-            with CatchExceptionDialog("Error running user code.", suppress=False):
-                exec(self.code_editor.toPlainText(), {}, {"self": obj})
+        obj = item.widget() if isinstance(item, TreeWidgetItem) else None
+        with CatchExceptionDialog("Error running user code."):
+            exec(self.code_editor.toPlainText(), {}, {"self": obj})
