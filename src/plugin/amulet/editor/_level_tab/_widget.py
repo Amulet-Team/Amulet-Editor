@@ -59,7 +59,7 @@ class LevelTabWidget(QWidget, WindowTabClose):
             raise ValueError(f"Tool with identifier {identifier} already exists.")
 
         if isinstance(widget, str):
-            widget = DockMainWidget(widget)
+            widget = DockMainWidget(self._level, widget)
 
         self._widget_stack.addWidget(widget)
         button = ToolbarButton(name, icon_path)

@@ -7,16 +7,25 @@ from PySide6.QtCore import Qt
 from PySide6.QtWidgets import QWidget, QVBoxLayout
 from PySide6.QtGui import QShowEvent, QHideEvent
 
+from amulet.level.abc import Level
+
+from .._layout import LayoutConfig, SplitterConfig, WidgetStackConfig, get_layout
+from ..widget._widget import get_tab_widget_constructor
+from ..widget._missing import MissingWidget, MissingTabIdentifier
+
 from ._child_window import DockChildWindow
-from ._tab_widget import TabWidgetStack, RecursiveSplitter
+from ._tab_widget import TabWidgetStack, RecursiveSplitter, TabWidgetMeta
 from ._overlay import DropArea
 
 log = logging.getLogger(__name__)
 
 
 class DockMainWidget(QWidget):
-    def __init__(self, layout_name: str) -> None:
+    def __init__(self, level: Level, layout_name: str) -> None:
         super().__init__()
+        self._level = level
+        self._layout_name = layout_name
+
         self._child_windows = WeakSet[DockChildWindow]()
 
         self._layout = QVBoxLayout(self)
@@ -27,8 +36,15 @@ class DockMainWidget(QWidget):
         self._bind_events(self._widget)
         self._layout.addWidget(self._widget)
 
+        self._initialised = False
+
     def showEvent(self, event: QShowEvent) -> None:
         super().showEvent(event)
+
+        if not self._initialised:
+            self._initialised = True
+            self._create_layout(get_layout(self._layout_name))
+
         for window in self._child_windows:
             window.show()
 
@@ -37,7 +53,9 @@ class DockMainWidget(QWidget):
         for window in self._child_windows:
             window.hide()
 
-    def _create_child_window(self, widget: TabWidgetStack) -> DockChildWindow:
+    def _create_child_window(
+        self, widget: TabWidgetStack | RecursiveSplitter
+    ) -> DockChildWindow:
         window = DockChildWindow(self, widget)
         self._child_windows.add(window)
         return window
@@ -126,3 +144,57 @@ class DockMainWidget(QWidget):
         self._bind_events(new_widget)
         self._widget = new_widget
         return old_widget
+    def _init_layout(
+        self,
+        layout: SplitterConfig | WidgetStackConfig,
+    ) -> TabWidgetStack | RecursiveSplitter:
+        if isinstance(layout, SplitterConfig):
+            splitter_widget = RecursiveSplitter()
+            splitter_widget.setOrientation(layout.orientation)
+            splitter_widget.addWidget(self._init_layout(layout.first))
+            splitter_widget.addWidget(self._init_layout(layout.second))
+            left_weight = max(1, min(100, int(100 * layout.weight)))
+            right_weight = 100 - left_weight
+            splitter_widget.setStretchFactor(0, left_weight)
+            splitter_widget.setStretchFactor(1, right_weight)
+            return splitter_widget
+        elif isinstance(layout, WidgetStackConfig):
+            _create_child_window = WeakMethod(self._create_child_window)
+
+            def create_child_window(
+                child_tab_widget: TabWidgetStack,
+            ) -> DockChildWindow | None:
+                func = _create_child_window()
+                if func is None:
+                    return None
+                return func(child_tab_widget)
+
+            tab_widget = TabWidgetStack(create_child_window)
+            for widget_config in layout.widgets:
+                try:
+                    widget_cls = get_tab_widget_constructor(widget_config.identifier)
+                except KeyError:
+                    tab_widget_meta = TabWidgetMeta(
+                        MissingTabIdentifier,
+                        MissingWidget(widget_config.identifier),
+                    )
+                else:
+                    tab_widget_meta = TabWidgetMeta(
+                        widget_config.identifier, widget_cls(self._level)
+                    )
+
+                tab_widget._add_tab_widget(tab_widget_meta)
+            return tab_widget
+        else:
+            raise RuntimeError(f"Unknown layout type {type(layout)}")
+
+    def _create_layout(self, layout_config: LayoutConfig) -> None:
+        """Initialisation of the layout."""
+        # TODO: set window position and size
+        self._replace_widget(
+            self._init_layout(layout_config.main_window.layout)
+        ).deleteLater()
+        for config in layout_config.sub_windows:
+            self._create_child_window(
+                self._init_layout(config.layout),
+            )
