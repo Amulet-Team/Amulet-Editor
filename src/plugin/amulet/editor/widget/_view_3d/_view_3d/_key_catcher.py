@@ -8,8 +8,7 @@ from inspect import ismethod
 from PySide6.QtCore import QObject, QEvent, Signal, QTimer, Qt
 from PySide6.QtGui import QMouseEvent, QKeyEvent, QScrollEvent
 
-if TYPE_CHECKING:
-    from PySide6.QtCore import SignalInstanceProtocol
+from amulet.app.qt.signal import SignalInstanceProtocol
 
 """
 When a key is released, we stop all all events that need that key.

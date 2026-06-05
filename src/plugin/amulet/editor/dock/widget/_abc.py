@@ -4,6 +4,8 @@ from PySide6.QtCore import Signal
 from PySide6.QtGui import QIcon
 from PySide6.QtWidgets import QWidget
 
+from amulet.app.qt.signal import TypeFormSignal
+
 
 class DockWidget(QWidget):
     """A base class for all widgets in the docking system."""
@@ -22,4 +24,4 @@ class DockWidget(QWidget):
         return QIcon()
 
     # Emit this signal to notify that the icon has changed
-    icon_changed = Signal(QIcon | None)
+    icon_changed = TypeFormSignal(QIcon | None)

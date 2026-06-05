@@ -31,6 +31,8 @@ from PySide6.QtWidgets import (
     QLabel,
 )
 
+from amulet.app.qt.signal import TypeFormSignal
+
 from plugin.amulet.editor.dock.widget import DockWidget
 
 from . import _tab_drag
@@ -264,9 +266,9 @@ class TabWidgetStack(QWidget):
         self._tab_container.child_size_change.connect(self._on_resize)
 
     # Emitted when the stack is empty (the stack will still have the default add widget)
-    last_tab_removed = Signal("TabWidgetStack")
+    last_tab_removed = TypeFormSignal("TabWidgetStack")
 
-    split = Signal("TabWidgetStack", "TabWidgetStack", _tab_drag.DropArea)
+    split = TypeFormSignal("TabWidgetStack", "TabWidgetStack", _tab_drag.DropArea)
 
     def showEvent(self, event: QShowEvent) -> None:
         super().showEvent(event)
@@ -474,7 +476,7 @@ class RecursiveSplitter(QSplitter):
         self._children: list[QWidget] = []
 
     # Emitted when the penultimate child is removed
-    penultimate_child_removed = Signal("RecursiveSplitter")
+    penultimate_child_removed = TypeFormSignal("RecursiveSplitter")
 
     def _on_last_tab_removed(self, stack: TabWidgetStack) -> None:
         log.debug(f"RecursiveSplitter._on_last_tab_removed({self}, {stack})")
