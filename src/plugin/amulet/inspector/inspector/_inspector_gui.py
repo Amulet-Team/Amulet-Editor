@@ -1,12 +1,6 @@
-# -*- coding: utf-8 -*-
-################################################################################
-## Form generated from reading UI file '_inspector.ui'
-##
-## Created by: Qt User Interface Compiler
-##
-## WARNING! All changes made in this file will be lost when recompiling UI file!
-################################################################################
-from PySide6.QtCore import QCoreApplication, QMetaObject, Qt, QEvent
+import os
+
+from PySide6.QtCore import QCoreApplication, Qt, QEvent, QLocale
 from PySide6.QtWidgets import (
     QHBoxLayout,
     QMainWindow,
@@ -17,29 +11,45 @@ from PySide6.QtWidgets import (
     QTreeWidgetItem,
     QVBoxLayout,
     QWidget,
+    QApplication,
 )
 
+from amulet.app.localisation import Translator, locale_changed
 
-class Ui_InspectionTool(QMainWindow):
+_translator: Translator | None = None
+
+
+def get_translator() -> Translator:
+    global _translator
+    if _translator is None:
+        _translator = Translator()
+
+        def _load_translations() -> None:
+            _translator.load_lang(
+                QLocale(),
+                "",
+                directory=os.path.join(os.path.dirname(__file__), "lang"),
+            )
+
+        _load_translations()
+        QApplication.installTranslator(_translator)
+        locale_changed.connect(_load_translations)
+    return _translator
+
+
+class InspectionToolGUI(QMainWindow):
     def __init__(
         self, parent: QWidget | None = None, flags: Qt.WindowType = Qt.WindowType.Window
     ) -> None:
         super().__init__(parent, flags)
-        if not self.objectName():
-            self.setObjectName("InspectionTool")
-        self.resize(266, 252)
 
         self._central_widget = QWidget(self)
-        self._central_widget.setObjectName("_central_widget")
 
         self._vertical_layout = QVBoxLayout(self._central_widget)
-        self._vertical_layout.setObjectName("_vertical_layout")
 
         self._horizontal_layout_2 = QHBoxLayout()
-        self._horizontal_layout_2.setObjectName("_horizontal_layout_2")
 
         self.inspect_button = QPushButton(self._central_widget)
-        self.inspect_button.setObjectName("inspect_button")
         sizePolicy = QSizePolicy(QSizePolicy.Policy.Maximum, QSizePolicy.Policy.Fixed)
         sizePolicy.setHorizontalStretch(0)
         sizePolicy.setVerticalStretch(0)
@@ -50,7 +60,6 @@ class Ui_InspectionTool(QMainWindow):
         self._horizontal_layout_2.addWidget(self.inspect_button)
 
         self.reload_button = QPushButton(self._central_widget)
-        self.reload_button.setObjectName("reload_button")
         self._horizontal_layout_2.addWidget(self.reload_button)
         self._vertical_layout.addLayout(self._horizontal_layout_2)
 
@@ -58,19 +67,15 @@ class Ui_InspectionTool(QMainWindow):
         __qtreewidgetitem = QTreeWidgetItem()
         __qtreewidgetitem.setText(0, "1")
         self.tree_widget.setHeaderItem(__qtreewidgetitem)
-        self.tree_widget.setObjectName("tree_widget")
         self.tree_widget.header().setVisible(False)
         self._vertical_layout.addWidget(self.tree_widget)
 
         self._horizontal_layout_1 = QHBoxLayout()
-        self._horizontal_layout_1.setObjectName("_horizontal_layout_1")
 
         self.code_editor = QPlainTextEdit(self._central_widget)
-        self.code_editor.setObjectName("code_editor")
         self._horizontal_layout_1.addWidget(self.code_editor)
 
         self.run_button = QPushButton(self._central_widget)
-        self.run_button.setObjectName("run_button")
         sizePolicy1 = QSizePolicy(
             QSizePolicy.Policy.Minimum, QSizePolicy.Policy.MinimumExpanding
         )
@@ -83,7 +88,6 @@ class Ui_InspectionTool(QMainWindow):
         self.setCentralWidget(self._central_widget)
 
         self._localise()
-        QMetaObject.connectSlotsByName(self)
 
     def changeEvent(self, event: QEvent) -> None:
         super().changeEvent(event)
@@ -92,10 +96,14 @@ class Ui_InspectionTool(QMainWindow):
 
     def _localise(self) -> None:
         self.setWindowTitle(
-            QCoreApplication.translate("InspectionTool", "Inspector", None)
+            QCoreApplication.translate(
+                "plugin.amulet.inspector.InspectionTool", "window_title", None
+            )
         )
         self.inspect_button.setText("")
         self.reload_button.setText("")
         self.run_button.setText(
-            QCoreApplication.translate("InspectionTool", "Run", None)
+            QCoreApplication.translate(
+                "plugin.amulet.inspector.InspectionTool", "run", None
+            )
         )

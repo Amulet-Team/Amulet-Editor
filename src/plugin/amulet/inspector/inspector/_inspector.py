@@ -2,13 +2,13 @@ from typing import Optional
 from weakref import ref
 
 from PySide6.QtWidgets import QTreeWidgetItem, QApplication, QWidget
-from PySide6.QtCore import QObject, QPoint, QSize, Qt
+from PySide6.QtCore import QObject, QPoint, Qt
 from PySide6.QtGui import QMouseEvent, QPainter, QColor, QIcon, QCloseEvent, QPaintEvent
 
 from amulet.app.exception import CatchExceptionDialog
 from plugin.tablericons import tablericons
 
-from ._inspector import Ui_InspectionTool
+from ._inspector_gui import InspectionToolGUI
 
 
 class TreeWidgetItem(QTreeWidgetItem):
@@ -49,23 +49,20 @@ class Overlay(QWidget):
         painter.end()
 
 
-_inspector = None
-
-
-class InspectorTool(Ui_InspectionTool):
+class InspectorTool(InspectionToolGUI):
     def __init__(
         self, parent: QWidget | None = None, f: Qt.WindowType = Qt.WindowType.Widget
     ) -> None:
         super().__init__(parent, f)
-        self._inspect = False
+        self._inspecting = False
         self._highlight: tuple[QWidget, Overlay] | None = None
 
         self.inspect_button.setIcon(QIcon(tablericons.outline.click))
         self.reload_button.setIcon(QIcon(tablericons.outline.refresh))
 
-        self.inspect_button.clicked.connect(self.inspect)
+        self.inspect_button.clicked.connect(self._start_inspecting)
         self.reload_button.clicked.connect(self.reload)
-        self.run_button.clicked.connect(self.run_code)
+        self.run_button.clicked.connect(self._run_code)
         self.reload()
 
     def closeEvent(self, event: QCloseEvent) -> None:
@@ -81,10 +78,10 @@ class InspectorTool(Ui_InspectionTool):
         if self.tree_widget.topLevelItemCount():
             self.tree_widget.topLevelItem(0)
 
-    def inspect(self) -> None:
+    def _start_inspecting(self) -> None:
         self.setMouseTracking(True)
         self.grabMouse()
-        self._inspect = True
+        self._inspecting = True
 
     def _remove_highlight(self) -> None:
         if self._highlight is not None:
@@ -93,7 +90,7 @@ class InspectorTool(Ui_InspectionTool):
             self._highlight = None
 
     def mouseMoveEvent(self, event: QMouseEvent) -> None:
-        if self._inspect:
+        if self._inspecting:
             widget = QApplication.widgetAt(event.globalPosition().toPoint())
             if not widget:
                 return
@@ -111,15 +108,15 @@ class InspectorTool(Ui_InspectionTool):
             super().mouseMoveEvent(event)
 
     def mousePressEvent(self, event: QMouseEvent) -> None:
-        if self._inspect:
-            self._inspect = False
+        if self._inspecting:
+            self._inspecting = False
             self.releaseMouse()
             self.setMouseTracking(False)
             self._remove_highlight()
         else:
             super().mousePressEvent(event)
 
-    def run_code(self) -> None:
+    def _run_code(self) -> None:
         item = self.tree_widget.currentItem()
         if not isinstance(item, TreeWidgetItem):
             return
@@ -129,11 +126,3 @@ class InspectorTool(Ui_InspectionTool):
         else:
             with CatchExceptionDialog("Error running user code.", suppress=False):
                 exec(self.code_editor.toPlainText(), {}, {"self": obj})
-
-
-def show_inspector(parent: QWidget | None = None) -> None:
-    global _inspector
-    if _inspector is None:
-        _inspector = InspectorTool(parent)
-        _inspector.show()
-    _inspector.activateWindow()

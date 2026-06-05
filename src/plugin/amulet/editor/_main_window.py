@@ -2,7 +2,7 @@ import traceback
 from dataclasses import dataclass
 
 from PySide6.QtCore import QObject, Signal, QEvent, QCoreApplication, QThread
-from PySide6.QtGui import QCloseEvent
+from PySide6.QtGui import QCloseEvent, QShortcut
 from PySide6.QtWidgets import (
     QWidget,
     QMainWindow,
@@ -15,6 +15,8 @@ from PySide6.QtOpenGLWidgets import QOpenGLWidget
 from amulet.app.exception import CatchExceptionDialog, display_exception
 
 from amulet.level.abc import Level
+
+from plugin.amulet.inspector.inspector import InspectorTool
 
 from ._home_tab import HomeTabWidget
 from ._level_tab import LevelTabWidget, LevelTabWidgetAPI
@@ -60,6 +62,10 @@ class EditorMainWindow(QMainWindow):
 
         self._tabs.tabCloseRequested.connect(self._tab_close_requested)
 
+        self._inspector: InspectorTool | None = None
+        self._f12_shortcut = QShortcut("F12", self)
+        self._f12_shortcut.activated.connect(self._show_inspector)
+
         self._localise()
 
     def changeEvent(self, event: QEvent) -> None:
@@ -76,6 +82,13 @@ class EditorMainWindow(QMainWindow):
                 None,
             ),
         )
+
+    def _show_inspector(self) -> None:
+        if self._inspector is None:
+            self._inspector = InspectorTool(self)
+        else:
+            self._inspector.reload()
+        self._inspector.show()
 
     def _tab_close_requested(self, index: int) -> None:
         with CatchExceptionDialog("Error in EditorMainWindow._tab_close_requested"):
