@@ -15,7 +15,7 @@ class TypeFormSignal:
     def __new__(
         cls, /, *types: Any, name: str = "", arguments: Sequence[str] = ()
     ) -> TypeFormSignal:
-        return Signal(*(i if isclass(i) else object for i in types), name=name, arguments=arguments)  # type: ignore
+        return Signal(*(i if isclass(i) else object for i in types), name=name, arguments=arguments)  # type: ignore[return-value]
 
 
 class SignalInstanceProtocol(Protocol[P]):

@@ -114,8 +114,8 @@ def get_package_dir(name: str) -> str:
 
 
 def patch_stubgen() -> None:
-    class_member_blacklist: set[Identifier] = FilterClassMembers._FilterClassMembers__class_member_blacklist  # type: ignore
-    attribute_blacklist: set[Identifier] = FilterClassMembers._FilterClassMembers__attribute_blacklist  # type: ignore
+    class_member_blacklist: set[Identifier] = FilterClassMembers._FilterClassMembers__class_member_blacklist  # type: ignore[attr-defined]
+    attribute_blacklist: set[Identifier] = FilterClassMembers._FilterClassMembers__attribute_blacklist  # type: ignore[attr-defined]
 
     # Is there a better way to add items to the blacklist?
     # Pybind11

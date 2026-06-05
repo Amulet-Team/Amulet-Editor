@@ -108,7 +108,7 @@ class CMakeBuild(BuildExt):
                 raise RuntimeError("Error installing amulet-editor")
 
 
-cmdclass["build_ext"] = CMakeBuild  # type: ignore
+cmdclass["build_ext"] = CMakeBuild  # type: ignore[assignment]
 
 
 setup(
