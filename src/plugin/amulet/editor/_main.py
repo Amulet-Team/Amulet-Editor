@@ -87,7 +87,6 @@ def main(argv: list[str]) -> NoReturn:
     # Initialise the application
     app = QApplication()
     app_created.emit()
-    app.setApplicationName("Amulet Editor")
     app.setApplicationVersion(__version__)
     app.setWindowIcon(QIcon(get_resource_path("icons/amulet/Icon.ico")))
 
@@ -106,6 +105,8 @@ def main(argv: list[str]) -> NoReturn:
     _load_translations()
     QApplication.installTranslator(translator)
     locale_changed.connect(_load_translations)
+
+    app.setApplicationName(QApplication.translate("plugin.amulet.editor", "app_name"))
 
     init_and_show_editor()
     init_editor_tools()

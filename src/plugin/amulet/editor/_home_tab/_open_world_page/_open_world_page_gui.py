@@ -72,7 +72,7 @@ class OpenWorldPageGUI(QWidget):
     def _localise(self) -> None:
         self.setWindowTitle(
             QCoreApplication.translate(
-                "plugin.amulet.editor.OpenWorldPage", "Open World", None
+                "plugin.amulet.editor.OpenWorldPage", "window_title", None
             )
         )
         self.btn_back.setText("")

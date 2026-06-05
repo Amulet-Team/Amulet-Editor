@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import logging
 
-from PySide6.QtCore import Qt, QEvent, QCoreApplication
+from PySide6.QtCore import Qt
 from PySide6.QtGui import QCloseEvent
 from PySide6.QtWidgets import QMainWindow, QWidget
 
@@ -29,7 +29,6 @@ class DockChildWindow(QMainWindow):
         self._widget = widget
         self._bind_events(self._widget)
         self.setCentralWidget(self._widget)
-        self._localise()
 
     def _bind_events(
         self, widget: _tab_widget.TabWidgetStack | _tab_widget.RecursiveSplitter
@@ -115,16 +114,6 @@ class DockChildWindow(QMainWindow):
             assert old_widget.parent() is splitter
             assert new_widget.parent() is splitter
             assert splitter.parent() is self
-
-    def changeEvent(self, event: QEvent) -> None:
-        super().changeEvent(event)
-        if event.type() == QEvent.Type.LanguageChange:
-            self._localise()
-
-    def _localise(self) -> None:
-        self.setWindowTitle(
-            QCoreApplication.translate("DockChildWindow", "Amulet Editor", None)
-        )
 
     def closeEvent(self, event: QCloseEvent) -> None:
         # The parent keeps this object alive. We need to do this so it can be destroyed

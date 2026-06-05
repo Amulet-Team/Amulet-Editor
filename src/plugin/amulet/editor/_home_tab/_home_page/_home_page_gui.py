@@ -114,9 +114,6 @@ class HomePageGUI(QWidget):
             self._localise()
 
     def _localise(self) -> None:
-        self.setWindowTitle(
-            QCoreApplication.translate("plugin.amulet.editor.HomePage", "Home", None)
-        )
         self._lbl_app_name.setText(
             QCoreApplication.translate(
                 "plugin.amulet.editor.HomePage", "amulet_editor", None

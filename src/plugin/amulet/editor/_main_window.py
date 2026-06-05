@@ -52,7 +52,7 @@ class EditorMainWindow(QMainWindow):
         self._central_layout.addWidget(self._tabs)
 
         self._home_widget = HomeTabWidget()
-        self._tabs.addTab(self._home_widget, "Home")
+        self._tabs.addTab(self._home_widget, "")
         self._tab_bar.setTabButton(0, QTabBar.ButtonPosition.RightSide, None)
 
         self.setCentralWidget(self._central_widget)
