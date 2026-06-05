@@ -1,4 +1,4 @@
-from PySide6.QtCore import QCoreApplication, QMetaObject, QSize, Qt, QEvent
+from PySide6.QtCore import QCoreApplication, QSize, Qt, QEvent
 from PySide6.QtWidgets import (
     QFrame,
     QHBoxLayout,
