@@ -83,7 +83,7 @@ class ResourcePackHandle(QObject):
             # TODO: support other resource pack formats
             progress_manager.update_progress_text(
                 QCoreApplication.translate(
-                    "ResourcePack", "downloading_resource_pack", None
+                    "plugin.amulet.resource_pack", "downloading_resource_pack", None
                 )
             )
 
@@ -95,7 +95,7 @@ class ResourcePackHandle(QObject):
             )
             progress_manager.update_progress_text(
                 QCoreApplication.translate(
-                    "ResourcePack", "loading_resource_pack", None
+                    "plugin.amulet.resource_pack", "loading_resource_pack", None
                 )
             )
             reload_progress_manager = progress_manager.get_child(0.5, 1.0)

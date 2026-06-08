@@ -10,8 +10,9 @@ from PySide6.QtWidgets import (
 )
 
 from amulet.core.block import Block
+from amulet.level.abc import Level
 
-from plugin.amulet.editor.widget.abc import TabWidget
+from plugin.amulet.editor.dock.widget import DockWidget
 
 from ._block_select import BlockSelect
 from ._op import fill_block
@@ -59,9 +60,10 @@ class FindWidget(QWidget):
         return self._block_select.get_block()
 
 
-class FillReplaceWidget(TabWidget):
-    def __init__(self) -> None:
+class FillReplaceWidget(DockWidget):
+    def __init__(self, level: Level) -> None:
         super().__init__()
+        self._level = level
 
         self._layout = QVBoxLayout(self)
         self._layout.setContentsMargins(0, 0, 0, 0)
@@ -115,4 +117,4 @@ class FillReplaceWidget(TabWidget):
             find_block = None
         else:
             find_block = self._find_widget.get_block()
-        fill_block(self._fill_widget.get_block(), find_block)
+        fill_block(self._level, self._fill_widget.get_block(), find_block)

@@ -104,13 +104,13 @@ def main() -> None:
             import traceback
             from PySide6.QtWidgets import QApplication
             from amulet.app.exception import (
-                display_exception_blocking,
+                display_exception,
             )
 
             if QApplication.instance() is None:
                 # QDialog needs an app otherwise it crashes
                 app = QApplication()
-            display_exception_blocking(
+            display_exception(
                 title="Error Initialising Application",
                 error=str(e),
                 traceback="".join(traceback.format_exc()),

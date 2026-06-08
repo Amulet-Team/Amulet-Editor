@@ -9,7 +9,6 @@ from . import (
     invoke,
     localisation,
     path,
-    qt,
     resource,
 )
 
@@ -21,7 +20,6 @@ __all__: list[str] = [
     "invoke",
     "localisation",
     "path",
-    "qt",
     "resource",
 ]
 __version__: str

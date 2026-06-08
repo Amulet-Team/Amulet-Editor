@@ -95,7 +95,7 @@ def parse_cli(
         "command",
         help="The command to run",
         nargs=OPTIONAL,
-        default="amulet_launcher",
+        default="amulet_editor",
         choices=valid_commands,
     )
 

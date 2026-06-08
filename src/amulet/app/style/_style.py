@@ -1,7 +1,8 @@
 from threading import Lock
 from collections.abc import Callable
 
-from PySide6.QtWidgets import QStyle, QStyleFactory, QApplication
+from PySide6.QtCore import Qt, QTimer
+from PySide6.QtWidgets import QStyle, QStyleFactory, QApplication, QProxyStyle
 
 
 class StyleStorage:
@@ -66,12 +67,28 @@ def get_valid_styles() -> dict[str, str]:
         return {identifier: storage.name for identifier, storage in _styles.items()}
 
 
+class BuiltInStyle(QProxyStyle):
+    def __init__(self, identifier: str):
+        super().__init__(identifier)
+        self._style = QApplication.styleHints()
+        self._style.colorSchemeChanged.connect(
+            self._set_style_sheet, type=Qt.ConnectionType.QueuedConnection
+        )
+        QTimer.singleShot(0, self._set_style_sheet)
+
+    def _set_style_sheet(self) -> None:
+        app = QApplication.instance()
+        assert isinstance(app, QApplication)
+        app.setStyleSheet(" ")
+
+
 def set_style(identifier: str) -> None:
     with _lock:
         factory = _styles[identifier].style_factory
+        style: QStyle
         if isinstance(factory, str):
             # Built in style
-            style = QStyleFactory.create(factory)
+            style = BuiltInStyle(factory)
         else:
             style = factory()
         QApplication.setStyle(style)

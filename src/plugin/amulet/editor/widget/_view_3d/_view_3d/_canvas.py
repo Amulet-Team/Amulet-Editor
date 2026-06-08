@@ -7,7 +7,7 @@ import logging
 import weakref
 from math import sin, cos, radians
 
-from PySide6.QtCore import Qt, QPoint, Slot, QThread, QThreadPool, QObject
+from PySide6.QtCore import Qt, QPoint, QThread, QThreadPool, QObject, Signal
 from PySide6.QtGui import (
     QOpenGLFunctions,
     QOpenGLContext,
@@ -43,11 +43,9 @@ from amulet.level.abc.level import Level
 
 from amulet.app.exception import CatchExceptionDialog, display_exception
 from amulet.app.invoke import invoke
-from amulet.app.qt.signal import Signal
 
 from plugin.amulet.resource_pack import get_resource_pack_handle
 
-from plugin.amulet.level import get_main_level
 from plugin.amulet.camera import get_camera_extrinsics, Location, Rotation
 
 from ._settings import render_settings
@@ -99,7 +97,7 @@ class CanvasGlData(QObject):
     _level_change_token: EventToken[()] | None
     _selection_change_token: EventToken[()] | None
 
-    geometry_changed = Signal[()]()
+    geometry_changed = Signal()
 
     def __init__(self, level: Level) -> None:
         super().__init__()
@@ -193,11 +191,11 @@ class FirstPersonCanvas(QOpenGLWidget, QOpenGLFunctions):
     # Having a pointer to self would stop self being garbage collected.
     _canvas_gl_data: CanvasGlData
 
-    def __init__(self, parent: QWidget | None = None) -> None:
+    def __init__(self, level: Level) -> None:
         log.debug("FirstPersonCanvas.__init__()")
         if not QThread.isMainThread():
             raise RuntimeError("FirstPersonCanvas must be constructed in main thread")
-        QOpenGLWidget.__init__(self, parent)
+        QOpenGLWidget.__init__(self)
         QOpenGLFunctions.__init__(self)
         self._initialised = False
         self._errors: set[str] = set()
@@ -205,11 +203,6 @@ class FirstPersonCanvas(QOpenGLWidget, QOpenGLFunctions):
         # hideEvent can be called twice without a call to showEvent
         self._shown = False
 
-        level = get_main_level()
-        if level is None:
-            raise RuntimeError(
-                "FirstPersonCanvas cannot be constructed when a level does not exist."
-            )
         self._level = level
         self._canvas_gl_data = CanvasGlData(self._level)
 
@@ -373,21 +366,21 @@ class FirstPersonCanvas(QOpenGLWidget, QOpenGLFunctions):
     def _queue_load_resource_pack(self) -> None:
         QThreadPool.globalInstance().start(self._load_resource_pack)
 
-    _progress_changed = Signal[float]()
+    _progress_changed = Signal(float)
 
     def _on_progress_changed(self, progress: float) -> None:
         if not self._loading_overlay.isVisible():
             self._show_loading_overlay()
         self._loading_bar.setValue(int(100 * progress))
 
-    _progress_text_changed = Signal[str]()
+    _progress_text_changed = Signal(str)
 
     def _on_progress_text_changed(self, text: str) -> None:
         if not self._loading_overlay.isVisible():
             self._show_loading_overlay()
         self._loading_text.setText(text)
 
-    _loading_finished = Signal[()]()
+    _loading_finished = Signal()
 
     def _hide_loading_overlay(self) -> None:
         self._loading_overlay.hide()
@@ -536,36 +529,28 @@ class FirstPersonCanvas(QOpenGLWidget, QOpenGLFunctions):
             z + cos(azimuth) * self.camera.speed * dt,
         )
 
-    @Slot()
     def _forwards(self, dt: float) -> None:
         self._move_relative(180, dt)
 
-    @Slot()
     def _right(self, dt: float) -> None:
         self._move_relative(270, dt)
 
-    @Slot()
     def _backwards(self, dt: float) -> None:
         self._move_relative(0, dt)
 
-    @Slot()
     def _left(self, dt: float) -> None:
         self._move_relative(90, dt)
 
-    @Slot()
     def _up(self, dt: float) -> None:
         x, y, z = self.camera.location
         self.camera.location = Location(x, y + self.camera.speed * dt, z)
 
-    @Slot()
     def _down(self, dt: float) -> None:
         x, y, z = self.camera.location
         self.camera.location = Location(x, y - self.camera.speed * dt, z)
 
-    @Slot()
     def _faster(self) -> None:
         self.camera.speed *= 1.1
 
-    @Slot()
     def _slower(self) -> None:
         self.camera.speed /= 1.1

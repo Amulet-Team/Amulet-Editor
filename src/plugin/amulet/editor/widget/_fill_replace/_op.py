@@ -7,9 +7,9 @@ from amulet.core.selection import SelectionBoxGroup, SelectionBox
 from amulet.core.chunk.component import BlockComponent
 
 from amulet.game import get_game_version
+from amulet.level.abc import Level
 
 from plugin.amulet.selection import get_selection_manager
-from plugin.amulet.level import get_main_level
 
 log = logging.getLogger(__name__)
 
@@ -35,10 +35,7 @@ def get_chunk_boxes(
     return chunk_boxes
 
 
-def fill_block(block: Block, find_block: Block | None = None) -> None:
-    level = get_main_level()
-    if level is None:
-        return
+def fill_block(level: Level, block: Block, find_block: Block | None = None) -> None:
     selection = get_selection_manager().get_selection()
     sub_chunk_size = level.sub_chunk_size
     chunk_boxes = get_chunk_boxes(selection.voxelise(), sub_chunk_size)

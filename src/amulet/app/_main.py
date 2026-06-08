@@ -10,7 +10,7 @@ import os
 import logging
 from datetime import datetime
 import faulthandler
-from io import TextIOWrapper
+from io import TextIOBase
 import atexit
 import traceback
 
@@ -79,9 +79,9 @@ def app_main(argv: Sequence[str] | None = None) -> None:
     logging.getLogger("OpenGL.acceleratesupport").setLevel(logging.CRITICAL)
     # TODO: remove old log files
 
-    class StdCapture(TextIOWrapper):
+    class StdCapture(TextIOBase):
         def __init__(self, logger: Callable[[str], None]) -> None:
-            super().__init__(log_file)  # type: ignore
+            super().__init__()
             self._logger = logger
 
         def write(self, msg: str) -> int:

@@ -1,12 +1,12 @@
-from PySide6.QtCore import Slot, QSize, Qt
+from PySide6.QtCore import QSize, Qt
 from PySide6.QtGui import QGuiApplication, QIcon
 from PySide6.QtWidgets import QWidget
 
-from ._traceback_dialog_ui import Ui_TracebackDialog
+from ._traceback_dialog_gui import TracebackDialogGUI
 from amulet.app.resource import get_resource_path
 
 
-class TracebackDialog(Ui_TracebackDialog):
+class TracebackDialog(TracebackDialogGUI):
     """A dialog to display tracebacks."""
 
     def __init__(
@@ -28,7 +28,6 @@ class TracebackDialog(Ui_TracebackDialog):
         self._error_text.setText(error)
         self._traceback_text.setText(traceback)
 
-    @Slot()
     def _on_copy(self) -> None:
         clipboard = QGuiApplication.clipboard()
         clipboard.setText(self._traceback)

@@ -1,6 +1,6 @@
 from __future__ import annotations
 from typing import TypeVar, Callable, Generic
-from PySide6.QtCore import Slot, Signal, QObject, Qt, QThread
+from PySide6.QtCore import Signal, QObject, Qt, QThread
 from PySide6.QtGui import QGuiApplication
 
 from runtime_final import final
@@ -71,7 +71,6 @@ class InvokeMethod(QObject, Generic[T]):
 
     start_signal = Signal()
 
-    @Slot()
     def execute(self) -> None:
         try:
             self.__return = self.__method()

@@ -1,12 +1,14 @@
-from typing import Union, Callable, Optional, Literal
+from typing import Union, Callable, Optional, Any, Literal, TYPE_CHECKING
 from threading import Lock
 from enum import IntEnum
 import time
 from weakref import WeakMethod
 from inspect import ismethod
 
-from PySide6.QtCore import QObject, QEvent, Slot, Signal, QTimer, Qt
-from PySide6.QtGui import QMouseEvent, QKeyEvent, QScrollEvent, QMoveEvent
+from PySide6.QtCore import QObject, QEvent, Signal, QTimer, Qt
+from PySide6.QtGui import QMouseEvent, QKeyEvent, QScrollEvent
+
+from amulet.app.qt.signal import SignalInstanceProtocol
 
 """
 When a key is released, we stop all all events that need that key.
@@ -26,11 +28,28 @@ KeyT = Union[
 ]
 ModifierT = frozenset[KeyT]
 Number = Union[float, int]
-ReceiverType = Union[Slot, Signal, Callable[[float], None], WeakMethod]
+
+type ReceiverType = Union[
+    SignalInstanceProtocol[[]],
+    Callable[[], Any],
+]
+
+type DeltaReceiverType = Union[
+    SignalInstanceProtocol[[]],
+    SignalInstanceProtocol[[float]],
+    Callable[[], Any],
+    Callable[[float], Any],
+]
+
+type DeltaReceiverStorageType = Union[
+    DeltaReceiverType,
+    WeakMethod[Callable[[], Any]],
+    WeakMethod[Callable[[float], Any]],
+]
 
 
 class TimerData(QObject):
-    event_receivers: set[ReceiverType]
+    event_receivers: set[DeltaReceiverStorageType]
     interval: float
 
     _timer: QTimer
@@ -173,14 +192,14 @@ class KeyCatcher(QObject):
 
     def connect_single_shot(
         self,
-        receiver: Union[Slot, Signal, Callable[[], None]],
+        receiver: ReceiverType,
         key: KeyT,
         modifiers: frozenset[KeyT],
     ) -> None:
         """
-        Connect a receiver (slot, signal or function) to a key press that is called once when pressed.
+        Connect a receiver (signal or function) to a key press that is called once when pressed.
 
-        :param receiver: The slot, signal or callable that is notified when the key combination is pressed.
+        :param receiver: The signal or callable that is notified when the key combination is pressed.
         :param key: The trigger key that activates the event.
         :param modifiers: The modifier keys that must be held when the trigger key is pressed.
         """
@@ -191,7 +210,7 @@ class KeyCatcher(QObject):
 
     def disconnect_single_shot(
         self,
-        receiver: Union[Slot, Signal, Callable[[], None]],
+        receiver: ReceiverType,
         key: KeyT,
         modifiers: frozenset[KeyT],
     ) -> None:
@@ -199,7 +218,7 @@ class KeyCatcher(QObject):
         Disconnect a single shot receiver.
         The arguments must be the same as were passed to the :meth:`connect_single_shot` method.
 
-        :param receiver: The slot, signal or callable that is notified when the key combination is pressed.
+        :param receiver: The signal or callable that is notified when the key combination is pressed.
         :param key: The trigger key that activates the event.
         :param modifiers: The modifier keys that must be held when the trigger key is pressed.
         """
@@ -212,15 +231,15 @@ class KeyCatcher(QObject):
 
     def connect_repeating(
         self,
-        receiver: Union[Slot, Signal, Callable[[float], None]],
+        receiver: DeltaReceiverType,
         key: KeyT,
         modifiers: frozenset[KeyT],
         interval: int,
     ) -> None:
         """
-        Connect a receiver (slot, signal or function) to a key press that is called once when pressed and every interval ms after until released.
+        Connect a receiver (signal or function) to a key press that is called once when pressed and every interval ms after until released.
 
-        :param receiver: The slot, signal or callable that is notified when the key combination is pressed.
+        :param receiver: The signal or callable that is notified when the key combination is pressed.
         :param key: The trigger key that activates the event.
         :param modifiers: The modifier keys that must be held when the trigger key is pressed.
         :param interval: The interval between receiver calls in milliseconds.
@@ -239,16 +258,16 @@ class KeyCatcher(QObject):
 
     def disconnect_repeating(
         self,
-        receiver: Union[Slot, Signal, Callable[[float], None]],
+        receiver: DeltaReceiverType,
         key: KeyT,
         modifiers: frozenset[KeyT],
         interval: int,
     ) -> None:
         """
-        Disconnect a repeating receiver (slot, signal or function).
+        Disconnect a repeating receiver (signal or function).
         The arguments must be the same as were passed to the :meth:`connect_repeating` method.
 
-        :param receiver: The slot, signal or callable that is notified when the key combination is pressed.
+        :param receiver: The signal or callable that is notified when the key combination is pressed.
         :param key: The trigger key that activates the event.
         :param modifiers: The modifier keys that must be held when the trigger key is pressed.
         :param interval: The interval between receiver calls in milliseconds.
