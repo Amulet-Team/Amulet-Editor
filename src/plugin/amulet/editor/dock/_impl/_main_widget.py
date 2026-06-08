@@ -10,7 +10,7 @@ from PySide6.QtGui import QShowEvent, QHideEvent
 from amulet.level.abc import Level
 
 from .._layout import LayoutConfig, SplitterConfig, WidgetStackConfig, get_layout
-from ..widget._widget import get_dock_widget_constructor
+from ..widget._widget import get_dock_widget_constructor, dock_widget_registered
 from ..widget._missing import MissingWidget, MissingTabIdentifier
 
 from ._child_window import DockChildWindow
@@ -35,6 +35,8 @@ class DockMainWidget(QWidget):
         self._widget: TabWidgetStack | RecursiveSplitter | None = None
 
         self._initialised = False
+
+        dock_widget_registered.connect(self._populate_widgets)
 
     def showEvent(self, event: QShowEvent) -> None:
         super().showEvent(event)
@@ -199,4 +201,19 @@ class DockMainWidget(QWidget):
         for config in layout_config.sub_windows:
             self._create_child_window(
                 self._init_layout(config.layout),
+            )
+
+    def _populate_widgets(self, widget_identifier: str) -> None:
+        """Populate all missing widgets of this type.
+        If a widget is created before its plugin is loaded, it will be a missing widget.
+        This function replaces all missing widgets with the real widget."""
+        widget_constructor = get_dock_widget_constructor(widget_identifier)
+        level = self._level
+        if isinstance(self._widget, (TabWidgetStack, RecursiveSplitter)):
+            self._widget.populate_widgets(
+                widget_identifier, lambda: widget_constructor(level)
+            )
+        for child_window in self._child_windows:
+            child_window.populate_widgets(
+                widget_identifier, lambda: widget_constructor(level)
             )

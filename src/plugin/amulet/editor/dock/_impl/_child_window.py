@@ -1,11 +1,13 @@
 from __future__ import annotations
 
 import logging
+from collections.abc import Callable
 
 from PySide6.QtCore import Qt
 from PySide6.QtGui import QCloseEvent
 from PySide6.QtWidgets import QMainWindow, QWidget
 
+from ..widget import DockWidget
 from . import _tab_widget
 from . import _tab_drag
 
@@ -119,3 +121,11 @@ class DockChildWindow(QMainWindow):
         # The parent keeps this object alive. We need to do this so it can be destroyed
         self.setParent(None)
         self.deleteLater()
+
+    def populate_widgets(
+        self, widget_identifier: str, widget_constructor: Callable[[], DockWidget]
+    ) -> None:
+        """Populate all missing widgets of this type.
+        If a widget is created before its plugin is loaded, it will be a missing widget.
+        This function replaces all missing widgets with the real widget."""
+        self._widget.populate_widgets(widget_identifier, widget_constructor)

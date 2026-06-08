@@ -34,6 +34,10 @@ from PySide6.QtWidgets import (
 from amulet.app.qt.signal import TypeFormSignal
 
 from plugin.amulet.editor.dock.widget import DockWidget
+from plugin.amulet.editor.dock.widget._missing import (
+    MissingWidget,
+    MissingTabIdentifier,
+)
 
 from . import _tab_drag
 
@@ -456,6 +460,29 @@ class TabWidgetStack(QWidget):
                 tab_widgets.append(tab_widget)
         return tab_widgets
 
+    def populate_widgets(
+        self, widget_identifier: str, widget_constructor: Callable[[], DockWidget]
+    ) -> None:
+        """Populate all missing widgets of this type.
+        If a widget is created before its plugin is loaded, it will be a missing widget.
+        This function replaces all missing widgets with the real widget."""
+        for tab_widget_meta in self._get_tab_widgets():
+            # If it is a missing widget
+            if tab_widget_meta.identifier != MissingTabIdentifier:
+                continue
+            widget = tab_widget_meta.widget
+            if (
+                isinstance(widget, MissingWidget)
+                and widget.identifier == widget_identifier
+            ):
+                # Replace the placeholder with the real widget
+                self._replace_widget(
+                    tab_widget_meta,
+                    TabWidgetMeta(widget_identifier, widget_constructor()),
+                )
+                tab_widget_meta.tab.deleteLater()
+                tab_widget_meta.widget.deleteLater()
+
 
 def get_tab_widget_stack(widget: QWidget) -> TabWidgetStack:
     """Get the TabWidgetStack that contains this widget."""
@@ -592,3 +619,13 @@ class RecursiveSplitter(QSplitter):
         if widget is None:
             raise RuntimeError(f"There is no widget at index {index}")
         return self.remove_widget(widget)
+
+    def populate_widgets(
+        self, widget_identifier: str, widget_constructor: Callable[[], DockWidget]
+    ) -> None:
+        """Populate all missing widgets of this type.
+        If a widget is created before its plugin is loaded, it will be a missing widget.
+        This function replaces all missing widgets with the real widget."""
+        for child_widget in self.children():
+            if isinstance(child_widget, (TabWidgetStack, RecursiveSplitter)):
+                child_widget.populate_widgets(widget_identifier, widget_constructor)
