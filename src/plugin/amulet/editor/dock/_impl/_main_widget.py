@@ -32,9 +32,7 @@ class DockMainWidget(QWidget):
         self._layout.setContentsMargins(0, 0, 0, 0)
         self._layout.setSpacing(0)
 
-        self._widget: TabWidgetStack | RecursiveSplitter = RecursiveSplitter()
-        self._bind_events(self._widget)
-        self._layout.addWidget(self._widget)
+        self._widget: TabWidgetStack | RecursiveSplitter | None = None
 
         self._initialised = False
 
@@ -61,14 +59,14 @@ class DockMainWidget(QWidget):
         return window
 
     def _bind_events(self, widget: TabWidgetStack | RecursiveSplitter) -> None:
-        log.debug(f"AmuletMainWindow._bind_events({widget})")
+        log.debug(f"DockMainWidget._bind_events({widget})")
         if isinstance(widget, TabWidgetStack):
             widget.split.connect(self._on_split)
         else:
             widget.penultimate_child_removed.connect(self._on_penultimate_child_removed)
 
     def _unbind_events(self, widget: TabWidgetStack | RecursiveSplitter) -> None:
-        log.debug(f"AmuletMainWindow._unbind_events({widget})")
+        log.debug(f"DockMainWidget._unbind_events({widget})")
         if isinstance(widget, TabWidgetStack):
             widget.split.disconnect(self._on_split)
         else:
@@ -77,7 +75,7 @@ class DockMainWidget(QWidget):
             )
 
     def _on_penultimate_child_removed(self) -> None:
-        log.debug(f"AmuletMainWindow._on_penultimate_child_removed()")
+        log.debug(f"DockMainWidget._on_penultimate_child_removed()")
         # Switch from a splitter to a stack
         if isinstance(self._widget, RecursiveSplitter):
             old_widget = self._widget
@@ -100,7 +98,7 @@ class DockMainWidget(QWidget):
         new_widget: TabWidgetStack,
         direction: DropArea,
     ) -> None:
-        log.debug(f"AmuletMainWindow._on_split()")
+        log.debug(f"DockMainWidget._on_split()")
         # Switch from a stack to a splitter
         if isinstance(self._widget, TabWidgetStack):
             # Remove the old widget
@@ -136,10 +134,11 @@ class DockMainWidget(QWidget):
 
     def _replace_widget(
         self, new_widget: TabWidgetStack | RecursiveSplitter
-    ) -> TabWidgetStack | RecursiveSplitter:
+    ) -> TabWidgetStack | RecursiveSplitter | None:
         old_widget = self._widget
-        self._unbind_events(old_widget)
-        self._layout.removeWidget(old_widget)
+        if old_widget is not None:
+            self._unbind_events(old_widget)
+            self._layout.removeWidget(old_widget)
         self._layout.addWidget(new_widget)
         self._bind_events(new_widget)
         self._widget = new_widget
@@ -191,9 +190,11 @@ class DockMainWidget(QWidget):
     def _create_layout(self, layout_config: LayoutConfig) -> None:
         """Initialisation of the layout."""
         # TODO: set window position and size
-        self._replace_widget(
+        old_widget = self._replace_widget(
             self._init_layout(layout_config.main_window.layout)
-        ).deleteLater()
+        )
+        if old_widget is not None:
+            old_widget.deleteLater()
         for config in layout_config.sub_windows:
             self._create_child_window(
                 self._init_layout(config.layout),
