@@ -19,9 +19,9 @@ class DockWidgetAPI(QObject):
         self._widget_classes: dict[str, DockWidgetConstructor] = {}
 
     # Emitted when a widget is registered
-    widget_registered = Signal(str)
+    dock_widget_registered = Signal(str)
 
-    def register_tab_widget(
+    def register_dock_widget(
         self, widget_identifier: str, widget_constructor: DockWidgetConstructor
     ) -> None:
         """
@@ -34,12 +34,12 @@ class DockWidgetAPI(QObject):
         with self._lock:
             if widget_identifier in self._widget_classes:
                 raise ValueError(
-                    f"TabWidget type {widget_identifier} has already been registered."
+                    f"DockWidget type {widget_identifier} has already been registered."
                 )
             self._widget_classes[widget_identifier] = widget_constructor
-            self.widget_registered.emit(widget_identifier)
+            self.dock_widget_registered.emit(widget_identifier)
 
-    def get_tab_widget_constructor(
+    def get_dock_widget_constructor(
         self, widget_identifier: str
     ) -> DockWidgetConstructor:
         """Get the registered widget from its qualified name.
@@ -55,6 +55,6 @@ class DockWidgetAPI(QObject):
 
 
 dock_widget_api = DockWidgetAPI()
-widget_registered = dock_widget_api.widget_registered
-register_tab_widget = dock_widget_api.register_tab_widget
-get_tab_widget_constructor = dock_widget_api.get_tab_widget_constructor
+dock_widget_registered = dock_widget_api.dock_widget_registered
+register_dock_widget = dock_widget_api.register_dock_widget
+get_dock_widget_constructor = dock_widget_api.get_dock_widget_constructor

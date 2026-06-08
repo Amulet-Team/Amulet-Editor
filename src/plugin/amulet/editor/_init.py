@@ -8,7 +8,7 @@ from amulet.level import Level
 
 from plugin.tablericons import tablericons
 
-from .dock.widget import register_tab_widget
+from .dock.widget import register_dock_widget
 from .dock.layout import (
     LayoutConfig,
     WindowConfig,
@@ -314,18 +314,18 @@ def init_editor_tools() -> None:
         ),
     )
 
-    register_tab_widget(MetadataWidgetIdentifier, MetadataWidget)
-    register_tab_widget(SelectionWidgetIdentifier, SelectionWidget)
-    register_tab_widget(BlockEditWidgetIdentifier, BlockEditWidget)
-    register_tab_widget(BrushWidgetIdentifier, BrushWidget)
-    register_tab_widget(ViewportWidgetIdentifier, ViewportWidget)
-    register_tab_widget(FillReplaceWidgetIdentifier, FillReplaceWidget)
-    register_tab_widget(ImportWidgetIdentifier, ImportWidget)
-    register_tab_widget(ExportWidgetIdentifier, ExportWidget)
-    register_tab_widget(ClipboardWidgetIdentifier, ClipboardWidget)
-    register_tab_widget(PasteWidgetIdentifier, PasteWidget)
-    register_tab_widget(OperationWidgetIdentifier, OperationWidget)
-    register_tab_widget(ChunkWidgetIdentifier, ChunkWidget)
-    register_tab_widget(PlayerWidgetIdentifier, PlayerWidget)
+    register_dock_widget(MetadataWidgetIdentifier, MetadataWidget)
+    register_dock_widget(SelectionWidgetIdentifier, SelectionWidget)
+    register_dock_widget(BlockEditWidgetIdentifier, BlockEditWidget)
+    register_dock_widget(BrushWidgetIdentifier, BrushWidget)
+    register_dock_widget(ViewportWidgetIdentifier, ViewportWidget)
+    register_dock_widget(FillReplaceWidgetIdentifier, FillReplaceWidget)
+    register_dock_widget(ImportWidgetIdentifier, ImportWidget)
+    register_dock_widget(ExportWidgetIdentifier, ExportWidget)
+    register_dock_widget(ClipboardWidgetIdentifier, ClipboardWidget)
+    register_dock_widget(PasteWidgetIdentifier, PasteWidget)
+    register_dock_widget(OperationWidgetIdentifier, OperationWidget)
+    register_dock_widget(ChunkWidgetIdentifier, ChunkWidget)
+    register_dock_widget(PlayerWidgetIdentifier, PlayerWidget)
 
     get_amulet_editor().level_tab_init.connect(_init_level_tools)

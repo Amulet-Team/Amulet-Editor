@@ -10,7 +10,7 @@ from PySide6.QtGui import QShowEvent, QHideEvent
 from amulet.level.abc import Level
 
 from .._layout import LayoutConfig, SplitterConfig, WidgetStackConfig, get_layout
-from ..widget._widget import get_tab_widget_constructor
+from ..widget._widget import get_dock_widget_constructor
 from ..widget._missing import MissingWidget, MissingTabIdentifier
 
 from ._child_window import DockChildWindow
@@ -143,6 +143,7 @@ class DockMainWidget(QWidget):
         self._bind_events(new_widget)
         self._widget = new_widget
         return old_widget
+
     def _init_layout(
         self,
         layout: SplitterConfig | WidgetStackConfig,
@@ -171,7 +172,7 @@ class DockMainWidget(QWidget):
             tab_widget = TabWidgetStack(create_child_window)
             for widget_config in layout.widgets:
                 try:
-                    widget_cls = get_tab_widget_constructor(widget_config.identifier)
+                    widget_cls = get_dock_widget_constructor(widget_config.identifier)
                 except KeyError:
                     tab_widget_meta = TabWidgetMeta(
                         MissingTabIdentifier,
