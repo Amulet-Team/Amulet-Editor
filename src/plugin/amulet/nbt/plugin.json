@@ -1,0 +1,17 @@
+{
+	"namespace": "amulet",
+	"identifier": "nbt",
+	"version": "1.0.0",
+	"name": "Amulet NBT Editor",
+	"depends": {
+		"python": "~=3.11",
+		"library": [
+			"PySide6_Essentials~=6.10",
+			"amulet_nbt~=5.0a0",
+			"amulet_editor~=1.0a0"
+		],
+		"plugin": [
+			"tablericons.tablericons~=3.34"
+		]
+	}
+}

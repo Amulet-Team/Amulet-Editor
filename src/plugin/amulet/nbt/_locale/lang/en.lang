@@ -1,0 +1,12 @@
+plugin.amulet.nbt.app_name=Amulet NBT Editor
+
+plugin.amulet.nbt.count_items={count} items
+plugin.amulet.nbt.edit_tag=Edit {cls}
+
+plugin.amulet.nbt.copy_fail=Failed copying SNBT
+plugin.amulet.nbt.paste_fail=Failed pasting SNBT
+plugin.amulet.nbt.edit_fail=Failed editing value
+
+plugin.amulet.nbt.edit=Edit
+plugin.amulet.nbt.copy=Copy
+plugin.amulet.nbt.paste=Paste
