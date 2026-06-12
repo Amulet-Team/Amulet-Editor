@@ -17,11 +17,15 @@ Colours = [
         "button_dark": "#efefef",
         "button_hover_light": "#dadada",
         "button_hover_dark": "#c7c7c7",
+        "button_disabled_light": "#f6f6f6",
+        "button_disabled_dark": "#c7c7c7",
         "button_hover_2": "#a0a0a0",
         "button_checked_light": "#82d4ff",
         "button_checked_dark": "#82d4ff",
         "button_checked_hover_light": "#64bbe9",
         "button_checked_hover_dark": "#41ade4",
+        "button_checked_disabled_light": "#4c97be",
+        "button_checked_disabled_dark": "#28739a",
         "tab_widget_light": "#fcfcfc",
         "tab_widget_dark": "#fcfcfc",
     },
@@ -33,11 +37,15 @@ Colours = [
         "button_dark": "#474747",
         "button_hover_light": "#848484",
         "button_hover_dark": "#717171",
+        "button_disabled_light": "#4d4d4d",
+        "button_disabled_dark": "#383838",
         "button_hover_2": "#a0a0a0",
         "button_checked_light": "#4cc2ff",
         "button_checked_dark": "#3a9ccf",
         "button_checked_hover_light": "#23a0e1",
         "button_checked_hover_dark": "#2e7ca5",
+        "button_checked_disabled_light": "#4c97be",
+        "button_checked_disabled_dark": "#28739a",
         "tab_widget_light": "#303030",
         "tab_widget_dark": "#303030",
     },
@@ -83,6 +91,20 @@ QPushButton:hover {{
     );
 }}
 
+QPushButton:disabled {{
+    background: qlineargradient(
+        coordinatemode: logical,
+        spread: repeat,
+        x1: 0, y1: 0,
+        x2: 4, y2: 4,
+        stop: 0 {button_disabled_light},
+        stop: 0.5 {button_disabled_light},
+        stop: 0.501 {button_disabled_dark},
+        stop: 1 {button_disabled_dark}
+    );
+    color: black;
+}}
+
 QPushButton:checked {{
     background: qlineargradient(
         x1: 0, y1: 0,
@@ -99,6 +121,20 @@ QPushButton:checked:hover {{
         x2: 0, y2: 1,
         stop: 0 {button_checked_hover_light},
         stop: 1 {button_checked_hover_dark}
+    );
+    color: black;
+}}
+
+QPushButton:checked:disabled {{
+    background: qlineargradient(
+        coordinatemode: logical,
+        spread: repeat,
+        x1: 0, y1: 0,
+        x2: 4, y2: 4,
+        stop: 0 {button_checked_disabled_light},
+        stop: 0.5 {button_checked_disabled_light},
+        stop: 0.501 {button_checked_disabled_dark},
+        stop: 1 {button_checked_disabled_dark}
     );
     color: black;
 }}
