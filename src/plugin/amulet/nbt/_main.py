@@ -1,7 +1,7 @@
 from __future__ import annotations
 
-from typing import NoReturn
-from argparse import ArgumentParser, Namespace
+from typing import NoReturn, cast
+from argparse import Namespace
 import logging
 import sys
 
@@ -22,6 +22,7 @@ from amulet.nbt import (
     CompoundTag,
     IntArrayTag,
     LongArrayTag,
+    AnyNBT,
 )
 
 from amulet.app import __version__
@@ -41,18 +42,6 @@ class EditorNamespace(Namespace):
 
 
 def main(argv: list[str]) -> NoReturn:
-    parser = ArgumentParser("amulet_editor amulet_editor")
-    parser.add_argument(
-        "level_paths",
-        type=str,
-        nargs="*",
-        help="The Minecraft worlds or structures to open",
-        action="store",
-    )
-    args = parser.parse_args(argv, namespace=EditorNamespace())
-
-    # TODO: check if a session is already running and open the levels in that session
-
     # Check an app has not already been created
     if QApplication.instance() is not None:
         raise RuntimeError("QApplication has already been initialized")
@@ -84,20 +73,24 @@ def main(argv: list[str]) -> NoReturn:
         # LongArrayTag([1, 2, 3]),
         NamedTag(
             CompoundTag(
-                {
-                    "ByteTag": ByteTag(1),
-                    "ShortTag": ShortTag(2),
-                    "IntTag": IntTag(3),
-                    "LongTag": LongTag(4),
-                    "FloatTag": FloatTag(5.0),
-                    "DoubleTag": DoubleTag(6.0),
-                    "ByteArrayTag": ByteArrayTag([1, 2, 3]),
-                    "StringTag": StringTag("Hello, world!"),
-                    "ListTag": ListTag([IntTag(1), IntTag(2), IntTag(3)]),
-                    "CompoundTag": CompoundTag(),
-                    "IntArrayTag": IntArrayTag([1, 2, 3]),
-                    "LongArrayTag": LongArrayTag([1, 2, 3]),
-                }
+                cast(
+                    dict[str | bytes, AnyNBT],
+                    {
+                        "ByteTag": ByteTag(1),
+                        "ShortTag": ShortTag(2),
+                        "IntTag": IntTag(3),
+                        "LongTag": LongTag(4),
+                        "FloatTag": FloatTag(5.0),
+                        "DoubleTag": DoubleTag(6.0),
+                        "ByteArrayTag": ByteArrayTag([1, 2, 3]),
+                        "StringTag": StringTag("Hello, world!"),
+                        "ListTag": ListTag([IntTag(1), IntTag(2), IntTag(3)]),
+                        "CompoundTag": CompoundTag(),
+                        "IntArrayTag": IntArrayTag([1, 2, 3]),
+                        "LongArrayTag": LongArrayTag([1, 2, 3]),
+                        b"\xff": StringTag(b"\xff"),
+                    },
+                )
             ),
             "test",
         ),
