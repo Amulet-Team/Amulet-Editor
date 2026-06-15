@@ -2,19 +2,32 @@ plugin.amulet.nbt.app_name=Amulet NBT Editor
 
 plugin.amulet.nbt.count_items={count} items
 plugin.amulet.nbt.count_items_single={count} items
-plugin.amulet.nbt.edit_tag=Edit {cls}
 
 plugin.amulet.nbt.copy_fail=Failed copying SNBT
 plugin.amulet.nbt.paste_fail=Failed pasting SNBT
 plugin.amulet.nbt.edit_fail=Failed editing value
 
-plugin.amulet.nbt.edit=Edit
-plugin.amulet.nbt.delete=Delete
-plugin.amulet.nbt.move_up=Move Up
-plugin.amulet.nbt.move_down=Move Down
+plugin.amulet.nbt.edit_name=Edit Name
+plugin.amulet.nbt.edit_name_tooltip=Edit the name of the selected tag
+plugin.amulet.nbt.edit_name_confirm=A tag with this name already exists. Do you want to replace it?
+plugin.amulet.nbt.edit_tag=Edit Tag
+plugin.amulet.nbt.edit_tag_cls=Edit {cls}
+plugin.amulet.nbt.edit_tag_tooltip=Edit the selected tag
+plugin.amulet.nbt.add=Add
+plugin.amulet.nbt.add_tooltip=Add a tag to the selected tag
 plugin.amulet.nbt.duplicate=Duplicate
-
+plugin.amulet.nbt.duplicate_tooltip=Duplicate the selected tag
+plugin.amulet.nbt.delete=Delete
+plugin.amulet.nbt.delete_tooltip=Delete the selected tag
+plugin.amulet.nbt.cut=Cut
+plugin.amulet.nbt.cut_tooltip=Copy the selected tag to the clipboard and delete it
 plugin.amulet.nbt.copy=Copy
+plugin.amulet.nbt.copy_tooltip=Copy the selected tag to the clipboard
 plugin.amulet.nbt.paste=Paste
+plugin.amulet.nbt.paste_tooltip=
+plugin.amulet.nbt.move_up=Move Up
+plugin.amulet.nbt.move_up_tooltip=Move the selected tag up
+plugin.amulet.nbt.move_down=Move Down
+plugin.amulet.nbt.move_down_tooltip=Move the selected tag down
 
-plugin.amulet.nbt.paste_replace=Replace from Clipboard
+

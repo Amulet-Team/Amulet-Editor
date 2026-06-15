@@ -3,7 +3,7 @@ from copy import deepcopy
 from typing import SupportsInt
 
 from PySide6.QtCore import QPoint, Qt, QSize, QEvent
-from PySide6.QtGui import QPixmap, QKeyEvent, QMouseEvent
+from PySide6.QtGui import QPixmap, QKeyEvent, QMouseEvent, QEnterEvent, QCursor
 from PySide6.QtWidgets import (
     QWidget,
     QTreeWidget,
@@ -16,6 +16,8 @@ from PySide6.QtWidgets import (
     QApplication,
     QHBoxLayout,
     QPushButton,
+    QToolTip,
+    QMessageBox,
 )
 from PySide6.QtSvgWidgets import QSvgWidget
 
@@ -146,39 +148,40 @@ class NBTTreeWidgetItem(QTreeWidgetItem):
     def get_tag(self) -> TagType:
         return self._tag
 
-    def set_tag(self, tag: TagType) -> None:
-        parent = self.parent()
-        if isinstance(parent, NBTTreeWidgetItem):
-            parent_tag = parent.get_tag()
-            if isinstance(tag, NamedTag):
-                raise TypeError("NamedTag cannot be a child of another tag")
-            if isinstance(parent_tag, CompoundTag):
-                if self._key is None:
-                    raise RuntimeError("Item with CompoundTag parent has no key")
-                parent_tag[self._key] = tag
-            elif isinstance(parent_tag, ListTag):
-                parent_tag[parent.indexOfChild(self)] = tag
-            elif isinstance(parent_tag, NamedTag):
-                parent_tag.tag = tag
-            elif isinstance(parent_tag, ByteArrayTag):
-                if not isinstance(tag, ByteTag):
-                    raise TypeError("ByteArrayTag can only contain ByteTag")
-                parent_tag[parent.indexOfChild(self)] = tag
-            elif isinstance(parent_tag, IntArrayTag):
-                if not isinstance(tag, IntTag):
-                    raise TypeError("IntArrayTag can only contain IntTag")
-                parent_tag[parent.indexOfChild(self)] = tag
-            elif isinstance(parent_tag, LongArrayTag):
-                if not isinstance(tag, LongTag):
-                    raise TypeError("LongArrayTag can only contain LongTag")
-                parent_tag[parent.indexOfChild(self)] = tag
-            else:
-                raise RuntimeError(f"Unsupported parent type {type(parent_tag)}")
+    def set_tag(self, tag: TagType, update_parent: bool) -> None:
+        if update_parent:
+            parent = self.parent()
+            if isinstance(parent, NBTTreeWidgetItem):
+                parent_tag = parent.get_tag()
+                if isinstance(tag, NamedTag):
+                    raise TypeError("NamedTag cannot be a child of another tag")
+                if isinstance(parent_tag, CompoundTag):
+                    if self._key is None:
+                        raise RuntimeError("Item with CompoundTag parent has no key")
+                    parent_tag[self._key] = tag
+                elif isinstance(parent_tag, ListTag):
+                    parent_tag[parent.indexOfChild(self)] = tag
+                elif isinstance(parent_tag, NamedTag):
+                    parent_tag.tag = tag
+                elif isinstance(parent_tag, ByteArrayTag):
+                    if not isinstance(tag, ByteTag):
+                        raise TypeError("ByteArrayTag can only contain ByteTag")
+                    parent_tag[parent.indexOfChild(self)] = tag
+                elif isinstance(parent_tag, IntArrayTag):
+                    if not isinstance(tag, IntTag):
+                        raise TypeError("IntArrayTag can only contain IntTag")
+                    parent_tag[parent.indexOfChild(self)] = tag
+                elif isinstance(parent_tag, LongArrayTag):
+                    if not isinstance(tag, LongTag):
+                        raise TypeError("LongArrayTag can only contain LongTag")
+                    parent_tag[parent.indexOfChild(self)] = tag
+                else:
+                    raise RuntimeError(f"Unsupported parent type {type(parent_tag)}")
         self._tag = tag
 
-    def set_tag_and_display(self, tag: TagType) -> None:
+    def set_tag_and_display(self, tag: TagType, update_parent: bool) -> None:
         """Set the tag and update the display."""
-        self.set_tag(tag)
+        self.set_tag(tag, update_parent)
         self.update_text()
         self.update_icon()
         self._remove_children()
@@ -189,9 +192,14 @@ class NBTTreeWidgetItem(QTreeWidgetItem):
 
     def set_key(self, key: str | bytes) -> None:
         """Set the key for this item."""
-        if not isinstance(self._tag, NamedTag):
-            raise RuntimeError("Key can only be set for NamedTag")
-        self._tag.name = key
+        if isinstance(self._tag, NamedTag):
+            self._tag.name = key
+        elif self._key is not None:
+            self._key = key
+        else:
+            raise RuntimeError(
+                "Key can only be set for NamedTag or child of CompoundTag"
+            )
         self.update_text()
 
     def update_text(self) -> None:
@@ -204,8 +212,8 @@ class NBTTreeWidgetItem(QTreeWidgetItem):
                 parent_tag, (ListTag, ByteArrayTag, IntArrayTag, LongArrayTag)
             ):
                 text = f"{parent_item.indexOfChild(self)}: " + text
-            if isinstance(parent_tag, CompoundTag):
-                text = f"{self._key or ""!r}: {text}"
+        if self._key is not None:
+            text = f"{self._key or ""!r}: {text}"
         self.setText(0, text)
 
     def update_icon(self) -> None:
@@ -249,7 +257,7 @@ class NBTTreeWidgetItem(QTreeWidgetItem):
                 NBTTreeWidgetItem(self, item)
         elif isinstance(tag, CompoundTag):
             for key, item in sorted(
-                map(lambda v: (get_string(v[0]), v[1]), tag.items()), key=lambda v: v[0]
+                tag.items(), key=lambda v: (isinstance(v[0], bytes), v[0])
             ):
                 NBTTreeWidgetItem(self, item, key)
         elif isinstance(tag, ByteArrayTag):
@@ -299,7 +307,23 @@ class SVGButton(QPushButton):
         self._layout.setContentsMargins(0, 0, 0, 0)
         self._layout.setAlignment(Qt.AlignmentFlag.AlignCenter)
         self._icon = QSvgWidget(icon_path)
+        self._icon.setAttribute(Qt.WidgetAttribute.WA_TransparentForMouseEvents)
         self._layout.addWidget(self._icon)
+        self._tip: str = ""
+
+    def setToolTip(self, tip: str) -> None:
+        self._tip = tip
+
+    def toolTip(self) -> str:
+        return self._tip
+
+    def enterEvent(self, event: QEnterEvent) -> None:
+        super().enterEvent(event)
+        if self._tip:
+            pos = self.mapToGlobal(self.rect().bottomLeft())
+            # QToolTip adds an offset that we have to subtract.
+            pos.setY(pos.y() - int(16 / self.devicePixelRatio()))
+            QToolTip.showText(pos, self._tip, self)
 
 
 class TreeWidget(QTreeWidget):
@@ -319,25 +343,15 @@ class NBTWidgetP(QWidget):
         self._tool_layout = QHBoxLayout()
         self._layout.addLayout(self._tool_layout)
 
-        self._edit_button = SVGButton(tablericons.outline.pencil)
-        self._edit_button.setFixedSize(QSize(30, 30))
-        self._edit_button.clicked.connect(self._edit_current_item)
-        self._tool_layout.addWidget(self._edit_button)
+        self._edit_name_button = SVGButton(tablericons.outline.cursor_text)
+        self._edit_name_button.setFixedSize(QSize(30, 30))
+        self._edit_name_button.clicked.connect(self._edit_current_item_name)
+        self._tool_layout.addWidget(self._edit_name_button)
 
-        self._cut_button = SVGButton(tablericons.outline.scissors)
-        self._cut_button.setFixedSize(QSize(30, 30))
-        self._cut_button.clicked.connect(self._cut_current_item)
-        self._tool_layout.addWidget(self._cut_button)
-
-        self._copy_button = SVGButton(tablericons.outline.copy)
-        self._copy_button.setFixedSize(QSize(30, 30))
-        self._copy_button.clicked.connect(self._copy_current_item)
-        self._tool_layout.addWidget(self._copy_button)
-
-        self._paste_button = SVGButton(tablericons.outline.clipboard)
-        self._paste_button.setFixedSize(QSize(30, 30))
-        self._paste_button.clicked.connect(self._paste_current_item)
-        self._tool_layout.addWidget(self._paste_button)
+        self._edit_tag_button = SVGButton(tablericons.outline.pencil)
+        self._edit_tag_button.setFixedSize(QSize(30, 30))
+        self._edit_tag_button.clicked.connect(self._edit_current_item_tag)
+        self._tool_layout.addWidget(self._edit_tag_button)
 
         self._add_button = SVGButton(tablericons.outline.plus)
         self._add_button.setFixedSize(QSize(30, 30))
@@ -353,6 +367,21 @@ class NBTWidgetP(QWidget):
         self._delete_button.setFixedSize(QSize(30, 30))
         self._delete_button.clicked.connect(self._delete_current_item)
         self._tool_layout.addWidget(self._delete_button)
+
+        self._cut_button = SVGButton(tablericons.outline.scissors)
+        self._cut_button.setFixedSize(QSize(30, 30))
+        self._cut_button.clicked.connect(self._cut_current_item)
+        self._tool_layout.addWidget(self._cut_button)
+
+        self._copy_button = SVGButton(tablericons.outline.copy)
+        self._copy_button.setFixedSize(QSize(30, 30))
+        self._copy_button.clicked.connect(self._copy_current_item)
+        self._tool_layout.addWidget(self._copy_button)
+
+        self._paste_button = SVGButton(tablericons.outline.clipboard)
+        self._paste_button.setFixedSize(QSize(30, 30))
+        self._paste_button.clicked.connect(self._paste_current_item)
+        self._tool_layout.addWidget(self._paste_button)
 
         self._move_up_button = SVGButton(tablericons.outline.arrow_up)
         self._move_up_button.setFixedSize(QSize(30, 30))
@@ -373,6 +402,8 @@ class NBTWidgetP(QWidget):
         self._tree.setHeaderHidden(True)
         self._tree.setExpandsOnDoubleClick(False)
 
+        self._localise()
+
         self._tree.itemExpanded.connect(self._populate_children)
         self._tree.currentItemChanged.connect(self._update_buttons)
         self.set_tag(tag)
@@ -386,12 +417,13 @@ class NBTWidgetP(QWidget):
             item = self._tree.currentItem()
         if not isinstance(item, NBTTreeWidgetItem):
             return
-        self._edit_button.setEnabled(self._supports_edit(item))
-        self._cut_button.setEnabled(self._supports_delete(item))
-        # TODO: paste
+        self._edit_name_button.setEnabled(self._supports_edit_name(item))
+        self._edit_tag_button.setEnabled(self._supports_edit_tag(item))
         self._add_button.setEnabled(self._supports_add_item(item))
         self._duplicate_button.setEnabled(self._supports_duplicate(item))
         self._delete_button.setEnabled(self._supports_delete(item))
+        self._cut_button.setEnabled(self._supports_cut(item))
+        # TODO: paste
         self._move_up_button.setEnabled(self._supports_move_up(item))
         self._move_down_button.setEnabled(self._supports_move_down(item))
 
@@ -410,6 +442,36 @@ class NBTWidgetP(QWidget):
         for i in range(self._tree.topLevelItemCount()):
             localise_item(self._tree.topLevelItem(i))
 
+        self._edit_name_button.setToolTip(
+            QApplication.translate("plugin.amulet.nbt", "edit_name_tooltip", None)
+        )
+        self._edit_tag_button.setToolTip(
+            QApplication.translate("plugin.amulet.nbt", "edit_tag_tooltip", None)
+        )
+        self._add_button.setToolTip(
+            QApplication.translate("plugin.amulet.nbt", "add_tooltip", None)
+        )
+        self._duplicate_button.setToolTip(
+            QApplication.translate("plugin.amulet.nbt", "duplicate_tooltip", None)
+        )
+        self._delete_button.setToolTip(
+            QApplication.translate("plugin.amulet.nbt", "delete_tooltip", None)
+        )
+        self._cut_button.setToolTip(
+            QApplication.translate("plugin.amulet.nbt", "cut_tooltip", None)
+        )
+        self._copy_button.setToolTip(
+            QApplication.translate("plugin.amulet.nbt", "copy_tooltip", None)
+        )
+        self._paste_button.setToolTip(
+            QApplication.translate("plugin.amulet.nbt", "paste_tooltip", None)
+        )
+        self._move_up_button.setToolTip(
+            QApplication.translate("plugin.amulet.nbt", "move_up_tooltip", None)
+        )
+        self._move_down_button.setToolTip(
+            QApplication.translate("plugin.amulet.nbt", "move_down_tooltip", None)
+        )
         # TODO: localise buttons
 
     def get_tag(self) -> TagType:
@@ -437,41 +499,48 @@ class NBTWidgetP(QWidget):
 
     def _double_clicked(self, item: QTreeWidgetItem) -> None:
         if isinstance(item, NBTTreeWidgetItem):
-            self._edit_item(item)
+            self._edit_item_tag(item)
 
     def _right_clicked(self, point: QPoint) -> None:
         item = self._tree.itemAt(point)
         if isinstance(item, NBTTreeWidgetItem):
-            nbt_item = item
             menu = QMenu(self)
-            if isinstance(
-                nbt_item.get_tag(),
-                (
-                    NamedTag,
-                    ByteTag,
-                    ShortTag,
-                    IntTag,
-                    LongTag,
-                    FloatTag,
-                    DoubleTag,
-                    StringTag,
-                ),
-            ):
+            if self._supports_edit_name(item):
                 menu.addAction(
-                    QApplication.translate("plugin.amulet.nbt", "edit", None),
-                    self._edit_current_item,
+                    QApplication.translate("plugin.amulet.nbt", "edit_name", None),
+                    self._edit_current_item_name,
+                )
+            if self._supports_edit_tag(item):
+                menu.addAction(
+                    QApplication.translate("plugin.amulet.nbt", "edit_tag", None),
+                    self._edit_current_item_tag,
+                )
+            if self._supports_add_item(item):
+                menu.addAction(
+                    QApplication.translate("plugin.amulet.nbt", "add", None),
+                    self._add_current_item,
+                )
+            if self._supports_duplicate(item):
+                menu.addAction(
+                    QApplication.translate("plugin.amulet.nbt", "duplicate", None),
+                    self._duplicate_current_item,
                 )
             if self._supports_delete(item):
                 menu.addAction(
                     QApplication.translate("plugin.amulet.nbt", "delete", None),
                     self._delete_current_item,
                 )
+            if self._supports_cut(item):
+                menu.addAction(
+                    QApplication.translate("plugin.amulet.nbt", "cut", None),
+                    self._cut_current_item,
+                )
             menu.addAction(
                 QApplication.translate("plugin.amulet.nbt", "copy", None),
                 self._copy_current_item,
             )
             menu.addAction(
-                QApplication.translate("plugin.amulet.nbt", "paste_replace", None),
+                QApplication.translate("plugin.amulet.nbt", "paste", None),
                 self._paste_current_item,
             )
             # menu.addAction(
@@ -482,20 +551,15 @@ class NBTWidgetP(QWidget):
             #     QApplication.translate("plugin.amulet.nbt", "paste_prepend", None),
             #     lambda: None,
             # )
-            if self._supports_move_up(nbt_item):
+            if self._supports_move_up(item):
                 menu.addAction(
                     QApplication.translate("plugin.amulet.nbt", "move_up", None),
                     self._move_current_item_up,
                 )
-            if self._supports_move_down(nbt_item):
+            if self._supports_move_down(item):
                 menu.addAction(
                     QApplication.translate("plugin.amulet.nbt", "move_down", None),
                     self._move_current_item_down,
-                )
-            if self._supports_duplicate(nbt_item):
-                menu.addAction(
-                    QApplication.translate("plugin.amulet.nbt", "duplicate", None),
-                    self._duplicate_current_item,
                 )
             menu.exec(self._tree.mapToGlobal(point))
             menu.deleteLater()
@@ -530,11 +594,113 @@ class NBTWidgetP(QWidget):
             super().keyPressEvent(event)
 
     @staticmethod
-    def _supports_edit(item: NBTTreeWidgetItem) -> bool:
+    def _supports_edit_name(item: NBTTreeWidgetItem) -> bool:
+        if isinstance(item.get_tag(), NamedTag):
+            return True
+        parent_item = item.parent()
+        if isinstance(parent_item, NBTTreeWidgetItem):
+            return isinstance(parent_item.get_tag(), CompoundTag)
+        return False
+
+    def _edit_item_name(self, item: NBTTreeWidgetItem) -> None:
+        with CatchExceptionDialog(
+            QApplication.translate("plugin.amulet.nbt", "edit_fail", None)
+        ):
+            tag = item.get_tag()
+            if isinstance(tag, NamedTag):
+                name = tag.name
+                if isinstance(name, bytes):
+                    name = get_string(name)
+                str_widget = QLineEdit(name)
+                dialog = EditDialog(
+                    self,
+                    str_widget,
+                    QApplication.translate(
+                        "plugin.amulet.nbt", "edit_tag_cls", None
+                    ).format(cls="NamedTag"),
+                )
+                if dialog.exec():
+                    item.set_key(str_widget.text())
+            else:
+                parent_item = item.parent()
+                if not isinstance(parent_item, NBTTreeWidgetItem):
+                    return
+                parent_tag = parent_item.get_tag()
+                if isinstance(parent_tag, CompoundTag):
+                    key = item.get_key()
+                    if key is None:
+                        return
+                    key_str = get_string(key)
+                    str_widget = QLineEdit(key_str)
+                    dialog = EditDialog(
+                        self,
+                        str_widget,
+                        QApplication.translate("plugin.amulet.nbt", "edit_name", None),
+                    )
+                    if dialog.exec():
+                        new_key = str_widget.text()
+                        if new_key != key_str:
+                            tag_replaced = new_key in parent_tag
+                            if tag_replaced:
+                                message_box = QMessageBox()
+                                message_box.setText(
+                                    QApplication.translate(
+                                        "plugin.amulet.nbt", "edit_name_confirm", None
+                                    )
+                                )
+                                message_box.setStandardButtons(
+                                    QMessageBox.StandardButton.Yes
+                                    | QMessageBox.StandardButton.No
+                                )
+                                if message_box.exec() == QMessageBox.StandardButton.No:
+                                    return
+                                parent_item.removeChild(item)
+                                # Find the other item and set its tag
+                                for i in range(parent_item.childCount()):
+                                    child = parent_item.child(i)
+                                    if (
+                                        isinstance(child, NBTTreeWidgetItem)
+                                        and child.get_key() == new_key
+                                    ):
+                                        child.set_tag_and_display(tag, False)
+                                        self._tree.setCurrentItem(child)
+                                        break
+                                else:
+                                    raise RuntimeError("Could not find item to replace")
+                            else:
+                                parent_item.removeChild(item)
+                                item.set_key(new_key)
+                                for i in range(parent_item.childCount()):
+                                    child = parent_item.child(i)
+                                    if not isinstance(child, NBTTreeWidgetItem):
+                                        continue
+                                    child_key = child.get_key()
+                                    if child_key is None:
+                                        continue
+                                    if (False, new_key) < (
+                                        isinstance(child_key, bytes),
+                                        child_key,
+                                    ):
+                                        parent_item.insertChild(i, item)
+                                        break
+                                else:
+                                    parent_item.addChild(item)
+                                self._tree.setCurrentItem(item)
+                            parent_tag.pop(key, None)
+                            parent_tag[new_key] = tag
+                            if tag_replaced:
+                                parent_item.update_text()
+
+    def _edit_current_item_name(self) -> None:
+        item = self._tree.currentItem()
+        if isinstance(item, NBTTreeWidgetItem):
+            self._edit_item_name(item)
+
+    @staticmethod
+    def _supports_edit_tag(item: NBTTreeWidgetItem) -> bool:
         return isinstance(
             item.get_tag(),
             (
-                NamedTag,
                 ByteTag,
                 ShortTag,
                 IntTag,
@@ -545,7 +711,7 @@ class NBTWidgetP(QWidget):
             ),
         )
 
-    def _edit_item(self, item: NBTTreeWidgetItem) -> None:
+    def _edit_item_tag(self, item: NBTTreeWidgetItem) -> None:
         with CatchExceptionDialog(
             QApplication.translate("plugin.amulet.nbt", "edit_fail", None)
         ):
@@ -558,11 +724,11 @@ class NBTWidgetP(QWidget):
                     self,
                     spin_widget,
                     QApplication.translate(
-                        "plugin.amulet.nbt", "edit_tag", None
+                        "plugin.amulet.nbt", "edit_tag_cls", None
                     ).format(cls=type(tag).__name__),
                 )
                 if dialog.exec():
-                    item.set_tag_and_display(spin_widget.value())
+                    item.set_tag_and_display(spin_widget.value(), True)
             elif isinstance(tag, StringTag):
                 text = tag.py_str_or_bytes
                 if isinstance(text, bytes):
@@ -572,30 +738,19 @@ class NBTWidgetP(QWidget):
                     self,
                     str_widget,
                     QApplication.translate(
-                        "plugin.amulet.nbt", "edit_tag", None
+                        "plugin.amulet.nbt", "edit_tag_cls", None
                     ).format(cls="StringTag"),
                 )
                 if dialog.exec():
-                    item.set_tag_and_display(StringTag(str_widget.text()))
-            elif isinstance(tag, NamedTag):
-                name = tag.name
-                if isinstance(name, bytes):
-                    name = get_string(name)
-                str_widget = QLineEdit(name)
-                dialog = EditDialog(
-                    self,
-                    str_widget,
-                    QApplication.translate(
-                        "plugin.amulet.nbt", "edit_tag", None
-                    ).format(cls="NamedTag"),
-                )
-                if dialog.exec():
-                    item.set_key(str_widget.text())
+                    item.set_tag_and_display(StringTag(str_widget.text()), True)
 
-    def _edit_current_item(self) -> None:
+    def _edit_current_item_tag(self) -> None:
         item = self._tree.currentItem()
         if isinstance(item, NBTTreeWidgetItem):
-            self._edit_item(item)
+            self._edit_item_tag(item)
+
+    def _supports_cut(self, item: NBTTreeWidgetItem) -> bool:
+        return self._supports_delete(item)
 
     def _cut_item(self, item: NBTTreeWidgetItem) -> None:
         item.copy_snbt()
@@ -619,7 +774,7 @@ class NBTWidgetP(QWidget):
             clipboard = QApplication.clipboard()
             text = clipboard.text()
             nbt = read_snbt(text)
-            item.set_tag_and_display(nbt)
+            item.set_tag_and_display(nbt, True)
 
     def _paste_current_item(self) -> None:
         item = self._tree.currentItem()
@@ -665,17 +820,20 @@ class NBTWidgetP(QWidget):
             arr: list[SupportsInt] = list(parent_tag)
             arr.insert(i, arr[i])
             new_tag = ByteTag(arr[i])
-            parent_item.set_tag(ByteArrayTag(arr))
+            parent_item.set_tag(ByteArrayTag(arr), True)
+            parent_item.update_text()
         elif isinstance(parent_tag, IntArrayTag):
             arr = list(parent_tag)
             arr.insert(i, arr[i])
             new_tag = IntTag(arr[i])
-            parent_item.set_tag(IntArrayTag(arr))
+            parent_item.set_tag(IntArrayTag(arr), True)
+            parent_item.update_text()
         elif isinstance(parent_tag, LongArrayTag):
             arr = list(parent_tag)
             arr.insert(i, arr[i])
             new_tag = LongTag(arr[i])
-            parent_item.set_tag(LongArrayTag(arr))
+            parent_item.set_tag(LongArrayTag(arr), True)
+            parent_item.update_text()
         else:
             return
         new_item = NBTTreeWidgetItem(None, new_tag)
@@ -703,6 +861,14 @@ class NBTWidgetP(QWidget):
         if not isinstance(parent_item, NBTTreeWidgetItem):
             return
         parent_tag = parent_item.get_tag()
+
+        def update_grandparent() -> None:
+            grandparent_item = parent_item.parent()
+            if isinstance(grandparent_item, NBTTreeWidgetItem):
+                grandparent_tag = grandparent_item.get_tag()
+                if isinstance(grandparent_tag, NamedTag):
+                    grandparent_item.update_text()
+
         if isinstance(parent_tag, CompoundTag):
             key = item.get_key()
             if key is None:
@@ -710,6 +876,7 @@ class NBTWidgetP(QWidget):
             parent_tag.pop(key, None)
             parent_item.removeChild(item)
             parent_item.update_text()
+            update_grandparent()
         else:
             i = parent_item.indexOfChild(item)
             if isinstance(parent_tag, ListTag):
@@ -726,11 +893,12 @@ class NBTWidgetP(QWidget):
                     tag = IntArrayTag(l)
                 else:
                     tag = LongArrayTag(l)
-                parent_item.set_tag(tag)
+                parent_item.set_tag(tag, True)
                 parent_item.removeChild(item)
                 parent_item.update_text()
             else:
                 return
+            update_grandparent()
             for i2 in range(i, parent_item.childCount()):
                 child = parent_item.child(i2)
                 if isinstance(child, NBTTreeWidgetItem):
