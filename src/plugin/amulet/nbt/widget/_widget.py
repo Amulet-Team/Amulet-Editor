@@ -278,6 +278,37 @@ class EditDialog(QDialog):
         self._buttons.rejected.connect(self.reject)
 
 
+def edit_numeric_tag[
+    TagT: ByteTag | ShortTag | IntTag | LongTag | FloatTag | DoubleTag
+](
+    parent: QWidget, tag: TagT, title: str
+) -> TagT | None:
+    widget = NBTSpinBox(tag)
+    dialog = EditDialog(
+        parent,
+        widget,
+        title,
+    )
+    if dialog.exec() == QDialog.DialogCode.Accepted:
+        return widget.value()
+    return None
+
+
+def edit_string_tag(parent: QWidget, tag: StringTag, title: str) -> StringTag | None:
+    text = tag.py_str_or_bytes
+    if isinstance(text, bytes):
+        text = get_string(text)
+    widget = QLineEdit(text)
+    dialog = EditDialog(
+        parent,
+        widget,
+        title,
+    )
+    if dialog.exec() == QDialog.DialogCode.Accepted:
+        return StringTag(widget.text())
+    return None
+
+
 class SVGButton(QPushButton):
     """A QPushButton containing a stylable icon."""
 
@@ -696,33 +727,31 @@ class NBTWidgetP(QWidget):
             QApplication.translate("plugin.amulet.nbt", "edit_fail", None)
         ):
             tag = item.get_tag()
+            new_tag: AnyNBT | None
             if isinstance(
                 tag, (ByteTag, ShortTag, IntTag, LongTag, FloatTag, DoubleTag)
             ):
-                spin_widget = NBTSpinBox(tag)
-                dialog = EditDialog(
+                new_tag = edit_numeric_tag(
                     self,
-                    spin_widget,
+                    tag,
                     QApplication.translate(
                         "plugin.amulet.nbt", "edit_tag_cls", None
                     ).format(cls=type(tag).__name__),
                 )
-                if dialog.exec():
-                    item.set_tag_and_display(spin_widget.value(), True)
+
             elif isinstance(tag, StringTag):
-                text = tag.py_str_or_bytes
-                if isinstance(text, bytes):
-                    text = get_string(text)
-                str_widget = QLineEdit(text)
-                dialog = EditDialog(
+                new_tag = edit_string_tag(
                     self,
-                    str_widget,
+                    tag,
                     QApplication.translate(
                         "plugin.amulet.nbt", "edit_tag_cls", None
                     ).format(cls="StringTag"),
                 )
-                if dialog.exec():
-                    item.set_tag_and_display(StringTag(str_widget.text()), True)
+            else:
+                new_tag = None
+
+            if new_tag is not None:
+                item.set_tag_and_display(new_tag, True)
 
     def _edit_current_item_tag(self) -> None:
         item = self._tree.currentItem()
