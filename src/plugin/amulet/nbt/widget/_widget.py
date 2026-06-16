@@ -323,10 +323,10 @@ class NBTWidgetP(QWidget):
         self._tool_layout = QHBoxLayout()
         self._layout.addLayout(self._tool_layout)
 
-        self._edit_name_button = SVGButton(tablericons.outline.cursor_text)
-        self._edit_name_button.setFixedSize(QSize(30, 30))
-        self._edit_name_button.clicked.connect(self._edit_current_item_name)
-        self._tool_layout.addWidget(self._edit_name_button)
+        self._rename_button = SVGButton(tablericons.outline.cursor_text)
+        self._rename_button.setFixedSize(QSize(30, 30))
+        self._rename_button.clicked.connect(self._edit_current_item_name)
+        self._tool_layout.addWidget(self._rename_button)
 
         self._edit_tag_button = SVGButton(tablericons.outline.pencil)
         self._edit_tag_button.setFixedSize(QSize(30, 30))
@@ -397,7 +397,7 @@ class NBTWidgetP(QWidget):
             item = self._tree.currentItem()
         if not isinstance(item, NBTTreeWidgetItem):
             return
-        self._edit_name_button.setEnabled(self._supports_edit_name(item))
+        self._rename_button.setEnabled(self._supports_rename(item))
         self._edit_tag_button.setEnabled(self._supports_edit_tag(item))
         self._add_button.setEnabled(self._supports_add_item(item))
         self._duplicate_button.setEnabled(self._supports_duplicate(item))
@@ -422,8 +422,8 @@ class NBTWidgetP(QWidget):
         for i in range(self._tree.topLevelItemCount()):
             localise_item(self._tree.topLevelItem(i))
 
-        self._edit_name_button.setToolTip(
-            QApplication.translate("plugin.amulet.nbt", "edit_name_tooltip", None)
+        self._rename_button.setToolTip(
+            QApplication.translate("plugin.amulet.nbt", "rename_tooltip", None)
         )
         self._edit_tag_button.setToolTip(
             QApplication.translate("plugin.amulet.nbt", "edit_tag_tooltip", None)
@@ -485,9 +485,9 @@ class NBTWidgetP(QWidget):
         item = self._tree.itemAt(point)
         if isinstance(item, NBTTreeWidgetItem):
             menu = QMenu(self)
-            if self._supports_edit_name(item):
+            if self._supports_rename(item):
                 menu.addAction(
-                    QApplication.translate("plugin.amulet.nbt", "edit_name", None),
+                    QApplication.translate("plugin.amulet.nbt", "rename", None),
                     self._edit_current_item_name,
                 )
             if self._supports_edit_tag(item):
@@ -574,7 +574,7 @@ class NBTWidgetP(QWidget):
             super().keyPressEvent(event)
 
     @staticmethod
-    def _supports_edit_name(item: NBTTreeWidgetItem) -> bool:
+    def _supports_rename(item: NBTTreeWidgetItem) -> bool:
         if isinstance(item.get_tag(), NamedTag):
             return True
         parent_item = item.parent()
@@ -615,7 +615,7 @@ class NBTWidgetP(QWidget):
                     dialog = EditDialog(
                         self,
                         str_widget,
-                        QApplication.translate("plugin.amulet.nbt", "edit_name", None),
+                        QApplication.translate("plugin.amulet.nbt", "rename", None),
                     )
                     if dialog.exec():
                         new_key = str_widget.text()
@@ -625,7 +625,7 @@ class NBTWidgetP(QWidget):
                                 message_box = QMessageBox()
                                 message_box.setText(
                                     QApplication.translate(
-                                        "plugin.amulet.nbt", "edit_name_confirm", None
+                                        "plugin.amulet.nbt", "rename_confirm", None
                                     )
                                 )
                                 message_box.setStandardButtons(

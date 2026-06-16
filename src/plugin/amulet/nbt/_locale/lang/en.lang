@@ -7,9 +7,9 @@ plugin.amulet.nbt.copy_fail=Failed copying SNBT
 plugin.amulet.nbt.paste_fail=Failed pasting SNBT
 plugin.amulet.nbt.edit_fail=Failed editing value
 
-plugin.amulet.nbt.edit_name=Edit Name
-plugin.amulet.nbt.edit_name_tooltip=Edit the name of the selected tag
-plugin.amulet.nbt.edit_name_confirm=A tag with this name already exists. Do you want to replace it?
+plugin.amulet.nbt.rename=Rename
+plugin.amulet.nbt.rename_tooltip=Rename the selected tag
+plugin.amulet.nbt.rename_confirm=A tag with this name already exists. Do you want to replace it?
 plugin.amulet.nbt.edit_tag=Edit Tag
 plugin.amulet.nbt.edit_tag_cls=Edit {cls}
 plugin.amulet.nbt.edit_tag_tooltip=Edit the selected tag
