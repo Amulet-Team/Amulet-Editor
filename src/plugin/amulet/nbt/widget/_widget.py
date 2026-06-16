@@ -1,8 +1,8 @@
 from copy import deepcopy
 from typing import SupportsInt
 
-from PySide6.QtCore import QPoint, Qt, QSize, QEvent
-from PySide6.QtGui import QPixmap, QKeyEvent, QMouseEvent, QEnterEvent, QCursor
+from PySide6.QtCore import QPoint, Qt, QSize, QEvent, QTimer
+from PySide6.QtGui import QPixmap, QKeyEvent, QMouseEvent, QEnterEvent, QIcon
 from PySide6.QtWidgets import (
     QWidget,
     QTreeWidget,
@@ -18,6 +18,7 @@ from PySide6.QtWidgets import (
     QToolTip,
     QMessageBox,
     QLayout,
+    QComboBox,
 )
 from PySide6.QtSvgWidgets import QSvgWidget
 
@@ -306,6 +307,96 @@ def edit_string_tag(parent: QWidget, tag: StringTag, title: str) -> StringTag | 
     )
     if dialog.exec() == QDialog.DialogCode.Accepted:
         return StringTag(widget.text())
+    return None
+
+
+def edit_tag(parent: QWidget, tag: AnyNBT, title: str) -> AnyNBT | None:
+    tag_choice = QComboBox()
+    tag_choice.addItem(get_icon(ByteTag) or QIcon(), "ByteTag")
+    tag_choice.addItem(get_icon(ShortTag) or QIcon(), "ShortTag")
+    tag_choice.addItem(get_icon(IntTag) or QIcon(), "IntTag")
+    tag_choice.addItem(get_icon(LongTag) or QIcon(), "LongTag")
+    tag_choice.addItem(get_icon(FloatTag) or QIcon(), "FloatTag")
+    tag_choice.addItem(get_icon(DoubleTag) or QIcon(), "DoubleTag")
+    tag_choice.addItem(get_icon(StringTag) or QIcon(), "StringTag")
+    tag_choice.addItem(get_icon(ListTag) or QIcon(), "ListTag")
+    tag_choice.addItem(get_icon(CompoundTag) or QIcon(), "CompoundTag")
+    tag_choice.addItem(get_icon(ByteArrayTag) or QIcon(), "ByteArrayTag")
+    tag_choice.addItem(get_icon(IntArrayTag) or QIcon(), "IntArrayTag")
+    tag_choice.addItem(get_icon(LongArrayTag) or QIcon(), "LongArrayTag")
+
+    tag_id = tag.tag_id
+    if tag_id <= 6 or 11 <= tag_id <= 12:
+        tag_choice.setCurrentIndex(tag_id - 1)
+    elif tag_id == 7:
+        tag_choice.setCurrentIndex(9)
+    elif 8 <= tag_id <= 10:
+        tag_choice.setCurrentIndex(tag_id - 2)
+    else:
+        raise RuntimeError(f"Unknown tag id: {tag_id}")
+
+    layout = QVBoxLayout()
+    layout.addWidget(tag_choice)
+
+    dialog = EditDialog(
+        parent,
+        layout,
+        title,
+    )
+
+    widget: NBTSpinBox[ByteTag | ShortTag | IntTag | LongTag | FloatTag | DoubleTag] | QLineEdit | None = None
+
+    def set_widget(widget_: NBTSpinBox | QLineEdit | None) -> None:
+        nonlocal widget
+        if widget is not None:
+            layout.removeWidget(widget)
+            widget.hide()
+            widget.deleteLater()
+            widget = None
+        if widget_ is not None:
+            layout.addWidget(widget_)
+            widget = widget_
+        QTimer.singleShot(0, dialog.adjustSize)
+
+    if isinstance(tag, (ByteTag, ShortTag, IntTag, LongTag, FloatTag, DoubleTag)):
+        set_widget(NBTSpinBox(tag))
+    elif isinstance(tag, StringTag):
+        text = tag.py_str_or_bytes
+        if isinstance(text, bytes):
+            text = get_string(text)
+        set_widget(QLineEdit(text))
+
+    def cls_changed(i: int) -> None:
+        if i <= 5:
+            set_widget(
+                NBTSpinBox(
+                    [ByteTag, ShortTag, IntTag, LongTag, FloatTag, DoubleTag][i]()
+                )
+            )
+        elif i == 6:
+            set_widget(QLineEdit())
+        else:
+            set_widget(None)
+
+    tag_choice.currentIndexChanged.connect(cls_changed)
+
+    if dialog.exec() == QDialog.DialogCode.Accepted:
+        if isinstance(widget, NBTSpinBox):
+            return widget.value()
+        elif isinstance(widget, QLineEdit):
+            return StringTag(widget.text())
+        else:
+            index = tag_choice.currentIndex()
+            if index == 7:
+                return ListTag()
+            elif index == 8:
+                return CompoundTag()
+            elif index == 9:
+                return ByteArrayTag()
+            elif index == 10:
+                return IntArrayTag()
+            elif index == 11:
+                return LongArrayTag()
     return None
 
 
@@ -798,7 +889,67 @@ class NBTWidgetP(QWidget):
         )
 
     def _add_item(self, item: NBTTreeWidgetItem) -> None:
-        pass
+        tag = item.get_tag()
+        if isinstance(tag, ListTag):
+            new_tag: AnyNBT | None
+            if tag:
+                element_cls = tag.element_class
+                if element_cls is None:
+                    return
+                new_tag = element_cls()
+                if isinstance(
+                    new_tag, (ByteTag, ShortTag, IntTag, LongTag, FloatTag, DoubleTag)
+                ):
+                    new_tag = edit_numeric_tag(
+                        self,
+                        new_tag,
+                        QApplication.translate(
+                            "plugin.amulet.nbt", "edit_tag_cls", None
+                        ).format(cls=type(new_tag).__name__),
+                    )
+            else:
+                new_tag = edit_tag(
+                    self,
+                    ByteTag(),
+                    QApplication.translate("plugin.amulet.nbt", "add", None),
+                )
+            if new_tag is None:
+                return
+            tag.append(new_tag)
+            item.update_text()
+            NBTTreeWidgetItem(item, new_tag)
+        elif isinstance(tag, CompoundTag):
+            pass
+        else:
+            arr_cls: type[ByteArrayTag | IntArrayTag | LongArrayTag]
+            new_arr_tag: ByteTag | IntTag | LongTag | None
+            if isinstance(tag, ByteArrayTag):
+                arr_cls = ByteArrayTag
+                new_arr_tag = ByteTag()
+                cls_name = "ByteTag"
+            elif isinstance(tag, IntArrayTag):
+                arr_cls = IntArrayTag
+                new_arr_tag = IntTag()
+                cls_name = "IntTag"
+            elif isinstance(tag, LongArrayTag):
+                arr_cls = LongArrayTag
+                new_arr_tag = LongTag()
+                cls_name = "LongTag"
+            else:
+                return
+            new_arr_tag = edit_numeric_tag(
+                self,
+                new_arr_tag,
+                QApplication.translate(
+                    "plugin.amulet.nbt", "edit_tag_cls", None
+                ).format(cls=cls_name),
+            )
+            if new_arr_tag is not None:
+                l: list[SupportsInt] = list(tag)
+                l.append(new_arr_tag)
+                item.set_tag(arr_cls(l), True)
+                item.update_text()
+                NBTTreeWidgetItem(item, new_arr_tag)
 
     def _add_current_item(self) -> None:
         item = self._tree.currentItem()
