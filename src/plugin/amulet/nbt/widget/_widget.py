@@ -966,7 +966,7 @@ class NBTWidget(QWidget):
         self._layout.addWidget(self._tree_widget)
 
     def get_tag(self) -> TagType:
-        return self._tree_widget.get_tag()
+        return deepcopy(self._tree_widget.get_tag())
 
     def set_tag(self, tag: TagType) -> None:
-        self._tree_widget.set_tag(tag)
+        self._tree_widget.set_tag(deepcopy(tag))
