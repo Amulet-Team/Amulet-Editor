@@ -223,6 +223,8 @@ class NBTTreeWidgetItem(QTreeWidgetItem):
         if self._children_populated:
             return
         self._children_populated = True
+        while self.childCount():
+            self.takeChild(0)
         tag = self._tag
         if isinstance(tag, NamedTag):
             NBTTreeWidgetItem(self, tag.tag)
