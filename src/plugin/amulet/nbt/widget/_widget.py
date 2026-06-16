@@ -17,6 +17,7 @@ from PySide6.QtWidgets import (
     QPushButton,
     QToolTip,
     QMessageBox,
+    QLayout,
 )
 from PySide6.QtSvgWidgets import QSvgWidget
 
@@ -258,13 +259,16 @@ class EditDialog(QDialog):
     def __init__(
         self,
         parent: QWidget,
-        widget: QWidget,
+        child: QWidget | QLayout,
         title: str,
     ) -> None:
         super().__init__(parent)
         self.setWindowTitle(title)
         self._layout = QVBoxLayout(self)
-        self._layout.addWidget(widget)
+        if isinstance(child, QWidget):
+            self._layout.addWidget(child)
+        elif isinstance(child, QLayout):
+            self._layout.addLayout(child)
         self._buttons = QDialogButtonBox(self)
         self._buttons.setStandardButtons(
             QDialogButtonBox.StandardButton.Ok | QDialogButtonBox.StandardButton.Cancel
