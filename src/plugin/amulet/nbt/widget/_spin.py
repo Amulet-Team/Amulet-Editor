@@ -1,4 +1,5 @@
 import math
+from collections.abc import Callable
 
 from PySide6.QtGui import QValidator
 from PySide6.QtWidgets import QAbstractSpinBox
@@ -15,23 +16,25 @@ Bounds = {
 }
 
 
-class NBTSpinBox(QAbstractSpinBox):
+class NBTSpinBox[TagT: ByteTag | ShortTag | IntTag | LongTag | FloatTag | DoubleTag](
+    QAbstractSpinBox
+):
     _minimum: int | float
     _maximum: int | float
     _py_cls: type[int | float]
-    _cls: type[ByteTag | ShortTag | IntTag | LongTag | FloatTag | DoubleTag]
+    _cls: Callable[[int | float], TagT]
 
     def __init__(
-        self,
-        value: ByteTag | ShortTag | IntTag | LongTag | FloatTag | DoubleTag,
+        self: NBTSpinBox[TagT],
+        value: TagT,
     ):
         super().__init__()
         self._cls = type(value)
         self._minimum, self._maximum, self._py_cls = Bounds[self._cls]
-        self._value = value
+        self._value: TagT = value
         self._update_text()
 
-    def value(self) -> ByteTag | ShortTag | IntTag | LongTag | FloatTag | DoubleTag:
+    def value(self) -> TagT:
         return self._value
 
     def wrapping(self) -> bool:
