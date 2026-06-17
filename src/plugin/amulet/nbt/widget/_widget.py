@@ -1106,6 +1106,8 @@ class NBTWidgetP(QWidget):
             parent_tag.pop(key, None)
             parent_item.removeChild(item)
             parent_item.update_text()
+            if not parent_tag:
+                parent_item.setExpanded(False)
             update_grandparent()
         else:
             i = parent_item.indexOfChild(item)
@@ -1116,14 +1118,13 @@ class NBTWidgetP(QWidget):
             elif isinstance(parent_tag, (ByteArrayTag, IntArrayTag, LongArrayTag)):
                 l: list[SupportsInt] = list(parent_tag)
                 l.pop(i)
-                tag: ByteArrayTag | IntArrayTag | LongArrayTag
                 if isinstance(parent_tag, ByteArrayTag):
-                    tag = ByteArrayTag(l)
+                    parent_tag = ByteArrayTag(l)
                 elif isinstance(parent_tag, IntArrayTag):
-                    tag = IntArrayTag(l)
+                    parent_tag = IntArrayTag(l)
                 else:
-                    tag = LongArrayTag(l)
-                parent_item.set_tag(tag, True)
+                    parent_tag = LongArrayTag(l)
+                parent_item.set_tag(parent_tag, True)
                 parent_item.removeChild(item)
                 parent_item.update_text()
             else:
@@ -1133,6 +1134,8 @@ class NBTWidgetP(QWidget):
                 child = parent_item.child(i2)
                 if isinstance(child, NBTTreeWidgetItem):
                     child.update_text()
+            if not parent_tag:
+                parent_item.setExpanded(False)
         self._update_buttons()
 
     def _delete_current_item(self) -> None:
