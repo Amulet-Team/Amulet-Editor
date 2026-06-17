@@ -1,5 +1,5 @@
 from copy import deepcopy
-from typing import SupportsInt
+from typing import SupportsInt, Literal, overload
 
 from PySide6.QtCore import QPoint, Qt, QSize, QEvent, QTimer
 from PySide6.QtGui import QPixmap, QKeyEvent, QMouseEvent, QEnterEvent, QIcon
@@ -309,9 +309,23 @@ def edit_string_tag(parent: QWidget, tag: StringTag, title: str) -> StringTag | 
         return StringTag(widget.text())
     return None
 
+@overload
+def edit_tag(parent: QWidget, tag: AnyNBT, title: str, named: Literal[True]) -> NamedTag | None:
+    ...
+@overload
+def edit_tag(parent: QWidget, tag: AnyNBT, title: str, named: Literal[False]) -> AnyNBT | None:
+    ...
+def edit_tag(parent: QWidget, tag: AnyNBT, title: str, named: bool) -> AnyNBT | NamedTag | None:
+    layout = QVBoxLayout()
 
-def edit_tag(parent: QWidget, tag: AnyNBT, title: str) -> AnyNBT | None:
+    if named:
+        name_entry = QLineEdit(placeholderText=QApplication.translate("plugin.amulet.nbt", "name_placeholder", None))
+        layout.addWidget(name_entry)
+    else:
+        name_entry = None
+
     tag_choice = QComboBox()
+    layout.addWidget(tag_choice)
     tag_choice.addItem(get_icon(ByteTag) or QIcon(), "ByteTag")
     tag_choice.addItem(get_icon(ShortTag) or QIcon(), "ShortTag")
     tag_choice.addItem(get_icon(IntTag) or QIcon(), "IntTag")
@@ -335,9 +349,6 @@ def edit_tag(parent: QWidget, tag: AnyNBT, title: str) -> AnyNBT | None:
     else:
         raise RuntimeError(f"Unknown tag id: {tag_id}")
 
-    layout = QVBoxLayout()
-    layout.addWidget(tag_choice)
-
     dialog = EditDialog(
         parent,
         layout,
@@ -355,6 +366,7 @@ def edit_tag(parent: QWidget, tag: AnyNBT, title: str) -> AnyNBT | None:
             widget = None
         if widget_ is not None:
             layout.addWidget(widget_)
+            QTimer.singleShot(0, lambda: widget_.setFixedHeight(tag_choice.height()))
             widget = widget_
         QTimer.singleShot(0, dialog.adjustSize)
 
@@ -381,22 +393,28 @@ def edit_tag(parent: QWidget, tag: AnyNBT, title: str) -> AnyNBT | None:
     tag_choice.currentIndexChanged.connect(cls_changed)
 
     if dialog.exec() == QDialog.DialogCode.Accepted:
-        if isinstance(widget, NBTSpinBox):
-            return widget.value()
-        elif isinstance(widget, QLineEdit):
-            return StringTag(widget.text())
+        def get_tag() -> AnyNBT:
+            if isinstance(widget, NBTSpinBox):
+                return widget.value()
+            elif isinstance(widget, QLineEdit):
+                return StringTag(widget.text())
+            else:
+                index = tag_choice.currentIndex()
+                if index == 7:
+                    return ListTag()
+                elif index == 8:
+                    return CompoundTag()
+                elif index == 9:
+                    return ByteArrayTag()
+                elif index == 10:
+                    return IntArrayTag()
+                elif index == 11:
+                    return LongArrayTag()
+            raise RuntimeError
+        if isinstance(name_entry, QLineEdit):
+            return NamedTag(get_tag(), name_entry.text())
         else:
-            index = tag_choice.currentIndex()
-            if index == 7:
-                return ListTag()
-            elif index == 8:
-                return CompoundTag()
-            elif index == 9:
-                return ByteArrayTag()
-            elif index == 10:
-                return IntArrayTag()
-            elif index == 11:
-                return LongArrayTag()
+            return get_tag()
     return None
 
 
@@ -912,14 +930,66 @@ class NBTWidgetP(QWidget):
                     self,
                     ByteTag(),
                     QApplication.translate("plugin.amulet.nbt", "add", None),
+                    False,
                 )
-            if new_tag is None:
-                return
-            tag.append(new_tag)
-            item.update_text()
-            NBTTreeWidgetItem(item, new_tag)
+            if new_tag is not None:
+                tag.append(new_tag)
+                item.update_text()
+                NBTTreeWidgetItem(item, new_tag)
         elif isinstance(tag, CompoundTag):
-            pass
+            new_named_tag = edit_tag(
+                self,
+                ByteTag(),
+                QApplication.translate("plugin.amulet.nbt", "add", None),
+                True,
+            )
+            if new_named_tag is not None:
+                new_key = new_named_tag.name
+                new_tag = new_named_tag.tag
+                if new_key in tag:
+                    message_box = QMessageBox()
+                    message_box.setText(
+                        QApplication.translate(
+                            "plugin.amulet.nbt", "add_confirm", None
+                        )
+                    )
+                    message_box.setStandardButtons(
+                        QMessageBox.StandardButton.Yes
+                        | QMessageBox.StandardButton.No
+                    )
+                    if message_box.exec() == QMessageBox.StandardButton.No:
+                        return
+                    # Find the other item and set its tag
+                    for i in range(item.childCount()):
+                        child = item.child(i)
+                        if (
+                            isinstance(child, NBTTreeWidgetItem)
+                            and child.get_key() == new_key
+                        ):
+                            child.set_tag_and_display(new_tag, False)
+                            self._tree.setCurrentItem(child)
+                            break
+                    else:
+                        raise RuntimeError("Could not find item to replace")
+                else:
+                    new_item = NBTTreeWidgetItem(None, new_tag, new_key)
+                    for i in range(item.childCount()):
+                        child = item.child(i)
+                        if not isinstance(child, NBTTreeWidgetItem):
+                            continue
+                        child_key = child.get_key()
+                        if child_key is None:
+                            continue
+                        if (False, new_key) < (
+                            isinstance(child_key, bytes),
+                            child_key,
+                        ):
+                            item.insertChild(i, new_item)
+                            break
+                    else:
+                        item.addChild(new_item)
+                tag[new_key] = new_tag
+                item.update_text()
         else:
             arr_cls: type[ByteArrayTag | IntArrayTag | LongArrayTag]
             new_arr_tag: ByteTag | IntTag | LongTag | None
