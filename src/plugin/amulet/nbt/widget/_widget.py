@@ -309,17 +309,26 @@ def edit_string_tag(parent: QWidget, tag: StringTag, title: str) -> StringTag | 
         return StringTag(widget.text())
     return None
 
+
 @overload
-def edit_tag(parent: QWidget, tag: AnyNBT, title: str, named: Literal[True]) -> NamedTag | None:
-    ...
+def edit_tag(
+    parent: QWidget, tag: AnyNBT, title: str, named: Literal[True]
+) -> NamedTag | None: ...
 @overload
-def edit_tag(parent: QWidget, tag: AnyNBT, title: str, named: Literal[False]) -> AnyNBT | None:
-    ...
-def edit_tag(parent: QWidget, tag: AnyNBT, title: str, named: bool) -> AnyNBT | NamedTag | None:
+def edit_tag(
+    parent: QWidget, tag: AnyNBT, title: str, named: Literal[False]
+) -> AnyNBT | None: ...
+def edit_tag(
+    parent: QWidget, tag: AnyNBT, title: str, named: bool
+) -> AnyNBT | NamedTag | None:
     layout = QVBoxLayout()
 
     if named:
-        name_entry = QLineEdit(placeholderText=QApplication.translate("plugin.amulet.nbt", "name_placeholder", None))
+        name_entry = QLineEdit(
+            placeholderText=QApplication.translate(
+                "plugin.amulet.nbt", "name_placeholder", None
+            )
+        )
         layout.addWidget(name_entry)
     else:
         name_entry = None
@@ -355,7 +364,11 @@ def edit_tag(parent: QWidget, tag: AnyNBT, title: str, named: bool) -> AnyNBT | 
         title,
     )
 
-    widget: NBTSpinBox[ByteTag | ShortTag | IntTag | LongTag | FloatTag | DoubleTag] | QLineEdit | None = None
+    widget: (
+        NBTSpinBox[ByteTag | ShortTag | IntTag | LongTag | FloatTag | DoubleTag]
+        | QLineEdit
+        | None
+    ) = None
 
     def set_widget(widget_: NBTSpinBox | QLineEdit | None) -> None:
         nonlocal widget
@@ -393,6 +406,7 @@ def edit_tag(parent: QWidget, tag: AnyNBT, title: str, named: bool) -> AnyNBT | 
     tag_choice.currentIndexChanged.connect(cls_changed)
 
     if dialog.exec() == QDialog.DialogCode.Accepted:
+
         def get_tag() -> AnyNBT:
             if isinstance(widget, NBTSpinBox):
                 return widget.value()
@@ -411,6 +425,7 @@ def edit_tag(parent: QWidget, tag: AnyNBT, title: str, named: bool) -> AnyNBT | 
                 elif index == 11:
                     return LongArrayTag()
             raise RuntimeError
+
         if isinstance(name_entry, QLineEdit):
             return NamedTag(get_tag(), name_entry.text())
         else:
@@ -949,13 +964,10 @@ class NBTWidgetP(QWidget):
                 if new_key in tag:
                     message_box = QMessageBox()
                     message_box.setText(
-                        QApplication.translate(
-                            "plugin.amulet.nbt", "add_confirm", None
-                        )
+                        QApplication.translate("plugin.amulet.nbt", "add_confirm", None)
                     )
                     message_box.setStandardButtons(
-                        QMessageBox.StandardButton.Yes
-                        | QMessageBox.StandardButton.No
+                        QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No
                     )
                     if message_box.exec() == QMessageBox.StandardButton.No:
                         return
