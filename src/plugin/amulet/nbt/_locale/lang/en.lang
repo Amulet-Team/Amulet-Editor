@@ -6,17 +6,17 @@ plugin.amulet.nbt.count_items_single={count} items
 plugin.amulet.nbt.copy_fail=Failed copying SNBT
 plugin.amulet.nbt.paste_fail=Failed pasting SNBT
 plugin.amulet.nbt.edit_fail=Failed editing value
+plugin.amulet.nbt.snbt_parse_fail=Failed parsing SNBT from clipboard
 
 plugin.amulet.nbt.rename=Rename
 plugin.amulet.nbt.rename_tooltip=Rename the selected tag
-plugin.amulet.nbt.rename_confirm=A tag with this name already exists. Do you want to replace it?
+plugin.amulet.nbt.replace_tag_confirm=A tag with this name already exists. Do you want to replace it?
 plugin.amulet.nbt.name_placeholder=The tag's name...
 plugin.amulet.nbt.edit_tag=Edit Tag
 plugin.amulet.nbt.edit_tag_cls=Edit {cls}
 plugin.amulet.nbt.edit_tag_tooltip=Edit the selected tag
 plugin.amulet.nbt.add=Add Tag
 plugin.amulet.nbt.add_tooltip=Add a tag to the selected tag
-plugin.amulet.nbt.add_confirm=A tag with this name already exists. Do you want to replace it?
 plugin.amulet.nbt.duplicate=Duplicate
 plugin.amulet.nbt.duplicate_tooltip=Duplicate the selected tag
 plugin.amulet.nbt.delete=Delete
@@ -26,10 +26,13 @@ plugin.amulet.nbt.cut_tooltip=Copy the selected tag to the clipboard and delete 
 plugin.amulet.nbt.copy=Copy
 plugin.amulet.nbt.copy_tooltip=Copy the selected tag to the clipboard
 plugin.amulet.nbt.paste=Paste
-plugin.amulet.nbt.paste_tooltip=
+plugin.amulet.nbt.paste_tooltip=Replace the selected tag with the copied tag
+plugin.amulet.nbt.paste_into=Paste Into
+plugin.amulet.nbt.paste_into_tooltip=Paste the coped tag into the selected tag
+plugin.amulet.nbt.paste_into_list_type_wrong=All child tags of ListTag must be the same. Expected {list_tag_cls} but clipboard is {tag_cls}
+plugin.amulet.nbt.paste_into_arr_type_wrong=All child tags of {arr_cls} must be {arr_tag_cls}. Clipboard is {tag_cls}.
+plugin.amulet.nbt.select_tag_name=Select the name to assign the tag to
 plugin.amulet.nbt.move_up=Move Up
 plugin.amulet.nbt.move_up_tooltip=Move the selected tag up
 plugin.amulet.nbt.move_down=Move Down
 plugin.amulet.nbt.move_down_tooltip=Move the selected tag down
-
-
