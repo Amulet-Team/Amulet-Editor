@@ -187,9 +187,11 @@ class NBTTreeWidgetItem(QTreeWidgetItem):
             if isinstance(
                 parent_tag, (ListTag, ByteArrayTag, IntArrayTag, LongArrayTag)
             ):
-                text = f"{parent_item.indexOfChild(self)}: " + text
+                prefix = f"{parent_item.indexOfChild(self)}: "
+                text = f"{prefix:<4}{text}"
         if self._key is not None:
-            text = f"{self._key or ""!r}: {text}"
+            prefix = f"{self._key or ""!r}: "
+            text = f"{prefix:<20}{text}"
         self.setText(0, text)
 
     def update_icon(self) -> None:
