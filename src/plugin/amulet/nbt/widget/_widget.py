@@ -249,6 +249,9 @@ class NBTTreeWidgetItem(QTreeWidgetItem):
         elif isinstance(tag, LongArrayTag):
             for item in tag:
                 NBTTreeWidgetItem(self, LongTag(item))
+        self.setChildIndicatorPolicy(
+            QTreeWidgetItem.ChildIndicatorPolicy.DontShowIndicatorWhenChildless
+        )
 
     def copy_snbt(self) -> None:
         with CatchExceptionDialog(
