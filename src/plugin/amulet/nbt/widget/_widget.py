@@ -728,6 +728,69 @@ class NBTWidgetP(QWidget):
         else:
             super().keyPressEvent(event)
 
+    def _set_compound_tag(
+        self,
+        compound_tag: CompoundTag,
+        compound_item: NBTTreeWidgetItem,
+        new_key: str | bytes,
+        new_tag: AnyNBT,
+        replace: tuple[str | bytes, NBTTreeWidgetItem] | None = None,
+    ) -> None:
+        if new_key in compound_tag:
+            message_box = QMessageBox()
+            message_box.setText(
+                QApplication.translate("plugin.amulet.nbt", "replace_tag_confirm", None)
+            )
+            message_box.setStandardButtons(
+                QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No
+            )
+            if message_box.exec() == QMessageBox.StandardButton.No:
+                return
+            if replace is None:
+                size_changed = False
+            else:
+                size_changed = True
+                compound_item.removeChild(replace[1])
+            # Find the other item and set its tag
+            for i in range(compound_item.childCount()):
+                child = compound_item.child(i)
+                if isinstance(child, NBTTreeWidgetItem) and child.get_key() == new_key:
+                    child.set_tag_and_display(new_tag, False)
+                    self._tree.setCurrentItem(child)
+                    break
+            else:
+                raise RuntimeError("Could not find item to replace")
+        else:
+            if replace is None:
+                size_changed = True
+                item = NBTTreeWidgetItem(None, new_tag, new_key)
+            else:
+                size_changed = False
+                item = replace[1]
+                compound_item.removeChild(item)
+                item.set_key(new_key)
+            for i in range(compound_item.childCount()):
+                child = compound_item.child(i)
+                if not isinstance(child, NBTTreeWidgetItem):
+                    continue
+                child_key = child.get_key()
+                if child_key is None:
+                    continue
+                if (False, new_key) < (
+                    isinstance(child_key, bytes),
+                    child_key,
+                ):
+                    compound_item.insertChild(i, item)
+                    break
+            else:
+                compound_item.addChild(item)
+            self._tree.setCurrentItem(item)
+        if replace is not None:
+            compound_tag.pop(replace[0], None)
+        compound_tag[new_key] = new_tag
+        if size_changed:
+            compound_item.update_text()
+
     @staticmethod
     def _supports_rename(item: NBTTreeWidgetItem) -> bool:
         if isinstance(item.get_tag(), NamedTag):
@@ -775,56 +838,13 @@ class NBTWidgetP(QWidget):
                     if dialog.exec():
                         new_key = str_widget.text()
                         if new_key != key_str:
-                            tag_replaced = new_key in parent_tag
-                            if tag_replaced:
-                                message_box = QMessageBox()
-                                message_box.setText(
-                                    QApplication.translate(
-                                        "plugin.amulet.nbt", "rename_confirm", None
-                                    )
-                                )
-                                message_box.setStandardButtons(
-                                    QMessageBox.StandardButton.Yes
-                                    | QMessageBox.StandardButton.No
-                                )
-                                if message_box.exec() == QMessageBox.StandardButton.No:
-                                    return
-                                parent_item.removeChild(item)
-                                # Find the other item and set its tag
-                                for i in range(parent_item.childCount()):
-                                    child = parent_item.child(i)
-                                    if (
-                                        isinstance(child, NBTTreeWidgetItem)
-                                        and child.get_key() == new_key
-                                    ):
-                                        child.set_tag_and_display(tag, False)
-                                        self._tree.setCurrentItem(child)
-                                        break
-                                else:
-                                    raise RuntimeError("Could not find item to replace")
-                            else:
-                                parent_item.removeChild(item)
-                                item.set_key(new_key)
-                                for i in range(parent_item.childCount()):
-                                    child = parent_item.child(i)
-                                    if not isinstance(child, NBTTreeWidgetItem):
-                                        continue
-                                    child_key = child.get_key()
-                                    if child_key is None:
-                                        continue
-                                    if (False, new_key) < (
-                                        isinstance(child_key, bytes),
-                                        child_key,
-                                    ):
-                                        parent_item.insertChild(i, item)
-                                        break
-                                else:
-                                    parent_item.addChild(item)
-                                self._tree.setCurrentItem(item)
-                            parent_tag.pop(key, None)
-                            parent_tag[new_key] = tag
-                            if tag_replaced:
-                                parent_item.update_text()
+                            self._set_compound_tag(
+                                parent_tag,
+                                parent_item,
+                                new_key,
+                                tag,
+                                (key, item),
+                            )
 
     def _rename_current_item(self) -> None:
         item = self._tree.currentItem()
@@ -961,47 +981,7 @@ class NBTWidgetP(QWidget):
             if new_named_tag is not None:
                 new_key = new_named_tag.name
                 new_tag = new_named_tag.tag
-                if new_key in tag:
-                    message_box = QMessageBox()
-                    message_box.setText(
-                        QApplication.translate("plugin.amulet.nbt", "add_confirm", None)
-                    )
-                    message_box.setStandardButtons(
-                        QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No
-                    )
-                    if message_box.exec() == QMessageBox.StandardButton.No:
-                        return
-                    # Find the other item and set its tag
-                    for i in range(item.childCount()):
-                        child = item.child(i)
-                        if (
-                            isinstance(child, NBTTreeWidgetItem)
-                            and child.get_key() == new_key
-                        ):
-                            child.set_tag_and_display(new_tag, False)
-                            self._tree.setCurrentItem(child)
-                            break
-                    else:
-                        raise RuntimeError("Could not find item to replace")
-                else:
-                    new_item = NBTTreeWidgetItem(None, new_tag, new_key)
-                    for i in range(item.childCount()):
-                        child = item.child(i)
-                        if not isinstance(child, NBTTreeWidgetItem):
-                            continue
-                        child_key = child.get_key()
-                        if child_key is None:
-                            continue
-                        if (False, new_key) < (
-                            isinstance(child_key, bytes),
-                            child_key,
-                        ):
-                            item.insertChild(i, new_item)
-                            break
-                    else:
-                        item.addChild(new_item)
-                tag[new_key] = new_tag
-                item.update_text()
+                self._set_compound_tag(tag, item, new_key, new_tag)
         else:
             arr_cls: type[ByteArrayTag | IntArrayTag | LongArrayTag]
             new_arr_tag: ByteTag | IntTag | LongTag | None
