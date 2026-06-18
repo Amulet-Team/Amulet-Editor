@@ -480,7 +480,7 @@ class NBTWidgetP(QWidget):
 
         self._rename_button = SVGButton(tablericons.outline.cursor_text)
         self._rename_button.setFixedSize(QSize(30, 30))
-        self._rename_button.clicked.connect(self._edit_current_item_name)
+        self._rename_button.clicked.connect(self._rename_current_item)
         self._tool_layout.addWidget(self._rename_button)
 
         self._edit_tag_button = SVGButton(tablericons.outline.pencil)
@@ -643,7 +643,7 @@ class NBTWidgetP(QWidget):
             if self._supports_rename(item):
                 menu.addAction(
                     QApplication.translate("plugin.amulet.nbt", "rename", None),
-                    self._edit_current_item_name,
+                    self._rename_current_item,
                 )
             if self._supports_edit_tag(item):
                 menu.addAction(
@@ -737,7 +737,7 @@ class NBTWidgetP(QWidget):
             return isinstance(parent_item.get_tag(), CompoundTag)
         return False
 
-    def _edit_item_name(self, item: NBTTreeWidgetItem) -> None:
+    def _rename_item(self, item: NBTTreeWidgetItem) -> None:
         with CatchExceptionDialog(
             QApplication.translate("plugin.amulet.nbt", "edit_fail", None)
         ):
@@ -826,10 +826,10 @@ class NBTWidgetP(QWidget):
                             if tag_replaced:
                                 parent_item.update_text()
 
-    def _edit_current_item_name(self) -> None:
+    def _rename_current_item(self) -> None:
         item = self._tree.currentItem()
         if isinstance(item, NBTTreeWidgetItem):
-            self._edit_item_name(item)
+            self._rename_item(item)
 
     @staticmethod
     def _supports_edit_tag(item: NBTTreeWidgetItem) -> bool:
