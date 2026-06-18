@@ -701,30 +701,22 @@ class NBTWidgetP(QWidget):
 
     def keyPressEvent(self, event: QKeyEvent) -> None:
         if event.key() == Qt.Key.Key_Delete:
-            item = self._tree.currentItem()
-            if isinstance(item, NBTTreeWidgetItem):
-                self._delete_item(item)
+            self._delete_current_item()
         elif (
             event.key() == Qt.Key.Key_C
             and event.modifiers() == Qt.KeyboardModifier.ControlModifier
         ):
-            item = self._tree.currentItem()
-            if isinstance(item, NBTTreeWidgetItem):
-                item.copy_snbt()
+            self._copy_current_item()
         elif (
             event.key() == Qt.Key.Key_X
             and event.modifiers() == Qt.KeyboardModifier.ControlModifier
         ):
-            item = self._tree.currentItem()
-            if isinstance(item, NBTTreeWidgetItem):
-                self._cut_item(item)
+            self._cut_current_item()
         elif (
             event.key() == Qt.Key.Key_V
             and event.modifiers() == Qt.KeyboardModifier.ControlModifier
         ):
-            item = self._tree.currentItem()
-            if isinstance(item, NBTTreeWidgetItem):
-                self._paste_item(item)
+            self._paste_current_item()
         else:
             super().keyPressEvent(event)
 
