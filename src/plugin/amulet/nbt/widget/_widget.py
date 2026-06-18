@@ -737,6 +737,7 @@ class NBTWidgetP(QWidget):
         replace: tuple[str | bytes, NBTTreeWidgetItem] | None = None,
     ) -> None:
         if new_key in compound_tag:
+            # Check that the user wants to overwrite the other value
             message_box = QMessageBox()
             message_box.setText(
                 QApplication.translate("plugin.amulet.nbt", "replace_tag_confirm", None)
@@ -746,6 +747,7 @@ class NBTWidgetP(QWidget):
             )
             if message_box.exec() == QMessageBox.StandardButton.No:
                 return
+            compound_item.setExpanded(True)
             if replace is None:
                 size_changed = False
             else:
@@ -761,6 +763,7 @@ class NBTWidgetP(QWidget):
             else:
                 raise RuntimeError("Could not find item to replace")
         else:
+            compound_item.setExpanded(True)
             if replace is None:
                 size_changed = True
                 item = NBTTreeWidgetItem(None, new_tag, new_key)
