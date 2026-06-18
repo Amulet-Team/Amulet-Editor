@@ -258,6 +258,16 @@ class NBTTreeWidgetItem(QTreeWidgetItem):
             clipboard.setText(self._tag.to_snbt())
 
 
+def _parse_clipboard() -> AnyNBT:
+    with CatchExceptionDialog(
+        QApplication.translate("plugin.amulet.nbt", "snbt_parse_fail", None)
+    ):
+        clipboard = QApplication.clipboard()
+        text = clipboard.text()
+        nbt = read_snbt(text)
+    return nbt
+
+
 class EditDialog(QDialog):
     def __init__(
         self,
@@ -520,6 +530,11 @@ class NBTWidgetP(QWidget):
         self._paste_button.clicked.connect(self._paste_current_item)
         self._tool_layout.addWidget(self._paste_button)
 
+        self._paste_into_button = SVGButton(tablericons.outline.clipboard_plus)
+        self._paste_into_button.setFixedSize(QSize(30, 30))
+        self._paste_into_button.clicked.connect(self._paste_into_current_item)
+        self._tool_layout.addWidget(self._paste_into_button)
+
         self._move_up_button = SVGButton(tablericons.outline.arrow_up)
         self._move_up_button.setFixedSize(QSize(30, 30))
         self._move_up_button.clicked.connect(self._move_current_item_up)
@@ -533,15 +548,17 @@ class NBTWidgetP(QWidget):
         self._tool_layout.addStretch(1)
 
         self._tree = TreeWidget(self)
-        font = QFont([
-            "Consolas",
-            "Menlo",
-            "DejaVu Sans Mono",
-            "Liberation Mono",
-            "Courier New",
-            "Courier",
-            "monospace",
-        ])
+        font = QFont(
+            [
+                "Consolas",
+                "Menlo",
+                "DejaVu Sans Mono",
+                "Liberation Mono",
+                "Courier New",
+                "Courier",
+                "monospace",
+            ]
+        )
         font.setStyleHint(QFont.StyleHint.Monospace)
         self._tree.setFont(font)
         self._layout.addWidget(self._tree)
@@ -571,7 +588,8 @@ class NBTWidgetP(QWidget):
         self._duplicate_button.setEnabled(self._supports_duplicate(item))
         self._delete_button.setEnabled(self._supports_delete(item))
         self._cut_button.setEnabled(self._supports_cut(item))
-        # TODO: paste
+        self._paste_button.setEnabled(self._supports_paste(item))
+        self._paste_into_button.setEnabled(self._supports_paste_into(item))
         self._move_up_button.setEnabled(self._supports_move_up(item))
         self._move_down_button.setEnabled(self._supports_move_down(item))
 
@@ -614,13 +632,15 @@ class NBTWidgetP(QWidget):
         self._paste_button.setToolTip(
             QApplication.translate("plugin.amulet.nbt", "paste_tooltip", None)
         )
+        self._paste_into_button.setToolTip(
+            QApplication.translate("plugin.amulet.nbt", "paste_into_tooltip", None)
+        )
         self._move_up_button.setToolTip(
             QApplication.translate("plugin.amulet.nbt", "move_up_tooltip", None)
         )
         self._move_down_button.setToolTip(
             QApplication.translate("plugin.amulet.nbt", "move_down_tooltip", None)
         )
-        # TODO: localise buttons
 
     def get_tag(self) -> TagType:
         item = self._tree.topLevelItem(0)
@@ -694,19 +714,19 @@ class NBTWidgetP(QWidget):
                 QApplication.translate("plugin.amulet.nbt", "copy", None),
                 self._copy_current_item,
             )
-            menu.addAction(
-                QIcon(tablericons.outline.clipboard),
-                QApplication.translate("plugin.amulet.nbt", "paste", None),
-                self._paste_current_item,
-            )
-            # menu.addAction(
-            #     QApplication.translate("plugin.amulet.nbt", "paste_insert", None),
-            #     lambda: None,
-            # )
-            # menu.addAction(
-            #     QApplication.translate("plugin.amulet.nbt", "paste_prepend", None),
-            #     lambda: None,
-            # )
+            if self._supports_paste(item):
+                menu.addAction(
+                    QIcon(tablericons.outline.clipboard),
+                    QApplication.translate("plugin.amulet.nbt", "paste", None),
+                    self._paste_current_item,
+                )
+            if self._supports_paste_into(item):
+                menu.addAction(
+                    QIcon(tablericons.outline.clipboard_plus),
+                    QApplication.translate("plugin.amulet.nbt", "paste_into", None),
+                    lambda: None,
+                )
+
             if self._supports_move_up(item):
                 menu.addAction(
                     QIcon(tablericons.outline.arrow_up),
@@ -745,9 +765,7 @@ class NBTWidgetP(QWidget):
             and event.modifiers() == Qt.KeyboardModifier.ControlModifier
         ):
             self._duplicate_current_item()
-        elif (
-            event.key() == Qt.Key.Key_F2
-        ):
+        elif event.key() == Qt.Key.Key_F2:
             self._rename_current_item()
         else:
             super().keyPressEvent(event)
@@ -947,19 +965,107 @@ class NBTWidgetP(QWidget):
             item.copy_snbt()
 
     @staticmethod
+    def _supports_paste(item: NBTTreeWidgetItem) -> bool:
+        return not isinstance(item.get_tag(), NamedTag)
+
+    @staticmethod
     def _paste_item(item: NBTTreeWidgetItem) -> None:
+        tag = _parse_clipboard()
         with CatchExceptionDialog(
             QApplication.translate("plugin.amulet.nbt", "paste_fail", None)
         ):
-            clipboard = QApplication.clipboard()
-            text = clipboard.text()
-            nbt = read_snbt(text)
-            item.set_tag_and_display(nbt, True)
+            item.set_tag_and_display(tag, True)
 
     def _paste_current_item(self) -> None:
         item = self._tree.currentItem()
         if isinstance(item, NBTTreeWidgetItem):
             self._paste_item(item)
+
+    @staticmethod
+    def _supports_paste_into(item: NBTTreeWidgetItem) -> bool:
+        return isinstance(
+            item.get_tag(),
+            (ListTag, CompoundTag, ByteArrayTag, IntArrayTag, LongArrayTag),
+        )
+
+    def _paste_into_item(self, item: NBTTreeWidgetItem) -> None:
+        tag = _parse_clipboard()
+        with CatchExceptionDialog(
+            QApplication.translate("plugin.amulet.nbt", "paste_fail", None)
+        ):
+            item_tag = item.get_tag()
+            if isinstance(item_tag, ListTag):
+                list_tag_cls = item_tag.element_class
+                if list_tag_cls is not None and not isinstance(tag, list_tag_cls):
+                    message_box = QMessageBox()
+                    message_box.setText(
+                        QApplication.translate(
+                            "plugin.amulet.nbt", "paste_into_list_type_wrong", None
+                        ).format(
+                            list_tag_cls=list_tag_cls.__name__,
+                            tag_cls=type(tag).__name__,
+                        )
+                    )
+                    message_box.setStandardButtons(QMessageBox.StandardButton.Ok)
+                    message_box.exec()
+                    return
+                item_tag.append(tag)
+                item.update_text()
+                NBTTreeWidgetItem(item, tag)
+            elif isinstance(item_tag, CompoundTag):
+                str_widget = QLineEdit(
+                    placeholderText=QApplication.translate(
+                        "plugin.amulet.nbt", "name_placeholder", None
+                    )
+                )
+                dialog = EditDialog(
+                    self,
+                    str_widget,
+                    QApplication.translate(
+                        "plugin.amulet.nbt", "select_tag_name", None
+                    ),
+                )
+                if dialog.exec():
+                    key = str_widget.text()
+                    self._set_compound_tag(item_tag, item, key, tag)
+            else:
+                arr_cls: type[ByteArrayTag | IntArrayTag | LongArrayTag]
+                arr_tag_cls: type[ByteTag | IntTag | LongTag]
+                if isinstance(item_tag, ByteArrayTag):
+                    arr_cls = ByteArrayTag
+                    arr_tag_cls = ByteTag
+                elif isinstance(item_tag, IntArrayTag):
+                    arr_cls = IntArrayTag
+                    arr_tag_cls = IntTag
+                elif isinstance(item_tag, LongArrayTag):
+                    arr_cls = LongArrayTag
+                    arr_tag_cls = LongTag
+                else:
+                    return
+                if not isinstance(tag, arr_tag_cls):
+                    message_box = QMessageBox()
+                    message_box.setText(
+                        QApplication.translate(
+                            "plugin.amulet.nbt", "paste_into_arr_type_wrong", None
+                        ).format(
+                            arr_cls=arr_cls.__name__,
+                            arr_tag_cls=arr_tag_cls.__name__,
+                            tag_cls=type(tag).__name__,
+                        )
+                    )
+                    message_box.setStandardButtons(QMessageBox.StandardButton.Ok)
+                    message_box.exec()
+                    return
+                l: list[SupportsInt] = list(item_tag)
+                l.append(tag)
+                item.set_tag(arr_cls(l), True)
+                item.update_text()
+                NBTTreeWidgetItem(item, tag)
+
+    def _paste_into_current_item(self) -> None:
+        item = self._tree.currentItem()
+        if isinstance(item, NBTTreeWidgetItem):
+            self._paste_into_item(item)
 
     @staticmethod
     def _supports_add_item(item: NBTTreeWidgetItem) -> bool:
