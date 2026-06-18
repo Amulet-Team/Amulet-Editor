@@ -655,39 +655,47 @@ class NBTWidgetP(QWidget):
             menu = QMenu(self)
             if self._supports_rename(item):
                 menu.addAction(
+                    QIcon(tablericons.outline.cursor_text),
                     QApplication.translate("plugin.amulet.nbt", "rename", None),
                     self._rename_current_item,
                 )
             if self._supports_edit_tag(item):
                 menu.addAction(
+                    QIcon(tablericons.outline.pencil),
                     QApplication.translate("plugin.amulet.nbt", "edit_tag", None),
                     self._edit_current_item_tag,
                 )
             if self._supports_add_item(item):
                 menu.addAction(
+                    QIcon(tablericons.outline.plus),
                     QApplication.translate("plugin.amulet.nbt", "add", None),
                     self._add_current_item,
                 )
             if self._supports_duplicate(item):
                 menu.addAction(
+                    QIcon(tablericons.outline.copy_plus),
                     QApplication.translate("plugin.amulet.nbt", "duplicate", None),
                     self._duplicate_current_item,
                 )
             if self._supports_delete(item):
                 menu.addAction(
+                    QIcon(tablericons.outline.trash),
                     QApplication.translate("plugin.amulet.nbt", "delete", None),
                     self._delete_current_item,
                 )
             if self._supports_cut(item):
                 menu.addAction(
+                    QIcon(tablericons.outline.scissors),
                     QApplication.translate("plugin.amulet.nbt", "cut", None),
                     self._cut_current_item,
                 )
             menu.addAction(
+                QIcon(tablericons.outline.copy),
                 QApplication.translate("plugin.amulet.nbt", "copy", None),
                 self._copy_current_item,
             )
             menu.addAction(
+                QIcon(tablericons.outline.clipboard),
                 QApplication.translate("plugin.amulet.nbt", "paste", None),
                 self._paste_current_item,
             )
@@ -701,11 +709,13 @@ class NBTWidgetP(QWidget):
             # )
             if self._supports_move_up(item):
                 menu.addAction(
+                    QIcon(tablericons.outline.arrow_up),
                     QApplication.translate("plugin.amulet.nbt", "move_up", None),
                     self._move_current_item_up,
                 )
             if self._supports_move_down(item):
                 menu.addAction(
+                    QIcon(tablericons.outline.arrow_down),
                     QApplication.translate("plugin.amulet.nbt", "move_down", None),
                     self._move_current_item_down,
                 )
