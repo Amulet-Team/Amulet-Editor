@@ -2,7 +2,7 @@ from copy import deepcopy
 from typing import SupportsInt, Literal, overload
 
 from PySide6.QtCore import QPoint, Qt, QSize, QEvent, QTimer
-from PySide6.QtGui import QPixmap, QKeyEvent, QMouseEvent, QEnterEvent, QIcon
+from PySide6.QtGui import QPixmap, QKeyEvent, QMouseEvent, QEnterEvent, QIcon, QFont
 from PySide6.QtWidgets import (
     QWidget,
     QTreeWidget,
@@ -531,6 +531,17 @@ class NBTWidgetP(QWidget):
         self._tool_layout.addStretch(1)
 
         self._tree = TreeWidget(self)
+        font = QFont([
+            "Consolas",
+            "Menlo",
+            "DejaVu Sans Mono",
+            "Liberation Mono",
+            "Courier New",
+            "Courier",
+            "monospace",
+        ])
+        font.setStyleHint(QFont.StyleHint.Monospace)
+        self._tree.setFont(font)
         self._layout.addWidget(self._tree)
 
         self._tree.setColumnCount(1)
