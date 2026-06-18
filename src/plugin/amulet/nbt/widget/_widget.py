@@ -717,6 +717,10 @@ class NBTWidgetP(QWidget):
             and event.modifiers() == Qt.KeyboardModifier.ControlModifier
         ):
             self._paste_current_item()
+        elif (
+            event.key() == Qt.Key.Key_F2
+        ):
+            self._rename_current_item()
         else:
             super().keyPressEvent(event)
 
