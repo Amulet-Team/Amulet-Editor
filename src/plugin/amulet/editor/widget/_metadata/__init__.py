@@ -1,1 +1,1 @@
-from ._widget import MetadataWidget, MetadataWidgetIdentifier
+from ._widget import MetadataWidget
