@@ -269,11 +269,11 @@ class FirstPersonCanvas(QOpenGLWidget, QOpenGLFunctions):
             if self_ is None:
                 return
             with self_._rp_load_condition:
-                if self._rp_load_managers is None:
+                if self_._rp_load_managers is None:
                     return
-                self._rp_load_managers[1].cancel()
-                while self._rp_load_managers is not None:
-                    self._rp_load_condition.wait()
+                self_._rp_load_managers[1].cancel()
+                while self_._rp_load_managers is not None:
+                    self_._rp_load_condition.wait()
 
         self.destroyed.connect(delete)
 
