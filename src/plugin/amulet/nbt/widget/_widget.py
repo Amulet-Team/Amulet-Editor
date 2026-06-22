@@ -47,6 +47,7 @@ from plugin.tablericons import tablericons
 
 from ._spin import NBTSpinBox
 from ..icon import get_pixmap, get_icon
+from .._locale import load_translations
 
 type TagType = NamedTag | AnyNBT
 
@@ -61,8 +62,8 @@ def get_string(v: str | bytes) -> str:
 def items_str(count: int) -> str:
     """Get the translation string for the number of items."""
     if count == 1:
-        return QApplication.translate("plugin.amulet.nbt", "count_items", None)
-    return QApplication.translate("plugin.amulet.nbt", "count_items_single", None)
+        return QApplication.translate("plugin.amulet.nbt", "count_items_single", None)
+    return QApplication.translate("plugin.amulet.nbt", "count_items", None)
 
 
 def _get_tag_str(tag: TagType) -> str:
@@ -485,6 +486,8 @@ class TreeWidget(QTreeWidget):
 class NBTWidgetP(QWidget):
     def __init__(self, tag: TagType) -> None:
         super().__init__()
+
+        load_translations()
 
         self._layout = QVBoxLayout(self)
         self._layout.setContentsMargins(0, 0, 0, 0)
