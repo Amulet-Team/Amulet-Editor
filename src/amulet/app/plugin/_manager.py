@@ -153,6 +153,8 @@ def _validate_import(imported_name: str, frame: FrameType | None) -> None:
         if importer_name is None:
             raise RuntimeError(f"Could not find __name__ attribute for frame\n{frame}")
         importer_name_split = importer_name.split(".", 3)
+        if importer_name_split[0] in {"shibokensupport"}:
+            return
         if importer_name_split[0] != "plugin" or len(importer_name_split) < 3:
             raise RuntimeError(
                 f'Plugin module "{imported_name}" was imported by "{importer_name}". Plugins can only be imported by plugins.'
