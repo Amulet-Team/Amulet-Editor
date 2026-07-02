@@ -1,1 +1,1 @@
-from ._widget import MetadataWidget
+from ._widget import MetadataTool

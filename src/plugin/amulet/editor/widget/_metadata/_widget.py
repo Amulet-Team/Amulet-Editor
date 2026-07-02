@@ -12,7 +12,7 @@ class MetadataWidgetP(QWidget):
         self._level = level
 
 
-class MetadataWidget(QWidget):
+class MetadataTool(QWidget):
     def __init__(self, level: Level):
         super().__init__()
         self._level = level

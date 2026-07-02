@@ -18,7 +18,7 @@ from .dock.layout import (
     register_layout,
 )
 
-from .widget._metadata import MetadataWidget
+from .widget._metadata import MetadataTool
 from .widget._selection import SelectionWidget, SelectionWidgetIdentifier
 from .widget._view_3d import ViewportWidget, ViewportWidgetIdentifier
 from .widget._block_inspect import BlockEditWidget, BlockEditWidgetIdentifier
@@ -53,7 +53,7 @@ def _init_level_tools(level: Level) -> None:
         identifier=MetadataToolIdentifier,
         name=("plugin.amulet.editor.tool", "metadata", None),
         icon_path=tablericons.outline.file_info,
-        widget=MetadataWidget(level),
+        widget=MetadataTool(level),
     )
 
     tab.activate_tool(MetadataToolIdentifier)
