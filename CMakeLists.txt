@@ -25,7 +25,7 @@ if (MSVC)
     add_definitions("/MP")
 endif()
 
-find_package(Python3 COMPONENTS Interpreter Development REQUIRED)
+find_package(Python3 COMPONENTS Interpreter Development.Module REQUIRED)
 
 # Find libraries
 if (NOT TARGET pybind11::module)
@@ -69,6 +69,11 @@ file(GLOB_RECURSE EXTENSION_HEADERS LIST_DIRECTORIES false ${SOURCE_PATH}/amulet
 
 # Add python extension
 pybind11_add_module(_amulet_app)
+if(APPLE)
+    set_target_properties(_amulet_app PROPERTIES INSTALL_RPATH "@loader_path")
+elseif(UNIX)
+    set_target_properties(_amulet_app PROPERTIES INSTALL_RPATH "$ORIGIN")
+endif()
 set_target_properties(_amulet_app PROPERTIES CXX_VISIBILITY_PRESET hidden)
 set_target_properties(_amulet_app PROPERTIES FOLDER "Python")
 target_link_libraries(_amulet_app PRIVATE amulet_pybind11_extensions)

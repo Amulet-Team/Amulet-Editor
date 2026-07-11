@@ -79,3 +79,30 @@ versionfile_source = "src/amulet/app/_version.py"
 versionfile_build = "amulet/app/_version.py"
 tag_prefix = ""
 parentdir_prefix = "amulet_editor-"
+
+[tool.cibuildwheel]
+test-sources = ["tests", "tools/compile_tests.py"]
+test-command = [
+    "python -m venv venv_build",
+    "venv_build/bin/pip install {wheel}[dev]",
+    "venv_build/bin/python tools/compile_tests.py",
+    "python -m unittest discover -s tests"
+]
+
+manylinux-x86_64-image = "manylinux_2_34"
+
+[tool.cibuildwheel.linux]
+before-all = "yum install -y cmake"
+repair-wheel-command = "auditwheel repair --exclude libleveldb.so --exclude libamulet_utils.so --exclude libamulet_zlib.so --exclude libamulet_nbt.so --exclude libamulet_core.so --exclude libamulet_resource_pack.so --exclude libamulet_game.so --exclude libamulet_anvil.so --exclude libamulet_level.so -w {dest_dir} {wheel}"
+
+[tool.cibuildwheel.macos]
+repair-wheel-command = "delocate-wheel --require-archs {delocate_archs} --ignore-missing-dependencies --exclude libleveldb.dylib --exclude libamulet_utils.dylib --exclude libamulet_zlib.dylib --exclude libamulet_nbt.dylib --exclude libamulet_core.dylib --exclude libamulet_resource_pack.dylib --exclude libamulet_game.dylib --exclude libamulet_anvil.dylib --exclude libamulet_level.dylib -w {dest_dir} -v {wheel}"
+
+[tool.cibuildwheel.windows]
+repair-wheel-command = "delvewheel repair --ignore-existing --exclude \"msvcp140.dll;leveldb.dll;amulet_utils.dll;amulet_zlib.dll;amulet_nbt.dll;amulet_core.dll;amulet_resource_pack.dll;amulet_game.dll;amulet_anvil.dll;amulet_level.dll\" -w {dest_dir} -v {wheel}"
+test-command = [
+    "python -m venv venv_build",
+    "venv_build\\Scripts\\pip install {wheel}[dev]",
+    "venv_build\\Scripts\\python tools/compile_tests.py",
+    "python -m unittest discover -s tests"
+]
