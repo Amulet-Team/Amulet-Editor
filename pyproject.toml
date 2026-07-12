@@ -116,11 +116,4 @@ test-command = [
     "venv_build\\Scripts\\python tools/compile_tests.py",
     "python -m unittest discover -s tests"
 ]
-
-[[tool.cibuildwheel.overrides]]
-select = "*-win_amd64"
 environment = { CMAKE_PREFIX_PATH = "C:\\\\Qt\\\\6.11.1\\\\msvc2022_64", QT_ROOT_DIR = "C:\\\\Qt\\\\6.11.1\\\\msvc2022_64" }
-
-[[tool.cibuildwheel.overrides]]
-select = "*-win_arm64"
-environment = { CMAKE_PREFIX_PATH = "C:\\\\Qt\\\\6.11.1\\\\msvc2022_arm64", QT_ROOT_DIR = "C:\\\\Qt\\\\6.11.1\\\\msvc2022_arm64" }
