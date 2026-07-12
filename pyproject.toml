@@ -103,7 +103,7 @@ repair-wheel-command = "auditwheel repair --exclude libleveldb.so --exclude libl
 [tool.cibuildwheel.macos]
 before-build = """
 pip install aqtinstall
-aqt install-qt mac desktop 6.11.1 clang_64 -O /opt/qt
+sudo aqt install-qt mac desktop 6.11.1 clang_64 -O /opt/qt
 """
 environment = { QT_ROOT_DIR = "/opt/qt/6.11.1/macos" }
 repair-wheel-command = "delocate-wheel --require-archs {delocate_archs} --ignore-missing-dependencies --exclude libleveldb.dylib --exclude libleveldb.1.dylib --exclude libamulet_utils.dylib --exclude libamulet_zlib.dylib --exclude libamulet_nbt.dylib --exclude libamulet_core.dylib --exclude libamulet_resource_pack.dylib --exclude libamulet_game.dylib --exclude libamulet_anvil.dylib --exclude libamulet_level.dylib -w {dest_dir} -v {wheel}"
