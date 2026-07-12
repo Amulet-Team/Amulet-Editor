@@ -93,9 +93,19 @@ manylinux-x86_64-image = "manylinux_2_34"
 
 [tool.cibuildwheel.linux]
 before-all = "yum install -y cmake"
+before-build = """
+pip install aqtinstall
+aqt install-qt linux desktop 6.11.1 linux_gcc_64 -O /opt/qt --outputdir /opt/qt
+"""
+environment = { CMAKE_PREFIX_PATH = "/opt/qt/6.11.1/gcc_64" }
 repair-wheel-command = "auditwheel repair --exclude libleveldb.so --exclude libleveldb.so.1 --exclude libamulet_utils.so --exclude libamulet_zlib.so --exclude libamulet_nbt.so --exclude libamulet_core.so --exclude libamulet_resource_pack.so --exclude libamulet_game.so --exclude libamulet_anvil.so --exclude libamulet_level.so -w {dest_dir} {wheel}"
 
 [tool.cibuildwheel.macos]
+before-build = """
+pip install aqtinstall
+aqt install-qt mac desktop 6.11.1 clang_64 -O /opt/qt
+"""
+environment = { CMAKE_PREFIX_PATH = "/opt/qt/6.11.1/macos" }
 repair-wheel-command = "delocate-wheel --require-archs {delocate_archs} --ignore-missing-dependencies --exclude libleveldb.dylib --exclude libleveldb.1.dylib --exclude libamulet_utils.dylib --exclude libamulet_zlib.dylib --exclude libamulet_nbt.dylib --exclude libamulet_core.dylib --exclude libamulet_resource_pack.dylib --exclude libamulet_game.dylib --exclude libamulet_anvil.dylib --exclude libamulet_level.dylib -w {dest_dir} -v {wheel}"
 
 [tool.cibuildwheel.windows]
@@ -106,3 +116,19 @@ test-command = [
     "venv_build\\Scripts\\python tools/compile_tests.py",
     "python -m unittest discover -s tests"
 ]
+
+[[tool.cibuildwheel.overrides]]
+select = "*-win_amd64"
+before-build = """
+pip install aqtinstall
+aqt install-qt windows desktop 6.11.1 win64_msvc2022_64 -O C:\\Qt
+"""
+environment = { CMAKE_PREFIX_PATH = "C:\\\\Qt\\\\6.11.1\\\\msvc2022_64" }
+
+[[tool.cibuildwheel.overrides]]
+select = "*-win_arm64"
+before-build = """
+pip install aqtinstall
+aqt install-qt windows desktop 6.11.1 win64_msvc2022_arm64 -O C:\\Qt
+"""
+environment = { CMAKE_PREFIX_PATH = "C:\\\\Qt\\\\6.11.1\\\\msvc2022_arm64" }
