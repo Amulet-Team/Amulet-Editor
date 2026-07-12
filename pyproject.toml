@@ -81,13 +81,8 @@ tag_prefix = ""
 parentdir_prefix = "amulet_editor-"
 
 [tool.cibuildwheel]
-test-sources = ["tests", "tools/compile_tests.py"]
-test-command = [
-    "python -m venv venv_build",
-    "venv_build/bin/pip install {wheel}[dev]",
-    "venv_build/bin/python tools/compile_tests.py",
-    "python -m unittest discover -s tests"
-]
+test-sources = ["tests"]
+test-command = "python -m unittest discover -s tests"
 
 manylinux-x86_64-image = "manylinux_2_34"
 
