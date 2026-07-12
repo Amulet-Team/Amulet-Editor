@@ -95,7 +95,7 @@ manylinux-x86_64-image = "manylinux_2_34"
 before-all = "yum install -y cmake"
 before-build = """
 pip install aqtinstall
-aqt install-qt linux desktop 6.11.1 linux_gcc_64 -O /opt/qt --outputdir /opt/qt
+aqt install-qt linux desktop 6.11.1 linux_gcc_64 -O /opt/qt
 """
 environment = { CMAKE_PREFIX_PATH = "/opt/qt/6.11.1/gcc_64" }
 repair-wheel-command = "auditwheel repair --exclude libleveldb.so --exclude libleveldb.so.1 --exclude libamulet_utils.so --exclude libamulet_zlib.so --exclude libamulet_nbt.so --exclude libamulet_core.so --exclude libamulet_resource_pack.so --exclude libamulet_game.so --exclude libamulet_anvil.so --exclude libamulet_level.so -w {dest_dir} {wheel}"
