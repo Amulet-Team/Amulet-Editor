@@ -104,6 +104,11 @@ environment = { CMAKE_PREFIX_PATH = "/opt/qt/6.11.1/macos", QT_ROOT_DIR = "/opt/
 repair-wheel-command = "delocate-wheel --require-archs {delocate_archs} --ignore-missing-dependencies --exclude libleveldb.dylib --exclude libleveldb.1.dylib --exclude libamulet_utils.dylib --exclude libamulet_zlib.dylib --exclude libamulet_nbt.dylib --exclude libamulet_core.dylib --exclude libamulet_resource_pack.dylib --exclude libamulet_game.dylib --exclude libamulet_anvil.dylib --exclude libamulet_level.dylib -w {dest_dir} -v {wheel}"
 
 [tool.cibuildwheel.windows]
+before-all = """
+pip install aqtinstall
+if "%PROCESSOR_ARCHITECTURE%"=="AMD64" aqt install-qt windows desktop 6.11.1 win64_msvc2022_64 -O C:\\Qt
+if "%PROCESSOR_ARCHITECTURE%"=="ARM64" aqt install-qt windows desktop 6.11.1 win64_msvc2022_arm64 -O C:\\Qt
+"""
 repair-wheel-command = "delvewheel repair --ignore-existing --exclude \"msvcp140.dll;leveldb.dll;amulet_utils.dll;amulet_zlib.dll;amulet_nbt.dll;amulet_core.dll;amulet_resource_pack.dll;amulet_game.dll;amulet_anvil.dll;amulet_level.dll\" -w {dest_dir} -v {wheel}"
 test-command = [
     "python -m venv venv_build",
@@ -114,16 +119,8 @@ test-command = [
 
 [[tool.cibuildwheel.overrides]]
 select = "*-win_amd64"
-before-build = """
-pip install aqtinstall
-aqt install-qt windows desktop 6.11.1 win64_msvc2022_64 -O C:\\Qt
-"""
 environment = { CMAKE_PREFIX_PATH = "C:\\\\Qt\\\\6.11.1\\\\msvc2022_64", QT_ROOT_DIR = "C:\\\\Qt\\\\6.11.1\\\\msvc2022_64" }
 
 [[tool.cibuildwheel.overrides]]
 select = "*-win_arm64"
-before-build = """
-pip install aqtinstall
-aqt install-qt windows desktop 6.11.1 win64_msvc2022_arm64 -O C:\\Qt
-"""
 environment = { CMAKE_PREFIX_PATH = "C:\\\\Qt\\\\6.11.1\\\\msvc2022_arm64", QT_ROOT_DIR = "C:\\\\Qt\\\\6.11.1\\\\msvc2022_arm64" }
