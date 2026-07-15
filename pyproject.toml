@@ -127,4 +127,4 @@ environment = { CMAKE_PREFIX_PATH = "C:\\\\Qt\\\\6.10.3\\\\msvc2022_64", QT_ROOT
 
 [[tool.cibuildwheel.overrides]]
 select = "*-win_arm64"
-environment = { CMAKE_PREFIX_PATH = "C:\\\\Qt\\\\6.10.3\\\\msvc2022_arm64_cross_compiled", QT_ROOT_DIR = "C:\\\\Qt\\\\6.10.3\\\\msvc2022_arm64_cross_compiled" }
+environment = { CMAKE_PREFIX_PATH = "C:\\\\Qt\\\\6.10.3\\\\msvc2022_arm64", QT_ROOT_DIR = "C:\\\\Qt\\\\6.10.3\\\\msvc2022_arm64" }
