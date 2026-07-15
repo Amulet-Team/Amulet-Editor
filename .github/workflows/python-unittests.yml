@@ -47,7 +47,7 @@ jobs:
 
     - name: Build
       run: |
-        pip install -v .
+        pip install .
 
     - name: Test with unittest
       run: python -m unittest discover -v -s tests
