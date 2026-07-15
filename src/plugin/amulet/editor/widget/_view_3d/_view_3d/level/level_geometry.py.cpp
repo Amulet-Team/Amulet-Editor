@@ -81,6 +81,5 @@ void init_level_geometry(py::module m_parent)
             Amulet::create_event_binding<Amulet::Event<>>();
             return py::cast(self.get_geometry_changed(), py::return_value_policy::reference);
         },
-        py::doc("Event emitted when the geometry changes."),
-        py::keep_alive<0, 1>());
+        py::doc("Event emitted when the geometry changes."));
 }
