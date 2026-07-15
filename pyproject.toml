@@ -106,12 +106,8 @@ repair-wheel-command = "delocate-wheel --require-archs {delocate_archs} --ignore
 [tool.cibuildwheel.windows]
 before-all = """
 pip install aqtinstall
-if "%PROCESSOR_ARCHITECTURE%"=="AMD64" (
-    aqt install-qt windows desktop 6.10.3 win64_msvc2022_64 -O C:\\Qt || exit /b 1
-)
-if "%PROCESSOR_ARCHITECTURE%"=="ARM64" (
-    aqt install-qt windows desktop 6.10.3 win64_msvc2022_arm64_cross_compiled -O C:\\Qt || exit /b 1
-)
+aqt install-qt windows desktop 6.10.3 win64_msvc2022_64 -O C:\\Qt
+aqt install-qt windows desktop 6.10.3 win64_msvc2022_arm64_cross_compiled -O C:\\Qt
 """
 repair-wheel-command = "delvewheel repair --ignore-existing --exclude \"msvcp140.dll;leveldb.dll;amulet_utils.dll;amulet_zlib.dll;amulet_nbt.dll;amulet_core.dll;amulet_resource_pack.dll;amulet_game.dll;amulet_anvil.dll;amulet_level.dll\" -w {dest_dir} -v {wheel}"
 test-command = [
