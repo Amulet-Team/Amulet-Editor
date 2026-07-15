@@ -27,30 +27,30 @@ jobs:
         shell: bash
 
     steps:
-      - name: Clone
-        uses: actions/checkout@v7
+    - name: Clone
+      uses: actions/checkout@v7
 
-      - name: Setup cmake
-        uses: jwlawson/actions-setup-cmake@v2
+    - name: Setup cmake
+      uses: jwlawson/actions-setup-cmake@v2
 
-      - name: Set up Python
-        uses: actions/setup-python@v6
-        with:
-          python-version: ${{ matrix.cfg.python-version }}
-          architecture: ${{ matrix.cfg.architecture }}
+    - name: Set up Python
+      uses: actions/setup-python@v6
+      with:
+        python-version: ${{ matrix.cfg.python-version }}
+        architecture: ${{ matrix.cfg.architecture }}
 
-      - name: Install Qt
-        uses: jurplel/install-qt-action@v4
-        with:
-          version: '6.10.3'
-          setup-python: 'false'
+    - name: Install Qt
+      uses: jurplel/install-qt-action@v4
+      with:
+        version: '6.10.3'
+        setup-python: 'false'
 
-      - name: Build
-        run: |
-          pip install -v .
+    - name: Build
+      run: |
+        pip install -v .
 
-      - name: Test with unittest
-        run: python -m unittest discover -v -s tests
+    - name: Test with unittest
+      run: python -m unittest discover -v -s tests
 
   cibuildwheel:
     strategy:
