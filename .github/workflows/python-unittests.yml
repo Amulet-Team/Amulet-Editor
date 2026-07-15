@@ -15,10 +15,48 @@ jobs:
       fail-fast: false
       matrix:
         cfg:
-          - { os: windows-2025-vs2026, python-version: '3.14', architecture: x64, whl: 'cp314-win_amd64' }
-          - { os: windows-11-vs2026-arm, python-version: '3.14', architecture: arm64, whl: 'cp314-win_arm64' }
-          - { os: macos-15-intel, python-version: '3.14', architecture: x64, whl: 'cp314-macosx_x86_64' }
-          - { os: macos-15, python-version: '3.14', architecture: arm64, whl: 'cp314-macosx_arm64' }
+          - { os: windows-2025-vs2026, python-version: '3.14', architecture: x64 }
+          - { os: windows-11-vs2026-arm, python-version: '3.14', architecture: arm64 }
+          - { os: macos-15-intel, python-version: '3.14', architecture: x64 }
+          - { os: macos-15, python-version: '3.14', architecture: arm64 }
+
+    runs-on: ${{ matrix.cfg.os }}
+    timeout-minutes: 45
+    defaults:
+      run:
+        shell: bash
+
+    steps:
+      - name: Clone
+        uses: actions/checkout@v7
+
+      - name: Setup cmake
+        uses: jwlawson/actions-setup-cmake@v2
+
+      - name: Set up Python
+        uses: actions/setup-python@v6
+        with:
+          python-version: ${{ matrix.cfg.python-version }}
+          architecture: ${{ matrix.cfg.architecture }}
+
+      - name: Install Qt
+        uses: jurplel/install-qt-action@v4
+        with:
+          version: '6.10.3'
+          setup-python: 'false'
+
+      - name: Build
+        run: |
+          pip install -v .
+
+      - name: Test with unittest
+        run: python -m unittest discover -v -s tests
+
+  cibuildwheel:
+    strategy:
+      fail-fast: false
+      matrix:
+        cfg:
           - { os: ubuntu-24.04, python-version: '3.14', architecture: x64, whl: 'cp314-manylinux_x86_64' }
 
     runs-on: ${{ matrix.cfg.os }}
