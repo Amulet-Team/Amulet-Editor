@@ -103,7 +103,9 @@ class LevelTabWidget(QWidget, TabAboutToClose, TabAboutToHide):
                 return
             widget_stack.setCurrentWidget(widget)
 
-        button.pre_clicked.connect(pre_show_widget, type=Qt.ConnectionType.DirectConnection)
+        button.pre_clicked.connect(
+            pre_show_widget, type=Qt.ConnectionType.DirectConnection
+        )
         button.clicked.connect(show_widget)
         self._toolbar.add_layout_button(button)
         self._tool_id_to_storage[identifier] = LayoutStorage(identifier, button, widget)
