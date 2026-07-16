@@ -1,9 +1,12 @@
+from collections.abc import Callable
+
 from PySide6.QtCore import QSize, Qt, QEvent, QCoreApplication
-from PySide6.QtGui import QPixmap, QIcon
+from PySide6.QtGui import QPixmap, QIcon, QMouseEvent
 from PySide6.QtWidgets import QVBoxLayout, QPushButton
 from PySide6.QtSvgWidgets import QSvgWidget
 
 from amulet.app.exception import CatchExceptionDialog
+from amulet.app.qt.signal import TypeFormSignal
 
 from ._hover_label import HoverLabel
 
@@ -30,6 +33,9 @@ class SVGButton(QPushButton):
 
 
 class ToolbarButton(SVGButton):
+    # The button has been clicked. If the callback is called, the click is vetoed.
+    pre_clicked = TypeFormSignal(Callable[[], None])
+
     def __init__(
         self,
         name: str | tuple[str, str, str | None],
@@ -62,3 +68,25 @@ class ToolbarButton(SVGButton):
     def hide_tooltip(self) -> None:
         if self._tooltip is not None:
             self._tooltip.hide()
+
+    def mouseReleaseEvent(self, event: QMouseEvent) -> None:
+        if event.button() != Qt.MouseButton.LeftButton:
+            event.ignore()
+            return
+
+        if self.hitButton(event.position().toPoint()):
+            veto = False
+
+            def set_veto() -> None:
+                nonlocal veto
+                veto = True
+
+            self.pre_clicked.emit(set_veto)
+
+            if not veto:
+                self.setChecked(True)
+                self.clicked.emit()
+                event.accept()
+                return
+        self.setDown(False)
+        event.ignore()

@@ -1,8 +1,9 @@
 import traceback
 from dataclasses import dataclass
+from collections.abc import Callable
 
-from PySide6.QtCore import QObject, Signal, QEvent, QCoreApplication, QThread
-from PySide6.QtGui import QCloseEvent, QShortcut
+from PySide6.QtCore import QObject, Signal, QEvent, QCoreApplication, QThread, Qt
+from PySide6.QtGui import QCloseEvent, QShortcut, QMouseEvent
 from PySide6.QtWidgets import (
     QWidget,
     QMainWindow,
@@ -12,15 +13,16 @@ from PySide6.QtWidgets import (
 )
 from PySide6.QtOpenGLWidgets import QOpenGLWidget
 
-from amulet.app.exception import CatchExceptionDialog, display_exception
-
 from amulet.level.abc import Level
+
+from amulet.app.exception import CatchExceptionDialog, display_exception
+from amulet.app.qt.signal import TypeFormSignal
 
 from plugin.amulet.inspector.inspector import InspectorTool
 
 from ._home_tab import HomeTabWidget
 from ._level_tab import LevelTabWidget, LevelTabWidgetAPI
-from ._tab import WindowTabClose
+from ._tab import TabAboutToClose, TabAboutToHide
 
 
 @dataclass(frozen=True)
@@ -28,6 +30,26 @@ class LevelTabStorage:
     level: Level
     widget: QWidget
     api: LevelTabWidgetAPI
+
+
+class TabBar(QTabBar):
+    # The tab is about to change. If the callback is called, the tab change is vetoed.
+    tabAboutToChange = TypeFormSignal(Callable[[], None])
+
+    def mousePressEvent(self, event: QMouseEvent) -> None:
+        if event.button() == Qt.MouseButton.LeftButton:
+            index = self.tabAt(event.position().toPoint())
+            if index >= 0 and index != self.currentIndex():
+                veto = False
+
+                def set_veto() -> None:
+                    nonlocal veto
+                    veto = True
+
+                self.tabAboutToChange.emit(set_veto)
+                if veto:
+                    return
+        super().mousePressEvent(event)
 
 
 class EditorMainWindow(QMainWindow):
@@ -45,7 +67,8 @@ class EditorMainWindow(QMainWindow):
         self._central_widget.setLayout(self._central_layout)
 
         self._tabs = QTabWidget()
-        self._tab_bar = self._tabs.tabBar()
+        self._tab_bar = TabBar()
+        self._tabs.setTabBar(self._tab_bar)
         self._tabs.setStyleSheet("QTabBar::tab { min-width: 100px; }")
         self._tabs.setTabsClosable(True)
         self._tabs.setTabBarAutoHide(True)
@@ -60,6 +83,7 @@ class EditorMainWindow(QMainWindow):
         self._widget_to_storage: dict[QWidget, LevelTabStorage] = {}
         self._level_to_storage: dict[Level, LevelTabStorage] = {}
 
+        self._tab_bar.tabAboutToChange.connect(self._tab_changing)
         self._tabs.tabCloseRequested.connect(self._tab_close_requested)
 
         self._inspector: InspectorTool | None = None
@@ -89,6 +113,13 @@ class EditorMainWindow(QMainWindow):
         else:
             self._inspector.reload()
         self._inspector.show()
+
+    def _tab_changing(self, veto: Callable[[], None]) -> None:
+        widget = self._tabs.currentWidget()
+        if isinstance(widget, TabAboutToHide):
+            with CatchExceptionDialog(f"Error in {widget}.tab_about_to_hide()"):
+                if not widget.tab_about_to_hide():
+                    veto()
 
     def _tab_close_requested(self, index: int) -> None:
         with CatchExceptionDialog("Error in EditorMainWindow._tab_close_requested"):
@@ -156,6 +187,11 @@ class EditorMainWindow(QMainWindow):
         storage = self._level_to_storage.get(level)
         if storage is None:
             raise RuntimeError("Level tab does not exist")
+        current_widget = self._tabs.currentWidget()
+        if isinstance(current_widget, TabAboutToHide):
+            with CatchExceptionDialog(f"Error in {current_widget}.tab_about_to_hide()"):
+                if not current_widget.tab_about_to_hide():
+                    return
         self._tabs.setCurrentWidget(storage.widget)
 
     def request_close_level_tab(self, level: Level) -> bool:
@@ -166,14 +202,16 @@ class EditorMainWindow(QMainWindow):
             # We are not aware of this level
             return True
         widget = storage.widget
-        if isinstance(widget, WindowTabClose):
-            with CatchExceptionDialog("Failed closing tab"):
-                if not widget.close_tab():
+        if isinstance(widget, TabAboutToClose):
+            with CatchExceptionDialog(f"Error in {widget}.tab_about_to_close()"):
+                if not widget.tab_about_to_close():
                     # The tab vetoed the close
                     return False
         self._tabs.removeTab(self._tabs.indexOf(widget))
         self._level_to_storage.pop(level, None)
         self._widget_to_storage.pop(widget, None)
+        widget.setParent(None)
+        widget.deleteLater()
         return True
 
 

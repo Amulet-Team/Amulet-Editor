@@ -1,12 +1,16 @@
 from dataclasses import dataclass
+import weakref
+from collections.abc import Callable
 
-from PySide6.QtCore import Qt
+from PySide6.QtCore import Qt, QTimer
 from PySide6.QtGui import QShowEvent
 from PySide6.QtWidgets import QWidget, QHBoxLayout, QStackedWidget
 
 from amulet.level import Level
 
-from .._tab import WindowTabClose
+from amulet.app.exception import CatchExceptionDialog
+
+from .._tab import TabAboutToHide, TabAboutToClose, ToolAboutToHide
 from ._toolbar import ToolBar, ToolbarButton
 from ..dock._impl import DockMainWidget
 
@@ -18,7 +22,7 @@ class LayoutStorage:
     widget: QWidget
 
 
-class LevelTabWidget(QWidget, WindowTabClose):
+class LevelTabWidget(QWidget, TabAboutToClose, TabAboutToHide):
     def __init__(self, level: Level) -> None:
         super().__init__()
         self._level = level
@@ -37,7 +41,17 @@ class LevelTabWidget(QWidget, WindowTabClose):
 
         self._initialised = False
 
-    def close_tab(self) -> bool:
+    def tab_about_to_hide(self) -> bool:
+        widget = self._widget_stack.currentWidget()
+        if isinstance(widget, ToolAboutToHide):
+            return widget.tool_about_to_hide()
+        return True
+
+    def tab_about_to_close(self) -> bool:
+        widget = self._widget_stack.currentWidget()
+        if isinstance(widget, ToolAboutToHide):
+            if not widget.tool_about_to_hide():
+                return False
         # TODO: If the level has unsaved changes, ask the user if they want to save them.
         return True
 
@@ -64,9 +78,32 @@ class LevelTabWidget(QWidget, WindowTabClose):
         self._widget_stack.addWidget(widget)
         button = ToolbarButton(name, icon_path)
 
-        def show_widget() -> None:
-            self._widget_stack.setCurrentWidget(widget)
+        weak_widget_stack = weakref.ref(self._widget_stack)
 
+        def pre_show_widget(veto: Callable[[], None]) -> None:
+            widget_stack = weak_widget_stack()
+            if widget_stack is None:
+                return
+            current_widget = widget_stack.currentWidget()
+            if widget is current_widget:
+                return
+            if isinstance(current_widget, ToolAboutToHide):
+                with CatchExceptionDialog(
+                    f"Error in {current_widget}.tool_about_to_hide()"
+                ):
+                    if not current_widget.tool_about_to_hide():
+                        veto()
+
+        def show_widget() -> None:
+            widget_stack = weak_widget_stack()
+            if widget_stack is None:
+                return
+            current_widget = widget_stack.currentWidget()
+            if widget is current_widget:
+                return
+            widget_stack.setCurrentWidget(widget)
+
+        button.pre_clicked.connect(pre_show_widget, type=Qt.ConnectionType.DirectConnection)
         button.clicked.connect(show_widget)
         self._toolbar.add_layout_button(button)
         self._tool_id_to_storage[identifier] = LayoutStorage(identifier, button, widget)
@@ -77,7 +114,7 @@ class LevelTabWidget(QWidget, WindowTabClose):
 
 class LevelTabWidgetAPI:
     def __init__(self, level_tab: LevelTabWidget) -> None:
-        self._level_tab = level_tab
+        self._level_tab = weakref.ref(level_tab)
 
     def add_tool(
         self,
@@ -96,8 +133,12 @@ class LevelTabWidgetAPI:
             1) The widget that is displayed when the tool is selected.
             2) The identifier for a dock layout.
         """
-        self._level_tab.add_tool(identifier, name, icon_path, widget)
+        level_tab = self._level_tab()
+        if level_tab is not None:
+            level_tab.add_tool(identifier, name, icon_path, widget)
 
     def activate_tool(self, identifier: str) -> None:
         """This simulates the user clicking the button for the tool."""
-        self._level_tab.activate_tool(identifier)
+        level_tab = self._level_tab()
+        if level_tab is not None:
+            level_tab.activate_tool(identifier)
