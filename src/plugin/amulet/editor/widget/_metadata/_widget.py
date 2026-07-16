@@ -4,10 +4,7 @@ import os
 import sys
 import subprocess
 
-from PySide6.QtCore import (
-    Qt,
-    QSize,
-)
+from PySide6.QtCore import Qt, QSize
 from PySide6.QtGui import QShowEvent, QPixmap
 from PySide6.QtWidgets import (
     QVBoxLayout,
@@ -48,9 +45,14 @@ class MetadataWidgetP(QWidget):
         self._layout.addLayout(self._header_layout)
 
         thumbnail = level.thumbnail
-        self._thumbnail = QLabel(pixmap=QPixmap.fromImage(ImageQt(thumbnail)))
-        self._thumbnail.setScaledContents(True)
-        self._thumbnail.setFixedSize(int(200 * thumbnail.width / thumbnail.height), 200)
+        self._thumbnail = QLabel(
+            pixmap=QPixmap.fromImage(ImageQt(thumbnail)).scaled(
+                int(200 * thumbnail.width / thumbnail.height),
+                200,
+                Qt.AspectRatioMode.KeepAspectRatio,
+                Qt.TransformationMode.FastTransformation,
+            )
+        )
         self._header_layout.addWidget(
             self._thumbnail, alignment=Qt.AlignmentFlag.AlignCenter
         )
