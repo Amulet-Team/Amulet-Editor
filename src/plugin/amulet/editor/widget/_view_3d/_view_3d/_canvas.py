@@ -264,7 +264,6 @@ class FirstPersonCanvas(QOpenGLWidget, QOpenGLFunctions):
         weak_self = weakref.ref(self)
 
         def delete() -> None:
-            print("delete canvas")
             self_ = weak_self()
             if self_ is None:
                 return

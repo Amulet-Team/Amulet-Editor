@@ -17,6 +17,9 @@ plugin.amulet.editor.OpenWorldPage.open_level=Open Level
 plugin.amulet.editor.OpenWorldPage.open_file=Open File
 plugin.amulet.editor.OpenWorldPage.open_directory=Open Directory
 
+plugin.amulet.editor.LevelDatEditor.level_dat_version=level.dat version:
+plugin.amulet.editor.LevelDatEditor.ask_save=Save changes to level.dat?
+
 plugin.amulet.editor.tool.metadata=Metadata
 plugin.amulet.editor.tool.fill_replace=Fill/Replace
 plugin.amulet.editor.tool.brush=Brush

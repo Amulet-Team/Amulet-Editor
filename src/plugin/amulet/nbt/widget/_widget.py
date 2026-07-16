@@ -1346,6 +1346,9 @@ class NBTWidgetP(QWidget):
         if isinstance(item, NBTTreeWidgetItem):
             self._move_item_down(item)
 
+    def add_menu_widget(self, widget: QWidget) -> None:
+        self._tool_layout.insertWidget(self._tool_layout.count() - 1, widget)
+
 
 class NBTWidget(QWidget):
     def __init__(self, tag: TagType | None = None) -> None:
@@ -1360,3 +1363,6 @@ class NBTWidget(QWidget):
 
     def set_tag(self, tag: TagType) -> None:
         self._tree_widget.set_tag(deepcopy(tag))
+
+    def add_menu_widget(self, widget: QWidget) -> None:
+        self._tree_widget.add_menu_widget(widget)
