@@ -5,8 +5,9 @@ This module manages resource pack objects for each level
 from weakref import WeakKeyDictionary
 from threading import Lock, Condition
 import logging
+import os
 
-from PySide6.QtCore import QObject, QCoreApplication, Signal
+from PySide6.QtCore import QObject, QCoreApplication, Signal, QLocale
 
 from amulet.level.abc import Level
 
@@ -23,7 +24,33 @@ from amulet.resource_pack.java.download_resources import (
     get_java_vanilla_fix,
 )
 
+from amulet.app.localisation import Translator, locale_changed
+
 log = logging.getLogger(__name__)
+
+
+translator: Translator | None = None
+
+
+def _init_localisation() -> None:
+    global translator
+    if translator is not None:
+        return
+
+    translator = Translator()
+
+    def _locale_changed() -> None:
+        from plugin.amulet.resource_pack import __path__ as resource_pack_path
+
+        translator.load_lang(
+            QLocale(),
+            "",
+            directory=os.path.join(*resource_pack_path, "lang"),
+        )
+
+    _locale_changed()
+    QCoreApplication.installTranslator(translator)
+    locale_changed.connect(_locale_changed)
 
 
 class ResourcePackHandle(QObject):
@@ -145,6 +172,7 @@ _level_data: WeakKeyDictionary[Level, ResourcePackHandle] = WeakKeyDictionary()
 
 def get_resource_pack_handle(level: Level) -> ResourcePackHandle:
     with _lock:
+        _init_localisation()
         if level not in _level_data:
             _level_data[level] = ResourcePackHandle()
         return _level_data[level]
