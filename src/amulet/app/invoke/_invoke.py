@@ -141,6 +141,7 @@ def enqueue(func: Callable[[], Any], parent: QObject | None = None) -> None:
             promise.result()
         except Exception as e:
             from amulet.app.exception import display_exception
+
             display_exception(
                 title=f"Error in function {func}",
                 error=str(e),

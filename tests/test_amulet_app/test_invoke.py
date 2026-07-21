@@ -23,6 +23,7 @@ class InvokeTestCase(unittest.TestCase):
         app = QApplication()
 
         try:
+
             def func() -> tuple[QThread, int]:
                 return QThread.currentThread(), 1
 
@@ -57,6 +58,7 @@ class InvokeTestCase(unittest.TestCase):
         app = QApplication()
 
         try:
+
             def func() -> tuple[QThread, int]:
                 return QThread.currentThread(), 1
 
@@ -100,6 +102,7 @@ class InvokeTestCase(unittest.TestCase):
         app = QApplication()
 
         try:
+
             def func() -> tuple[QThread, int]:
                 return QThread.currentThread(), 1
 
@@ -130,11 +133,11 @@ class InvokeTestCase(unittest.TestCase):
         finally:
             shiboken6.delete(app)
 
-
     def test_invoke_thread_from_thread(self) -> None:
         app = QApplication()
 
         try:
+
             def func() -> tuple[QThread, int]:
                 return QThread.currentThread(), 1
 
@@ -175,5 +178,5 @@ class InvokeTestCase(unittest.TestCase):
             shiboken6.delete(app)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     unittest.main()
