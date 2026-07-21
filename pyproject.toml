@@ -94,3 +94,4 @@ aqt install-qt linux desktop 6.10.3 linux_gcc_64 -O /opt/qt
 """
 environment = { CMAKE_PREFIX_PATH = "/opt/qt/6.10.3/gcc_64", QT_ROOT_DIR = "/opt/qt/6.10.3/gcc_64" }
 repair-wheel-command = "auditwheel repair --exclude libleveldb.so --exclude libleveldb.so.1 --exclude libamulet_utils.so --exclude libamulet_zlib.so --exclude libamulet_nbt.so --exclude libamulet_core.so --exclude libamulet_resource_pack.so --exclude libamulet_game.so --exclude libamulet_anvil.so --exclude libamulet_level.so --exclude libQt* -w {dest_dir} {wheel}"
+test-environment = { QT_QPA_PLATFORM = "offscreen" }
