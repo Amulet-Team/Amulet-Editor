@@ -18,7 +18,7 @@ from amulet.app import __version__
 from amulet.app.resource import get_resource_path
 from amulet.app.exception import display_exception, CatchExceptionDialog
 from amulet.app.localisation import Translator, locale_changed
-from amulet.app.app import app_created
+from amulet.app.app import AmuletApp
 from amulet.app.style import set_style
 from amulet.app.invoke import invoke
 
@@ -85,8 +85,7 @@ def main(argv: list[str]) -> NoReturn:
     QSurfaceFormat.setDefaultFormat(surface_format)
 
     # Initialise the application
-    app = QApplication()
-    app_created.emit()
+    app = AmuletApp()
     app.setApplicationVersion(__version__)
     app.setWindowIcon(QIcon(get_resource_path("icons/amulet/Icon.ico")))
 
