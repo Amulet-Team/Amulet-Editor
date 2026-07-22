@@ -2,8 +2,7 @@ from __future__ import annotations
 from typing import TypeVar, Callable, Generic, Any
 import traceback
 
-from PySide6.QtCore import Signal, QObject, Qt, QThread
-from PySide6.QtGui import QGuiApplication
+from PySide6.QtCore import Signal, QObject, Qt, QThread, QCoreApplication
 
 from runtime_final import final
 
@@ -19,7 +18,7 @@ class Promise(QObject, Generic[T]):
     >>> parent: QObject
     >>> promise = Promise(
     >>>     func,  # The function to run
-    >>>     parent,  # The QObject to get the thread from. Use QGuiApplication.instance() to run on the main thread.
+    >>>     parent,  # The QObject to get the thread from. Use QCoreApplication.instance() to run on the main thread.
     >>>     Qt.ConnectionType.QueuedConnection  # The connection type to use.
     >>> )
     >>> def on_finished() -> None:
@@ -40,7 +39,7 @@ class Promise(QObject, Generic[T]):
         Construct a new promise
 
         :param func: The function to run. The result can be accessed by calling :meth:`result` when the function is finished.
-        :param parent: The QObject to get the thread from. Use QGuiApplication.instance() to run on the main thread.
+        :param parent: The QObject to get the thread from. Use QCoreApplication.instance() to run on the main thread.
         :param connection_type: The Qt.ConnectionType to control the behaviour of :meth:`start`.
             AutoConnection automatically picks DirectConnection or QueuedConnection depending on the calling thread.
             DirectConnection will block the calling thread until the function is finished. This can only be used if :meth:`start` is called from the same thread as parent.
@@ -96,7 +95,7 @@ class Promise(QObject, Generic[T]):
 def _get_parent(parent: QObject | None) -> QObject:
     if parent is None:
         # Default to the app if not defined
-        parent = QGuiApplication.instance()
+        parent = QCoreApplication.instance()
         if parent is None:
             raise RuntimeError("The application instance does not exist.")
     return parent
