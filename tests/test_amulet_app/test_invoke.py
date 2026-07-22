@@ -335,8 +335,7 @@ class InvokeTestCase(unittest.TestCase):
 
             def func() -> None:
                 results.append((QThread.currentThread(), len(results)))
-                if len(results) == 2:
-                    QTimer.singleShot(0, app, quit_app)
+                QTimer.singleShot(0, app, quit_app)
 
             def test_enqueue() -> None:
                 nonlocal src_thread
@@ -388,8 +387,7 @@ class InvokeTestCase(unittest.TestCase):
 
             def func() -> None:
                 results.append((QThread.currentThread(), len(results)))
-                if len(results) == 2:
-                    QTimer.singleShot(0, app, quit_app)
+                QTimer.singleShot(0, app, quit_app)
 
             def test_enqueue() -> None:
                 nonlocal src_thread
