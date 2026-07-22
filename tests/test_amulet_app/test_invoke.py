@@ -187,6 +187,177 @@ class InvokeTestCase(unittest.TestCase):
         finally:
             shiboken6.delete(app)
 
+    def test_enqueue_main_from_main(self) -> None:
+        app = QApplication()
+
+        try:
+            results: list[tuple[QThread, int]] = []
+            src_thread: QThread | None = None
+
+            def quit_app() -> None:
+                app.quit()
+
+            def func() -> None:
+                results.append((QThread.currentThread(), len(results)))
+                if len(results) == 2:
+                    QTimer.singleShot(0, app, quit_app)
+
+            def test_enqueue() -> None:
+                nonlocal src_thread
+                src_thread = QThread.currentThread()
+                enqueue(func)
+                enqueue(func, app)
+
+            enqueue(test_enqueue)
+            QTimer.singleShot(2000, app, quit_app)
+
+            app.exec()
+
+            self.assertEqual(app.thread(), src_thread)
+            self.assertEqual(
+                [
+                    (app.thread(), 0),
+                    (app.thread(), 1),
+                ],
+                results,
+            )
+
+        finally:
+            shiboken6.delete(app)
+
+    def test_enqueue_main_from_thread(self) -> None:
+        app = QApplication()
+
+        try:
+            results: list[tuple[QThread, int]] = []
+            src_thread: QThread | None = None
+            thread_2 = QThread()
+            o2 = QObject()
+            o2.moveToThread(thread_2)
+
+            def quit_app() -> None:
+                thread_2.quit()
+                thread_2.wait()
+                app.quit()
+
+            def func() -> None:
+                results.append((QThread.currentThread(), len(results)))
+                if len(results) == 2:
+                    QTimer.singleShot(0, app, quit_app)
+
+            def test_enqueue() -> None:
+                nonlocal src_thread
+                src_thread = QThread.currentThread()
+                enqueue(func)
+                enqueue(func, app)
+
+            thread_2.start()
+
+            enqueue(test_enqueue, o2)
+            QTimer.singleShot(2000, app, quit_app)
+
+            app.exec()
+
+            self.assertEqual(thread_2, src_thread)
+            self.assertEqual(
+                [
+                    (app.thread(), 0),
+                    (app.thread(), 1),
+                ],
+                results,
+            )
+
+        finally:
+            shiboken6.delete(app)
+
+    def test_enqueue_thread_from_main(self) -> None:
+        app = QApplication()
+
+        try:
+            results: list[tuple[QThread, int]] = []
+            src_thread: QThread | None = None
+            thread_2 = QThread()
+            o2 = QObject()
+            o2.moveToThread(thread_2)
+
+            def quit_app() -> None:
+                thread_2.quit()
+                thread_2.wait()
+                app.quit()
+
+            def func() -> None:
+                results.append((QThread.currentThread(), len(results)))
+                if len(results) == 2:
+                    QTimer.singleShot(0, app, quit_app)
+
+            def test_enqueue() -> None:
+                nonlocal src_thread
+                src_thread = QThread.currentThread()
+                enqueue(func, o2)
+
+            thread_2.start()
+
+            enqueue(test_enqueue)
+            QTimer.singleShot(2000, app, quit_app)
+
+            app.exec()
+
+            self.assertEqual(app.thread(), src_thread)
+            self.assertEqual(
+                [(thread_2, 0)],
+                results,
+            )
+
+        finally:
+            shiboken6.delete(app)
+
+    def test_enqueue_thread_from_thread(self) -> None:
+        app = QApplication()
+
+        try:
+            results: list[tuple[QThread, int]] = []
+            src_thread: QThread | None = None
+            thread_2 = QThread()
+            o2 = QObject()
+            o2.moveToThread(thread_2)
+            thread_3 = QThread()
+            o3 = QObject()
+            o3.moveToThread(thread_3)
+
+            def quit_app() -> None:
+                thread_2.quit()
+                thread_3.quit()
+                thread_2.wait()
+                thread_3.wait()
+                app.quit()
+
+            def func() -> None:
+                results.append((QThread.currentThread(), len(results)))
+                if len(results) == 2:
+                    QTimer.singleShot(0, app, quit_app)
+
+            def test_enqueue() -> None:
+                nonlocal src_thread
+                src_thread = QThread.currentThread()
+                enqueue(func, o3)
+
+            thread_2.start()
+            thread_3.start()
+
+            enqueue(test_enqueue, o2)
+            QTimer.singleShot(2000, app, quit_app)
+
+            app.exec()
+
+            self.assertEqual(thread_2, src_thread)
+            self.assertEqual(
+                [(thread_3, 0)],
+                results,
+            )
+
+        finally:
+            shiboken6.delete(app)
+
 
 if __name__ == "__main__":
     unittest.main()
