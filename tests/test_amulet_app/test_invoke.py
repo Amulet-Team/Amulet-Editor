@@ -23,6 +23,7 @@ class InvokeTestCase(unittest.TestCase):
         app = QApplication()
 
         try:
+            fail = False
             src_thread: QThread | None = None
             exe_thread_1: QThread | None = None
             i_1: int = 0
@@ -31,6 +32,11 @@ class InvokeTestCase(unittest.TestCase):
 
             def quit_app() -> None:
                 app.quit()
+
+            def quit_app_fail() -> None:
+                quit_app()
+                nonlocal fail
+                fail = True
 
             def func() -> tuple[QThread, int]:
                 return QThread.currentThread(), 1
@@ -42,13 +48,14 @@ class InvokeTestCase(unittest.TestCase):
                     exe_thread_1, i_1 = invoke(func)
                     exe_thread_2, i_2 = invoke(func, app)
                 finally:
-                    app.quit()
+                    quit_app()
 
             QTimer.singleShot(0, app, test_invoke)
-            QTimer.singleShot(2000, app, quit_app)
+            QTimer.singleShot(2000, app, quit_app_fail)
 
             app.exec()
 
+            self.assertFalse(fail)
             self.assertEqual(app.thread(), src_thread)
             self.assertEqual(app.thread(), exe_thread_1)
             self.assertEqual(1, i_1)
@@ -61,6 +68,7 @@ class InvokeTestCase(unittest.TestCase):
         app = QApplication()
 
         try:
+            fail = False
             src_thread: QThread | None = None
             t = QThread()
             o = QObject()
@@ -74,6 +82,11 @@ class InvokeTestCase(unittest.TestCase):
                 t.quit()
                 t.wait()
                 app.quit()
+
+            def quit_app_fail() -> None:
+                quit_app()
+                nonlocal fail
+                fail = True
 
             def func() -> tuple[QThread, int]:
                 return QThread.currentThread(), 1
@@ -90,10 +103,11 @@ class InvokeTestCase(unittest.TestCase):
             t.start()
 
             QTimer.singleShot(0, o, test_invoke)
-            QTimer.singleShot(2000, app, quit_app)
+            QTimer.singleShot(2000, app, quit_app_fail)
 
             app.exec()
 
+            self.assertFalse(fail)
             self.assertEqual(t, src_thread)
             self.assertEqual(app.thread(), exe_thread_1)
             self.assertEqual(1, i_1)
@@ -106,6 +120,7 @@ class InvokeTestCase(unittest.TestCase):
         app = QApplication()
 
         try:
+            fail = False
             src_thread: QThread | None = None
             t = QThread()
             o = QObject()
@@ -117,6 +132,11 @@ class InvokeTestCase(unittest.TestCase):
                 t.quit()
                 t.wait()
                 app.quit()
+
+            def quit_app_fail() -> None:
+                quit_app()
+                nonlocal fail
+                fail = True
 
             def func() -> tuple[QThread, int]:
                 return QThread.currentThread(), 1
@@ -131,10 +151,11 @@ class InvokeTestCase(unittest.TestCase):
 
             t.start()
             QTimer.singleShot(0, app, test_invoke)
-            QTimer.singleShot(2000, app, quit_app)
+            QTimer.singleShot(2000, app, quit_app_fail)
 
             app.exec()
 
+            self.assertFalse(fail)
             self.assertEqual(app.thread(), src_thread)
             self.assertEqual(t, exe_thread)
             self.assertEqual(1, i)
@@ -145,6 +166,7 @@ class InvokeTestCase(unittest.TestCase):
         app = QApplication()
 
         try:
+            fail = False
             src_thread: QThread | None = None
             t1 = QThread()
             o1 = QObject()
@@ -162,6 +184,11 @@ class InvokeTestCase(unittest.TestCase):
                 t2.wait()
                 app.quit()
 
+            def quit_app_fail() -> None:
+                quit_app()
+                nonlocal fail
+                fail = True
+
             def func() -> tuple[QThread, int]:
                 return QThread.currentThread(), 1
 
@@ -177,10 +204,11 @@ class InvokeTestCase(unittest.TestCase):
             t2.start()
 
             QTimer.singleShot(0, o2, test_invoke)
-            QTimer.singleShot(2000, app, quit_app)
+            QTimer.singleShot(2000, app, quit_app_fail)
 
             app.exec()
 
+            self.assertFalse(fail)
             self.assertEqual(t2, src_thread)
             self.assertEqual(t1, exe_thread)
             self.assertEqual(1, i)
@@ -191,11 +219,17 @@ class InvokeTestCase(unittest.TestCase):
         app = QApplication()
 
         try:
+            fail = False
             results: list[tuple[QThread, int]] = []
             src_thread: QThread | None = None
 
             def quit_app() -> None:
                 app.quit()
+
+            def quit_app_fail() -> None:
+                quit_app()
+                nonlocal fail
+                fail = True
 
             def func() -> None:
                 results.append((QThread.currentThread(), len(results)))
@@ -209,10 +243,11 @@ class InvokeTestCase(unittest.TestCase):
                 enqueue(func, app)
 
             enqueue(test_enqueue)
-            QTimer.singleShot(2000, app, quit_app)
+            QTimer.singleShot(2000, app, quit_app_fail)
 
             app.exec()
 
+            self.assertFalse(fail)
             self.assertEqual(app.thread(), src_thread)
             self.assertEqual(
                 [
@@ -229,6 +264,7 @@ class InvokeTestCase(unittest.TestCase):
         app = QApplication()
 
         try:
+            fail = False
             results: list[tuple[QThread, int]] = []
             src_thread: QThread | None = None
             thread_2 = QThread()
@@ -239,6 +275,11 @@ class InvokeTestCase(unittest.TestCase):
                 thread_2.quit()
                 thread_2.wait()
                 app.quit()
+
+            def quit_app_fail() -> None:
+                quit_app()
+                nonlocal fail
+                fail = True
 
             def func() -> None:
                 results.append((QThread.currentThread(), len(results)))
@@ -254,10 +295,11 @@ class InvokeTestCase(unittest.TestCase):
             thread_2.start()
 
             enqueue(test_enqueue, o2)
-            QTimer.singleShot(2000, app, quit_app)
+            QTimer.singleShot(2000, app, quit_app_fail)
 
             app.exec()
 
+            self.assertFalse(fail)
             self.assertEqual(thread_2, src_thread)
             self.assertEqual(
                 [
@@ -274,6 +316,7 @@ class InvokeTestCase(unittest.TestCase):
         app = QApplication()
 
         try:
+            fail = False
             results: list[tuple[QThread, int]] = []
             src_thread: QThread | None = None
             thread_2 = QThread()
@@ -284,6 +327,11 @@ class InvokeTestCase(unittest.TestCase):
                 thread_2.quit()
                 thread_2.wait()
                 app.quit()
+
+            def quit_app_fail() -> None:
+                quit_app()
+                nonlocal fail
+                fail = True
 
             def func() -> None:
                 results.append((QThread.currentThread(), len(results)))
@@ -298,10 +346,11 @@ class InvokeTestCase(unittest.TestCase):
             thread_2.start()
 
             enqueue(test_enqueue)
-            QTimer.singleShot(2000, app, quit_app)
+            QTimer.singleShot(2000, app, quit_app_fail)
 
             app.exec()
 
+            self.assertFalse(fail)
             self.assertEqual(app.thread(), src_thread)
             self.assertEqual(
                 [(thread_2, 0)],
@@ -315,6 +364,7 @@ class InvokeTestCase(unittest.TestCase):
         app = QApplication()
 
         try:
+            fail = False
             results: list[tuple[QThread, int]] = []
             src_thread: QThread | None = None
             thread_2 = QThread()
@@ -331,6 +381,11 @@ class InvokeTestCase(unittest.TestCase):
                 thread_3.wait()
                 app.quit()
 
+            def quit_app_fail() -> None:
+                quit_app()
+                nonlocal fail
+                fail = True
+
             def func() -> None:
                 results.append((QThread.currentThread(), len(results)))
                 if len(results) == 2:
@@ -345,10 +400,11 @@ class InvokeTestCase(unittest.TestCase):
             thread_3.start()
 
             enqueue(test_enqueue, o2)
-            QTimer.singleShot(2000, app, quit_app)
+            QTimer.singleShot(2000, app, quit_app_fail)
 
             app.exec()
 
+            self.assertFalse(fail)
             self.assertEqual(thread_2, src_thread)
             self.assertEqual(
                 [(thread_3, 0)],
