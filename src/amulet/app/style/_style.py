@@ -1,7 +1,7 @@
 from threading import Lock
 from collections.abc import Callable
 
-from PySide6.QtCore import Qt, QTimer
+from PySide6.QtCore import Qt
 from PySide6.QtWidgets import QStyle, QStyleFactory, QApplication, QProxyStyle
 
 from amulet.app.invoke import enqueue

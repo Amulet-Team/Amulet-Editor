@@ -5,7 +5,7 @@ import shiboken6
 from PySide6.QtCore import QTimer, QThread, QObject
 from PySide6.QtWidgets import QApplication
 
-from amulet.app.invoke import invoke, enqueue, Promise
+from amulet.app.invoke import invoke, enqueue
 
 
 class InvokeTestCase(unittest.TestCase):

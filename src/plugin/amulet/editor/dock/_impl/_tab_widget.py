@@ -6,7 +6,7 @@ from typing import Callable
 from weakref import ref
 import logging
 
-from PySide6.QtCore import Qt, QSize, QEvent, QObject, QTimer, Signal
+from PySide6.QtCore import Qt, QSize, QEvent, QObject, Signal
 from PySide6.QtGui import (
     QWheelEvent,
     QCursor,
