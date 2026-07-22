@@ -7,6 +7,7 @@ from PySide6.QtWidgets import (
 )
 
 import amulet.app.style
+from amulet.app.invoke import enqueue
 
 Colours = [
     # light
@@ -273,7 +274,7 @@ class AmuletStyle(QProxyStyle):
         self._style.colorSchemeChanged.connect(
             self._set_style_sheet, type=Qt.ConnectionType.QueuedConnection
         )
-        QTimer.singleShot(0, self._set_style_sheet)
+        enqueue(self._set_style_sheet)
 
     def _is_dark(self) -> bool:
         return self._style.colorScheme() == Qt.ColorScheme.Dark

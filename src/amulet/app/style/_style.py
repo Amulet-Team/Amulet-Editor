@@ -4,6 +4,8 @@ from collections.abc import Callable
 from PySide6.QtCore import Qt, QTimer
 from PySide6.QtWidgets import QStyle, QStyleFactory, QApplication, QProxyStyle
 
+from amulet.app.invoke import enqueue
+
 
 class StyleStorage:
     def __init__(
@@ -74,7 +76,7 @@ class BuiltInStyle(QProxyStyle):
         self._style.colorSchemeChanged.connect(
             self._set_style_sheet, type=Qt.ConnectionType.QueuedConnection
         )
-        QTimer.singleShot(0, self._set_style_sheet)
+        enqueue(self._set_style_sheet)
 
     def _set_style_sheet(self) -> None:
         app = QApplication.instance()

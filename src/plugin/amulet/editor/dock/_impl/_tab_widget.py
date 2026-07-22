@@ -32,6 +32,7 @@ from PySide6.QtWidgets import (
 )
 
 from amulet.app.qt.signal import TypeFormSignal
+from amulet.app.invoke import enqueue
 
 from plugin.amulet.editor.dock.widget import DockWidget
 from plugin.amulet.editor.dock.widget._missing import (
@@ -289,7 +290,7 @@ class TabWidgetStack(QWidget):
 
                 # Delay call resize handler.
                 # For some reason calling this directly does not work.
-                QTimer.singleShot(50, self._on_resize)
+                enqueue(self._on_resize)
 
                 break
             else:
