@@ -449,6 +449,43 @@ class InvokeTestCase(unittest.TestCase):
         finally:
             shiboken6.delete(app)
 
+    def test_enqueue_exception(self) -> None:
+        app = QApplication()
+
+        try:
+            fail = False
+            raised = False
+
+            def quit_app() -> None:
+                app.quit()
+
+            def quit_app_fail() -> None:
+                quit_app()
+                nonlocal fail
+                fail = True
+
+            def func() -> None:
+                raise Exception
+
+            def test_invoke() -> None:
+                try:
+                    enqueue(func)
+                except Exception:
+                    nonlocal raised
+                    raised = True
+                finally:
+                    quit_app()
+
+            QTimer.singleShot(0, app, test_invoke)
+            QTimer.singleShot(2000, app, quit_app_fail)
+
+            app.exec()
+
+            self.assertFalse(fail)
+            self.assertFalse(raised)
+        finally:
+            shiboken6.delete(app)
+
 
 if __name__ == "__main__":
     unittest.main()
