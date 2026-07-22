@@ -23,15 +23,17 @@ class InvokeTestCase(unittest.TestCase):
         app = QApplication()
 
         try:
-
-            def func() -> tuple[QThread, int]:
-                return QThread.currentThread(), 1
-
             src_thread: QThread | None = None
             exe_thread_1: QThread | None = None
             i_1: int = 0
             exe_thread_2: QThread | None = None
             i_2: int = 0
+
+            def quit_app() -> None:
+                app.quit()
+
+            def func() -> tuple[QThread, int]:
+                return QThread.currentThread(), 1
 
             def test_invoke() -> None:
                 try:
@@ -42,7 +44,8 @@ class InvokeTestCase(unittest.TestCase):
                 finally:
                     app.quit()
 
-            QTimer.singleShot(0, test_invoke)
+            QTimer.singleShot(0, app, test_invoke)
+            QTimer.singleShot(2000, app, quit_app)
 
             app.exec()
 
@@ -58,10 +61,6 @@ class InvokeTestCase(unittest.TestCase):
         app = QApplication()
 
         try:
-
-            def func() -> tuple[QThread, int]:
-                return QThread.currentThread(), 1
-
             src_thread: QThread | None = None
             t = QThread()
             o = QObject()
@@ -71,9 +70,13 @@ class InvokeTestCase(unittest.TestCase):
             exe_thread_2: QThread | None = None
             i_2: int = 0
 
-            def quit() -> None:
+            def quit_app() -> None:
                 t.quit()
+                t.wait()
                 app.quit()
+
+            def func() -> tuple[QThread, int]:
+                return QThread.currentThread(), 1
 
             def test_invoke() -> None:
                 try:
@@ -82,11 +85,12 @@ class InvokeTestCase(unittest.TestCase):
                     exe_thread_1, i_1 = invoke(func)
                     exe_thread_2, i_2 = invoke(func, app)
                 finally:
-                    enqueue(quit, app)
+                    QTimer.singleShot(0, app, quit_app)
 
             t.start()
 
-            enqueue(test_invoke, o)
+            QTimer.singleShot(0, o, test_invoke)
+            QTimer.singleShot(2000, app, quit_app)
 
             app.exec()
 
@@ -102,10 +106,6 @@ class InvokeTestCase(unittest.TestCase):
         app = QApplication()
 
         try:
-
-            def func() -> tuple[QThread, int]:
-                return QThread.currentThread(), 1
-
             src_thread: QThread | None = None
             t = QThread()
             o = QObject()
@@ -113,17 +113,25 @@ class InvokeTestCase(unittest.TestCase):
             exe_thread: QThread | None = None
             i: int = 0
 
+            def quit_app() -> None:
+                t.quit()
+                t.wait()
+                app.quit()
+
+            def func() -> tuple[QThread, int]:
+                return QThread.currentThread(), 1
+
             def test_invoke() -> None:
                 try:
                     nonlocal src_thread, exe_thread, i
                     src_thread = QThread.currentThread()
                     exe_thread, i = invoke(func, o)
                 finally:
-                    t.quit()
-                    app.quit()
+                    quit_app()
 
             t.start()
-            QTimer.singleShot(0, test_invoke)
+            QTimer.singleShot(0, app, test_invoke)
+            QTimer.singleShot(2000, app, quit_app)
 
             app.exec()
 
@@ -137,10 +145,6 @@ class InvokeTestCase(unittest.TestCase):
         app = QApplication()
 
         try:
-
-            def func() -> tuple[QThread, int]:
-                return QThread.currentThread(), 1
-
             src_thread: QThread | None = None
             t1 = QThread()
             o1 = QObject()
@@ -151,10 +155,15 @@ class InvokeTestCase(unittest.TestCase):
             exe_thread: QThread | None = None
             i: int = 0
 
-            def quit() -> None:
+            def quit_app() -> None:
                 t1.quit()
                 t2.quit()
+                t1.wait()
+                t2.wait()
                 app.quit()
+
+            def func() -> tuple[QThread, int]:
+                return QThread.currentThread(), 1
 
             def test_invoke() -> None:
                 try:
@@ -162,12 +171,13 @@ class InvokeTestCase(unittest.TestCase):
                     src_thread = QThread.currentThread()
                     exe_thread, i = invoke(func, o1)
                 finally:
-                    enqueue(quit, app)
+                    QTimer.singleShot(0, app, quit_app)
 
             t1.start()
             t2.start()
 
-            enqueue(test_invoke, o2)
+            QTimer.singleShot(0, o2, test_invoke)
+            QTimer.singleShot(2000, app, quit_app)
 
             app.exec()
 
