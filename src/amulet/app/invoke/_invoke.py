@@ -1,8 +1,7 @@
 from __future__ import annotations
 from typing import TypeVar, Callable, Generic, Any
-import traceback
 
-from PySide6.QtCore import Signal, QObject, Qt, QThread, QCoreApplication
+from PySide6.QtCore import Signal, QObject, Qt, QThread, QCoreApplication, QTimer
 
 from runtime_final import final
 
@@ -107,7 +106,7 @@ def invoke(func: Callable[[], T], parent: QObject | None = None) -> T:
     This is useful for calling a method across threads.
 
     :param func: The function or method to be called.
-    :param parent: The object to be used as the parent and from which the thread is found. If undefined, uses the app instance.
+    :param parent: The object to be used as the parent and from which the thread is found. If undefined, defaults to the app instance.
     :return: The method return value.
     """
     parent = _get_parent(parent)
@@ -128,24 +127,9 @@ def enqueue(func: Callable[[], Any], parent: QObject | None = None) -> None:
     Returns immediately and runs asynchronously.
 
     :param func: The function to be called.
-    :param parent: The object to be used as the parent and from which the thread is found. If undefined, uses the app instance.
+    :param parent: The object to be used as the parent and from which the thread is found. If undefined, defaults to the app instance.
     :return: The function return value.
     """
     parent = _get_parent(parent)
 
-    promise = Promise(func, parent, Qt.ConnectionType.QueuedConnection)
-
-    def on_finished() -> None:
-        try:
-            promise.result()
-        except Exception as e:
-            from amulet.app.exception import display_exception
-
-            display_exception(
-                title=f"Error in function {func}",
-                error=str(e),
-                traceback=traceback.format_exc(),
-            )
-
-    promise.finished.connect(on_finished)
-    promise.start()
+    QTimer.singleShot(0, parent, func)
