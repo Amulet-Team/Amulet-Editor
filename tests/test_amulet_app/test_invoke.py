@@ -465,18 +465,17 @@ class InvokeTestCase(unittest.TestCase):
                 fail = True
 
             def func() -> None:
+                QTimer.singleShot(0, app, quit_app)
                 raise Exception
 
-            def test_invoke() -> None:
+            def test_enqueue() -> None:
                 try:
                     enqueue(func)
                 except Exception:
                     nonlocal raised
                     raised = True
-                finally:
-                    quit_app()
 
-            QTimer.singleShot(0, app, test_invoke)
+            QTimer.singleShot(0, app, test_enqueue)
             QTimer.singleShot(2000, app, quit_app_fail)
 
             app.exec()
