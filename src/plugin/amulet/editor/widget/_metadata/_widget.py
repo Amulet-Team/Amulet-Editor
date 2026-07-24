@@ -50,7 +50,9 @@ class LevelLocker(QObject):
 
     def _try_lock(self, timeout: float) -> None:
         assert self._cancel_manager is not None
-        locked = self._level.lock.acquire(timeout=timeout, cancel_manager=self._cancel_manager)
+        locked = self._level.lock.acquire(
+            timeout=timeout, cancel_manager=self._cancel_manager
+        )
         with self._lock:
             self._cancel_manager = None
             self._level_lock_held = locked

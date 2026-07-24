@@ -2,4 +2,5 @@ from PySide6.QtWidgets import QWidget
 
 
 class BedrockLevelExplorer(QWidget):
-    pass
+    def reload(self) -> None:
+        pass
