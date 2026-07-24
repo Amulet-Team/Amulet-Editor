@@ -1,1 +1,1 @@
-from ._widget import NBTWidget
+from ._widget import NBTWidget, TagType
