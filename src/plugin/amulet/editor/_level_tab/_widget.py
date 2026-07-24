@@ -2,7 +2,7 @@ from dataclasses import dataclass
 import weakref
 from collections.abc import Callable
 
-from PySide6.QtCore import Qt, QTimer
+from PySide6.QtCore import Qt
 from PySide6.QtGui import QShowEvent
 from PySide6.QtWidgets import QWidget, QHBoxLayout, QStackedWidget
 

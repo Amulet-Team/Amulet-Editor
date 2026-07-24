@@ -1,7 +1,7 @@
 from copy import deepcopy
 from typing import SupportsInt, Literal, overload
 
-from PySide6.QtCore import QPoint, Qt, QSize, QEvent, QTimer
+from PySide6.QtCore import QPoint, Qt, QSize, QEvent
 from PySide6.QtGui import QPixmap, QKeyEvent, QMouseEvent, QEnterEvent, QIcon, QFont
 from PySide6.QtWidgets import (
     QWidget,
@@ -42,6 +42,7 @@ from amulet.nbt import (
 )
 
 from amulet.app.exception import CatchExceptionDialog
+from amulet.app.invoke import enqueue
 
 from plugin.tablericons import tablericons
 
@@ -395,9 +396,9 @@ def edit_tag(
             widget = None
         if widget_ is not None:
             layout.addWidget(widget_)
-            QTimer.singleShot(0, lambda: widget_.setFixedHeight(tag_choice.height()))
+            enqueue(lambda: widget_.setFixedHeight(tag_choice.height()))
             widget = widget_
-        QTimer.singleShot(0, dialog.adjustSize)
+        enqueue(dialog.adjustSize)
 
     if isinstance(tag, (ByteTag, ShortTag, IntTag, LongTag, FloatTag, DoubleTag)):
         set_widget(NBTSpinBox(tag))
