@@ -13,6 +13,8 @@ from PySide6.QtWidgets import (
 )
 from PySide6.QtOpenGLWidgets import QOpenGLWidget
 
+from amulet.utils.event import EventToken
+
 from amulet.level.abc import Level
 
 from amulet.app.exception import CatchExceptionDialog, display_exception
@@ -30,6 +32,7 @@ class LevelTabStorage:
     level: Level
     widget: QWidget
     api: LevelTabWidgetAPI
+    level_name_changed_token: EventToken[str]
 
 
 class TabBar(QTabBar):
@@ -174,7 +177,16 @@ class EditorMainWindow(QMainWindow):
                 )
                 return
             else:
-                storage = LevelTabStorage(level, widget, LevelTabWidgetAPI(widget))
+
+                def on_level_name_changed(level_name: str) -> None:
+                    self._tabs.setTabText(self._tabs.indexOf(widget), level_name)
+
+                storage = LevelTabStorage(
+                    level,
+                    widget,
+                    LevelTabWidgetAPI(widget),
+                    level.level_name_changed.connect(on_level_name_changed),
+                )
                 self._level_to_storage[level] = storage
                 self._widget_to_storage[widget] = storage
                 self._tabs.addTab(widget, level.level_name)
