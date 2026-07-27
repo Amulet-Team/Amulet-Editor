@@ -3,7 +3,7 @@ import sys
 import subprocess
 from pathlib import Path
 
-from PySide6.QtCore import QFileInfo, QPoint, Qt, QCoreApplication
+from PySide6.QtCore import QFileInfo, QPoint, Qt, QCoreApplication, QRect
 from PySide6.QtGui import QMouseEvent, QFont
 from PySide6.QtWidgets import (
     QWidget,
@@ -174,6 +174,15 @@ class JavaLevelExplorer(QTreeWidget):
             with CatchExceptionDialog(f"Error editing {item.path}"):
                 named_tag = read_nbt(item.path, preset=java_encoding)
                 dialog = NBTDialog(named_tag)
+                geometry = self.topLevelWidget().geometry()
+                dialog.setGeometry(
+                    QRect(
+                        geometry.x() + 100,
+                        geometry.y() + 100,
+                        max(600, geometry.width() - 200),
+                        max(600, geometry.height() - 200),
+                    )
+                )
                 if dialog.exec():
                     tag = dialog.get_tag()
                     if Path(self._level.path) / "level.dat" == Path(item.path):
