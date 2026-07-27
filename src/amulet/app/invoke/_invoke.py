@@ -45,10 +45,11 @@ class Promise(QObject, Generic[T]):
             QueuedConnection will add the function to the thread's event queue and return immediately.
             BlockingQueuedConnection is a blocking form of QueuedConnection. It can only be used if :meth:`start` is called from a different thread to parent.
         """
-        super().__init__(parent)
+        super().__init__()
 
         # Move to the thread
         self.moveToThread(parent.thread())
+        self.setParent(parent)
 
         # Connect slot
         self._start.connect(self._execute, connection_type)
